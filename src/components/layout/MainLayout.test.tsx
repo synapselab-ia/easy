@@ -4,15 +4,14 @@ import { MemoryRouter } from 'react-router-dom'
 import { MainLayout } from './MainLayout'
 
 describe('MainLayout Component', () => {
-    it('renders Sidebar and Outlet placeholder', () => {
+    it('renders the Easy shell', () => {
         render(
             <MemoryRouter>
                 <MainLayout />
             </MemoryRouter>
         )
 
-        // Sidebar brand text
-        expect(screen.getByText('Easy')).toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: 'Easy' })).toBeInTheDocument()
     })
 
     it('toggles command center on Ctrl+K', () => {
@@ -34,7 +33,6 @@ describe('MainLayout Component', () => {
         fireEvent(document, event)
 
         expect(preventDefault).toHaveBeenCalled()
-        // The CommandCenter should be visible (mock it or check for its placeholder)
         expect(screen.getByPlaceholderText(/Digite um comando/i)).toBeInTheDocument()
     })
 })
