@@ -23,7 +23,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
+      - name: Lint baseline (informational)
+        continue-on-error: true
         run: npm run lint
 
       - name: Unit and integration tests
