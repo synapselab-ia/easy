@@ -93,8 +93,9 @@ describe('TransactionCorrectionDialog', () => {
             />
         );
 
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-        expect(screen.getByText(/Original:/i)).toHaveTextContent('#10');
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toBeInTheDocument();
+        expect(dialog).toHaveTextContent('Original: #10 · Pagamento');
         expect(screen.getByLabelText(/Revendedor da substituição/i)).toHaveValue('1');
         expect(screen.getByLabelText(/Valor corrigido/i)).toHaveValue(5000);
 
@@ -137,7 +138,7 @@ describe('TransactionCorrectionDialog', () => {
             />
         );
 
-        expect(screen.getByText(/Item:/i)).toHaveTextContent('Perfume');
+        expect(screen.getByRole('dialog')).toHaveTextContent('Item: Perfume');
         expect(screen.getByLabelText(/Quantidade corrigida/i)).toHaveValue(10);
         expect(screen.getByLabelText(/Valor unitário corrigido/i)).toHaveValue(500);
 
