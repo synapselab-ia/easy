@@ -76,11 +76,13 @@ A reseller detail page has the reseller identity already selected, but starting 
 
 The inventory found no current evidence sufficient to prioritize broad visual redesign, dashboard rearrangement, theme changes, table-density preferences or a catalog-search feature. Those may be useful later, but current code/tests/product evidence does not establish operational impact strongly enough to outrank the gaps above.
 
-## P7-S1 decision
+## P7-S1 decision and validation
 
 D-020 accepts the prioritization rule: P7 fixes evidenced broken/misleading operator controls and intent/error risks before convenience or cosmetic refinement. The first implementation slice is limited to the transaction-entry cluster above.
 
 No runtime, schema, persistence, financial-domain, recovery or QA-workflow code changed in P7-S1.
+
+Persistent Critical QA run **`32066802100` — PASS** on the canonical P7-S1 documentation/content head before validation evidence was appended.
 
 ## P6 QA contract remains active
 
