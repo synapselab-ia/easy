@@ -4,6 +4,40 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-17 — P1-S3 referential validation and P1 closure
+
+### Added
+
+- explicit new-transaction reference acceptance matrix;
+- positive reseller-ID validation before lookup;
+- mandatory catalog reference for new orders;
+- mutation-level derivation of new-order `itemName` from the resolved item identity;
+- rejection of item references on new payment/signal movements;
+- complete V1 → V2 → V3 migration-path coverage;
+- automated preservation coverage for IDs, dates, lifecycle state and historical transaction snapshots.
+
+### Historical compatibility
+
+- existing stored transactions are not revalidated or rewritten during P1 migrations;
+- unresolved historical item references with a stored snapshot remain preserved/readable;
+- no Dexie V4 was introduced because P1-S3 changes runtime validation/coverage rather than persistent fields.
+
+### QA
+
+- targeted P1-S3 gate passed in GitHub Actions run `32039763539`;
+- reseller/item lifecycle, search, form, Command Center, integration and historical snapshot regressions passed in the same gate;
+- `npm run build` passed in the same run;
+- repository-wide QA debt remains explicitly owned by P6.
+
+### Canonical state
+
+- P1-S3 is `DONE`;
+- P1 — Referential integrity and safe entity lifecycle is `DONE`;
+- `NEXT_ACTION` advances to P2 — Correction, reversal and audit trail;
+- deep backup restore validation remains P5 rather than being pulled into P1.
+
+---
+
 ## 2026-08-17 — P1-S2 safe item lifecycle
 
 ### Added
@@ -12,7 +46,7 @@ This changelog records material V2 project-state changes, not every code-line ed
 - Dexie schema V3 migration that defaults existing items to active without changing reseller lifecycle state;
 - reversible item archive/reactivate mutations;
 - hard-delete protection when a transaction references an item;
-- order-creation guard that rejects inactive or missing referenced items when `itemId` is supplied;
+- order-creation guard for inactive/missing referenced items;
 - inactive-state visibility in catalog and global search/recent results;
 - targeted automated coverage for item lifecycle, migration, search, new-order selection/guards, catalog integration and P1-S1/history regressions.
 
@@ -20,24 +54,12 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 - normal item removal now archives instead of destructively deleting the catalog identity;
 - new-order forms list only active items;
-- archived item records remain discoverable for catalog/history traceability;
-- historical transaction snapshots such as `itemName`, quantity and stored values remain unchanged;
-- canonical P1 state advanced: P1-S2 is complete and P1-S3 is the new `NEXT_ACTION`.
+- historical transaction snapshots remain unchanged;
+- canonical P1 state advanced from P1-S2 to P1-S3.
 
 ### QA
 
-- targeted P1-S2 test gate passed in GitHub Actions run `32038951903`;
-- historical snapshot and reseller-lifecycle regression tests passed in the same gate;
-- `npm run build` passed in the same run;
-- repository-wide lint/test debt remains explicitly open for P6 and is not represented as resolved by this slice.
-
-### Scope not changed
-
-- remaining referential validation/migration acceptance matrix remains P1-S3;
-- transaction reversal/correction remains P2;
-- date/statement semantics remain P3;
-- persistence remains Dexie/IndexedDB pending P4;
-- backup schema/version hardening remains P5.
+- targeted gate and build passed in run `32038951903`.
 
 ---
 
@@ -49,30 +71,19 @@ This changelog records material V2 project-state changes, not every code-line ed
 - Dexie schema V2 migration that defaults existing resellers to active;
 - reversible reseller archive/reactivate mutations;
 - hard-delete protection when a reseller has financial transactions;
-- transaction-creation guard that rejects inactive or missing resellers;
-- inactive-state visibility in reseller list, global search and detail/history;
-- targeted automated coverage for lifecycle, migration, search, transaction selection/guards and reseller integration.
+- transaction-creation guard for inactive/missing resellers;
+- inactive-state visibility in reseller list, global search and detail/history.
 
 ### Changed
 
 - normal reseller removal now archives instead of destructively deleting the identity;
 - new transaction forms list only active resellers;
 - archived reseller records remain available for historical attribution and statement/PDF flows;
-- canonical P1 state advanced: P1-S1 is complete and P1-S2 is the new `NEXT_ACTION`.
+- canonical P1 state advanced from P1-S1 to P1-S2.
 
 ### QA
 
-- targeted P1-S1 test gate passed in GitHub Actions run `32037965651`;
-- `npm run build` passed in the same run;
-- repository-wide lint/test debt remains explicitly open for P6 and is not represented as resolved by this slice.
-
-### Scope not changed
-
-- item lifecycle remains P1-S2;
-- remaining referential validation/migration remains P1-S3;
-- transaction reversal/correction remains P2;
-- date/statement semantics remain P3;
-- persistence remains Dexie/IndexedDB pending P4.
+- targeted gate and build passed in run `32037965651`.
 
 ---
 
@@ -95,28 +106,6 @@ This changelog records material V2 project-state changes, not every code-line ed
 - `feature/*` designated for isolated work;
 - legacy `tasks/` checkboxes explicitly demoted from canonical status tracking.
 
-### Baseline state reconstructed
-
-Documented the current application as:
-
-- React/TypeScript/Vite static SPA;
-- Dexie/IndexedDB local persistence;
-- items, resellers and transactions as core entities;
-- GitHub Pages deployment from `main`;
-- existing dashboard, PDF, backup, search, responsive UI and analytics;
-- existing automated-test infrastructure with known stale E2E expectations.
-
-### Risks recorded
-
-- reseller deletion can orphan financial transactions;
-- item deletion can weaken historical references;
-- no robust audited transaction-correction flow;
-- date-of-occurrence is not distinct from creation timestamp;
-- statement period semantics need clarification;
-- current aging is not necessarily true debt aging;
-- backup import validation is shallow for destructive restoration;
-- deployment is not gated by the full quality suite.
-
 ### Runtime impact
 
-None. P0 intentionally changes documentation/governance only.
+None. P0 intentionally changed documentation/governance only.
