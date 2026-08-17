@@ -13,10 +13,11 @@ import {
     SelectValue,
 } from "../ui/select";
 import { isItemActive, isResellerActive, type TransactionType } from "../../db/database";
+import { toast } from "sonner";
 
 interface TransactionFormProps {
     onSubmitSuccess: () => void;
-    onCancel: () => void;
+    onCancel?: () => void;
     initialType?: TransactionType;
 }
 
@@ -38,15 +39,11 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
     const [type, setType] = useState<TransactionType>(initialType);
     const [occurrenceDate, setOccurrenceDate] = useState<string>(() => formatDateInput());
 
-    // Pass order fields
     const [itemId, setItemId] = useState<string>("");
     const [quantity, setQuantity] = useState<string>("1");
     const [unitPrice, setUnitPrice] = useState<string>("");
     const [observation, setObservation] = useState<string>("");
-
-    // Pass payment fields
     const [paymentValue, setPaymentValue] = useState<string>("");
-
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const createMutation = useCreateTransaction();
@@ -63,7 +60,6 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
         [resellers]
     );
 
-    // Auto-fill unit price when item is selected
     useEffect(() => {
         if (type === "order" && itemId) {
             const selectedItem = activeItems.find(i => i.id?.toString() === itemId);
@@ -73,10 +69,22 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
         }
     }, [itemId, activeItems, type]);
 
-    // Computed total price for orders
     const orderTotalPrice = type === "order"
-        ? (parseFloat(quantity) || 0) * (parseFloat(unitPrice.replace(",", ".")) || 0)
+        ? (parseFloat(quantity) || 0) * (parseFloat(unitPrice.replace(",", ".")) || 0
         : 0;
+
+    const resetForm = () => {
+        setResellerId("");
+        setType(initialType);
+        setOccurrenceDate(formatDateInput());
+        setItemId("");
+        setQuantity("1");
+        setUnitPrice("");
+        setPaymentValue("");
+        setObservation("");
+        setErrors({});
+        createMutation.reset();
+    };
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
@@ -146,17 +154,15 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
         try {
             await createMutation.mutateAsync(data);
             onSubmitSuccess();
-            // Reset form
-            setResellerId("");
-            setOccurrenceDate(formatDateInput());
-            setItemId("");
-            setQuantity("1");
-            setUnitPrice("");
-            setPaymentValue("");
-            setObservation("");
+            resetForm();
         } catch (error) {
-            console.error("Erro ao salvar transação:", error);
+            toast.error(error instanceof Error ? error.message : "Não foi possível salvar o lançamento.");
         }
+    };
+
+    const handleCancel = () => {
+        resetForm();
+        onCancel?.();
     };
 
     return (
@@ -305,7 +311,7 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
             )}
 
             <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending}>
                     Cancelar
                 </Button>
                 <Button type="submit" disabled={isPending}>
