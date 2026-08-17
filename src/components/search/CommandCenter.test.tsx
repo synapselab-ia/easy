@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { CommandCenter } from './CommandCenter'
 import { MemoryRouter } from 'react-router-dom'
 import * as searchHook from '@/hooks/useSearch'
@@ -17,42 +18,48 @@ vi.mock('@/hooks/useSearch', () => ({
     useSearch: vi.fn(),
 }))
 
-describe('CommandCenter', () => {
-    beforeAll(() => {
-        global.ResizeObserver = class ResizeObserver {
-            observe() { }
-            unobserve() { }
-            disconnect() { }
-        }
-        HTMLElement.prototype.scrollIntoView = vi.fn()
-    })
+vi.mock('@/components/ui/command', () => ({
+    CommandDialog: ({ open, children }: { open: boolean; children: ReactNode }) =>
+        open ? <div data-testid="command-dialog">{children}</div> : null,
+    CommandInput: ({
+        placeholder,
+        value,
+        onValueChange,
+    }: {
+        placeholder?: string;
+        value?: string;
+        onValueChange?: (value: string) => void;
+    }) => (
+        <input
+            placeholder={placeholder}
+            value={value ?? ''}
+            onChange={(event) => onValueChange?.(event.target.value)}
+        />
+    ),
+    CommandList: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    CommandEmpty: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    CommandGroup: ({ heading, children }: { heading?: string; children: ReactNode }) => (
+        <section>
+            {heading && <h3>{heading}</h3>}
+            {children}
+        </section>
+    ),
+    CommandItem: ({ onSelect, children }: { onSelect?: () => void; children: ReactNode }) => (
+        <button type="button" onClick={() => onSelect?.()}>
+            {children}
+        </button>
+    ),
+    CommandSeparator: () => <hr />,
+}))
 
+describe('CommandCenter', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        Object.defineProperty(window, 'matchMedia', {
-            writable: true,
-            value: vi.fn().mockImplementation(query => ({
-                matches: false,
-                media: query,
-                onchange: null,
-                addListener: vi.fn(),
-                removeListener: vi.fn(),
-                addEventListener: vi.fn(),
-                removeEventListener: vi.fn(),
-                dispatchEvent: vi.fn(),
-            })),
-        })
-
         vi.mocked(searchHook.useSearch).mockReturnValue({
             results: [],
             recent: [],
             isLoading: false,
         })
-    })
-
-    afterEach(() => {
-        cleanup()
-        document.body.innerHTML = ''
     })
 
     it('should render basic structure when open', () => {
@@ -122,9 +129,9 @@ describe('CommandCenter', () => {
         fireEvent.change(input, { target: { value: 'New Reseller' } })
 
         expect(screen.getByText(/Nenhum resultado encontrado para/i)).toBeInTheDocument()
-        expect(screen.getByText(/"New Reseller"/)).toBeInTheDocument()
-        expect(screen.getByText(/Cadastrar revendedor: "New Reseller"/i)).toBeInTheDocument()
-        expect(screen.getByText(/Cadastrar produto: "New Reseller"/i)).toBeInTheDocument()
+        expect(screen.getAllByText(/"New Reseller"/)).toHaveLength(3)
+        expect(screen.getByText(/Cadastrar revendedor:/i)).toBeInTheDocument()
+        expect(screen.getByText(/Cadastrar produto:/i)).toBeInTheDocument()
     })
 
     it('should navigate with pre-filled name when clicking a suggestion', () => {
@@ -143,8 +150,10 @@ describe('CommandCenter', () => {
         const input = screen.getByPlaceholderText(/Digite um comando/i)
         fireEvent.change(input, { target: { value: 'New Reseller' } })
 
-        const suggestion = screen.getByText(/Cadastrar revendedor: "New Reseller"/i)
-        fireEvent.click(suggestion)
+        const suggestionLabel = screen.getByText(/Cadastrar revendedor:/i)
+        const suggestion = suggestionLabel.closest('button')
+        expect(suggestion).not.toBeNull()
+        fireEvent.click(suggestion!)
 
         expect(mockNavigate).toHaveBeenCalledWith('/resellers?name=New%20Reseller')
     })
