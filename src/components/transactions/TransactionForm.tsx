@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useCreateTransaction } from "../../hooks/useTransactions";
 import { useItems } from "../../hooks/useItems";
 import { useResellers } from "../../hooks/useResellers";
@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select";
-import type { TransactionType } from "../../db/database";
+import { isResellerActive, type TransactionType } from "../../db/database";
 
 interface TransactionFormProps {
     onSubmitSuccess: () => void;
@@ -40,6 +40,10 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
 
     const { data: items = [] } = useItems();
     const { data: resellers = [] } = useResellers();
+    const activeResellers = useMemo(
+        () => resellers.filter(isResellerActive),
+        [resellers]
+    );
 
     // Auto-fill unit price when item is selected
     useEffect(() => {
@@ -59,7 +63,11 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
     const validate = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!resellerId) newErrors.resellerId = "Revendedor é obrigatório";
+        if (!resellerId) {
+            newErrors.resellerId = "Revendedor é obrigatório";
+        } else if (!activeResellers.some(r => r.id?.toString() === resellerId)) {
+            newErrors.resellerId = "Revendedor inativo não pode receber novos lançamentos";
+        }
 
         if (type === "order") {
             if (!itemId) newErrors.itemId = "Item é obrigatório";
@@ -129,17 +137,20 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
                     <Select value={resellerId} onValueChange={(val) => setResellerId(val ?? "")}>
                         <SelectTrigger id="resellerId">
                             <SelectValue>
-                                {resellerId ? resellers.find(r => r.id!.toString() === resellerId)?.name : "Selecione..."}
+                                {resellerId ? activeResellers.find(r => r.id!.toString() === resellerId)?.name : "Selecione..."}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            {resellers.map((r) => (
+                            {activeResellers.map((r) => (
                                 <SelectItem key={r.id} value={r.id!.toString()}>
                                     {r.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
+                    {activeResellers.length === 0 && (
+                        <p className="text-sm text-muted-foreground">Nenhum revendedor ativo disponível para novos lançamentos.</p>
+                    )}
                     {errors.resellerId && <p className="text-red-500 text-sm">{errors.resellerId}</p>}
                 </div>
 
