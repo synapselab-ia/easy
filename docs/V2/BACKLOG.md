@@ -93,21 +93,30 @@ Acceptance gate:
 
 ### P1-S2 — Safe item lifecycle
 
-**Status:** `NOT_STARTED`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
 Goal: preserve historical order identity while allowing catalog cleanup.
 
-Expected direction:
+Implemented behavior:
 
-- introduce active/inactive lifecycle for catalog items;
-- preserve transaction snapshots such as item name/price;
-- avoid destructive behavior for items already used in historical orders;
-- define how inactive items appear in catalog/search/new-order forms.
+- item lifecycle uses reversible active/inactive state;
+- existing item data migrates to active by default in Dexie V3;
+- normal catalog UI archives/reactivates instead of destructively deleting used item identities;
+- physical deletion is blocked when a transaction references the item;
+- inactive items remain visible/identified in catalog and global search;
+- inactive items are unavailable in new-order selection and rejected by the order mutation when referenced;
+- historical order snapshots (`itemName`, quantity and stored values) remain unchanged and renderable;
+- P1-S1 reseller lifecycle state is preserved through the new migration.
 
 Acceptance gate:
 
-- every historical order remains understandable after catalog changes;
-- inactive items cannot accidentally be selected for new orders unless explicitly allowed.
+- [x] every historical order remains understandable after catalog deactivation;
+- [x] a referenced item cannot be physically deleted through the guarded mutation;
+- [x] inactive items cannot accidentally be selected for new orders;
+- [x] inactive items remain discoverable for operational traceability;
+- [x] migration/lifecycle behavior and relevant regressions are covered by automated tests;
+- [x] targeted P1-S2 tests and build pass.
 
 ### P1-S3 — Referential validation and migration
 
@@ -118,15 +127,19 @@ Goal: complete broader reference validation and make remaining schema transition
 Expected work:
 
 - reconcile lifecycle schema/migration behavior after P1-S1 and P1-S2;
-- add remaining domain-level validation for invalid references;
+- inventory remaining valid/invalid reference combinations instead of assuming every optional field is an error;
+- add remaining domain-level validation for invalid new references;
 - cover invalid historical/new references that are not already protected by the lifecycle slices;
-- ensure old valid local data upgrades without loss across the completed P1 schema path.
+- ensure old valid local data upgrades without loss across the completed P1 schema path;
+- preserve existing transaction snapshots rather than destructively repairing history.
 
 Acceptance gate:
 
 - old valid local data upgrades without loss;
-- invalid new references are rejected;
-- remaining migration/reference behavior is covered by automated tests.
+- invalid new references are rejected according to an explicit acceptance matrix;
+- historical references remain understandable;
+- remaining migration/reference behavior is covered by automated tests;
+- P1 lifecycle/integrity gates are reconciled before P1 is marked done.
 
 ---
 
