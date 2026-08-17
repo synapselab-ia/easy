@@ -58,9 +58,10 @@ Implemented the strict new-transaction reference matrix and complete V1 → V2 �
 ## P2 — Correction, reversal and audit trail
 
 **Priority:** Critical  
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Goal: correct common human financial-entry errors without silently destroying history.
+Goal achieved: common human financial-entry errors can be corrected without silently destroying history.
 
 ### P2-S1 — Audited transaction reversal
 
@@ -78,8 +79,8 @@ Implemented behavior:
 - shared transaction-domain rules make reversed entries financially ineffective;
 - reseller detail, dashboard totals/today orders/aging/performance, search balances and PDF balance inputs use reversal-aware semantics;
 - PDF statements keep reversed rows and show status/reason;
-- Dexie schema remains V3 because reversal metadata is optional/non-indexed;
-- P1 regression gates remain green.
+- pure cancellation covers duplicate-payment and old-order-reversal cases without forcing replacement;
+- Dexie schema remains V3 because reversal metadata is optional/non-indexed.
 
 Acceptance gate:
 
@@ -93,31 +94,37 @@ Acceptance gate:
 
 ### P2-S2 — Linked/guided correction replacement
 
-**Status:** `NOT_STARTED`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Goal: make wrong-value and wrong-reseller correction explicit rather than relying on an unlinked manual reversal + new entry.
+Implemented behavior:
 
-Expected work:
+- linked correction is atomic: reversal of the original and creation of the replacement happen in one Dexie transaction;
+- original reversal may persist `replacementTransactionId`;
+- replacement persists `correction.replacesTransactionId`;
+- failure validating the replacement rolls the entire operation back;
+- guided correction supports wrong-value and wrong-reseller cases;
+- replacement preserves the original transaction type and observation;
+- order correction preserves the original item identity and recalculates total from corrected quantity × unit price;
+- replacement still obeys P1 active reseller/item reference validation;
+- normal transaction creation strips correction/reversal metadata and cannot forge audit linkage;
+- history and PDF expose the relationship in both directions;
+- the original remains financially neutral and only the effective replacement contributes to balances/dashboard/search;
+- actor attribution strategy is provider-neutral and intentionally does not invent authentication/user identity before P4;
+- Dexie schema remains V3 because linkage metadata is optional/non-indexed.
 
-- define the minimum original/replacement relationship;
-- preserve both transactions and P2-S1 reversal audit metadata;
-- provide a guided recreate/correction flow for wrong amount and wrong reseller;
-- avoid in-place mutation of the original financial entry;
-- define a future actor-attribution strategy compatible with the later P4 persistence decision;
-- do not introduce authentication/backend yet;
-- do not change P3 occurrence-date or statement semantics.
+Acceptance gate:
 
-Acceptance direction:
-
-- a wrong-value entry can be reversed and replaced with explicit linkage;
-- a wrong-reseller entry can be reversed and recreated against the intended reseller with explicit linkage;
-- the original and replacement remain independently inspectable;
-- balances/dashboard/history/PDF remain coherent;
-- duplicate payment and pure cancellation remain supported by P2-S1 without forcing a replacement.
-
-### P2 remaining phase gate
-
-P2 is complete only when common entry errors can be corrected through the UI with traceability and no manual database editing, including wrong value, duplicate payment, wrong reseller and old-order reversal, with an explicit actor-attribution strategy for the future architecture.
+- [x] wrong-value entry can be reversed and replaced with explicit linkage;
+- [x] wrong-reseller entry can be reversed and recreated against the intended active reseller with explicit linkage;
+- [x] original and replacement remain independently inspectable;
+- [x] linked replacement uses current P1 validation and rollback is atomic on failure;
+- [x] balances/dashboard/search/history/PDF remain coherent;
+- [x] duplicate payment and pure cancellation remain supported by P2-S1;
+- [x] old-order reversal remains supported by P2-S1;
+- [x] future actor-attribution strategy is explicitly defined without backend/auth implementation;
+- [x] targeted P2-S2 tests, P2-S1/P1 regressions and build pass;
+- [x] P2 is closed.
 
 ---
 
@@ -126,14 +133,33 @@ P2 is complete only when common entry errors can be corrected through the UI wit
 **Priority:** High  
 **Status:** `NOT_STARTED`
 
+Goal: establish one coherent financial time and statement model across every consumer.
+
+### P3-S1 — Occurrence-date model and backward-safe migration
+
+**Status:** `NOT_STARTED`
+
 Expected work:
 
-- separate `occurredAt` from `createdAt`;
-- define opening/period/closing balance semantics;
-- make reseller detail, dashboard, search, PDF and analytics use consistent domain rules;
-- decide whether current last-movement risk is sufficient or true debt aging is required.
+- inventory every current `createdAt` consumer across transaction creation, history/filtering/PDF, dashboard/aging/performance, search, backup and tests;
+- define exact `occurredAt` versus registration/audit `createdAt` semantics;
+- add a backward-safe historical migration/read rule;
+- preserve P2 correction audit timestamps and linkage;
+- make the occurrence-date slice consistent across affected consumers;
+- do not redesign opening/closing statement semantics in this slice.
 
-Gate: identical data produces coherent financial results across every view/export.
+### P3-S2 — Statement and balance-period semantics
+
+**Status:** `NOT_STARTED`
+
+Expected later work:
+
+- define opening balance → period movements → closing balance semantics;
+- make reseller detail and PDF use the same statement model;
+- reconcile dashboard/search/analytics with shared financial domain rules;
+- decide whether current last-effective-movement aging is sufficient or true debt aging is required.
+
+Gate: identical data produces coherent financial results across every view/export, with explicit occurrence dates and formally defined statement balances.
 
 ---
 

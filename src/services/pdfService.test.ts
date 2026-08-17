@@ -100,6 +100,42 @@ describe('pdfService', () => {
         expect(row[6]).toContain('Motivo do estorno: Pagamento duplicado');
     });
 
+    it('includes both directions of a linked correction in PDF audit notes', () => {
+        const original: Transaction = {
+            id: 10,
+            resellerId: 1,
+            type: 'payment',
+            totalPrice: 5000,
+            reversal: {
+                reason: 'Valor incorreto',
+                reversedAt: '2026-08-17T15:00:00.000Z',
+                replacementTransactionId: 11,
+            },
+            createdAt: feb10,
+        };
+        const replacement: Transaction = {
+            id: 11,
+            resellerId: 1,
+            type: 'payment',
+            totalPrice: 500,
+            correction: {
+                replacesTransactionId: 10,
+            },
+            createdAt: mar20,
+        };
+
+        generateResellerExtract(mockReseller, [original, replacement], -500);
+
+        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
+        const originalRow = callArgs.body?.[0] as string[];
+        const replacementRow = callArgs.body?.[1] as string[];
+
+        expect(originalRow[5]).toBe('Estornado');
+        expect(originalRow[6]).toContain('Substituído pelo lançamento #11');
+        expect(replacementRow[5]).toBe('Válido');
+        expect(replacementRow[6]).toContain('Correção do lançamento #10');
+    });
+
     it('gera PDF com dateRange — nome do arquivo inclui as datas formatadas', () => {
         const dateRange = {
             startDate: new Date('2025-01-01T00:00:00'),

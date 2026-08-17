@@ -1,51 +1,33 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified current architecture through P2-S1  
+**Status:** verified current architecture through completed P2  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
 ## 1. Current architecture
 
-Easy is a static single-page application that runs entirely in the browser.
+Easy remains a static browser-only SPA:
 
 ```text
 Browser
-  |
   |-- React + TypeScript + Vite
   |-- React Router
   |-- TanStack Query
   |-- Dexie
-  `-- IndexedDB (local browser data)
+  `-- IndexedDB
 
-Static build
-  |
-  `-- GitHub Pages
+Static build -> GitHub Pages
 ```
 
 There is no application backend, remote database or authentication layer.
 
 ## 2. Verified stack
 
-- React 19;
-- TypeScript 6;
-- Vite 8;
-- React Router 7;
-- TanStack Query 5;
-- Dexie 4 / IndexedDB;
-- Tailwind CSS 4;
-- shadcn-related UI components / Base UI;
-- Recharts;
-- jsPDF + jspdf-autotable;
-- date-fns;
-- next-themes;
-- Vitest + Testing Library;
-- Playwright.
-
-Primary scripts remain `npm run dev`, `build`, `lint`, `test` and `preview`.
+React 19, TypeScript 6, Vite 8, React Router 7, TanStack Query 5, Dexie 4/IndexedDB, Tailwind CSS 4, shadcn/Base UI components, Recharts, jsPDF, date-fns, next-themes, Vitest/Testing Library and Playwright.
 
 ## 3. Routing baseline
 
-Routes under browser basename `/easy/` remain:
+Routes under `/easy/` remain:
 
 - `/` — Dashboard;
 - `/items` — Items;
@@ -54,31 +36,21 @@ Routes under browser basename `/easy/` remain:
 - `/transactions` — New transaction entry;
 - `/backup` — Backup.
 
-P2-S1 does not add a new route; reversal is exposed from reseller transaction history.
+P2 correction actions live in reseller transaction history; no new route was required.
 
-## 4. Persistence model
+## 4. Persistence model after P2
 
-Database name: `ResellerManagerDB`.
+Database: `ResellerManagerDB`. Current Dexie schema version remains **3**.
 
-Current Dexie schema version remains **3**.
+Tables remain `items`, `resellers`, `transactions`.
 
-Tables remain:
-
-```text
-items
-resellers
-transactions
-```
-
-P1 migration path remains:
+P1 migrations remain unchanged:
 
 - V1 → V2 materializes missing reseller active state;
 - V2 → V3 materializes missing item active state;
-- explicit inactive state and historical transaction snapshots are preserved.
+- historical transaction snapshots remain preserved.
 
-P2-S1 introduces no index/table/schema migration because reversal metadata is optional inside the transaction object.
-
-### Transaction after P2-S1
+### Transaction
 
 ```text
 id?
@@ -92,50 +64,71 @@ totalPrice
 observation?
 reversal? {
   reason
-  reversedAt   // ISO timestamp string
+  reversedAt                  // ISO audit timestamp
+  replacementTransactionId?
+}
+correction? {
+  replacesTransactionId
 }
 createdAt
 ```
 
-`createdAt` remains the existing transaction date field. P2-S1 does not reinterpret it.
+P2 linkage/audit fields are optional and non-indexed; therefore no V4 migration is required.
 
-## 5. P1 lifecycle/reference model
+## 5. P1 reference/lifecycle invariants
 
 P1 remains unchanged:
 
-- resellers/items use reversible active/inactive lifecycle;
-- referenced entities cannot be hard-deleted through guarded mutations;
-- new transactions require valid active references;
+- reseller/item lifecycle is reversible active/inactive;
+- referenced entities are protected from unsafe hard deletion;
+- new activity requires valid active references;
 - historical snapshots remain preserved.
 
-## 6. P2-S1 correction model
+All P2 replacement creation still passes through these reference rules.
 
-### Mutation boundary
+## 6. P2 correction architecture
 
-`useReverseTransaction` replaces physical transaction deletion as the approved correction primitive for this slice.
+### P2-S1 — Pure reversal/cancellation
 
-The mutation:
+`useReverseTransaction`:
 
-1. validates transaction ID;
-2. requires a trimmed non-empty reason;
-3. loads the original transaction inside a Dexie write transaction;
-4. rejects an already reversed transaction;
-5. writes only `reversal.reason` and `reversal.reversedAt`;
-6. keeps original amount/type/item snapshot/observation/createdAt unchanged;
-7. invalidates transaction and dashboard query caches.
+1. validates transaction ID and non-empty reason;
+2. loads the original in a Dexie write transaction;
+3. rejects missing/already reversed rows;
+4. writes only reversal audit metadata;
+5. preserves original amount/type/item/observation/`createdAt`;
+6. invalidates transaction/dashboard caches.
 
-### Shared domain rule
+A reversed row remains visible but has zero financial effect.
 
-`src/domain/transactions.ts` centralizes the first P2 financial-effect semantics:
+### P2-S2 — Atomic linked replacement
 
-```text
-isTransactionReversed(transaction)
-transactionSignedAmount(transaction)
-calculateBalance(transactions)
-effectiveTransactions(transactions)
-```
+`useReplaceTransaction` handles corrections requiring a replacement. It runs one Dexie RW transaction over resellers, items and transactions:
 
-Financial sign/effect:
+1. validate original ID and mandatory reason;
+2. load an effective original;
+3. construct a replacement of the **same transaction type**;
+4. validate the replacement against current P1 reseller/item rules;
+5. add the replacement with `correction.replacesTransactionId = original.id`;
+6. update original reversal with reason, timestamp and `replacementTransactionId`;
+7. return both reseller IDs for cache invalidation.
+
+Dexie rollback guarantees that replacement-validation/persistence failure leaves the original effective and creates no partial correction.
+
+### Guided replacement rules
+
+- target reseller may change but must be active;
+- payment/signal amount may change;
+- order quantity/unit price may change;
+- order `totalPrice` is recomputed from quantity × unit price;
+- order item identity and original observation remain preserved;
+- original order item must still satisfy P1 active-item rules to be recreated;
+- historical order with unavailable item remains reversible through P2-S1 but is not recreated silently;
+- normal `useCreateTransaction` sanitizes input and cannot persist caller-forged `reversal`/`correction` metadata.
+
+## 7. Shared financial effect
+
+`src/domain/transactions.ts` remains the shared P2 financial rule:
 
 ```text
 effective order          +totalPrice
@@ -143,99 +136,85 @@ effective payment/signal -totalPrice
 reversed transaction      0
 ```
 
-This rule avoids a reversed transaction being removed from history merely to remove its balance effect.
+For a linked pair, the reversed original contributes zero and only the effective replacement contributes. This keeps the existing P2-S1 consumers coherent without a second correction-specific arithmetic path.
 
-## 7. P2-S1 financial consumers
+Current reversal-aware consumers include:
 
-### Reseller detail/history
-
-- full history still contains reversed rows;
-- total and date-filtered balances use `calculateBalance`;
-- reversed rows display status, reason and reversal timestamp;
-- reversal UI is available only for effective rows.
-
-### Dashboard
-
-P2-S1 makes these metrics reversal-aware:
-
-- total debt;
+- reseller total/filtered balances;
+- dashboard total debt;
 - today-order count/volume;
 - debt-aging balances/last effective movement;
-- performance revenue and debtor ranking.
+- performance revenue/debtor ranking;
+- global-search reseller balances;
+- PDF balance inputs.
 
-Reversal timestamp is **not** treated as a new financial occurrence date; P3 owns occurrence-date semantics.
+## 8. Audit visibility
 
-### Search
+### Reseller history
 
-Reseller search/recent balances use the shared reversal-aware balance calculation.
+Effective rows expose both:
+
+- **Corrigir** — atomic linked replacement;
+- **Estornar** — pure cancellation.
+
+Reversed originals show reason/timestamp and, when applicable, `Substituído pelo lançamento #X`. Replacement rows show `Correção do lançamento #Y`.
 
 ### PDF
 
-PDF statements receive reversal-aware balance values from reseller detail while preserving every historical row.
+PDF statements keep both original and replacement rows and expose the same linkage text. Reversed originals retain their original values/snapshots for audit while contributing zero to the supplied balance.
 
-Rows now expose:
+## 9. Actor-attribution architecture boundary
 
-- `Válido` or `Estornado` status;
-- original value/snapshot;
-- original observation;
-- reversal reason for reversed rows.
+P2 defines a future strategy without inventing identity infrastructure:
 
-## 8. Backup compatibility boundary
+- future audit metadata may carry optional opaque `actorRef`;
+- it is provider-neutral and display-name-independent;
+- local P4 outcome may map it to a stable local operator/installation identity;
+- authenticated P4 outcome may map it to a stable application-user ID;
+- records without actor attribution remain valid;
+- no actor is fabricated before a trustworthy identity source exists.
 
-Current backup export serializes transaction objects recursively, so the optional `reversal` object and ISO string timestamp are naturally included.
+## 10. Backup compatibility boundary
 
-P2-S1 intentionally uses an ISO string for `reversedAt`, avoiding a new Date-rehydration rule solely for this metadata.
+Current JSON export serializes optional P2 audit/linkage objects. `reversedAt` is an ISO string.
 
-This does **not** resolve P5: deep backup schema/reference/value/version validation, duplicate detection, restore preview and destructive-restore safeguards remain open.
+This is compatibility, **not** P5 hardening. Deep backup validation, duplicate/reference checks, restore preview/version contracts and destructive-restore safeguards remain P5.
 
-## 9. Correction limitations after P2-S1
+## 11. Date/statement boundary entering P3
 
-P2-S1 supports pure cancellation/reversal and allows an operator to manually create a correct new transaction afterward.
+Transactions still rely on `createdAt` for current financial-date behavior. P2 also has `reversal.reversedAt`, but it is an audit timestamp only.
 
-Still missing:
+P3 must distinguish occurrence time from registration/audit time without rewriting P2 correction history. Opening/closing statement semantics are still undecided.
 
-- explicit linkage from reversed original to replacement;
-- guided wrong-value replacement flow;
-- guided wrong-reseller replacement flow;
-- actor attribution strategy/model.
+## 12. Testing baseline
 
-These are P2-S2 concerns. The original transaction must not become editable in place merely to implement them.
+P2-S2 targeted validation covers:
 
-## 10. Date/statement boundary
-
-Transactions still have only `createdAt` for financial date semantics.
-
-P2-S1 adds `reversal.reversedAt` as an audit timestamp only. It must not be reused to redefine transaction occurrence or statement periods.
-
-Opening/period/closing balance semantics remain P3.
-
-## 11. Testing baseline
-
-P2-S1 targeted coverage includes:
-
-- shared transaction financial rules;
-- reversal mutation preservation/reason/timestamp/double-reversal guards;
-- reversal UI and visible audit metadata;
-- dashboard total/today/aging/performance consistency;
-- search balance consistency;
-- reseller-detail history/balance/PDF input consistency;
-- PDF reversal status/reason;
+- linked-pair financial effect;
+- atomic correction mutation and rollback;
+- wrong-value/wrong-reseller replacement;
+- order item/type/observation preservation and derived corrected total;
+- audit-metadata anti-forgery on normal creation;
+- guided correction UI and inactive-item boundary;
+- history/PDF bidirectional linkage;
+- dashboard/search consistency;
+- reseller-detail P2 regression;
 - P1 migration/lifecycle/reference regressions;
 - production build.
 
-GitHub Actions P2-S1 gate: `32041280504` — PASS.
+GitHub Actions P2-S2 gate: `32042373332` — PASS.
 
-Repository-wide lint/unit/integration/E2E debt remains outside this targeted gate and is owned by P6.
+Repository-wide lint/unit/integration/E2E debt remains owned by P6.
 
-## 12. Deployment baseline
+## 13. Deployment baseline
 
-GitHub Pages deployment still builds/deploys from `main` without requiring the full quality suite. P6 owns deployment gating.
+GitHub Pages still deploys from `main` without a full quality gate. P6 owns deployment gating.
 
-## 13. Architectural constraints entering P2-S2
+## 14. Architectural constraints entering P3-S1
 
-- Dexie/IndexedDB remains the persistence baseline until P4;
-- do not introduce backend/authentication by assumption;
-- preserve original/reversed transactions;
-- any replacement linkage must be additive/auditable, not in-place mutation of history;
-- do not alter P3 date/statement semantics;
-- actor attribution strategy may be designed, but actual identity/auth architecture must remain compatible with the later P4 decision.
+- Dexie/IndexedDB remains baseline until P4;
+- preserve P1 lifecycle/reference and P2 correction/audit/linkage invariants;
+- do not use reversal timestamp as transaction occurrence time;
+- migrate/read historical financial dates backward-safely;
+- do not redesign opening/closing statements before occurrence-date semantics are established;
+- do not pull P4/P5/P6 work into P3-S1.

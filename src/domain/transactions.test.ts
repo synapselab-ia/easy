@@ -54,4 +54,30 @@ describe('transaction domain rules', () => {
         expect(calculateBalance(transactions)).toBe(400);
         expect(effectiveTransactions(transactions).map(transaction => transaction.id)).toEqual([1, 2]);
     });
+
+    it('counts only the linked replacement after a correction pair', () => {
+        const transactions = [
+            tx({
+                id: 1,
+                type: 'order',
+                totalPrice: 5000,
+                reversal: {
+                    reason: 'Valor incorreto',
+                    reversedAt: '2026-08-17T15:00:00.000Z',
+                    replacementTransactionId: 2,
+                },
+            }),
+            tx({
+                id: 2,
+                type: 'order',
+                totalPrice: 500,
+                correction: {
+                    replacesTransactionId: 1,
+                },
+            }),
+        ];
+
+        expect(calculateBalance(transactions)).toBe(500);
+        expect(effectiveTransactions(transactions).map(transaction => transaction.id)).toEqual([2]);
+    });
 });

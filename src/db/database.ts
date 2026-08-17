@@ -33,6 +33,11 @@ export type TransactionType = 'order' | 'payment' | 'signal';
 export interface TransactionReversal {
     reason: string;
     reversedAt: string;
+    replacementTransactionId?: number;
+}
+
+export interface TransactionCorrection {
+    replacesTransactionId: number;
 }
 
 export interface Transaction {
@@ -48,6 +53,8 @@ export interface Transaction {
     observation?: string;
     // Auditoria de correção. Ausente significa lançamento efetivo.
     reversal?: TransactionReversal;
+    // Presente apenas em uma transação criada como substituição auditável.
+    correction?: TransactionCorrection;
     // Comum
     createdAt: Date;
 }
