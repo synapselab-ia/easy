@@ -1,87 +1,30 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through P5-S1  
+**Status:** verified through completed P5  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
-Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB, deployed as static assets. D-016 keeps the product single-user/local-first; there is no backend, authentication, remote database or synchronization layer.
+Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. D-016 keeps the product single-user/local-first; there is no backend, authentication, remote database or synchronization layer.
 
 ## Persistence baseline
 
-Database: `ResellerManagerDB`, Dexie **V4**.
+Database: `ResellerManagerDB`, Dexie **V4** with `items`, `resellers` and `transactions`.
 
-Tables:
+Migration path remains V1 -> V2 reseller lifecycle, V2 -> V3 item lifecycle, V3 -> V4 transaction `occurredAt`. P5 adds no Dexie V5.
 
-- `items`;
-- `resellers`;
-- `transactions`.
+## Persisted recovery invariants
 
-Migration path remains V1 -> V2 reseller lifecycle, V2 -> V3 item lifecycle, V3 -> V4 transaction `occurredAt`. P5-S1 introduces no Dexie V5.
+The logical recovery contract preserves all current fields and relationships:
 
-## Persisted logical model
+- Item: `id`, `name`, `basePrice`, `isActive`, `createdAt`, `updatedAt`;
+- Reseller: `id`, `name`, `phone`, `email`, `notes`, `isActive`, `createdAt`, `updatedAt`;
+- Transaction: `id`, `resellerId`, `type`, item snapshot fields, `totalPrice`, `observation`, `reversal`, `correction`, `occurredAt`, `createdAt`;
+- P2 reversal/correction links and audit metadata;
+- P3 financial occurrence, reversed-zero effect, statements and FIFO-derived debt semantics.
 
-### Item
+## Backup/interchange contract
 
-```text
-id
-name
-basePrice
-isActive
-createdAt
-updatedAt
-```
-
-### Reseller
-
-```text
-id
-name
-phone?
-email?
-notes?
-isActive
-createdAt
-updatedAt
-```
-
-### Transaction
-
-```text
-id
-resellerId
-type
-itemId?
-itemName?
-quantity?
-unitPrice?
-totalPrice
-observation?
-reversal? { reason, reversedAt, replacementTransactionId? }
-correction? { replacesTransactionId }
-occurredAt
-createdAt
-```
-
-These fields, IDs and P1/P2/P3 relationships are recovery/migration invariants.
-
-## Financial/audit invariants
-
-The shared transaction domain remains unchanged:
-
-- effective order adds value;
-- effective payment/signal subtracts value;
-- reversed row has zero financial effect;
-- reversal/correction rows remain audit-visible and linked;
-- `occurredAt` is financial occurrence;
-- `createdAt` and `reversal.reversedAt` are audit timestamps;
-- linked replacement preserves original occurrence and, for an order, its item identity;
-- formal statements and FIFO open-debt aging remain P3 rules.
-
-## P5-S1 backup architecture
-
-Backup is now a **logical interchange contract**, not a dump of IndexedDB internals.
-
-Current envelope:
+D-017 defines `easy-backup` version 2 as the canonical logical interchange format, distinct from Dexie schema version:
 
 ```text
 format = "easy-backup"
@@ -94,88 +37,61 @@ data.resellers[]
 data.transactions[]
 ```
 
-Backup version and Dexie schema version are distinct dimensions. New exports are v2 even while the live database remains Dexie V4.
+New exports self-validate before download. Legacy `version: 1` JSON remains supported by in-memory normalization (`isActive -> true` when missing; `occurredAt -> createdAt` when missing) before the same deep validator runs.
 
-Before download, the assembled current dataset is passed through the same P5-S1 validator used for restore preflight. A corrupt live logical dataset therefore cannot be silently packaged as a trusted v2 backup.
+## Preflight boundary
 
-## Legacy v1 migration boundary
+`preflightBackupPayload()` / `preflightBackupText()` / `preflightBackupFile()` are the accepted ingress for restore data. They validate envelope structure, IDs/duplicates, fields, dates, values, table references and P1/P2/P3 audit/linkage invariants, returning normalized `Date`-backed rows plus a preview.
 
-The historical backup envelope (`version: 1`, `exportedAt`, `data`) remains a supported input.
+A restore never reparses unchecked file contents. It receives the successful `BackupPreflightResult` and revalidates its normalized target immediately before recovery starts, preventing an altered in-memory object from bypassing the contract.
 
-Migration occurs only in memory:
+## P5-S2 checkpoint and atomic restore
 
-- item/reseller missing `isActive` becomes `true`;
-- transaction missing `occurredAt` receives its `createdAt`;
-- explicit historical values and P2 audit metadata are preserved;
-- unsupported versions are rejected.
+`restoreService.ts` owns destructive recovery.
 
-No migration step writes IndexedDB in P5-S1.
+### Checkpoint
 
-## Preflight validator
+Before replacement, `createRestoreCheckpoint()`:
 
-`preflightBackupPayload()` / `preflightBackupText()` / `preflightBackupFile()` create the only accepted normalized restore input for the next slice.
+1. reads all live Dexie V4 rows;
+2. serializes them to a v2 logical backup envelope;
+3. validates that checkpoint with the P5-S1 validator;
+4. downloads it as `easy-checkpoint-v2-<timestamp>.json`.
 
-Validation includes:
+If checkpoint generation/validation/download fails, no destructive transaction starts.
 
-- envelope/source/version structure;
-- required fields and supported transaction types;
-- positive integer IDs and duplicates;
-- positive finite financial/order numbers;
-- valid serialized dates and entity update chronology;
-- order item snapshot fields and payment/signal field separation;
-- transaction -> reseller and transaction -> item references;
-- reversal reason/date/replacement reference;
-- correction original reference;
-- P2 bidirectional correction/replacement linkage;
-- type preservation across replacement;
-- item preservation for corrected orders;
-- P3 `occurredAt` preservation across linked correction;
-- replacement registration not preceding the original.
+### Atomic replacement
 
-Validation failure is represented by `BackupValidationError` with path-level issues.
+`restorePreflightedBackup()` then opens one Dexie `rw` transaction spanning all three tables. Within that transaction it:
 
-## Non-destructive UI boundary
+- clears items, resellers and transactions;
+- bulk-adds the normalized target with original IDs;
+- reads all restored rows back;
+- runs P5-S1 validation again against the restored logical dataset;
+- compares a canonical, ID-sorted projection of every restored field/date/link with the expected target.
 
-P5-S1 removes the old unsafe UI path that confirmed and immediately called destructive import after only shallow array validation.
+Any write or verification error throws before commit. Dexie rollback therefore restores the full prior database rather than exposing a partial replacement.
 
-Selecting a backup now:
+### Result contract
 
-1. reads/parses the JSON;
-2. migrates supported v1 input in memory;
-3. validates the complete logical dataset;
-4. displays a preview with versions, timestamp, counts and migration warnings;
-5. performs **no Dexie mutation**.
+Restore returns a discriminated result:
 
-There is intentionally no restore/replace button in this slice. This is not a missing implementation: the destructive action is gated on P5-S2 checkpoint/atomic-restore guarantees.
+- `status: "success"` with checkpoint filename and restored preview; or
+- `status: "failure"` with `previousDatabasePreserved: true`, error message and checkpoint filename when one had already been generated.
 
-## Preview contract
+The UI exposes restore only after successful preflight and communicates the checkpoint/recovery result.
 
-Preview includes:
+## Migration/round-trip proof
 
-- source backup version and target version;
-- Dexie schema version;
-- export timestamp;
-- whether compatibility migration was needed;
-- items/resellers with active/inactive counts;
-- transaction totals by order/payment/signal;
-- reversal and linked-correction counts;
-- compatibility warnings.
+P5-S2 integration coverage uses real Dexie semantics through `fake-indexeddb` and proves:
 
-Normalized rows contain real `Date` values and are suitable as future P5-S2 atomic restore input only after a successful preflight.
+- v2 export -> clean restore preserves IDs, lifecycle state, transaction history, P2 correction links, P3 occurrence and financial balance;
+- supported v1 migration -> restore materializes legacy lifecycle/occurrence defaults while preserving IDs/finance;
+- a simulated table-write failure after clears begin rolls back to the prior dataset;
+- a mutated normalized target is rejected before checkpoint or mutation.
 
-## Recovery boundary entering P5-S2
+Targeted run **`32060729538` — PASS**, including P5-S2 restore/UI, P5-S1 regressions, migrations, P1/P2/P3 regressions and build.
 
-P5-S2 must build on this exact contract. It must:
+## Boundary entering P6
 
-- create a recoverable checkpoint of the current dataset before replacement;
-- accept only successfully preflighted normalized input;
-- replace all three tables in one atomic Dexie transaction;
-- avoid partial replacement on failure;
-- verify post-restore counts, references and P1/P2/P3 invariants;
-- prove v2 clean restore and supported v1 migration preserve IDs/history/financial results.
-
-P5-S2 must not introduce backend/auth/cloud or repository-wide P6 changes.
-
-## Validation evidence
-
-Targeted P5-S1 run **`32058028793` — PASS** covering backup contract, preview UI, P3 occurrence compatibility, Dexie migrations, P1/P2/P3 regressions and production build.
+P6 may change tests, QA workflows and deployment gates. It must not alter P1–P5 business/recovery semantics merely to satisfy stale expectations, and it must not introduce backend/auth/cloud or P7+ feature work.
