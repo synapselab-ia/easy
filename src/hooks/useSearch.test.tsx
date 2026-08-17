@@ -116,6 +116,28 @@ describe('useSearch hook', () => {
         expect(result.current.results[0].subtitle).toBe('Saldo: R$ 60,00');
     });
 
+    it('should exclude reversed transactions from reseller search balance', async () => {
+        const now = new Date();
+        const resellerId = await db.resellers.add({ name: 'Maria Auditada', isActive: true, createdAt: now, updatedAt: now }) as number;
+
+        await db.transactions.add({ resellerId, type: 'order', totalPrice: 500, createdAt: now });
+        await db.transactions.add({ resellerId, type: 'payment', totalPrice: 100, createdAt: now });
+        await db.transactions.add({
+            resellerId,
+            type: 'payment',
+            totalPrice: 300,
+            reversal: { reason: 'Pagamento duplicado', reversedAt: '2026-08-17T15:00:00.000Z' },
+            createdAt: now,
+        });
+
+        const { result } = renderHook(() => useSearch('Maria'));
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        await waitFor(() => expect(result.current.results).toHaveLength(1));
+
+        expect(result.current.results[0].subtitle).toBe('Saldo: R$ 400,00');
+    });
+
     it('should limit results to 5 per category', async () => {
         const now = new Date();
         for (let i = 1; i <= 7; i++) {
