@@ -22,13 +22,14 @@ vi.mock('../ui/select', () => ({
             onChange={(e) => onValueChange(e.target.value)}
             {...props}
         >
+            <option value="" />
             {children}
         </select>
     ),
     SelectContent: ({ children }: any) => <>{children}</>,
     SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
-    SelectTrigger: ({ children, id }: any) => <span id={id}>{children}</span>,
-    SelectValue: ({ placeholder, children }: any) => <option disabled value="">{children || placeholder}</option>,
+    SelectTrigger: () => null,
+    SelectValue: () => null,
 }));
 
 const queryClient = new QueryClient();
