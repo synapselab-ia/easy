@@ -1,68 +1,136 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through completed P3-S1  
+**Status:** verified through completed P3  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
-Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB, deployed statically to GitHub Pages. There is no backend or authentication layer.
+Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB, deployed to GitHub Pages. There is no application backend or authentication layer.
 
 ## Persistence
 
-`ResellerManagerDB` now uses Dexie **V4** with the same `items`, `resellers` and `transactions` tables.
+Database: `ResellerManagerDB`, current Dexie schema **V4**.
+
+Tables remain `items`, `resellers`, `transactions`.
 
 Migration path:
 
 - V1 → V2: missing reseller active state becomes active;
 - V2 → V3: missing item active state becomes active;
-- V3 → V4: transaction `occurredAt` is indexed and missing occurrence is materialized as `occurredAt = createdAt`.
+- V3 → V4: transaction `occurredAt` is indexed and missing occurrence becomes `occurredAt = createdAt`.
 
-Historical IDs, lifecycle state, snapshots and P2 correction/audit metadata remain preserved.
+P3-S2 introduces no persistence fields or V5.
 
-### Transaction time fields
+## Transaction time and audit model
 
 ```text
-occurredAt?                   // financial occurrence; optional only for legacy read compatibility
-createdAt                     // record registration/audit timestamp
-reversal.reversedAt           // P2 reversal/correction audit timestamp
+occurredAt?                   financial occurrence; legacy read fallback to createdAt
+createdAt                     registration/audit timestamp
+reversal.reversedAt           P2 reversal/correction audit timestamp
 ```
 
-`transactionOccurredAt()` is the canonical backward-read helper: explicit occurrence first, legacy `createdAt` fallback second.
+`transactionOccurredAt()` is the canonical backward-read helper. P2 linked replacement preserves original financial occurrence but gets a new registration timestamp; reversal keeps its own audit timestamp.
 
-New writes generate `createdAt` internally. The supported form captures a date-only financial occurrence, defaulting to the current local day and materializing it at local noon. Lower-level legacy callers omitting occurrence default it to registration time; explicitly invalid occurrence is rejected.
+## Shared financial-effect model
 
-A P2 linked replacement inherits the original financial occurrence, receives a new registration `createdAt`, and leaves `reversal.reversedAt` as a separate correction audit timestamp.
+`src/domain/transactions.ts` is the canonical financial domain boundary:
 
-## Occurrence-aware consumers
+```text
+effective order          +totalPrice
+effective payment/signal -totalPrice
+reversed transaction      0
+```
 
-Financial occurrence drives:
+It also owns all-time reseller balance, grouped reseller balances, total debt, formal statement periods and derived outstanding-debt aging.
 
-- reseller history sorting/display;
-- reseller date-range filtering;
-- PDF range filtering and row dates;
-- today-order metrics;
-- current last-effective-movement aging;
-- performance revenue windows.
+## Formal statement architecture
 
-All-time balance arithmetic remains the shared P2 rule. Search has no independent date-window semantics.
+`buildStatementPeriod(transactions, range)` returns one `StatementPeriod`:
+
+```text
+range
+openingBalance
+periodMovement
+closingBalance
+movements[]
+```
+
+Rules:
+
+- opening = effective balance for occurrence strictly before start;
+- movements = audit-visible rows whose occurrence is within the inclusive range;
+- periodMovement = shared effective signed amount of movements;
+- closing = opening + periodMovement;
+- reversed rows stay in movements but contribute zero;
+- linked corrected rows remain independently visible while only the effective replacement contributes;
+- zero-movement periods are valid.
+
+`ResellerDetailPage` and `pdfService` use this same statement object. The visible filtered history is `statement.movements`; PDF gets the full transaction set plus the formal statement so the summary and audit rows cannot diverge.
+
+## Total-debt architecture
+
+Per-reseller all-time balances remain authoritative. Dashboard “Dívida Total” uses the sum of positive reseller balances instead of globally netting every transaction. This prevents an unrelated reseller credit from reducing another reseller's debt.
+
+Search continues to display each reseller's own all-time balance. Performance debtor ranking also remains per-reseller and therefore consistent with the same sign/effect rules.
+
+## Outstanding-debt aging architecture
+
+P3-S2 replaces last-movement aging with derived open-order aging.
+
+`calculateOutstandingDebtLots()`:
+
+1. filters to effective transactions;
+2. orders financial events deterministically by `occurredAt`, then registration time/id;
+3. treats orders as debt lots carrying their order occurrence;
+4. applies payment/signal credit to oldest debt first (FIFO);
+5. carries excess credit forward to later orders;
+6. returns only order amounts still outstanding.
+
+No persistent payment→order allocation is stored. FIFO is an explicit deterministic convention required by the current reseller-level payment model.
+
+`debtAgeCategory()` uses the occurrence of the debt still open:
+
+- recent: 0–6 calendar days;
+- attention: 7–30 days;
+- critical: >30 days.
+
+A reseller may have outstanding amounts in multiple buckets. Alert rows expose bucket amount, total balance and oldest outstanding order occurrence.
+
+## P1/P2 preservation
+
+- lifecycle/reference guarantees remain unchanged;
+- reversal/correction metadata remains audit-visible;
+- reversed originals have zero financial effect;
+- linked replacements preserve P3-S1 occurrence semantics;
+- P3-S2 does not mutate historical records.
 
 ## Backup boundary
 
-Restore converts `occurredAt`, falling back to `createdAt` for legacy backups. This is compatibility only; formal versioning/deep validation/restore hardening remain P5.
+Current backup compatibility still converts `occurredAt` with fallback to `createdAt`. Formal versioning, deep validation, restore preview/checkpoint and migration contracts remain P5.
 
-## P3-S2 boundary
+## Validation baseline
 
-Filtered period balances still mean net movement inside the selected window; formal opening → movements → closing semantics remain P3-S2. Aging still uses last effective movement, now by occurrence date; P3-S2 must decide whether that model is sufficient or true debt aging is required.
+P3-S2 final targeted gate: **`32053837309` — PASS**, including:
 
-## Validation
+- statement/aging domain rules;
+- total-debt per-reseller semantics;
+- reseller-detail/PDF formal statements;
+- P3-S1 occurrence regressions;
+- P2 mutation/history regressions;
+- P1 lifecycle/database migration regressions;
+- search/dashboard/PDF regressions;
+- production build.
 
-P3-S1 targeted gate **`32052076684` — PASS**, covering migration, timestamp separation, P2 correction preservation, form/history/dashboard/PDF/backup occurrence behavior, P1/P2 regressions and build.
+Earlier run `32053655161` stopped only on two obsolete pre-P3-S2 reseller-detail test expectations; runtime P3-S2 gates had already passed.
 
 Repository-wide QA debt remains P6.
 
-## Constraints entering P3-S2
+## Architecture boundary entering P4
 
-- preserve P1/P2 invariants and P3-S1 time semantics;
-- never use `reversal.reversedAt` as financial occurrence;
-- define one shared statement-period contract before changing period calculations;
-- decide the aging model explicitly;
-- do not begin P4/P5/P6 work.
+P4 must decide persistence architecture before any backend/auth implementation. It must evaluate actual operators, devices/locations, concurrency, actor attribution, security/privacy, offline requirements, recovery ownership and migration implications for the existing Dexie V4 dataset.
+
+Until that decision is accepted:
+
+- Dexie/local persistence remains the implementation baseline;
+- no provider/cloud/auth choice is assumed;
+- P1/P2/P3 invariants are migration requirements, not optional behavior;
+- P5 backup hardening and P6 global QA cleanup remain separate phases.

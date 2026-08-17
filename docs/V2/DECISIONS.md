@@ -8,7 +8,7 @@ Only accepted decisions belong here. Open questions remain in `STATUS.md`/`BACKL
 
 ## D-001 — V2 laboratory repository
 **Status:** ACCEPTED  
-Use `synapselab-ia/easy` for V2 work. Do not develop V2 in `viniciuscasarin/easy`.
+Use `synapselab-ia/easy` for V2 work; do not develop V2 in `viniciuscasarin/easy`.
 
 ## D-002 — Branch roles
 **Status:** ACCEPTED  
@@ -20,87 +20,105 @@ P0 does not change runtime, finance, schema or UI behavior.
 
 ## D-004 — Legacy task checkboxes are historical
 **Status:** ACCEPTED  
-Canonical status comes from V2 documents, merged code and QA evidence, not `tasks/` checkbox state.
+Canonical status comes from V2 documents, merged code and QA evidence.
 
 ## D-005 — No full rewrite by default
 **Status:** ACCEPTED  
-Evolve working Easy incrementally. A rewrite requires a later evidence-backed decision.
+Evolve working Easy incrementally; rewrite requires later evidence-backed decision.
 
 ## D-006 — Dexie/IndexedDB remains baseline until P4
 **Status:** ACCEPTED  
-Do not introduce backend, Supabase or authentication before P4 decides local vs cloud.
+No backend, Supabase or authentication before P4 decides persistence architecture.
 
 ## D-007 — Preserve financial history over destructive deletion
 **Status:** DIRECTION ACCEPTED  
-P1 applies preservation to entity lifecycle and P2 applies it to transaction correction.
+P1 preserves entity history and P2 preserves financial correction history.
 
 ## D-008 — Centralize financial domain rules over time
 **Status:** DIRECTION ACCEPTED  
-Balance, effective/reversed treatment and statement totals should come from shared domain rules rather than independent screen calculations.
+Balance, reversal, statement and aging semantics belong in shared domain rules rather than screen-specific calculations.
 
 ## D-009 — Reseller lifecycle is reversible archive
 **Status:** ACCEPTED  
-Resellers use `isActive`; archive/reactivate is normal behavior; historical identity is preserved and unsafe hard deletion is guarded.
+Inactive identities stay historical; new activity is blocked and unsafe hard deletion is guarded.
 
 ## D-010 — Item lifecycle is reversible archive
 **Status:** ACCEPTED  
-Items use `isActive`; inactive items remain traceable but unavailable for new orders; historical snapshots are preserved.
+Inactive items remain traceable but unavailable for new orders; historical snapshots are preserved.
 
 ## D-011 — New references are strict; historical rows are preserved
 **Status:** ACCEPTED  
-New transactions require an active reseller; orders require an active item and derive the item snapshot from it. Historical rows are not destructively repaired.
+New activity requires valid active references; historical rows are not destructively repaired.
 
 ## D-012 — Financial correction uses audited reversal
 **Status:** ACCEPTED  
-Preserve the original row, require reversal reason/timestamp, keep reversed rows visible with zero financial effect, and expose audit status in history/PDF.
+Preserve original row, require reversal reason/timestamp, keep reversed rows visible with zero financial effect.
 
 ## D-013 — Replacement correction is atomic, linked and actor-neutral until P4
 **Status:** ACCEPTED  
-Wrong-value/wrong-reseller correction performs replacement creation and original reversal in one Dexie transaction with bidirectional linkage. Type and relevant snapshots remain preserved; P1 validation applies. No fake actor identity is recorded before P4.
+Wrong-value/wrong-reseller correction performs replacement creation and original reversal atomically with bidirectional linkage. No fabricated actor identity before P4.
 
 ## D-014 — Financial occurrence is distinct from registration/audit time
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-P3-S1 separates business time from audit time.
+- `occurredAt` = financial/business occurrence;
+- `createdAt` = registration/audit timestamp;
+- `reversal.reversedAt` = P2 reversal/correction audit timestamp;
+- Dexie V4 indexes `occurredAt` and migrates missing legacy occurrence as `occurredAt = createdAt`;
+- linked correction preserves original financial occurrence while creating new registration/reversal audit timestamps;
+- history/filter/PDF/dashboard temporal consumers use occurrence time.
 
-### Timestamp contract
+## D-015 — Statements use opening → movements → closing; debt aging uses FIFO open-order allocation
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
 
-- `occurredAt` is the financial/business occurrence date used for date-window semantics;
-- `createdAt` is the record-registration timestamp and is generated internally for new transaction writes;
-- `reversal.reversedAt` is a P2 audit timestamp and is never financial occurrence;
-- the supported date-only transaction UI maps the selected local day to local noon; time-of-day is not business-significant in P3-S1;
-- old lower-level callers that omit occurrence default it to registration time for compatibility; explicitly invalid occurrence values are rejected.
+### Formal period statement
 
-### Persistence and migration
+P3-S2 defines one shared `StatementPeriod` contract using P3-S1 financial occurrence:
 
-Dexie **V4** adds an `occurredAt` index. Rows upgrading from older schemas materialize missing occurrence as `occurredAt = createdAt`. Existing valid occurrence, `createdAt`, P1 snapshots/lifecycle data and P2 reversal/correction metadata remain unchanged.
+- opening balance is effective signed balance from rows with `occurredAt < startDate`;
+- movements contain every audit-visible row inside inclusive `[startDate, endDate]`;
+- reversed rows remain visible but contribute zero through P2 shared effect;
+- period movement is the signed effective total of those movements;
+- closing balance is `openingBalance + periodMovement`;
+- future rows after `endDate` do not affect closing;
+- zero-movement periods are valid statements and may have non-zero opening/closing balances;
+- reseller detail and PDF consume the same statement object.
 
-`transactionOccurredAt()` is the canonical backward-read helper: explicit occurrence first, legacy `createdAt` fallback second.
+### Total debt
 
-### Correction semantics
+“Dívida Total” is the sum of each reseller's positive all-time balance. A credit from one reseller must not reduce another reseller's debt.
 
-A P2 linked replacement represents the corrected version of the same financial event:
+### Aging model
 
-- original occurrence stays unchanged;
-- replacement inherits the original occurrence;
-- replacement receives a new registration `createdAt`;
-- reversal receives its own new `reversedAt` audit timestamp.
+The prior “time since last effective movement” model is rejected because a recent payment can make old unpaid debt appear recent.
 
-### Consumer boundary
+Because current payments/signals are reseller-level and have no persisted allocation to specific orders, P3-S2 adopts a deterministic derived convention rather than inventing new schema:
 
-Occurrence date drives history ordering/display, reseller range filtering, PDF range/display, today-order metrics, current last-effective-movement aging and performance revenue windows. Global search has no independent time-window calculation and remains an all-time balance consumer.
+- effective orders create debt lots at their `occurredAt`;
+- effective payments/signals consume the oldest open order debt first (**FIFO**);
+- excess credit is carried forward to later orders;
+- reversed rows have zero effect and linked replacements behave as the effective financial event;
+- no persistent payment↔order link is created;
+- debt age is the age of the order amount still open: 0–6d recent, 7–30d attention, >30d critical;
+- one reseller may contribute amounts to multiple buckets.
 
-### Scope boundary
+This convention can be revisited only if later real requirements justify explicit allocation/invoice semantics.
 
-P3-S1 does **not** define opening/closing statement balances or decide whether the existing aging model is sufficient; those belong to P3-S2. Backup restore date conversion here is compatibility only; P5 retains deep backup validation/versioning.
+### Persistence consequence
+
+P3-S2 requires no schema change; Dexie remains **V4**.
+
+### Phase consequence
+
+P3-S1 and P3-S2 together satisfy the P3 financial-time, formal-statement and aging gates. P3 can close.
 
 ---
 
 # Open decisions
 
-- opening/closing statement semantics and aging model (P3-S2);
-- local vs cloud architecture and concrete actor identity source (P4);
-- backup version/migration strategy (P5);
-- preview/deployment and global QA gating (P6);
+- local vs cloud persistence architecture and concrete actor identity source (P4);
+- backup version/migration/restore-hardening strategy (P5);
+- repository-wide QA and deployment gating (P6);
 - new modules after real requirements discovery (P8/P9).

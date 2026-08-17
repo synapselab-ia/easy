@@ -4,73 +4,77 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
-## 2026-08-17 — P3-S1 occurrence-date model
+## 2026-08-17 — P3-S2 formal statements, FIFO debt aging and P3 closure
 
 ### Added
 
-- financial `occurredAt` on transactions, distinct from registration/audit `createdAt`;
-- Dexie V4 with `occurredAt` index and backward-safe V3 → V4 migration;
-- canonical `transactionOccurredAt()` legacy-read fallback;
-- transaction-entry financial date field;
-- focused P3-S1 migration, mutation, form, dashboard, history, reseller-filter, PDF and backup tests;
-- D-014 defining financial occurrence versus audit timestamps.
+- shared `StatementPeriod` model: opening balance → period movements → closing balance;
+- grouped reseller balance and total-debt rules;
+- derived outstanding-debt lots with FIFO payment/signal allocation;
+- debt-age categories based on open order occurrence;
+- formal period summary in reseller detail and PDF;
+- targeted P3-S2 domain/dashboard/reseller/PDF tests;
+- D-015 documenting statement, debt-total and aging semantics.
 
 ### Changed
 
-- new transaction `createdAt` is generated internally rather than supplied by the supported UI;
-- linked P2 correction preserves original financial occurrence while replacement registration and reversal timestamps remain separate audit events;
-- history sorting/display, reseller date-range filtering, PDF filtering/display, today-order metrics, current aging and performance windows use occurrence date;
-- legacy backup restore materializes missing occurrence from `createdAt` while preserving explicit occurrence;
-- Dexie current schema moved from V3 to V4;
-- P3 moved from `NOT_STARTED` to `IN_PROGRESS`; P3-S1 is `DONE`.
+- filtered reseller balance no longer means only net movement in the selected window;
+- reseller detail and PDF consume the same statement object;
+- zero-movement periods remain valid statements;
+- dashboard `Dívida Total` sums positive reseller balances rather than netting unrelated credits;
+- aging no longer uses time since last activity: payments/signals reduce oldest effective order debt first for derived aging;
+- dashboard copy describes debt still open rather than reseller inactivity;
+- performance balance uses the shared signed-effect rule;
+- Dexie remains V4 and no payment↔order link is persisted;
+- P3 moved from `IN_PROGRESS` to `DONE`.
 
 ### QA
 
-- targeted P3-S1 gate, P1/P2 regressions and build passed in GitHub Actions run `32052076684`;
+- run `32053655161` passed all new P3-S2 gates but stopped on two obsolete reseller-detail assertions for replaced period/PDF behavior;
+- those assertions were reconciled without runtime change;
+- final targeted P3-S2 gate, P3-S1/P2/P1 regressions and build passed in `32053837309`;
 - repository-wide QA debt remains P6.
 
 ### Scope unchanged
 
-- opening balance → movements → closing balance semantics were not implemented;
-- the existing last-effective-movement aging model was not accepted/replaced;
-- backend/auth/persistence architecture remains P4;
-- deep backup hardening remains P5;
-- global CI cleanup remains P6.
+No backend/auth/cloud implementation, P5 backup hardening or P6 global CI/deploy cleanup.
 
 ### Canonical state
 
-- D-014 accepted;
-- P3-S1 `DONE`;
-- P3 `IN_PROGRESS`;
-- `NEXT_ACTION` advances to P3-S2 — statement and balance-period semantics.
+P3-S1 `DONE`; P3-S2 `DONE`; P3 `DONE`; D-015 accepted; `NEXT_ACTION` advances to P4 persistence architecture decision.
 
 ---
 
+## 2026-08-17 — P3-S1 occurrence-date model
+
+- `occurredAt` separated from audit `createdAt`, Dexie V4 added and date consumers aligned;
+- validation `32052076684`; P3 advanced to `IN_PROGRESS`.
+
 ## 2026-08-17 — P2-S2 linked/guided correction and P2 closure
 
-- atomic linked replacement, guided wrong-value/wrong-reseller correction and bidirectional audit linkage;
-- P2 closed; validation run `32042373332`.
+- atomic linked replacement and wrong-value/wrong-reseller correction;
+- validation `32042373332`; P2 closed.
 
 ## 2026-08-17 — P2-S1 audited transaction reversal
 
-- mandatory reversal reason/timestamp, shared effective/reversed financial rules and visible history/PDF audit status;
-- validation run `32041280504`.
+- mandatory reversal reason/timestamp and reversal-aware financial rules;
+- validation `32041280504`.
 
 ## 2026-08-17 — P1-S3 referential validation and P1 closure
 
-- strict new-reference matrix and complete V1 → V2 → V3 preservation coverage;
-- validation run `32039763539`.
+- strict reference matrix and migration preservation coverage;
+- validation `32039763539`; P1 closed.
 
 ## 2026-08-17 — P1-S2 safe item lifecycle
 
-- item lifecycle, Dexie V3 migration, guarded deletion and historical snapshot preservation;
-- validation run `32038951903`.
+- item lifecycle, Dexie V3 migration and snapshot preservation;
+- validation `32038951903`.
 
 ## 2026-08-17 — P1-S1 safe reseller lifecycle
 
-- reseller lifecycle, Dexie V2 migration, guarded deletion and active-only new transactions;
-- validation run `32037965651`.
+- reseller lifecycle, Dexie V2 migration and active-only new activity;
+- validation `32037965651`.
 
 ## 2026-08-17 — P0 governance and state reconstruction
 
-- canonical V2 documents/branch roles established in `synapselab-ia/easy`; no runtime impact.
+- canonical V2 documents/branch roles established; no runtime impact.
