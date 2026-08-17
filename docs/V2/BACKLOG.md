@@ -35,111 +35,71 @@ Status vocabulary:
 - reconstruct actual technical/product state;
 - stop treating legacy task checkboxes as canonical status.
 
-### Required documents
-
-- `PROJECT_SPEC.md`
-- `ARCHITECTURE.md`
-- `BACKLOG.md`
-- `STATUS.md`
-- `DECISIONS.md`
-- `QA_LEDGER.md`
-- `CHANGELOG.md`
-
 ### Gate
 
-A fresh conversation must be able to read the V2 documents and correctly identify:
-
-- what Easy is;
-- what V2 is trying to solve;
-- the current architecture;
-- verified risks;
-- the current phase;
-- the single next action;
-- what is out of scope at that moment.
-
-**Gate result:** satisfied by the canonical document set and startup protocol in `STATUS.md`.
+A fresh conversation can reconstruct what Easy is, current architecture/risks, current phase, next action and scope boundaries from the canonical V2 documents.
 
 ---
 
 ## P1 — Referential integrity and safe entity lifecycle
 
 **Priority:** Critical  
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
 ### P1-S1 — Safe reseller lifecycle
 
 **Status:** `DONE`  
 **Completed:** 2026-08-17
 
-Goal: prevent financial history from becoming orphaned when a reseller is removed from active use.
+Implemented:
 
-Implemented behavior:
-
-- reseller lifecycle uses reversible active/inactive state;
-- existing reseller data migrates to active by default;
-- normal UI archives/reactivates instead of destructively deleting historical identities;
-- physical deletion is blocked when transactions exist;
-- inactive resellers remain identifiable in list, search, detail, history and statements;
-- inactive/missing resellers are rejected for new transaction creation;
-- automated migration/lifecycle/search/transaction guards are covered by targeted tests.
-
-Acceptance gate:
-
-- [x] no transaction can become financially unidentifiable because a reseller was removed;
-- [x] historical statements remain reproducible after archive;
-- [x] inactive resellers remain traceable while being unavailable for new transactions;
-- [x] migration and lifecycle behavior are covered by automated tests;
-- [x] targeted P1-S1 tests and build pass.
+- reversible active/inactive reseller lifecycle;
+- V1 → V2 active-state migration;
+- archive/reactivate normal UI;
+- hard-delete protection when transactions exist;
+- historical discovery/detail/statement preservation;
+- inactive/missing reseller rejection for new transactions.
 
 ### P1-S2 — Safe item lifecycle
 
 **Status:** `DONE`  
 **Completed:** 2026-08-17
 
-Goal: preserve historical order identity while allowing catalog cleanup.
+Implemented:
 
-Implemented behavior:
-
-- item lifecycle uses reversible active/inactive state;
-- existing item data migrates to active by default in Dexie V3;
-- normal catalog UI archives/reactivates instead of destructively deleting used item identities;
-- physical deletion is blocked when a transaction references the item;
-- inactive items remain visible/identified in catalog and global search;
-- inactive items are unavailable in new-order selection and rejected by the order mutation when referenced;
-- historical order snapshots (`itemName`, quantity and stored values) remain unchanged and renderable;
-- P1-S1 reseller lifecycle state is preserved through the new migration.
-
-Acceptance gate:
-
-- [x] every historical order remains understandable after catalog deactivation;
-- [x] a referenced item cannot be physically deleted through the guarded mutation;
-- [x] inactive items cannot accidentally be selected for new orders;
-- [x] inactive items remain discoverable for operational traceability;
-- [x] migration/lifecycle behavior and relevant regressions are covered by automated tests;
-- [x] targeted P1-S2 tests and build pass.
+- reversible active/inactive item lifecycle;
+- V2 → V3 active-state migration;
+- archive/reactivate catalog UI;
+- hard-delete protection when a transaction references the item;
+- inactive item visibility in catalog/search;
+- active-only new-order selection and mutation guard;
+- historical order snapshot preservation.
 
 ### P1-S3 — Referential validation and migration
 
-**Status:** `NOT_STARTED`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Goal: complete broader reference validation and make remaining schema transition behavior safe for existing local databases/backups.
+Implemented:
 
-Expected work:
-
-- reconcile lifecycle schema/migration behavior after P1-S1 and P1-S2;
-- inventory remaining valid/invalid reference combinations instead of assuming every optional field is an error;
-- add remaining domain-level validation for invalid new references;
-- cover invalid historical/new references that are not already protected by the lifecycle slices;
-- ensure old valid local data upgrades without loss across the completed P1 schema path;
-- preserve existing transaction snapshots rather than destructively repairing history.
+- explicit new-transaction reference acceptance matrix;
+- positive/existing/active reseller reference required for all new transactions;
+- new orders require a positive/existing/active item reference;
+- new-order `itemName` snapshot is derived from the resolved item identity;
+- payment/signal creation rejects item references;
+- complete V1 → V2 → V3 migration-path tests preserve IDs, dates, lifecycle state and transaction snapshots;
+- historical unresolved item references with stored snapshots remain preserved rather than destructively repaired;
+- P1-S1/P1-S2 lifecycle/search/form/integration regressions remain green.
 
 Acceptance gate:
 
-- old valid local data upgrades without loss;
-- invalid new references are rejected according to an explicit acceptance matrix;
-- historical references remain understandable;
-- remaining migration/reference behavior is covered by automated tests;
-- P1 lifecycle/integrity gates are reconciled before P1 is marked done.
+- [x] old valid local data upgrades without loss across V1 → V2 → V3;
+- [x] invalid new references are rejected according to an explicit matrix;
+- [x] historical snapshots remain understandable and are not rewritten by migration;
+- [x] reseller/item lifecycle rules are reconciled across P1;
+- [x] targeted P1-S3 tests and build pass;
+- [x] P1 is closed.
 
 ---
 
