@@ -138,6 +138,44 @@ describe('useSearch hook', () => {
         expect(result.current.results[0].subtitle).toBe('Saldo: R$ 400,00');
     });
 
+    it('should move financial effect to the intended reseller after a linked wrong-reseller correction', async () => {
+        const now = new Date();
+        const wrongResellerId = await db.resellers.add({ name: 'Origem Errada', isActive: true, createdAt: now, updatedAt: now }) as number;
+        const correctResellerId = await db.resellers.add({ name: 'Destino Correto', isActive: true, createdAt: now, updatedAt: now }) as number;
+
+        await db.transactions.add({
+            id: 101,
+            resellerId: wrongResellerId,
+            type: 'order',
+            totalPrice: 500,
+            reversal: {
+                reason: 'Revendedor errado',
+                reversedAt: '2026-08-17T15:00:00.000Z',
+                replacementTransactionId: 102,
+            },
+            createdAt: now,
+        });
+        await db.transactions.add({
+            id: 102,
+            resellerId: correctResellerId,
+            type: 'order',
+            totalPrice: 500,
+            correction: { replacesTransactionId: 101 },
+            createdAt: now,
+        });
+
+        const wrong = renderHook(() => useSearch('Origem'));
+        const correct = renderHook(() => useSearch('Destino'));
+
+        await waitFor(() => expect(wrong.result.current.isLoading).toBe(false));
+        await waitFor(() => expect(correct.result.current.isLoading).toBe(false));
+        await waitFor(() => expect(wrong.result.current.results).toHaveLength(1));
+        await waitFor(() => expect(correct.result.current.results).toHaveLength(1));
+
+        expect(wrong.result.current.results[0].subtitle).toBe('Saldo: R$ 0,00');
+        expect(correct.result.current.results[0].subtitle).toBe('Saldo: R$ 500,00');
+    });
+
     it('should limit results to 5 per category', async () => {
         const now = new Date();
         for (let i = 1; i <= 7; i++) {
