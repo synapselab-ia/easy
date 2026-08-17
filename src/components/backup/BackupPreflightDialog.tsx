@@ -7,6 +7,8 @@ interface BackupPreflightDialogProps {
     onOpenChange: (open: boolean) => void;
     preview: BackupPreview | null;
     fileName?: string;
+    onRestore: () => void;
+    isRestoring: boolean;
 }
 
 export default function BackupPreflightDialog({
@@ -14,14 +16,25 @@ export default function BackupPreflightDialog({
     onOpenChange,
     preview,
     fileName,
+    onRestore,
+    isRestoring,
 }: BackupPreflightDialogProps) {
     return (
         <ResponsiveDialog
             open={open}
             onOpenChange={onOpenChange}
             title="Prévia do Backup"
-            description="O arquivo foi validado sem alterar os dados atuais. A restauração destrutiva será habilitada somente após o checkpoint da próxima etapa."
-            footer={<Button onClick={() => onOpenChange(false)}>Fechar</Button>}
+            description="O arquivo passou pelo preflight. Ao restaurar, o Easy primeiro baixa um checkpoint v2 do banco atual e só então executa a substituição atômica."
+            footer={
+                <>
+                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isRestoring}>
+                        Cancelar
+                    </Button>
+                    <Button variant="destructive" onClick={onRestore} disabled={!preview || isRestoring}>
+                        {isRestoring ? 'Restaurando...' : 'Restaurar Backup'}
+                    </Button>
+                </>
+            }
         >
             {preview && (
                 <div className="space-y-4 text-sm">
@@ -70,9 +83,12 @@ export default function BackupPreflightDialog({
                         </div>
                     )}
 
-                    <p className="text-muted-foreground">
-                        Nenhuma tabela foi limpa ou gravada durante este preflight.
-                    </p>
+                    <div className="rounded-lg border p-3 space-y-1">
+                        <p className="font-medium">Proteção antes da substituição</p>
+                        <p className="text-muted-foreground">
+                            O checkpoint do banco atual é validado e baixado antes da transação destrutiva. Se qualquer gravação ou verificação falhar, a transação é revertida e o banco anterior permanece íntegro.
+                        </p>
+                    </div>
                 </div>
             )}
         </ResponsiveDialog>
