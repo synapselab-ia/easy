@@ -10,9 +10,11 @@
 **P1 — Referential integrity and safe entity lifecycle**  
 **State:** `IN_PROGRESS`
 
-**P1-S1 — Safe reseller lifecycle:** `DONE` on `feature/p1-s1-reseller-lifecycle`, with targeted automated validation and build passing before integration into `develop`.
+**P1-S1 — Safe reseller lifecycle:** `DONE`, integrated into `develop`.
 
-P1-S1 establishes a reversible active/inactive lifecycle for resellers while preserving historical financial attribution. It does not implement item lifecycle, general referential migration, transaction reversal, date/statement semantics, backend or authentication.
+**P1-S2 — Safe item lifecycle:** `DONE` on `feature/p1-s2-item-lifecycle`, with targeted automated validation and build passing before integration into `develop`.
+
+P1-S1 and P1-S2 now establish reversible active/inactive lifecycle rules for resellers and catalog items while preserving historical financial/order attribution. Broader reference reconciliation and migration edge cases remain P1-S3.
 
 ## Startup protocol for a new conversation
 
@@ -52,33 +54,49 @@ Easy remains a browser-only reseller/order/payment management SPA with:
 - the physical delete mutation is protected and rejects deletion when financial transactions exist;
 - archived resellers remain visible/identifiable in list, global search, detail, history and PDF statement flows;
 - archived resellers are excluded from new transaction selection;
-- transaction creation independently rejects inactive or missing resellers at the mutation layer;
-- item lifecycle remains unchanged and belongs to P1-S2.
+- transaction creation independently rejects inactive or missing resellers at the mutation layer.
 
-## Verified high-priority risks after P1-S1
+## P1-S2 implemented behavior
 
-1. Physical item deletion can weaken historical references.
-2. Broader invalid-reference validation/migration remains for P1-S3.
-3. There is no deliberate audited correction/reversal workflow for financial entries.
-4. `createdAt` currently carries date semantics that should later distinguish occurrence vs registration.
-5. Period balance semantics are not yet formal opening/closing statement semantics.
-6. Backup restore validation is not deep enough for high-confidence destructive replacement.
-7. The global lint/test baseline contains known pre-existing debt; P1-S1 targeted gates pass but P6 still owns suite reconciliation.
-8. Production deployment is not gated by the full quality suite.
+- item lifecycle is represented by `isActive`;
+- existing item rows migrate safely to active by default in Dexie schema version 3;
+- missing legacy `isActive` is interpreted as active for backward-safe reads;
+- normal catalog UI archives/reactivates instead of destructively removing used catalog identities;
+- the physical item-delete mutation rejects deletion when any transaction references the item;
+- physical deletion remains available only for unused items and is not the normal catalog-removal path;
+- inactive items remain visible and explicitly identified in the catalog and global search/recent results;
+- inactive items are excluded from new-order selection;
+- order creation independently rejects an inactive or missing referenced item when `itemId` is supplied;
+- historical transaction/PDF rendering continues to use transaction snapshots such as `itemName`, quantity and stored values, without rewriting old transactions;
+- the V2 → V3 migration does not alter existing reseller lifecycle state.
 
-## P1-S1 completion evidence
+## Verified high-priority risks after P1-S2
 
-- [x] A reseller with financial history cannot be destructively removed through the normal UI.
-- [x] Historical transactions remain attributable to the reseller after archive.
-- [x] List/search/detail/history behavior for inactive resellers is defined and implemented.
-- [x] Inactive resellers cannot receive new transactions through the selector or mutation layer.
-- [x] Existing reseller data receives a safe active default through Dexie V1 → V2 migration.
-- [x] Automated tests cover migration, archive/reactivation, deletion protection, search visibility and transaction blocking.
-- [x] GitHub Actions P1-S1 targeted gate passed on run `32037965651`.
+1. Broader invalid-reference reconciliation and complete P1 migration-path validation remain for P1-S3.
+2. There is no deliberate audited correction/reversal workflow for financial entries.
+3. `createdAt` currently carries date semantics that should later distinguish occurrence vs registration.
+4. Period balance semantics are not yet formal opening/closing statement semantics.
+5. Backup restore validation is not deep enough for high-confidence destructive replacement.
+6. The global lint/test baseline contains known pre-existing debt; targeted P1 gates pass but P6 still owns suite reconciliation.
+7. Production deployment is not gated by the full quality suite.
+
+## P1-S2 completion evidence
+
+- [x] An item used in historical orders is no longer removed through the normal catalog-removal flow.
+- [x] Hard deletion is rejected when a transaction references the item.
+- [x] Historical item snapshots remain renderable in reseller history/PDF flows after catalog deactivation.
+- [x] Catalog and global search keep inactive items visible and explicitly identified.
+- [x] Inactive items cannot be selected for new orders.
+- [x] Order creation rejects inactive or missing referenced items below the UI when `itemId` is supplied.
+- [x] Existing item data receives a safe active default through Dexie V2 → V3 migration.
+- [x] The V3 migration preserves prior reseller lifecycle state.
+- [x] Automated tests cover migration, archive/reactivation, deletion protection, search visibility, order selection/guards and catalog integration.
+- [x] Historical snapshot and reseller-lifecycle regression tests pass.
+- [x] GitHub Actions P1-S2 targeted gate passed on run `32038951903`.
 - [x] `npm run build` passed on the same run.
 - [x] Canonical V2 documentation updated with implemented behavior and next action.
 
-## Active constraints entering P1-S2
+## Active constraints entering P1-S3
 
 - do not work directly on `main`;
 - do not modify the original `viniciuscasarin/easy` repository;
@@ -86,21 +104,22 @@ Easy remains a browser-only reseller/order/payment management SPA with:
 - do not redesign unrelated UI during P1;
 - do not implement transaction reversal yet — that belongs to P2;
 - do not change financial date/statement semantics yet — that belongs to P3;
-- preserve existing valid data through any P1 schema migration;
+- preserve existing valid data across the complete P1 schema path;
+- do not reinterpret old transaction snapshots during reference reconciliation;
 - add tests with P1 behavior changes rather than postponing all testing to P6;
-- do not expand P1-S2 into P1-S3 except where strictly required by item lifecycle.
+- keep P1-S3 focused on remaining referential/migration gaps rather than new product features.
 
 ## NEXT_ACTION
 
-**P1-S2 — Safe item lifecycle. Create a new feature branch from `develop`, inspect every current item deletion/selection/search/history dependency, define the exact active/inactive/archive behavior and acceptance criteria, then implement only the item-lifecycle slice with migration and tests. Do not implement P1-S3 beyond what P1-S2 strictly requires.**
+**P1-S3 — Referential validation and migration. Create a new feature branch from `develop`, inventory the remaining invalid-reference and migration-path cases after P1-S1/P1-S2, define the exact acceptance matrix, then implement only the remaining reference validation and complete P1 schema-migration coverage. Preserve valid legacy data and existing transaction snapshots. Do not begin P2 correction/reversal work.**
 
-## P1-S2 completion target
+## P1-S3 completion target
 
-P1-S2 is not complete until:
+P1-S3 is not complete until:
 
-- an item already used in historical orders cannot make those orders unintelligible through normal catalog removal;
-- historical order snapshots/references remain understandable after item deactivation;
-- inactive item behavior is defined for catalog list, search and new-order selection;
-- existing item data receives a safe lifecycle default through migration without regressing the reseller migration;
-- automated tests cover item lifecycle and migration behavior;
-- V2 documentation is updated with the implemented behavior and next action.
+- old valid databases upgrade through the complete P1 schema path without data loss or lifecycle regression;
+- remaining invalid new references not already covered by P1-S1/P1-S2 are deliberately rejected or documented as valid optional cases;
+- historical references/snapshots remain understandable without destructive repair;
+- migration/reference edge cases are covered by automated tests;
+- P1 acceptance gates are reconciled across reseller and item lifecycle behavior;
+- V2 documentation is updated and either P1 is closed or an explicit blocker is recorded.
