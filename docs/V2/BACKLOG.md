@@ -32,67 +32,76 @@ Established V2 laboratory, branch roles, canonical documents and reconstructable
 
 ## P3 — Dates, balances and financial statements
 
-**Priority:** High  
-**Status:** `DONE`  
-**Completed:** 2026-08-17
+**Status:** `DONE` — 2026-08-17.
 
-### P3-S1 — Occurrence-date model and backward-safe migration
-
-**Status:** `DONE`.
-
-Established Dexie V4, `occurredAt` financial occurrence, separate registration/audit timestamps, backward-safe migration and occurrence-aware consumers.
-
-### P3-S2 — Statement and balance-period semantics
-
-**Status:** `DONE`  
-**Completed:** 2026-08-17
-
-Implemented:
-
-- shared `buildStatementPeriod()` contract;
-- opening balance strictly before period start;
-- audit-visible period movements by `occurredAt` inclusive range;
-- period movement using P2 effective/reversal-aware financial effect;
-- closing balance = opening + period movement;
-- reseller detail and PDF consume the same formal statement object;
-- zero-movement periods remain valid statements;
-- global total debt sums positive balances by reseller rather than netting credits across people;
-- old last-movement aging model rejected;
-- outstanding debt aging reconstructed with FIFO allocation of payment/signal credits to oldest effective order debt;
-- excess credit carries forward; no persistent payment/order link is invented;
-- age buckets use open order occurrence: 0–6d recent, 7–30d attention, >30d critical;
-- schema remains Dexie V4.
-
-Acceptance gate:
-
-- [x] opening → movements → closing is explicit and shared;
-- [x] identical period data gives identical reseller-detail/PDF statement values;
-- [x] reversed/corrected rows retain P2 audit semantics;
-- [x] zero-movement statement works;
-- [x] total debt cannot be reduced by another reseller's credit;
-- [x] aging represents debt still outstanding rather than last activity;
-- [x] FIFO/prepayment edge cases automated;
-- [x] P3-S1/P2/P1 regressions and build pass;
-- [x] final targeted gate `32053837309` passes;
-- [x] P3 closed.
-
----
+- P3-S1 occurrence-date model/backward migration — `DONE`.
+- P3-S2 formal statements/total debt/FIFO aging — `DONE`.
 
 ## P4 — Persistence architecture decision: local vs cloud
 
 **Priority:** High / Decision Gate  
-**Status:** `NOT_STARTED`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Before any backend/auth implementation, inventory real users/operators, devices/locations, concurrency, authorship, security/privacy, offline and recovery requirements. Compare continued local Dexie against remote persistence/authentication and record one evidence-backed architecture decision with costs, risks and migration implications.
+Decision: keep V2 **local-first, single-user on Dexie V4** under the requirements currently evidenced.
 
-Gate: one accepted persistence architecture decision and one explicit implementation next action. No backend/auth code before the decision is accepted.
+Evidence and accepted consequences:
+
+- historical product persona is one administrator/business owner;
+- original requirements explicitly specify IndexedDB/Dexie, no backend, no authentication and no cloud sync;
+- portability is manual JSON export/import to move computers, not concurrent synchronization;
+- current runtime/dependencies/deployment remain static and browser-local;
+- no evidence requires simultaneous operators, live multi-device dataset, centralized roles, person-level authorship or remote recovery SLA;
+- provider-neutral future audit actor under local architecture maps to an opaque local installation identity, not fabricated human identity;
+- backend/auth/cloud is deferred unless objective reopen triggers appear;
+- cloud migration, if later justified, must preserve Dexie V4 IDs/history and P1/P2/P3 invariants while adding an explicit identity/conflict/offline/cutover model.
+
+Acceptance gate:
+
+- [x] users/operators inventoried;
+- [x] devices/locations and concurrency inventoried;
+- [x] authorship strategy resolved for local architecture;
+- [x] security/privacy/offline/recovery boundaries documented;
+- [x] local vs cloud costs, risks and migration implications compared;
+- [x] objective cloud-reopen triggers defined;
+- [x] one accepted architecture decision recorded as D-016;
+- [x] no backend/auth/cloud implementation introduced.
+
+---
 
 ## P5 — Backup, restore and migration
 
 **Priority:** High  
 **Status:** `NOT_STARTED`
 
-Formal backup versioning, deep validation, restore preview/checkpoint, atomic restore and tested migration path.
+Goal: make the accepted local-first dataset recoverable and portable through a versioned, validated and tested backup/restore contract.
+
+### P5-S1 — Versioned backup contract and non-destructive restore preflight
+
+**Status:** `NOT_STARTED`
+
+Expected work:
+
+- inventory every persisted Dexie V4 field and current export/import behavior;
+- define a formal backup schema/envelope version and backward migration from current v1 JSON;
+- validate required fields, IDs, duplicate IDs, references, dates, values, lifecycle state, occurrence timestamps and P2 audit/linkage metadata;
+- produce a restore preview/summary before mutation;
+- invalid input must leave the current database untouched;
+- do not perform final destructive replacement/checkpoint in this slice.
+
+### P5-S2 — Checkpointed atomic restore and migration proof
+
+**Status:** `NOT_STARTED`
+
+Expected later work:
+
+- create a recoverable checkpoint before replacement;
+- perform atomic restore only after successful preflight;
+- validate post-restore invariants and counts;
+- test current-version clean restore plus supported legacy migration paths;
+- demonstrate export → clean restore preserves entities, financial history, correction links, occurrence dates, statements and balances.
+
+Gate: versioned export → validated preview → checkpointed atomic restore reproduces the canonical dataset and invariants.
 
 ## P6 — Tests, CI and deployment safety
 
@@ -111,7 +120,7 @@ Operational UX refinement after foundation work.
 
 **Status:** `NOT_STARTED`.
 
-Produce prioritized user stories from real operating requirements.
+Produce prioritized user stories from real operating requirements. If discovery proves a D-016 cloud-reopen trigger, persistence architecture must be explicitly reconsidered before multi-user/cloud implementation.
 
 ## P9 — Prioritized new modules
 
