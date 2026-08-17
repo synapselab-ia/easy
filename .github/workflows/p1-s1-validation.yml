@@ -1,9 +1,10 @@
 name: P1-S1 validation
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature/p1-s1-reseller-lifecycle
+      - develop
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 jobs:
