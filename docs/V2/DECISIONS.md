@@ -13,16 +13,7 @@ Only accepted decisions belong here. Candidates and open questions remain in `BA
 
 ### Decision
 
-Use `synapselab-ia/easy` as the V2 working repository.
-
-The original `viniciuscasarin/easy` is not the V2 experimentation target.
-
-### Rationale
-
-- isolates reconstruction work from the system originally maintained by Vinicius;
-- gives the V2 owner full repository control;
-- reduces risk of accidental changes to the original repository;
-- preserves the original implementation/history as upstream reference.
+Use `synapselab-ia/easy` as the V2 working repository. The original `viniciuscasarin/easy` is not the V2 experimentation target.
 
 ---
 
@@ -37,10 +28,6 @@ The original `viniciuscasarin/easy` is not the V2 experimentation target.
 - `develop` = V2 integration branch;
 - `feature/*` = isolated units of work derived from `develop`.
 
-### Rationale
-
-Separates stable reference, integration and experimental work, and allows review before V2 changes accumulate.
-
 ---
 
 ## D-003 — P0 changes documentation/governance only
@@ -52,10 +39,6 @@ Separates stable reference, integration and experimental work, and allows review
 
 P0 must not change Easy runtime behavior, financial logic, database schema or UI behavior.
 
-### Rationale
-
-The project needs a canonical state before implementation begins. Mixing documentation reconstruction with functional changes would make the initial baseline ambiguous.
-
 ---
 
 ## D-004 — Legacy task checkboxes are historical, not canonical
@@ -65,13 +48,7 @@ The project needs a canonical state before implementation begins. Mixing documen
 
 ### Decision
 
-The existing `tasks/` directory may be read as historical design evidence, but unchecked/checked boxes there do not define V2 completion state.
-
-V2 status is defined by `docs/V2/STATUS.md`, `BACKLOG.md`, merged code and QA evidence.
-
-### Rationale
-
-Several legacy task lists remain unchecked even though their features exist in the current application.
+The existing `tasks/` directory may be read as historical design evidence, but its checkbox state does not define V2 completion. V2 status is defined by canonical documents, merged code and QA evidence.
 
 ---
 
@@ -84,10 +61,6 @@ Several legacy task lists remain unchecked even though their features exist in t
 
 Preserve working parts of Easy and evolve incrementally. A full rewrite requires a later explicit decision supported by technical/business evidence.
 
-### Rationale
-
-The existing application already contains meaningful functionality, responsive UI, analytics, PDF generation, backup and tests. Rewriting everything would increase risk and delay correction of the financial core.
-
 ---
 
 ## D-006 — Current persistence remains baseline until P4
@@ -99,10 +72,6 @@ The existing application already contains meaningful functionality, responsive U
 
 Dexie/IndexedDB remains the current architecture through the early integrity/financial phases unless a specific change is technically required. Do not introduce Supabase, backend or authentication before P4 decides local vs cloud.
 
-### Rationale
-
-The real need for multi-device/multi-user synchronization has not yet been formally established. Premature backend adoption could force unnecessary architecture and migration complexity.
-
 ---
 
 ## D-007 — Financial history should favor preservation over destructive deletion
@@ -112,11 +81,7 @@ The real need for multi-device/multi-user synchronization has not yet been forma
 
 ### Decision
 
-The V2 should prefer historical preservation for entities involved in financial records. P1 specifies the exact lifecycle/deletion rules slice by slice.
-
-### Rationale
-
-Deleting an identity that owns financial history can make balances, statements or historical orders untraceable. P1-S1 resolves this for resellers and P1-S2 resolves it for catalog items; P1-S3 still owns broader reference reconciliation.
+The V2 prefers historical preservation for entities involved in financial records. P1 defines the exact lifecycle/reference rules and is now complete for reseller/item lifecycle plus new-transaction references.
 
 ---
 
@@ -128,10 +93,6 @@ Deleting an identity that owns financial history can make balances, statements o
 ### Decision
 
 Financial semantics such as balance, valid/reversed transaction treatment and statement totals should eventually come from shared domain rules rather than independent calculations scattered across screens.
-
-### Rationale
-
-The current application calculates related totals in multiple places. As reversal/date rules become richer, duplication increases the risk that dashboard, detail, search and PDF disagree.
 
 ---
 
@@ -145,20 +106,11 @@ The current application calculates related totals in multiple places. As reversa
 For P1-S1:
 
 - reseller lifecycle is represented by `isActive`;
-- existing/legacy reseller records default to active, including Dexie V1 → V2 migration;
-- the normal reseller UI uses reversible archive/reactivate behavior;
-- an inactive reseller remains discoverable and historically attributable in list, global search, detail/history and statement flows;
-- inactive resellers are unavailable for new transaction selection;
-- transaction creation must also reject inactive or missing resellers in the mutation layer;
-- physical reseller deletion is permitted only when no financial transactions reference that reseller and is not the normal historical-removal path.
-
-### Rationale
-
-This preserves financial attribution without preventing operational cleanup. The rule is enforced both at UI selection points and below the UI, so stale/alternate callers cannot create new financial activity for an archived reseller. Hard deletion remains available only for identities that never acquired financial history.
-
-### Scope boundary
-
-This decision applies to resellers only. Broader referential migration/validation remains P1-S3.
+- legacy reseller records default to active through V1 → V2 migration and backward-safe reads;
+- normal UI archives/reactivates;
+- inactive resellers remain historically discoverable but unavailable for new transactions;
+- transaction creation rejects inactive/missing resellers;
+- physical deletion is permitted only when no transaction references the reseller.
 
 ---
 
@@ -172,22 +124,49 @@ This decision applies to resellers only. Broader referential migration/validatio
 For P1-S2:
 
 - item lifecycle is represented by `isActive`;
-- existing/legacy item records default to active through Dexie V2 → V3 migration, while missing `isActive` remains backward-safe as active at read time;
-- the normal catalog UI uses reversible archive/reactivate behavior;
-- inactive items remain visible and explicitly identifiable in catalog and global search/recent results;
-- inactive items are unavailable for new-order selection;
-- order creation must also reject an inactive or missing referenced item when an `itemId` is supplied;
-- physical item deletion is rejected whenever any transaction references the item and is not the normal catalog-removal path;
-- physical deletion remains available only for unused items;
-- historical transaction snapshots such as `itemName`, quantity, unit price and total price are not rewritten when an item is archived or later edited.
+- legacy item records default to active through V2 → V3 migration and backward-safe reads;
+- normal catalog UI archives/reactivates;
+- inactive items remain visible but unavailable for new orders;
+- order creation rejects inactive/missing referenced items;
+- physical deletion is rejected whenever a transaction references the item;
+- historical transaction snapshots are not rewritten when catalog state changes.
+
+---
+
+## D-011 — New transaction references are strict; historical records are preserved
+
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
+
+### Decision
+
+P1-S3 closes the remaining runtime reference matrix without introducing a new Dexie schema version.
+
+For **new transactions created through the transaction mutation**:
+
+- `resellerId` must be a positive integer resolving to an existing active reseller for `order`, `payment` and `signal`;
+- `order` must include a positive `itemId` resolving to an existing active item;
+- the `itemName` snapshot for a new order is derived from the resolved item identity so a stale/alternate caller cannot persist a mismatched item name;
+- `payment` and `signal` are reseller-level movements and must not carry `itemId` references;
+- invalid/missing/inactive references are rejected before persistence.
+
+For **historical stored data and schema migration**:
+
+- V1 → V2 → V3 upgrades do not revalidate or rewrite transaction references/snapshots;
+- missing lifecycle fields become active according to the existing migrations/read rules, while explicit `false` state is preserved;
+- IDs, dates, transaction snapshots and valid lifecycle state must survive the complete P1 migration path;
+- an old order whose catalog reference no longer resolves is preserved when its stored snapshot still explains the order; P1 does not invent or destructively repair historical data.
 
 ### Rationale
 
-Catalog cleanup must not make historical orders unintelligible. Preserving the item identity plus the transaction snapshot provides two independent sources of historical context, while excluding inactive items from new orders prevents accidental reuse. The mutation-level guard protects against stale or alternate callers that bypass the form.
+Creation-time integrity and historical compatibility have different responsibilities. New activity can be strict because current entities are available to validate. Old records may encode legitimate legacy history after past catalog deletion; rewriting those records would destroy evidence rather than improve integrity.
 
 ### Scope boundary
 
-This decision does not define every valid/invalid optional transaction-reference combination. The complete acceptance matrix, migration-path reconciliation and remaining invalid-reference handling belong to P1-S3.
+- no Dexie V4 is required because P1-S3 adds validation/coverage, not persistent fields;
+- deep backup schema/reference/duplicate validation remains P5;
+- transaction reversal/correction semantics remain P2;
+- date/statement semantics remain P3.
 
 ---
 
@@ -195,8 +174,7 @@ This decision does not define every valid/invalid optional transaction-reference
 
 These are intentionally **not decided yet**:
 
-- remaining referential validation/migration behavior and acceptance matrix (P1-S3);
-- reversal/correction data model (P2);
+- reversal/correction data model and first audited-correction slice (P2);
 - `occurredAt` and statement semantics (P3);
 - local vs cloud architecture (P4);
 - backup migration/version strategy details (P5);
