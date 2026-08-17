@@ -97,57 +97,61 @@ A backup is not eligible for destructive restore until preflight validates envel
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Checkpoint decision
+Before any destructive restore write, Easy creates a recoverable logical checkpoint of all live Dexie V4 tables, serializes it as the canonical `easy-backup` v2 envelope, validates it with the P5-S1 contract and downloads it as `easy-checkpoint-v2-<timestamp>.json`.
 
-Before any destructive restore write, Easy must create a **recoverable logical checkpoint** of the current live dataset:
+Restore consumes only the successful P5-S1 normalized result, revalidates it immediately before recovery, and replaces all three tables inside one Dexie `rw` transaction. Restored rows are read back, revalidated and compared against the expected canonical projection before commit. Any write/verification error throws inside the transaction and Dexie rollback preserves the complete prior database.
 
-1. read all three Dexie V4 tables;
-2. serialize the live rows into the canonical `easy-backup` v2 envelope;
-3. run the same P5-S1 deep validator against that checkpoint;
-4. download the checkpoint as `easy-checkpoint-v2-<timestamp>.json`.
+Targeted run `32060729538` satisfies the P5-S2 recovery gate.
 
-If checkpoint creation, validation or download fails, no destructive transaction is allowed to start.
+## D-019 — Critical QA is mandatory for V2 integration and publication from main
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
 
-### Restore-input decision
+### One canonical critical command
 
-The destructive operation consumes the successful P5-S1 `BackupPreflightResult`; it does not reparse unchecked file text. Immediately before checkpoint creation, the normalized in-memory target is serialized/revalidated again. This prevents a mutated or stale object from bypassing the accepted restore contract between preview and confirmation.
+Repository-wide critical validation is defined by one reproducible command:
 
-### Atomicity decision
+```text
+npm run qa:critical
+  -> npm run lint
+  -> npm run test:run
+  -> npm run test:e2e
+  -> npm run build
+```
 
-All destructive work occurs inside **one Dexie `rw` transaction** spanning `items`, `resellers` and `transactions`:
+CI/deploy uses Node 22, `npm ci` and explicit Playwright Chromium installation. A local or CI pass must execute the same ordered gate rather than substituting a smaller phase-specific matrix.
 
-- clear all three tables;
-- bulk-add the preflighted rows with original IDs;
-- read the restored rows back before commit;
-- run the complete P5-S1 validator against the restored logical dataset;
-- compare an ID-sorted canonical projection of all restored fields, dates and audit links with the expected target.
+### Integration gate
 
-A write or verification error throws inside the transaction. Dexie rollback is therefore the authoritative mechanism that preserves the complete previous database and prevents partial replacement.
+`.github/workflows/ci.yml` runs Critical QA on pull requests targeting `develop` or `main`, on pushes to `develop`, and by manual dispatch. This is the persistent repository-wide V2 integration signal.
 
-### Result/recovery decision
+### Publication gate
 
-Restore returns an explicit discriminated success/failure result. Success includes the checkpoint filename and restored preview. Failure states `previousDatabasePreserved: true` and includes the checkpoint filename when one had already been generated, giving the operator an explicit recovery artifact/path.
+A push to `main` may publish GitHub Pages only through:
 
-### Migration proof
+```text
+quality -> build -> deploy
+```
 
-P5-S2 must be considered complete only with tests showing:
+The `quality` job executes `npm run qa:critical`; `build` depends on `quality`; `deploy` depends on `build`. Publication must therefore stop when critical validation fails.
 
-- current v2 export -> clean restore preserves IDs, P1 lifecycle, P2 correction links/audit, P3 occurrence and financial outcomes;
-- supported v1 migration -> restore preserves IDs/finance while materializing the accepted lifecycle/occurrence defaults;
-- a failure after clears begin rolls back to the prior dataset;
-- an altered normalized target is rejected before checkpoint/write.
+### Baseline reconciliation policy
 
-Targeted run `32060729538` satisfies this gate.
+P6 established that failing QA output must be classified before product code is changed. Stale test/tooling expectations may be reconciled to already accepted behavior; real regressions must be fixed without violating P1–P5 semantics.
 
-### Architecture consequence
+The P6 baseline contained both categories. Provider/router/mock/jsdom gaps, obsolete selectors/copy and the old zero-movement PDF expectation were stale QA assumptions. One real defect was found in global search: Dexie `useSearch` already owns result filtering while `cmdk` also applied its default internal filter. `CommandDialog` now disables the second filter (`shouldFilter={false}`), making the external result set authoritative.
 
-D-016 and Dexie V4 remain unchanged. Checkpoint/restore is a local browser recovery workflow; it does not introduce remote storage, authentication, synchronization or a second system of record.
+### Lint debt policy
+
+A green critical gate does not mean all warnings are erased. Objective ESLint errors remain blocking. Existing `no-explicit-any`, `react-hooks/set-state-in-effect` and `react-refresh/only-export-components` debt remains visible as warnings until intentionally refactored; P6 does not authorize behavior-changing refactors solely to reach zero warnings.
+
+Persistent functional run `32064801009` passes the reconciled gate.
 
 ---
 
 # Open decisions
 
-- repository-wide QA and deployment gating (P6);
-- operational UX refinements (P7);
+- operational UX refinements after P7 evidence/prioritization;
 - new modules after real requirements discovery (P8/P9);
-- local vs cloud only if a D-016 reopen trigger is proven.
+- local vs cloud only if a D-016 reopen trigger is proven;
+- controlled beta/migration/cutover policy in P10.
