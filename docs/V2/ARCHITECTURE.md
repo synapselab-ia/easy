@@ -1,106 +1,181 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through completed P4  
+**Status:** verified through P5-S1  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
-Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB, deployed to GitHub Pages.
+Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB, deployed as static assets. D-016 keeps the product single-user/local-first; there is no backend, authentication, remote database or synchronization layer.
 
-## Accepted persistence architecture
+## Persistence baseline
 
-D-016 accepts **local-first, single-user Dexie V4** under the requirements currently evidenced.
+Database: `ResellerManagerDB`, Dexie **V4**.
+
+Tables:
+
+- `items`;
+- `resellers`;
+- `transactions`.
+
+Migration path remains V1 -> V2 reseller lifecycle, V2 -> V3 item lifecycle, V3 -> V4 transaction `occurredAt`. P5-S1 introduces no Dexie V5.
+
+## Persisted logical model
+
+### Item
 
 ```text
-GitHub Pages static assets
-        -> Browser profile/origin
-             -> React/TanStack Query
-             -> Dexie V4 / IndexedDB = authoritative business dataset
-             -> localStorage = non-critical local UI state
-
-User-controlled JSON export/import = backup and computer-to-computer handoff
+id
+name
+basePrice
+isActive
+createdAt
+updatedAt
 ```
 
-There is no backend, remote database, authentication or synchronization layer.
+### Reseller
 
-## Evidence and operating model
+```text
+id
+name
+phone?
+email?
+notes?
+isActive
+createdAt
+updatedAt
+```
 
-P4 reviewed the historical PRD/prompt, README and current persistence/backup/deployment code. They establish one administrator/business owner, single-user local operation, IndexedDB/Dexie, static delivery and JSON portability. Authentication/backend/cloud sync are explicitly outside the original product model.
+### Transaction
 
-Accepted operating model:
+```text
+id
+resellerId
+type
+itemId?
+itemName?
+quantity?
+unitPrice?
+totalPrice
+observation?
+reversal? { reason, reversedAt, replacementTransactionId? }
+correction? { replacesTransactionId }
+occurredAt
+createdAt
+```
 
-- one authoritative dataset per browser profile/origin at a time;
-- desktop/tablet support is UI capability, not live cross-device synchronization;
-- moving data to another computer is an explicit export/import handoff;
-- no simultaneous multi-writer/conflict-resolution requirement is evidenced.
+These fields, IDs and P1/P2/P3 relationships are recovery/migration invariants.
 
-## Persistence model
+## Financial/audit invariants
 
-Database: `ResellerManagerDB`, Dexie **V4**; tables `items`, `resellers`, `transactions`.
+The shared transaction domain remains unchanged:
 
-Migration path remains:
+- effective order adds value;
+- effective payment/signal subtracts value;
+- reversed row has zero financial effect;
+- reversal/correction rows remain audit-visible and linked;
+- `occurredAt` is financial occurrence;
+- `createdAt` and `reversal.reversedAt` are audit timestamps;
+- linked replacement preserves original occurrence and, for an order, its item identity;
+- formal statements and FIFO open-debt aging remain P3 rules.
 
-- V1 → V2 reseller active state;
-- V2 → V3 item active state;
-- V3 → V4 transaction `occurredAt`, with missing occurrence materialized from `createdAt`.
+## P5-S1 backup architecture
 
-P4 adds no schema/runtime field.
+Backup is now a **logical interchange contract**, not a dump of IndexedDB internals.
 
-## Trust, security and privacy boundary
+Current envelope:
 
-The browser profile/device is the current data/trust boundary.
+```text
+format = "easy-backup"
+version = 2
+exportedAt = ISO timestamp
+source.database = "ResellerManagerDB"
+source.schemaVersion = 4
+data.items[]
+data.resellers[]
+data.transactions[]
+```
 
-- business data stays in IndexedDB unless explicitly exported;
-- GitHub Pages serves app assets and is not the business-data system of record;
-- no credential/auth/server-secret surface is added;
-- device/profile compromise or deletion can expose/lose data;
-- exported JSON contains sensitive contact/financial data and is user-controlled;
-- backup validation/recovery hardening belongs to P5.
+Backup version and Dexie schema version are distinct dimensions. New exports are v2 even while the live database remains Dexie V4.
 
-## Actor attribution
+Before download, the assembled current dataset is passed through the same P5-S1 validator used for restore preflight. A corrupt live logical dataset therefore cannot be silently packaged as a trusted v2 backup.
 
-D-013's provider-neutral strategy is resolved for local architecture: a future `actorRef`, if materialized, uses a stable opaque **local installation identity** generated/stored client-side.
+## Legacy v1 migration boundary
 
-It identifies an Easy installation, not a verified person. Historical rows without actor attribution remain valid. If person-level authorship becomes mandatory, D-016 must be revisited before pretending an installation ID is a human identity.
+The historical backup envelope (`version: 1`, `exportedAt`, `data`) remains a supported input.
 
-## Offline boundary
+Migration occurs only in memory:
 
-IndexedDB reads/writes require no backend once the static app is loaded. P4 does not claim guaranteed offline startup because there is no accepted service-worker/PWA caching contract.
+- item/reseller missing `isActive` becomes `true`;
+- transaction missing `occurredAt` receives its `createdAt`;
+- explicit historical values and P2 audit metadata are preserved;
+- unsupported versions are rejected.
 
-## Recovery boundary entering P5
+No migration step writes IndexedDB in P5-S1.
 
-Current JSON backup:
+## Preflight validator
 
-- exports all three tables in a `version: 1` envelope;
-- serializes P1/P2/P3 fields;
-- restores date fields and legacy `occurredAt` fallback;
-- performs only shallow structure validation before replacement.
+`preflightBackupPayload()` / `preflightBackupText()` / `preflightBackupFile()` create the only accepted normalized restore input for the next slice.
 
-P5 must make this a versioned logical recovery/interchange contract independent of physical IndexedDB details.
+Validation includes:
 
-## Cloud/auth reopen triggers
+- envelope/source/version structure;
+- required fields and supported transaction types;
+- positive integer IDs and duplicates;
+- positive finite financial/order numbers;
+- valid serialized dates and entity update chronology;
+- order item snapshot fields and payment/signal field separation;
+- transaction -> reseller and transaction -> item references;
+- reversal reason/date/replacement reference;
+- correction original reference;
+- P2 bidirectional correction/replacement linkage;
+- type preservation across replacement;
+- item preservation for corrected orders;
+- P3 `occurredAt` preservation across linked correction;
+- replacement registration not preceding the original.
 
-D-016 must be explicitly superseded before remote persistence/auth if real requirements mandate:
+Validation failure is represented by `BackupValidationError` with path-level issues.
 
-1. concurrent writes by multiple operators;
-2. automatic live sharing across devices/locations;
-3. verified person-level authorship or centralized access control;
-4. automatic remote backup/recovery SLA;
-5. trusted server credentials/webhooks/execution;
-6. security policy incompatible with browser-local storage.
+## Non-destructive UI boundary
 
-A future cloud design must solve auth/account recovery, authorization, globally safe IDs, conflict/offline semantics, migration and cutover before multi-writer use.
+P5-S1 removes the old unsafe UI path that confirmed and immediately called destructive import after only shallow array validation.
 
-## Migration invariants
+Selecting a backup now:
 
-Any P5 restore or future persistence migration must preserve:
+1. reads/parses the JSON;
+2. migrates supported v1 input in memory;
+3. validates the complete logical dataset;
+4. displays a preview with versions, timestamp, counts and migration warnings;
+5. performs **no Dexie mutation**.
 
-- P1 lifecycle/reference/history;
-- P2 reversal/correction links/audit and reversed-zero effect;
-- P3 occurrence/audit separation, statement semantics and FIFO-derived debt rules;
-- legacy rows without actor attribution.
+There is intentionally no restore/replace button in this slice. This is not a missing implementation: the destructive action is gated on P5-S2 checkpoint/atomic-restore guarantees.
 
-Numeric auto-increment IDs remain acceptable for one authoritative local dataset; independent multi-device writers would require globally safe identity/mapping before cutover.
+## Preview contract
 
-## Boundary entering P5-S1
+Preview includes:
 
-P5-S1 may change backup envelope/validation/preview only. It must not add backend/auth/cloud, replace Dexie V4 as live source of truth, introduce synchronization, alter financial semantics, or perform destructive restore before preflight is proven.
+- source backup version and target version;
+- Dexie schema version;
+- export timestamp;
+- whether compatibility migration was needed;
+- items/resellers with active/inactive counts;
+- transaction totals by order/payment/signal;
+- reversal and linked-correction counts;
+- compatibility warnings.
+
+Normalized rows contain real `Date` values and are suitable as future P5-S2 atomic restore input only after a successful preflight.
+
+## Recovery boundary entering P5-S2
+
+P5-S2 must build on this exact contract. It must:
+
+- create a recoverable checkpoint of the current dataset before replacement;
+- accept only successfully preflighted normalized input;
+- replace all three tables in one atomic Dexie transaction;
+- avoid partial replacement on failure;
+- verify post-restore counts, references and P1/P2/P3 invariants;
+- prove v2 clean restore and supported v1 migration preserve IDs/history/financial results.
+
+P5-S2 must not introduce backend/auth/cloud or repository-wide P6 changes.
+
+## Validation evidence
+
+Targeted P5-S1 run **`32058028793` — PASS** covering backup contract, preview UI, P3 occurrence compatibility, Dexie migrations, P1/P2/P3 regressions and production build.
