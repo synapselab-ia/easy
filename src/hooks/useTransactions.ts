@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, isResellerActive, type Transaction } from '../db/database';
+import { db, isItemActive, isResellerActive, type Transaction } from '../db/database';
 
 export function useTransactions(resellerId?: number) {
     return useQuery({
@@ -17,7 +17,7 @@ export function useCreateTransaction() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (transaction: Omit<Transaction, 'id'>) =>
-            db.transaction('rw', db.resellers, db.transactions, async () => {
+            db.transaction('rw', db.resellers, db.items, db.transactions, async () => {
                 const reseller = await db.resellers.get(transaction.resellerId);
 
                 if (!reseller) {
@@ -26,6 +26,18 @@ export function useCreateTransaction() {
 
                 if (!isResellerActive(reseller)) {
                     throw new Error('Revendedores inativos não podem receber novos lançamentos.');
+                }
+
+                if (transaction.type === 'order' && transaction.itemId !== undefined) {
+                    const item = await db.items.get(transaction.itemId);
+
+                    if (!item) {
+                        throw new Error('Item não encontrado.');
+                    }
+
+                    if (!isItemActive(item)) {
+                        throw new Error('Itens inativos não podem ser usados em novos pedidos.');
+                    }
                 }
 
                 return db.transactions.add(transaction);
