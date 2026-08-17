@@ -40,7 +40,8 @@ describe('TransactionForm', () => {
 
         // Seed basic data
         await db.items.add({ name: 'Perfume', basePrice: 150, createdAt: new Date(), updatedAt: new Date() });
-        await db.resellers.add({ name: 'Joãozinho', createdAt: new Date(), updatedAt: new Date() });
+        await db.resellers.add({ name: 'Joãozinho', isActive: true, createdAt: new Date(), updatedAt: new Date() });
+        await db.resellers.add({ name: 'Maria Arquivada', isActive: false, createdAt: new Date(), updatedAt: new Date() });
     });
 
     it('should render conditional fields based on type', async () => {
@@ -64,6 +65,13 @@ describe('TransactionForm', () => {
         expect(await screen.findByText("Valor para Abatimento (R$)")).toBeInTheDocument();
         expect(screen.queryByText("Item do Catálogo")).not.toBeInTheDocument();
         expect(screen.queryByLabelText(/Quantidade/i)).not.toBeInTheDocument();
+    });
+
+    it('should only list active resellers for new transactions', async () => {
+        render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
+
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        expect(screen.queryByText('Maria Arquivada')).not.toBeInTheDocument();
     });
 
     it('should auto fill price and calculate total automatically', async () => {
