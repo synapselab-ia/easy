@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { type Reseller, type Transaction } from '../db/database';
+import { isTransactionReversed } from '../domain/transactions';
 
 export interface DateRange {
     startDate: Date;
@@ -16,21 +17,17 @@ export function generateResellerExtract(
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Configurações fonte
     doc.setFont('helvetica');
 
-    // Título
     doc.setFontSize(22);
     doc.text('Extrato do Revendedor', pageWidth / 2, 20, { align: 'center' });
 
-    // Informações do Revendedor
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text(`Nome: ${reseller.name}`, 14, 40);
     doc.text(`Telefone: ${reseller.phone || '-'}`, 14, 48);
     doc.text(`Email: ${reseller.email || '-'}`, 14, 56);
 
-    // Indicador de período (quando filtro ativo)
     let saldoY = 70;
     if (dateRange) {
         const fmt = (d: Date) => d.toLocaleDateString('pt-BR');
@@ -45,38 +42,51 @@ export function generateResellerExtract(
     doc.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
     doc.text(balanceText, 14, saldoY);
 
-    // Filtragem por período (se informado)
     const filtered = dateRange
         ? transactions.filter(t => t.createdAt >= dateRange.startDate && t.createdAt <= dateRange.endDate)
         : transactions;
 
-    // Tabela de Transações
-    const tableData = filtered.map(t => [
-        t.createdAt.toLocaleDateString(),
-        t.type === 'order' ? 'Pedido' : t.type === 'payment' ? 'Pagamento' : 'Sinal',
-        t.itemName || '-',
-        t.quantity ? t.quantity.toString() : '-',
-        `R$ ${t.totalPrice.toFixed(2)}`,
-        t.observation || '-'
-    ]);
+    const tableData = filtered.map(t => {
+        const reversed = isTransactionReversed(t);
+        const notes = [
+            t.observation,
+            reversed ? `Motivo do estorno: ${t.reversal?.reason}` : undefined,
+        ].filter(Boolean).join(' | ') || '-';
+
+        return [
+            t.createdAt.toLocaleDateString(),
+            t.type === 'order' ? 'Pedido' : t.type === 'payment' ? 'Pagamento' : 'Sinal',
+            t.itemName || '-',
+            t.quantity ? t.quantity.toString() : '-',
+            `R$ ${t.totalPrice.toFixed(2)}`,
+            reversed ? 'Estornado' : 'Válido',
+            notes,
+        ];
+    });
 
     autoTable(doc, {
         startY: 80,
-        head: [['Data', 'Tipo', 'Item', 'Qtd', 'Valor', 'Observação']],
+        head: [['Data', 'Tipo', 'Item', 'Qtd', 'Valor', 'Status', 'Observação']],
         body: tableData,
         didParseCell: function (data) {
-            if (data.section === 'body' && data.column.index === 4) {
-                const type = filtered[data.row.index].type;
-                if (type === 'order') {
-                    data.cell.styles.textColor = [220, 38, 38]; // text-red-600
+            if (data.section !== 'body') return;
+
+            const transaction = filtered[data.row.index];
+            if (isTransactionReversed(transaction)) {
+                data.cell.styles.textColor = [100, 100, 100];
+                return;
+            }
+
+            if (data.column.index === 4) {
+                if (transaction.type === 'order') {
+                    data.cell.styles.textColor = [220, 38, 38];
                 } else {
-                    data.cell.styles.textColor = [22, 163, 74]; // text-green-600
+                    data.cell.styles.textColor = [22, 163, 74];
                 }
             }
         }
     });
 
-    // Nome do arquivo — amigável com datas quando filtro ativo
     const safeName = reseller.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const fmt = (d: Date) => d.toLocaleDateString('pt-BR').replace(/\//g, '-');
     const filename = dateRange

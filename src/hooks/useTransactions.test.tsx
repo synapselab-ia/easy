@@ -5,8 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     NON_ORDER_ITEM_REFERENCE_ERROR,
     ORDER_ITEM_REQUIRED_ERROR,
+    REVERSAL_REASON_REQUIRED_ERROR,
+    TRANSACTION_ALREADY_REVERSED_ERROR,
     useTransactions,
     useCreateTransaction,
+    useReverseTransaction,
 } from './useTransactions';
 import { db, type TransactionType } from '../db/database';
 import React, { ReactNode } from 'react';
@@ -247,5 +250,68 @@ describe('useTransactions hooks', () => {
         })).rejects.toThrow(NON_ORDER_ITEM_REFERENCE_ERROR);
 
         expect(await db.transactions.count()).toBe(0);
+    });
+
+    it('should reverse a transaction without deleting or rewriting the original entry', async () => {
+        const createdAt = new Date('2026-08-10T10:00:00-03:00');
+        const id = await db.transactions.add({
+            resellerId: 7,
+            type: 'payment',
+            totalPrice: 250,
+            observation: 'Pagamento via PIX',
+            createdAt,
+        }) as number;
+
+        const { result } = renderHook(() => useReverseTransaction(), { wrapper });
+
+        await result.current.mutateAsync({ id, reason: '  Pagamento duplicado  ' });
+
+        const transactions = await db.transactions.toArray();
+        const stored = transactions[0];
+
+        expect(transactions).toHaveLength(1);
+        expect(stored.id).toBe(id);
+        expect(stored.type).toBe('payment');
+        expect(stored.totalPrice).toBe(250);
+        expect(stored.observation).toBe('Pagamento via PIX');
+        expect(stored.createdAt).toEqual(createdAt);
+        expect(stored.reversal?.reason).toBe('Pagamento duplicado');
+        expect(Number.isNaN(Date.parse(stored.reversal?.reversedAt || ''))).toBe(false);
+    });
+
+    it('should require an explicit reversal reason', async () => {
+        const id = await db.transactions.add({
+            resellerId: 1,
+            type: 'order',
+            totalPrice: 5000,
+            createdAt: new Date(),
+        }) as number;
+
+        const { result } = renderHook(() => useReverseTransaction(), { wrapper });
+
+        await expect(result.current.mutateAsync({ id, reason: '   ' }))
+            .rejects.toThrow(REVERSAL_REASON_REQUIRED_ERROR);
+
+        expect((await db.transactions.get(id))?.reversal).toBeUndefined();
+    });
+
+    it('should reject a second reversal and preserve the original audit reason', async () => {
+        const id = await db.transactions.add({
+            resellerId: 1,
+            type: 'order',
+            totalPrice: 5000,
+            reversal: {
+                reason: 'Valor incorreto',
+                reversedAt: '2026-08-17T15:00:00.000Z',
+            },
+            createdAt: new Date(),
+        }) as number;
+
+        const { result } = renderHook(() => useReverseTransaction(), { wrapper });
+
+        await expect(result.current.mutateAsync({ id, reason: 'Outro motivo' }))
+            .rejects.toThrow(TRANSACTION_ALREADY_REVERSED_ERROR);
+
+        expect((await db.transactions.get(id))?.reversal?.reason).toBe('Valor incorreto');
     });
 });

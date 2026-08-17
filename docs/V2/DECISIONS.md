@@ -11,8 +11,6 @@ Only accepted decisions belong here. Candidates and open questions remain in `BA
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
 Use `synapselab-ia/easy` as the V2 working repository. The original `viniciuscasarin/easy` is not the V2 experimentation target.
 
 ---
@@ -21,8 +19,6 @@ Use `synapselab-ia/easy` as the V2 working repository. The original `viniciuscas
 
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
-
-### Decision
 
 - `main` = stable copied baseline/reference;
 - `develop` = V2 integration branch;
@@ -35,8 +31,6 @@ Use `synapselab-ia/easy` as the V2 working repository. The original `viniciuscas
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
 P0 must not change Easy runtime behavior, financial logic, database schema or UI behavior.
 
 ---
@@ -46,9 +40,7 @@ P0 must not change Easy runtime behavior, financial logic, database schema or UI
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
-The existing `tasks/` directory may be read as historical design evidence, but its checkbox state does not define V2 completion. V2 status is defined by canonical documents, merged code and QA evidence.
+The existing `tasks/` directory is historical evidence only. Canonical V2 status comes from V2 documents, merged code and QA evidence.
 
 ---
 
@@ -57,9 +49,7 @@ The existing `tasks/` directory may be read as historical design evidence, but i
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
-Preserve working parts of Easy and evolve incrementally. A full rewrite requires a later explicit decision supported by technical/business evidence.
+Preserve working parts of Easy and evolve incrementally. A full rewrite requires a later explicit decision supported by evidence.
 
 ---
 
@@ -68,9 +58,7 @@ Preserve working parts of Easy and evolve incrementally. A full rewrite requires
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
-Dexie/IndexedDB remains the current architecture through the early integrity/financial phases unless a specific change is technically required. Do not introduce Supabase, backend or authentication before P4 decides local vs cloud.
+Dexie/IndexedDB remains the current architecture through early integrity/financial phases. Do not introduce Supabase, backend or authentication before P4 decides local vs cloud.
 
 ---
 
@@ -79,20 +67,18 @@ Dexie/IndexedDB remains the current architecture through the early integrity/fin
 **Status:** DIRECTION ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
-The V2 prefers historical preservation for entities involved in financial records. P1 defines the exact lifecycle/reference rules and is now complete for reseller/item lifecycle plus new-transaction references.
+V2 prefers historical preservation for entities and financial entries. P1 applies this to reseller/item lifecycle; P2 applies it to transaction correction.
 
 ---
 
 ## D-008 — Runtime source of truth must be centralized over time
 
-**Status:** DIRECTION ACCEPTED; implementation scheduled for later phases  
+**Status:** DIRECTION ACCEPTED; implementation progressing by phase  
 **Date:** 2026-08-17
 
-### Decision
+Financial semantics such as balance, valid/reversed transaction treatment and statement totals should come from shared domain rules rather than independent screen calculations.
 
-Financial semantics such as balance, valid/reversed transaction treatment and statement totals should eventually come from shared domain rules rather than independent calculations scattered across screens.
+P2-S1 begins this centralization with shared effective/reversed transaction rules.
 
 ---
 
@@ -101,16 +87,7 @@ Financial semantics such as balance, valid/reversed transaction treatment and st
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
-For P1-S1:
-
-- reseller lifecycle is represented by `isActive`;
-- legacy reseller records default to active through V1 → V2 migration and backward-safe reads;
-- normal UI archives/reactivates;
-- inactive resellers remain historically discoverable but unavailable for new transactions;
-- transaction creation rejects inactive/missing resellers;
-- physical deletion is permitted only when no transaction references the reseller.
+For P1-S1, reseller lifecycle uses `isActive`, archive/reactivate is normal behavior, historical identity is retained, inactive/missing resellers are rejected for new activity, and physical deletion is allowed only without transaction references.
 
 ---
 
@@ -119,17 +96,7 @@ For P1-S1:
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Decision
-
-For P1-S2:
-
-- item lifecycle is represented by `isActive`;
-- legacy item records default to active through V2 → V3 migration and backward-safe reads;
-- normal catalog UI archives/reactivates;
-- inactive items remain visible but unavailable for new orders;
-- order creation rejects inactive/missing referenced items;
-- physical deletion is rejected whenever a transaction references the item;
-- historical transaction snapshots are not rewritten when catalog state changes.
+For P1-S2, item lifecycle uses `isActive`, archive/reactivate is normal behavior, inactive items remain traceable but unavailable for new orders, hard deletion is guarded, and historical transaction snapshots are preserved.
 
 ---
 
@@ -138,35 +105,65 @@ For P1-S2:
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
+For new transaction creation:
+
+- reseller reference must be positive/existing/active;
+- orders require a positive/existing/active item and derive the item-name snapshot from that identity;
+- payment/signal movements do not accept item references.
+
+Historical rows/migrations are preserved without destructive reference repair. P1 schema remains V3.
+
+---
+
+## D-012 — Financial correction uses audited reversal, not destructive deletion
+
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
+
 ### Decision
 
-P1-S3 closes the remaining runtime reference matrix without introducing a new Dexie schema version.
+P2-S1 establishes reversal as the first approved V2 financial-correction primitive.
 
-For **new transactions created through the transaction mutation**:
+For an existing transaction:
 
-- `resellerId` must be a positive integer resolving to an existing active reseller for `order`, `payment` and `signal`;
-- `order` must include a positive `itemId` resolving to an existing active item;
-- the `itemName` snapshot for a new order is derived from the resolved item identity so a stale/alternate caller cannot persist a mismatched item name;
-- `payment` and `signal` are reseller-level movements and must not carry `itemId` references;
-- invalid/missing/inactive references are rejected before persistence.
+- correction preserves the original transaction row and original business fields;
+- reversal metadata is stored in optional `transaction.reversal`;
+- `reversal.reason` is mandatory and non-empty;
+- `reversal.reversedAt` records the correction timestamp as an ISO string;
+- a transaction can be reversed only once;
+- a reversed transaction remains visible/auditable but has zero financial effect;
+- the old physical transaction-delete hook is no longer the normal correction mechanism.
 
-For **historical stored data and schema migration**:
+### Shared financial rule
 
-- V1 → V2 → V3 upgrades do not revalidate or rewrite transaction references/snapshots;
-- missing lifecycle fields become active according to the existing migrations/read rules, while explicit `false` state is preserved;
-- IDs, dates, transaction snapshots and valid lifecycle state must survive the complete P1 migration path;
-- an old order whose catalog reference no longer resolves is preserved when its stored snapshot still explains the order; P1 does not invent or destructively repair historical data.
+The P2-S1 domain rule is:
 
-### Rationale
+```text
+effective order           -> +totalPrice
+effective payment/signal  -> -totalPrice
+reversed transaction      -> 0
+```
 
-Creation-time integrity and historical compatibility have different responsibilities. New activity can be strict because current entities are available to validate. Old records may encode legitimate legacy history after past catalog deletion; rewriting those records would destroy evidence rather than improve integrity.
+That rule must be used consistently by reseller balances, dashboard metrics, search balances and other financial consumers as they are brought into P2.
+
+### Audit visibility
+
+- reseller history shows `Válido`/`Estornado` status;
+- reversal reason and timestamp remain visible;
+- PDF statements keep the original row and expose reversal status/reason;
+- reversing does not alter the transaction `createdAt`, because occurrence/registration semantics belong to P3.
+
+### Persistence rationale
+
+No Dexie V4 is introduced for P2-S1 because `reversal` is optional and non-indexed. The ISO timestamp is JSON-safe under the current backup serialization, avoiding unrelated P5 restore-hardening work.
+
+### Actor attribution boundary
+
+P2-S1 does not invent a user identity because Easy currently has no authenticated actor model and P4 has not decided local vs cloud/multi-user architecture. P2-S2 must document a future-ready attribution strategy while avoiding premature authentication/backend implementation.
 
 ### Scope boundary
 
-- no Dexie V4 is required because P1-S3 adds validation/coverage, not persistent fields;
-- deep backup schema/reference/duplicate validation remains P5;
-- transaction reversal/correction semantics remain P2;
-- date/statement semantics remain P3.
+P2-S1 does not yet link a reversed original to a replacement transaction. Wrong-value and wrong-reseller guided replacement/linkage belongs to P2-S2. P3 date/statement semantics, P5 backup validation and P6 global QA remain separate.
 
 ---
 
@@ -174,9 +171,10 @@ Creation-time integrity and historical compatibility have different responsibili
 
 These are intentionally **not decided yet**:
 
-- reversal/correction data model and first audited-correction slice (P2);
+- exact original/replacement linkage and guided correction model (P2-S2);
+- future actor-attribution strategy compatible with P4 (P2-S2/P4 boundary);
 - `occurredAt` and statement semantics (P3);
 - local vs cloud architecture (P4);
 - backup migration/version strategy details (P5);
-- preview/deployment architecture for V2 development (P6 or earlier operational setup if needed);
+- preview/deployment architecture and global QA gating (P6);
 - inventory, richer orders, users and other new modules (P8/P9).

@@ -30,6 +30,11 @@ export function isResellerActive(reseller: Pick<Reseller, 'isActive'>) {
 
 export type TransactionType = 'order' | 'payment' | 'signal';
 
+export interface TransactionReversal {
+    reason: string;
+    reversedAt: string;
+}
+
 export interface Transaction {
     id?: number;
     resellerId: number;
@@ -41,6 +46,8 @@ export interface Transaction {
     unitPrice?: number;
     totalPrice: number;
     observation?: string;
+    // Auditoria de correção. Ausente significa lançamento efetivo.
+    reversal?: TransactionReversal;
     // Comum
     createdAt: Date;
 }

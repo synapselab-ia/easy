@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified current architecture through completed P1  
+**Status:** verified current architecture through P2-S1  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
@@ -41,34 +41,28 @@ There is no application backend, remote database or authentication layer.
 - Vitest + Testing Library;
 - Playwright.
 
-Primary scripts:
-
-```text
-npm run dev
-npm run build
-npm run lint
-npm run test
-npm run preview
-```
+Primary scripts remain `npm run dev`, `build`, `lint`, `test` and `preview`.
 
 ## 3. Routing baseline
 
-`src/App.tsx` defines these routes under browser basename `/easy/`:
+Routes under browser basename `/easy/` remain:
 
 - `/` — Dashboard;
 - `/items` — Items;
 - `/resellers` — Resellers;
-- `/resellers/:id` — Reseller detail;
-- `/transactions` — Transactions/Lançamentos;
+- `/resellers/:id` — Reseller detail/history;
+- `/transactions` — New transaction entry;
 - `/backup` — Backup.
 
-## 4. Persistence model after P1
+P2-S1 does not add a new route; reversal is exposed from reseller transaction history.
+
+## 4. Persistence model
 
 Database name: `ResellerManagerDB`.
 
-Current Dexie schema version: **3**.
+Current Dexie schema version remains **3**.
 
-Tables:
+Tables remain:
 
 ```text
 items
@@ -76,43 +70,15 @@ resellers
 transactions
 ```
 
-Migration path:
+P1 migration path remains:
 
-- V1 → V2 materializes `reseller.isActive = true` only where lifecycle state is absent/non-boolean;
-- V2 → V3 materializes `item.isActive = true` only where lifecycle state is absent/non-boolean;
-- explicit `false` lifecycle state is preserved;
-- P1-S3 adds no persistent field and therefore no V4;
-- complete V1 → V2 → V3 tests verify preservation of IDs, dates, snapshots, row counts and lifecycle state.
+- V1 → V2 materializes missing reseller active state;
+- V2 → V3 materializes missing item active state;
+- explicit inactive state and historical transaction snapshots are preserved.
 
-### Item
+P2-S1 introduces no index/table/schema migration because reversal metadata is optional inside the transaction object.
 
-```text
-id?
-name
-basePrice
-isActive?
-createdAt
-updatedAt
-```
-
-`isActive !== false` is interpreted as active.
-
-### Reseller
-
-```text
-id?
-name
-phone?
-email?
-notes?
-isActive?
-createdAt
-updatedAt
-```
-
-`isActive !== false` is interpreted as active.
-
-### Transaction
+### Transaction after P2-S1
 
 ```text
 id?
@@ -124,147 +90,152 @@ quantity?
 unitPrice?
 totalPrice
 observation?
+reversal? {
+  reason
+  reversedAt   // ISO timestamp string
+}
 createdAt
 ```
 
-IndexedDB/Dexie has no relational foreign-key constraints. P1 therefore enforces current-activity reference integrity in application mutations while preserving legacy history in storage.
+`createdAt` remains the existing transaction date field. P2-S1 does not reinterpret it.
 
-## 5. P1 lifecycle and reference model
+## 5. P1 lifecycle/reference model
 
-### Resellers
+P1 remains unchanged:
 
-- new resellers default active;
-- archive/reactivate is the normal lifecycle;
-- inactive resellers remain historically discoverable;
-- inactive resellers are unavailable for new transactions;
-- hard deletion is rejected when any transaction references the reseller.
+- resellers/items use reversible active/inactive lifecycle;
+- referenced entities cannot be hard-deleted through guarded mutations;
+- new transactions require valid active references;
+- historical snapshots remain preserved.
 
-### Items
+## 6. P2-S1 correction model
 
-- new items default active;
-- archive/reactivate is the normal lifecycle;
-- inactive items remain visible in catalog/search;
-- inactive items are unavailable for new orders;
-- hard deletion is rejected when any transaction references the item;
-- historical order rendering uses stored snapshots rather than current catalog state.
+### Mutation boundary
 
-### New transaction reference acceptance matrix
+`useReverseTransaction` replaces physical transaction deletion as the approved correction primitive for this slice.
 
-All new transactions created through `useCreateTransaction` require:
+The mutation:
 
-```text
-resellerId -> positive integer -> existing reseller -> active reseller
-```
+1. validates transaction ID;
+2. requires a trimmed non-empty reason;
+3. loads the original transaction inside a Dexie write transaction;
+4. rejects an already reversed transaction;
+5. writes only `reversal.reason` and `reversal.reversedAt`;
+6. keeps original amount/type/item snapshot/observation/createdAt unchanged;
+7. invalidates transaction and dashboard query caches.
 
-Additional rules:
+### Shared domain rule
 
-```text
-order
-  -> requires positive itemId
-  -> item must exist and be active
-  -> itemName snapshot is derived from resolved item
-
-payment/signal
-  -> itemId is invalid
-  -> movement remains reseller-level
-```
-
-The mutation validates these rules below the UI so stale/alternate callers cannot bypass them.
-
-### Historical compatibility
-
-P1 migration deliberately does **not** revalidate or rewrite stored transactions.
-
-Consequences:
-
-- historical `itemName`, quantity, unit price, total price, observation and dates remain unchanged;
-- an old `itemId` that no longer resolves is preserved when the transaction snapshot still explains the order;
-- P1 does not invent a replacement catalog identity or delete old financial history;
-- deep validation/repair of imported malformed backup data remains P5.
-
-## 6. Financial model currently implemented
-
-At reseller level, balance semantics remain effectively:
+`src/domain/transactions.ts` centralizes the first P2 financial-effect semantics:
 
 ```text
-sum(order.totalPrice)
--
-sum(payment/signal.totalPrice)
-=
-balance
+isTransactionReversed(transaction)
+transactionSignedAmount(transaction)
+calculateBalance(transactions)
+effectiveTransactions(transactions)
 ```
 
-This calculation still exists in multiple surfaces. P2/P3 must avoid allowing reversal/date semantics to diverge between dashboard, detail, search and PDF.
+Financial sign/effect:
 
-## 7. Current correction behavior entering P2
+```text
+effective order          +totalPrice
+effective payment/signal -totalPrice
+reversed transaction      0
+```
 
-The data layer still contains `useDeleteTransaction`, which physically deletes a transaction.
+This rule avoids a reversed transaction being removed from history merely to remove its balance effect.
 
-This is **not** the approved V2 correction model. P2 must inventory every caller/dependency and design audited reversal/cancellation behavior that preserves the original entry.
+## 7. P2-S1 financial consumers
 
-P1 does not modify transaction deletion semantics because that would cross into P2.
+### Reseller detail/history
 
-## 8. Statement and date behavior
+- full history still contains reversed rows;
+- total and date-filtered balances use `calculateBalance`;
+- reversed rows display status, reason and reversal timestamp;
+- reversal UI is available only for effective rows.
 
-Transactions still have only `createdAt` as their date field.
+### Dashboard
 
-The reseller detail page filters by that field and computes period net movement rather than a formally defined opening → movement → closing statement.
+P2-S1 makes these metrics reversal-aware:
 
-P3 owns occurrence-date and statement semantics.
+- total debt;
+- today-order count/volume;
+- debt-aging balances/last effective movement;
+- performance revenue and debtor ranking.
 
-## 9. Backup architecture
+Reversal timestamp is **not** treated as a new financial occurrence date; P3 owns occurrence-date semantics.
 
-Backup export/import still serializes/reloads items, resellers and transactions with shallow structural validation.
+### Search
 
-Lifecycle fields present in records are preserved by object spread. Old records without lifecycle fields remain backward-safe as active at read time.
+Reseller search/recent balances use the shared reversal-aware balance calculation.
 
-Deep schema/reference/value validation, duplicate detection, restore preview and migration-version contracts remain P5.
+### PDF
 
-## 10. Search architecture
+PDF statements receive reversal-aware balance values from reseller detail while preserving every historical row.
 
-The global Command Center searches local Dexie data for resellers/items and calculates reseller balances in-browser.
+Rows now expose:
 
-After P1:
+- `Válido` or `Estornado` status;
+- original value/snapshot;
+- original observation;
+- reversal reason for reversed rows.
 
-- inactive resellers/items remain discoverable and labeled inactive;
-- inactive entities are not eligible for new financial/order activity;
-- item result navigation still has known UX limitations owned by P7.
+## 8. Backup compatibility boundary
+
+Current backup export serializes transaction objects recursively, so the optional `reversal` object and ISO string timestamp are naturally included.
+
+P2-S1 intentionally uses an ISO string for `reversedAt`, avoiding a new Date-rehydration rule solely for this metadata.
+
+This does **not** resolve P5: deep backup schema/reference/value/version validation, duplicate detection, restore preview and destructive-restore safeguards remain open.
+
+## 9. Correction limitations after P2-S1
+
+P2-S1 supports pure cancellation/reversal and allows an operator to manually create a correct new transaction afterward.
+
+Still missing:
+
+- explicit linkage from reversed original to replacement;
+- guided wrong-value replacement flow;
+- guided wrong-reseller replacement flow;
+- actor attribution strategy/model.
+
+These are P2-S2 concerns. The original transaction must not become editable in place merely to implement them.
+
+## 10. Date/statement boundary
+
+Transactions still have only `createdAt` for financial date semantics.
+
+P2-S1 adds `reversal.reversedAt` as an audit timestamp only. It must not be reused to redefine transaction occurrence or statement periods.
+
+Opening/period/closing balance semantics remain P3.
 
 ## 11. Testing baseline
 
-P1 targeted coverage now includes:
+P2-S1 targeted coverage includes:
 
-- V1 → V2 → V3 migration preservation;
-- reseller/item lifecycle and hard-delete guards;
-- inactive search visibility;
-- active-only transaction/order selection;
-- strict new-transaction reference matrix;
-- new-order snapshot derivation;
-- catalog/reseller integration regressions;
-- historical snapshot rendering;
+- shared transaction financial rules;
+- reversal mutation preservation/reason/timestamp/double-reversal guards;
+- reversal UI and visible audit metadata;
+- dashboard total/today/aging/performance consistency;
+- search balance consistency;
+- reseller-detail history/balance/PDF input consistency;
+- PDF reversal status/reason;
+- P1 migration/lifecycle/reference regressions;
 - production build.
 
-GitHub Actions P1-S3 gate: `32039763539` — PASS.
+GitHub Actions P2-S1 gate: `32041280504` — PASS.
 
-The repository-wide lint/unit/integration/E2E baseline still contains pre-existing debt outside targeted P1 scope. P6 owns full-suite reconciliation and CI hardening.
+Repository-wide lint/unit/integration/E2E debt remains outside this targeted gate and is owned by P6.
 
 ## 12. Deployment baseline
 
-`.github/workflows/deploy.yml` still builds/deploys from `main` with Node 22 and does not require the full quality suite before publication.
+GitHub Pages deployment still builds/deploys from `main` without requiring the full quality suite. P6 owns deployment gating.
 
-P6 owns deployment gating.
+## 13. Architectural constraints entering P2-S2
 
-## 13. Architectural constraints entering P2
-
-Until P4:
-
-- Dexie/IndexedDB remains the persistence baseline;
+- Dexie/IndexedDB remains the persistence baseline until P4;
 - do not introduce backend/authentication by assumption;
-- do not redesign around multi-user behavior before requirements are known.
-
-For P2 specifically:
-
-- preserve original financial entries during correction;
-- do not silently delete history as the normal correction mechanism;
-- do not change P3 date/statement semantics while implementing reversal/cancellation;
-- ensure future correction status can be consumed consistently by balance/dashboard/search/PDF logic.
+- preserve original/reversed transactions;
+- any replacement linkage must be additive/auditable, not in-place mutation of history;
+- do not alter P3 date/statement semantics;
+- actor attribution strategy may be designed, but actual identity/auth architecture must remain compatible with the later P4 decision.
