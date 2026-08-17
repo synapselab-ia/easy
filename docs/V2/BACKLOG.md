@@ -121,6 +121,8 @@ From a reseller detail page the operator must navigate to the transaction page a
 
 Current evidence does not establish enough operational impact to outrank the ranked gaps.
 
+Validation: persistent Critical QA run **`32066802100` — PASS** on the canonical P7-S1 content head before validation evidence was appended.
+
 P7-S1 gate: **PASS / DONE as evidence/prioritization work; no runtime behavior changed.** D-019 still requires Critical QA before integration.
 
 ### P7-S2 — Reliable transaction-entry intent and feedback
