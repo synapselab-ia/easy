@@ -4,77 +4,73 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
-## 2026-08-17 — P2-S2 linked/guided correction and P2 closure
+## 2026-08-17 — P3-S1 occurrence-date model
 
 ### Added
 
-- bidirectional correction linkage between reversed original and replacement;
-- atomic `useReplaceTransaction` for reversal + replacement in one Dexie write transaction;
-- guided `Corrigir` flow for wrong-value and wrong-reseller cases;
-- order correction preserving original type/item/observation and recomputing total from quantity × unit price;
-- sanitization preventing normal transaction creation from forging audit metadata;
-- history/PDF display of both linkage directions;
-- provider-neutral future actor-attribution strategy without auth/backend implementation.
+- financial `occurredAt` on transactions, distinct from registration/audit `createdAt`;
+- Dexie V4 with `occurredAt` index and backward-safe V3 → V4 migration;
+- canonical `transactionOccurredAt()` legacy-read fallback;
+- transaction-entry financial date field;
+- focused P3-S1 migration, mutation, form, dashboard, history, reseller-filter, PDF and backup tests;
+- D-014 defining financial occurrence versus audit timestamps.
 
 ### Changed
 
-- replacement creation keeps P1 active-reference validation;
-- invalid replacement rolls the whole operation back;
-- reversed original contributes zero and only the effective replacement contributes financially;
-- Dexie remains V3 because linkage metadata is optional/non-indexed;
-- P2 moved from `IN_PROGRESS` to `DONE`.
+- new transaction `createdAt` is generated internally rather than supplied by the supported UI;
+- linked P2 correction preserves original financial occurrence while replacement registration and reversal timestamps remain separate audit events;
+- history sorting/display, reseller date-range filtering, PDF filtering/display, today-order metrics, current aging and performance windows use occurrence date;
+- legacy backup restore materializes missing occurrence from `createdAt` while preserving explicit occurrence;
+- Dexie current schema moved from V3 to V4;
+- P3 moved from `NOT_STARTED` to `IN_PROGRESS`; P3-S1 is `DONE`.
 
 ### QA
 
-- final P2-S2 gate, P2/P1 regressions and build passed in run `32042373332`;
-- earlier run `32042303986` stopped only on two split-DOM-text test assertions, corrected before the complete green gate;
+- targeted P3-S1 gate, P1/P2 regressions and build passed in GitHub Actions run `32052076684`;
 - repository-wide QA debt remains P6.
+
+### Scope unchanged
+
+- opening balance → movements → closing balance semantics were not implemented;
+- the existing last-effective-movement aging model was not accepted/replaced;
+- backend/auth/persistence architecture remains P4;
+- deep backup hardening remains P5;
+- global CI cleanup remains P6.
 
 ### Canonical state
 
-- P2-S1 `DONE`;
-- P2-S2 `DONE`;
-- P2 `DONE`;
-- D-013 records atomic linkage and future actor strategy;
-- `NEXT_ACTION` advances to P3-S1 — occurrence-date model and backward-safe migration.
+- D-014 accepted;
+- P3-S1 `DONE`;
+- P3 `IN_PROGRESS`;
+- `NEXT_ACTION` advances to P3-S2 — statement and balance-period semantics.
 
 ---
+
+## 2026-08-17 — P2-S2 linked/guided correction and P2 closure
+
+- atomic linked replacement, guided wrong-value/wrong-reseller correction and bidirectional audit linkage;
+- P2 closed; validation run `32042373332`.
 
 ## 2026-08-17 — P2-S1 audited transaction reversal
 
-- added mandatory reversal reason/timestamp, shared effective/reversed financial rules and `useReverseTransaction`;
-- reversed rows remain visible but financially neutral across reseller balance, dashboard, search and PDF;
-- targeted gate/P1 regressions/build passed in run `32041280504`;
-- P2 advanced to `IN_PROGRESS`.
-
----
+- mandatory reversal reason/timestamp, shared effective/reversed financial rules and visible history/PDF audit status;
+- validation run `32041280504`.
 
 ## 2026-08-17 — P1-S3 referential validation and P1 closure
 
-- strict new-transaction reference matrix and canonical order-item snapshot derivation;
-- complete V1 → V2 → V3 preservation coverage without destructive historical repair;
-- gate/build passed in run `32039763539`;
-- P1 closed.
-
----
+- strict new-reference matrix and complete V1 → V2 → V3 preservation coverage;
+- validation run `32039763539`.
 
 ## 2026-08-17 — P1-S2 safe item lifecycle
 
-- item active/inactive lifecycle, Dexie V3 migration, guarded deletion, active-only new orders and historical snapshot preservation;
-- gate/build passed in run `32038951903`.
-
----
+- item lifecycle, Dexie V3 migration, guarded deletion and historical snapshot preservation;
+- validation run `32038951903`.
 
 ## 2026-08-17 — P1-S1 safe reseller lifecycle
 
-- reseller active/inactive lifecycle, Dexie V2 migration, guarded deletion, active-only new transactions and preserved historical attribution;
-- gate/build passed in run `32037965651`.
-
----
+- reseller lifecycle, Dexie V2 migration, guarded deletion and active-only new transactions;
+- validation run `32037965651`.
 
 ## 2026-08-17 — P0 governance and state reconstruction
 
-- canonical V2 specification, architecture, backlog, decisions, QA ledger and status established;
-- `synapselab-ia/easy` designated V2 laboratory;
-- `main` stable reference, `develop` integration and `feature/*` isolated work;
-- no runtime impact.
+- canonical V2 documents/branch roles established in `synapselab-ia/easy`; no runtime impact.
