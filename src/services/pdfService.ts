@@ -51,6 +51,12 @@ export function generateResellerExtract(
         const notes = [
             t.observation,
             reversed ? `Motivo do estorno: ${t.reversal?.reason}` : undefined,
+            t.reversal?.replacementTransactionId
+                ? `Substituído pelo lançamento #${t.reversal.replacementTransactionId}`
+                : undefined,
+            t.correction?.replacesTransactionId
+                ? `Correção do lançamento #${t.correction.replacesTransactionId}`
+                : undefined,
         ].filter(Boolean).join(' | ') || '-';
 
         return [
