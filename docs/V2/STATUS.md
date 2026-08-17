@@ -3,15 +3,14 @@
 **Updated:** 2026-08-17  
 **Repository:** `synapselab-ia/easy`  
 **Stable baseline:** `main`  
-**Integration branch:** `develop`  
-**Current work branch:** `feature/p0-documentacao`
+**Integration branch:** `develop`
 
 ## Current phase
 
 **P0 — State and governance**  
-**State:** `IN_REVIEW`
+**State:** `DONE`
 
-P0 documentation has been created on the feature branch and must be reviewed for consistency before integration into `develop`.
+The P0 documentation set has been created and reviewed against the verified `develop` baseline. The P0 PR contains documentation under `docs/V2/` only and no runtime, database-schema, UI or deployment changes.
 
 ## Startup protocol for a new conversation
 
@@ -53,43 +52,42 @@ Easy currently is a browser-only reseller/order/payment management SPA with:
 7. Some E2E expectations are stale.
 8. Production deployment is not gated by the full quality suite.
 
-## Constraints right now
-
-Until P0 is integrated:
-
-- do not change runtime behavior;
-- do not change database schema;
-- do not redesign UI;
-- do not introduce Supabase/backend/authentication;
-- do not implement P1 prematurely;
-- do not develop on `main`;
-- do not modify the original `viniciuscasarin/easy` repository.
-
-## Current P0 completion checklist
+## P0 completion evidence
 
 - [x] V2 repository established.
 - [x] `develop` integration branch established.
-- [x] P0 feature branch established.
+- [x] Feature-branch workflow established.
 - [x] Project spec written.
-- [x] Architecture baseline written.
+- [x] Architecture baseline written from inspected source.
 - [x] Canonical backlog written.
 - [x] Decision ledger written.
 - [x] QA ledger written.
 - [x] Changelog initialized.
-- [x] Canonical status written.
-- [ ] Review documentation diff against verified baseline.
-- [ ] Integrate approved P0 documentation into `develop`.
+- [x] Canonical startup/status protocol written.
+- [x] PR changed-file review confirms documentation-only scope.
+
+## Active constraints entering P1
+
+- do not work directly on `main`;
+- do not modify the original `viniciuscasarin/easy` repository;
+- do not introduce Supabase/backend/authentication before P4;
+- do not redesign unrelated UI during P1;
+- do not implement transaction reversal yet — that belongs to P2;
+- do not change financial date/statement semantics yet — that belongs to P3;
+- preserve existing valid data through any P1 schema migration;
+- add tests with P1 behavior changes rather than postponing all testing to P6.
 
 ## NEXT_ACTION
 
-**Review the complete `feature/p0-documentacao` diff against `develop`. If it contains only accurate V2 governance/documentation changes and no runtime modification, update this status to mark P0 `DONE`, set P1-S1 as the next action, and merge the P0 PR into `develop`.**
+**P1-S1 — Safe reseller lifecycle. Create a new feature branch from `develop`, inspect every current reseller deletion/selection/search/detail dependency, define the exact active/inactive/archive behavior and acceptance criteria, then implement only the reseller-lifecycle slice with migration and tests. Do not implement P1-S2 or P1-S3 beyond what P1-S1 strictly requires.**
 
-## Stop conditions
+## P1-S1 completion target
 
-Stop and do not integrate if the P0 diff:
+P1-S1 is not complete until:
 
-- modifies application/runtime source;
-- modifies database schema;
-- changes deployment behavior;
-- asserts an unverified business requirement as fact;
-- marks an unresolved architecture candidate as already decided.
+- a reseller with financial history cannot be destructively removed through the normal UI;
+- historical transactions remain attributable to that reseller;
+- inactive/archived reseller behavior is defined for list, search, new transactions and detail/history;
+- existing reseller data receives a safe default lifecycle state through migration;
+- automated tests cover the lifecycle rule and migration;
+- V2 documentation is updated with the implemented behavior and next action.
