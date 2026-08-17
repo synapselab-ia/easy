@@ -151,9 +151,11 @@ Evidence: reseller detail has the reseller context, but no launch action/prefill
 
 P7-S1 does not classify broad visual redesign, dashboard rearrangement, theme/branding changes, table-density preferences or speculative catalog search as QA/UX gaps without stronger evidence of operational impact.
 
-### P7-S1 validation policy
+### P7-S1 validation
 
-Because P7-S1 changes documentation only, it makes no new runtime test claim. D-019 still requires the persistent `qa:critical` workflow to pass on the PR head before integration. No test/workflow weakening is permitted to integrate the documentation change.
+Persistent Critical QA run **`32066802100`**, job `95500700733` — **PASS** on the canonical P7-S1 content head before this evidence line was appended.
+
+Because P7-S1 changes documentation only, it makes no new runtime test claim. D-019 still requires the persistent `qa:critical` workflow to pass on the final PR head before integration. No test/workflow weakening is permitted to integrate the documentation change.
 
 ## Known baseline QA gaps
 
