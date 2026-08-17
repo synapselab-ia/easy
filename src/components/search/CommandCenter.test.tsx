@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest'
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import { CommandCenter } from './CommandCenter'
 import { MemoryRouter } from 'react-router-dom'
 import * as searchHook from '@/hooks/useSearch'
@@ -48,6 +48,11 @@ describe('CommandCenter', () => {
             recent: [],
             isLoading: false,
         })
+    })
+
+    afterEach(() => {
+        cleanup()
+        document.body.innerHTML = ''
     })
 
     it('should render basic structure when open', () => {
