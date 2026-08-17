@@ -8,6 +8,10 @@ import ResellersPage from './ResellersPage';
 import ResellerDetailPage from './ResellerDetailPage';
 import { db } from '../db/database';
 
+vi.mock('@/hooks/use-media-query', () => ({
+    useMediaQuery: () => true,
+}));
+
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
