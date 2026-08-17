@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  e2e-diagnostic:
+  diagnostic:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,5 +24,32 @@ jobs:
         run: npm ci
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run E2E diagnostic
+      - name: Lint diagnostic
+        id: lint
+        continue-on-error: true
+        run: npm run lint
+      - name: Vitest diagnostic
+        id: vitest
+        continue-on-error: true
+        run: npx vitest run
+      - name: E2E diagnostic
+        id: e2e
+        continue-on-error: true
         run: npx playwright test --retries=0 --workers=4 --timeout=10000 --reporter=line
+      - name: Build diagnostic
+        id: build
+        continue-on-error: true
+        run: npm run build
+      - name: Report baseline outcomes
+        if: always()
+        run: |
+          echo "lint=${{ steps.lint.outcome }}"
+          echo "vitest=${{ steps.vitest.outcome }}"
+          echo "e2e=${{ steps.e2e.outcome }}"
+          echo "build=${{ steps.build.outcome }}"
+          if [ "${{ steps.lint.outcome }}" != "success" ] || \
+             [ "${{ steps.vitest.outcome }}" != "success" ] || \
+             [ "${{ steps.e2e.outcome }}" != "success" ] || \
+             [ "${{ steps.build.outcome }}" != "success" ]; then
+            exit 1
+          fi
