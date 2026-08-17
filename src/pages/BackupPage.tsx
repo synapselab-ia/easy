@@ -1,4 +1,3 @@
-// src/pages/BackupPage.tsx
 import ImportExport from '@/components/backup/ImportExport';
 
 export default function BackupPage() {
@@ -8,7 +7,8 @@ export default function BackupPage() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Backup &amp; Restore</h1>
                     <p className="text-muted-foreground">
-                        Use os botões abaixo para exportar os dados atuais para um arquivo JSON ou importar um backup anterior.
+                        Exporte o dataset atual no formato versionado ou valide um backup antes da futura restauração.
+                        O preflight desta etapa não substitui os dados atuais.
                     </p>
                 </div>
                 <div className="bg-card rounded-xl border p-4 sm:p-6">
@@ -18,4 +18,3 @@ export default function BackupPage() {
         </div>
     );
 }
-
