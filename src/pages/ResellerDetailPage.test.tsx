@@ -113,15 +113,10 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
 
     it('calls generateResellerExtract when PDF button is clicked (sem filtro)', () => {
         vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
-        vi.mocked(useTransactions).mockReturnValue({
-            data: [],
-            isLoading: false
-        } as any);
+        vi.mocked(useTransactions).mockReturnValue({ data: [], isLoading: false } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
-
-        const btn = screen.getByText('Gerar PDF');
-        fireEvent.click(btn);
+        fireEvent.click(screen.getByText('Gerar PDF'));
 
         expect(generateResellerExtract).toHaveBeenCalledWith(mockReseller, [], 0);
     });
@@ -152,11 +147,8 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         vi.mocked(useTransactions).mockReturnValue({ data: [], isLoading: false } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
-
         fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-01-01' } });
-
-        const btn = screen.getByText('Gerar PDF');
-        expect(btn).toBeDisabled();
+        expect(screen.getByText('Gerar PDF')).toBeDisabled();
     });
 
     it('desabilita o botão quando apenas endDate é preenchida', () => {
@@ -164,11 +156,8 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         vi.mocked(useTransactions).mockReturnValue({ data: [], isLoading: false } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
-
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-03-31' } });
-
-        const btn = screen.getByText('Gerar PDF');
-        expect(btn).toBeDisabled();
+        expect(screen.getByText('Gerar PDF')).toBeDisabled();
     });
 
     it('habilita o botão quando ambas as datas são preenchidas', () => {
@@ -176,12 +165,9 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         vi.mocked(useTransactions).mockReturnValue({ data: [], isLoading: false } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
-
         fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-01-01' } });
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-03-31' } });
-
-        const btn = screen.getByText('Gerar PDF');
-        expect(btn).not.toBeDisabled();
+        expect(screen.getByText('Gerar PDF')).not.toBeDisabled();
     });
 
     it('exibe toast.error quando dataFim é anterior a dataInicio e não gera PDF', () => {
@@ -192,7 +178,6 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
-
         fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-03-01' } });
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-01-01' } });
         fireEvent.click(screen.getByText('Gerar PDF'));
@@ -201,7 +186,7 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         expect(generateResellerExtract).not.toHaveBeenCalled();
     });
 
-    it('exibe toast.warning quando período não tem transações e não gera PDF', () => {
+    it('gera extrato formal quando o período não tem movimentações', () => {
         vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
         vi.mocked(useTransactions).mockReturnValue({
             data: [{ id: 1, resellerId: 1, type: 'order', totalPrice: 100, createdAt: new Date('2024-06-01') }],
@@ -209,16 +194,24 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
-
         fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-01-01' } });
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-03-31' } });
         fireEvent.click(screen.getByText('Gerar PDF'));
 
-        expect(toast.warning).toHaveBeenCalled();
-        expect(generateResellerExtract).not.toHaveBeenCalled();
+        expect(toast.warning).not.toHaveBeenCalled();
+        expect(generateResellerExtract).toHaveBeenCalledWith(
+            mockReseller,
+            expect.any(Array),
+            expect.objectContaining({
+                openingBalance: 100,
+                periodMovement: 0,
+                closingBalance: 100,
+                movements: [],
+            }),
+        );
     });
 
-    it('chama generateResellerExtract com dateRange correto quando período válido com transações', () => {
+    it('chama generateResellerExtract com o statement formal quando o período é válido', () => {
         const transactionDate = new Date('2025-02-15T10:00:00');
         vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
         vi.mocked(useTransactions).mockReturnValue({
@@ -227,7 +220,6 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
-
         fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-01-01' } });
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-03-31' } });
         fireEvent.click(screen.getByText('Gerar PDF'));
@@ -235,11 +227,16 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         expect(generateResellerExtract).toHaveBeenCalledWith(
             mockReseller,
             [expect.objectContaining({ id: 1 })],
-            100,
             expect.objectContaining({
-                startDate: expect.any(Date),
-                endDate: expect.any(Date),
-            })
+                openingBalance: 0,
+                periodMovement: 100,
+                closingBalance: 100,
+                movements: [expect.objectContaining({ id: 1 })],
+                range: expect.objectContaining({
+                    startDate: expect.any(Date),
+                    endDate: expect.any(Date),
+                }),
+            }),
         );
     });
 });

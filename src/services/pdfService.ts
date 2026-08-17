@@ -1,21 +1,28 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { type Reseller, type Transaction } from '../db/database';
-import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
+import {
+    isTransactionReversed,
+    transactionOccurredAt,
+    type StatementPeriod,
+    type StatementRange,
+} from '../domain/transactions';
 
-export interface DateRange {
-    startDate: Date;
-    endDate: Date;
-}
+export type DateRange = StatementRange;
 
 export function generateResellerExtract(
     reseller: Reseller,
     transactions: Transaction[],
-    balance: number,
-    dateRange?: DateRange
+    balanceOrStatement: number | StatementPeriod,
+    legacyDateRange?: DateRange
 ) {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const statement = typeof balanceOrStatement === 'number' ? undefined : balanceOrStatement;
+    const dateRange = statement?.range ?? legacyDateRange;
+    const closingBalance = typeof balanceOrStatement === 'number'
+        ? balanceOrStatement
+        : balanceOrStatement.closingBalance;
 
     doc.setFont('helvetica');
 
@@ -28,26 +35,44 @@ export function generateResellerExtract(
     doc.text(`Telefone: ${reseller.phone || '-'}`, 14, 48);
     doc.text(`Email: ${reseller.email || '-'}`, 14, 56);
 
-    let saldoY = 70;
+    let tableStartY = 80;
+
     if (dateRange) {
         const fmt = (d: Date) => d.toLocaleDateString('pt-BR');
         const periodoText = `Período: ${fmt(dateRange.startDate)} a ${fmt(dateRange.endDate)}`;
         doc.setFontSize(11);
         doc.setTextColor(100, 100, 100);
         doc.text(periodoText, 14, 64);
-        saldoY = 76;
-    }
-    const balanceText = `Saldo Devedor${dateRange ? ' do Período' : ' Atual'}: R$ ${balance.toFixed(2)}`;
-    const balanceColor = balance > 0 ? [220, 38, 38] : [22, 163, 74];
-    doc.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
-    doc.text(balanceText, 14, saldoY);
 
-    const filtered = dateRange
-        ? transactions.filter(transaction => {
-            const occurredAt = transactionOccurredAt(transaction);
-            return occurredAt >= dateRange.startDate && occurredAt <= dateRange.endDate;
-        })
-        : transactions;
+        if (statement) {
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Saldo inicial: R$ ${statement.openingBalance.toFixed(2)}`, 14, 76);
+            doc.text(`Movimentos do período: R$ ${statement.periodMovement.toFixed(2)}`, 14, 84);
+
+            const closingColor = statement.closingBalance > 0 ? [220, 38, 38] : [22, 163, 74];
+            doc.setTextColor(closingColor[0], closingColor[1], closingColor[2]);
+            doc.text(`Saldo final: R$ ${statement.closingBalance.toFixed(2)}`, 14, 92);
+            tableStartY = 102;
+        } else {
+            const balanceColor = closingBalance > 0 ? [220, 38, 38] : [22, 163, 74];
+            doc.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
+            doc.text(`Saldo Devedor do Período: R$ ${closingBalance.toFixed(2)}`, 14, 76);
+        }
+    } else {
+        const balanceColor = closingBalance > 0 ? [220, 38, 38] : [22, 163, 74];
+        doc.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
+        doc.text(`Saldo Devedor Atual: R$ ${closingBalance.toFixed(2)}`, 14, 70);
+    }
+
+    const filtered = statement
+        ? statement.movements
+        : dateRange
+            ? transactions.filter(transaction => {
+                const occurredAt = transactionOccurredAt(transaction);
+                return occurredAt >= dateRange.startDate && occurredAt <= dateRange.endDate;
+            })
+            : transactions;
 
     const tableData = filtered.map(t => {
         const reversed = isTransactionReversed(t);
@@ -74,7 +99,7 @@ export function generateResellerExtract(
     });
 
     autoTable(doc, {
-        startY: 80,
+        startY: tableStartY,
         head: [['Data', 'Tipo', 'Item', 'Qtd', 'Valor', 'Status', 'Observação']],
         body: tableData,
         didParseCell: function (data) {

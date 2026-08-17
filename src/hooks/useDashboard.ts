@@ -1,7 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { db } from '../db/database';
-import { calculateBalance, effectiveTransactions, transactionOccurredAt } from '../domain/transactions';
-import { differenceInDays, subDays } from 'date-fns';
+import { db, type Transaction } from '../db/database';
+import {
+    calculateOutstandingDebtLots,
+    calculateTotalDebt,
+    debtAgeCategory,
+    effectiveTransactions,
+    transactionOccurredAt,
+    transactionSignedAmount,
+} from '../domain/transactions';
+import { subDays } from 'date-fns';
 
 export interface AgingData {
     category: 'recent' | 'attention' | 'critical';
@@ -14,7 +21,13 @@ export interface AgingData {
 export interface CriticalReseller {
     id: number;
     name: string;
+    /** Amount outstanding in the alert bucket. */
     balance: number;
+    /** Entire positive outstanding balance for the reseller. */
+    totalBalance: number;
+    /** Oldest still-open order occurrence represented by this alert. */
+    oldestOutstandingAt: Date;
+    /** Backward-compatible alias for P3-S1 consumers; semantics now mean oldest open debt. */
     lastMovement: Date;
 }
 
@@ -46,7 +59,7 @@ export type AnalysisPeriod = 90 | 180 | 360;
 export function useTotalDebt() {
     return useQuery({
         queryKey: ['dashboard', 'total-debt'],
-        queryFn: async () => calculateBalance(await db.transactions.toArray()),
+        queryFn: async () => calculateTotalDebt(await db.transactions.toArray()),
     });
 }
 
@@ -65,7 +78,6 @@ export function useTodayOrders() {
             });
 
             const todayOrders = transactions.filter(t => t.type === 'order');
-
             const totalVolume = todayOrders.reduce((sum, current) => sum + current.totalPrice, 0);
 
             return {
@@ -81,93 +93,90 @@ export function useDebtAging() {
         queryKey: ['dashboard', 'debt-aging'],
         queryFn: async (): Promise<DebtAgingResult> => {
             const resellers = await db.resellers.toArray();
-            const transactions = effectiveTransactions(await db.transactions.toArray());
-
-            const resellerMap = new Map<number, { name: string; balance: number; lastDate: Date | null }>();
-
-            resellers.forEach(r => {
-                if (r.id) {
-                    resellerMap.set(r.id, { name: r.name, balance: 0, lastDate: null });
-                }
-            });
-
-            transactions.forEach(t => {
-                const data = resellerMap.get(t.resellerId);
-                if (data) {
-                    if (t.type === 'order') {
-                        data.balance += t.totalPrice;
-                    } else {
-                        data.balance -= t.totalPrice;
-                    }
-
-                    const occurredAt = transactionOccurredAt(t);
-                    if (!data.lastDate || occurredAt > data.lastDate) {
-                        data.lastDate = occurredAt;
-                    }
-                }
-            });
-
+            const transactions = await db.transactions.toArray();
             const now = new Date();
-            let totalDebt = 0;
-            const buckets: Record<string, number> = {
+
+            const transactionsByReseller = new Map<number, Transaction[]>();
+            transactions.forEach(transaction => {
+                const resellerTransactions = transactionsByReseller.get(transaction.resellerId) || [];
+                resellerTransactions.push(transaction);
+                transactionsByReseller.set(transaction.resellerId, resellerTransactions);
+            });
+
+            const buckets: Record<'recent' | 'attention' | 'critical', number> = {
                 recent: 0,
                 attention: 0,
-                critical: 0
+                critical: 0,
             };
-
+            let totalDebt = 0;
             const criticalResellersList: CriticalReseller[] = [];
             const attentionResellersList: CriticalReseller[] = [];
 
-            resellerMap.forEach((data, id) => {
-                if (data.balance > 0.01) {
-                    totalDebt += data.balance;
+            resellers.forEach(reseller => {
+                if (!reseller.id) return;
 
-                    let category: 'recent' | 'attention' | 'critical';
+                const lots = calculateOutstandingDebtLots(transactionsByReseller.get(reseller.id) || []);
+                const totalBalance = lots.reduce((sum, lot) => sum + lot.amount, 0);
+                if (totalBalance <= 0.01) return;
 
-                    if (!data.lastDate) {
-                        category = 'critical';
-                    } else {
-                        const days = differenceInDays(now, data.lastDate);
-                        if (days < 7) {
-                            category = 'recent';
-                        } else if (days <= 30) {
-                            category = 'attention';
-                        } else {
-                            category = 'critical';
-                        }
-                    }
+                totalDebt += totalBalance;
 
-                    buckets[category] += data.balance;
+                let criticalAmount = 0;
+                let attentionAmount = 0;
+                let oldestCritical: Date | null = null;
+                let oldestAttention: Date | null = null;
+
+                lots.forEach(lot => {
+                    const category = debtAgeCategory(lot.occurredAt, now);
+                    buckets[category] += lot.amount;
 
                     if (category === 'critical') {
-                        criticalResellersList.push({
-                            id,
-                            name: data.name,
-                            balance: data.balance,
-                            lastMovement: data.lastDate || new Date(0)
-                        });
+                        criticalAmount += lot.amount;
+                        if (!oldestCritical || lot.occurredAt < oldestCritical) {
+                            oldestCritical = lot.occurredAt;
+                        }
                     } else if (category === 'attention') {
-                        attentionResellersList.push({
-                            id,
-                            name: data.name,
-                            balance: data.balance,
-                            lastMovement: data.lastDate || new Date(0)
-                        });
+                        attentionAmount += lot.amount;
+                        if (!oldestAttention || lot.occurredAt < oldestAttention) {
+                            oldestAttention = lot.occurredAt;
+                        }
                     }
+                });
+
+                if (criticalAmount > 0.01 && oldestCritical) {
+                    criticalResellersList.push({
+                        id: reseller.id,
+                        name: reseller.name,
+                        balance: criticalAmount,
+                        totalBalance,
+                        oldestOutstandingAt: oldestCritical,
+                        lastMovement: oldestCritical,
+                    });
+                }
+
+                if (attentionAmount > 0.01 && oldestAttention) {
+                    attentionResellersList.push({
+                        id: reseller.id,
+                        name: reseller.name,
+                        balance: attentionAmount,
+                        totalBalance,
+                        oldestOutstandingAt: oldestAttention,
+                        lastMovement: oldestAttention,
+                    });
                 }
             });
 
             const resultBuckets: AgingData[] = [
                 {
                     category: 'recent',
-                    label: 'Recente (< 7d)',
+                    label: 'Recente (0–6d)',
                     value: buckets.recent,
                     percentage: totalDebt > 0 ? (buckets.recent / totalDebt) * 100 : 0,
                     color: '#22c55e'
                 },
                 {
                     category: 'attention',
-                    label: 'Em Atenção (8-30d)',
+                    label: 'Em Atenção (7–30d)',
                     value: buckets.attention,
                     percentage: totalDebt > 0 ? (buckets.attention / totalDebt) * 100 : 0,
                     color: '#eab308'
@@ -214,11 +223,7 @@ export function usePerformanceAnalysis(days: AnalysisPeriod) {
             transactions.forEach(t => {
                 const data = resellerMap.get(t.resellerId);
                 if (data) {
-                    if (t.type === 'order') {
-                        data.balance += t.totalPrice;
-                    } else {
-                        data.balance -= t.totalPrice;
-                    }
+                    data.balance += transactionSignedAmount(t);
 
                     if (t.type === 'order' && transactionOccurredAt(t) >= startDate) {
                         data.revenue += t.totalPrice;

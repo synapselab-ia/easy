@@ -71,9 +71,14 @@ describe('P3-S1 reseller period filtering', () => {
 
         expect(generateResellerExtract).toHaveBeenCalledWith(
             expect.objectContaining({ id: 1 }),
-            [expect.objectContaining({ id: 2 })],
-            -40,
-            expect.objectContaining({ startDate: expect.any(Date), endDate: expect.any(Date) }),
+            expect.any(Array),
+            expect.objectContaining({
+                openingBalance: 0,
+                periodMovement: -40,
+                closingBalance: -40,
+                movements: [expect.objectContaining({ id: 2 })],
+                range: expect.objectContaining({ startDate: expect.any(Date), endDate: expect.any(Date) }),
+            }),
         );
     });
 });

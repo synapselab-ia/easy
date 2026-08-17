@@ -12,7 +12,15 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { isResellerActive } from '../db/database';
-import { calculateBalance, transactionOccurredAt } from '../domain/transactions';
+import {
+    buildStatementPeriod,
+    calculateBalance,
+    transactionOccurredAt,
+} from '../domain/transactions';
+
+function formatBalance(value: number) {
+    return `R$ ${value.toFixed(2)}`;
+}
 
 export default function ResellerDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -43,21 +51,17 @@ export default function ResellerDetailPage() {
     const isFilterComplete = dateFilter.startDate !== '' && dateFilter.endDate !== '';
     const isPdfButtonDisabled = hasFilter && !isFilterComplete;
 
-    const displayedTransactions = useMemo(() => {
-        if (!isFilterComplete) return transactions;
+    const periodStatement = useMemo(() => {
+        if (!isFilterComplete) return null;
+
         const startDate = new Date(dateFilter.startDate + 'T00:00:00');
         const endDate = new Date(dateFilter.endDate + 'T23:59:59.999');
-        if (startDate > endDate) return transactions;
-        return transactions.filter(t => {
-            const occurredAt = transactionOccurredAt(t);
-            return occurredAt >= startDate && occurredAt <= endDate;
-        });
+        if (startDate > endDate) return null;
+
+        return buildStatementPeriod(transactions, { startDate, endDate });
     }, [transactions, isFilterComplete, dateFilter.startDate, dateFilter.endDate]);
 
-    const displayedBalance = useMemo(
-        () => calculateBalance(displayedTransactions),
-        [displayedTransactions]
-    );
+    const displayedTransactions = periodStatement?.movements ?? transactions;
 
     const isLoading = isLoadingReseller || isLoadingTransactions;
 
@@ -81,8 +85,6 @@ export default function ResellerDetailPage() {
     const resellerActive = isResellerActive(reseller);
 
     const handleGeneratePDF = () => {
-        if (!transactions) return;
-
         if (isFilterComplete) {
             const startDate = new Date(dateFilter.startDate + 'T00:00:00');
             const endDate = new Date(dateFilter.endDate + 'T23:59:59.999');
@@ -92,20 +94,12 @@ export default function ResellerDetailPage() {
                 return;
             }
 
-            const filtered = transactions.filter(t => {
-                const occurredAt = transactionOccurredAt(t);
-                return occurredAt >= startDate && occurredAt <= endDate;
-            });
-
-            if (filtered.length === 0) {
-                toast.warning('Nenhuma transação encontrada no período selecionado.');
-                return;
-            }
-
-            generateResellerExtract(reseller, filtered, calculateBalance(filtered), { startDate, endDate });
-        } else {
-            generateResellerExtract(reseller, transactions, balance);
+            const statement = buildStatementPeriod(transactions, { startDate, endDate });
+            generateResellerExtract(reseller, transactions, statement);
+            return;
         }
+
+        generateResellerExtract(reseller, transactions, balance);
     };
 
     return (
@@ -191,34 +185,53 @@ export default function ResellerDetailPage() {
                     </CardContent>
                 </Card>
 
-                <Card className={displayedBalance > 0 ? "border-debt/20 bg-debt/5" : "border-payment/20 bg-payment/5"}>
-                    <CardHeader>
-                        <CardTitle className="text-lg text-center md:text-left">
-                            {isFilterComplete ? 'Saldo do Período' : 'Saldo Devedor Atual'}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center md:items-start">
-                        <div className={`text-4xl font-extrabold ${displayedBalance > 0 ? "text-debt" : "text-payment"}`}>
-                            R$ {displayedBalance.toFixed(2)}
-                        </div>
-                        <p className="text-sm font-medium mt-2 text-muted-foreground">
-                            {displayedBalance > 0 ? "⚠️ Débito pendente" : displayedBalance < 0 ? "✅ Crédito acumulado" : "✨ Saldo quitado"}
-                        </p>
-                        {isFilterComplete && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Saldo total: R$ {balance.toFixed(2)}
+                {periodStatement ? (
+                    <Card className={periodStatement.closingBalance > 0 ? "border-debt/20 bg-debt/5" : "border-payment/20 bg-payment/5"}>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Resumo do Período</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <p className="text-xs text-muted-foreground">Saldo inicial</p>
+                                <p className="text-lg font-semibold">{formatBalance(periodStatement.openingBalance)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Movimentos do período</p>
+                                <p className={`text-lg font-semibold ${periodStatement.periodMovement > 0 ? 'text-debt' : periodStatement.periodMovement < 0 ? 'text-payment' : ''}`}>
+                                    {formatBalance(periodStatement.periodMovement)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Saldo final</p>
+                                <p className={`text-2xl font-extrabold ${periodStatement.closingBalance > 0 ? 'text-debt' : 'text-payment'}`}>
+                                    {formatBalance(periodStatement.closingBalance)}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card className={balance > 0 ? "border-debt/20 bg-debt/5" : "border-payment/20 bg-payment/5"}>
+                        <CardHeader>
+                            <CardTitle className="text-lg text-center md:text-left">Saldo Devedor Atual</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col items-center md:items-start">
+                            <div className={`text-4xl font-extrabold ${balance > 0 ? "text-debt" : "text-payment"}`}>
+                                {formatBalance(balance)}
+                            </div>
+                            <p className="text-sm font-medium mt-2 text-muted-foreground">
+                                {balance > 0 ? "⚠️ Débito pendente" : balance < 0 ? "✅ Crédito acumulado" : "✨ Saldo quitado"}
                             </p>
-                        )}
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             <div className="space-y-4">
                 <h2 className="text-lg font-bold px-1">
                     Histórico de Movimentações
-                    {isFilterComplete && (
+                    {periodStatement && (
                         <span className="ml-2 text-sm font-normal text-muted-foreground">
-                            ({new Date(dateFilter.startDate + 'T00:00:00').toLocaleDateString('pt-BR')} a {new Date(dateFilter.endDate + 'T00:00:00').toLocaleDateString('pt-BR')})
+                            ({periodStatement.range.startDate.toLocaleDateString('pt-BR')} a {periodStatement.range.endDate.toLocaleDateString('pt-BR')})
                         </span>
                     )}
                 </h2>
