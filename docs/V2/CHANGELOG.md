@@ -40,6 +40,10 @@ P7-S1 is `DONE`; P7 remains `IN_PROGRESS`.
 
 Lower-priority P7 gaps, P8 discovery, new modules and cloud/auth work remain out of scope.
 
+### Validation
+
+Persistent Critical QA run **`32066802100` — PASS** on the canonical P7-S1 content head before validation evidence was appended. The final documentation head remains subject to the same D-019 gate before integration.
+
 ---
 
 ## 2026-08-17 — P6 repository-wide QA reconciliation, gated deployment and P6 closure
