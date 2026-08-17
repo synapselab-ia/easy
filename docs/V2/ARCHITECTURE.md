@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified current architecture through P1-S2  
+**Status:** verified current architecture through completed P1  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
@@ -25,8 +25,6 @@ Static build
 There is no application backend, remote database or authentication layer.
 
 ## 2. Verified stack
-
-From `package.json`:
 
 - React 19;
 - TypeScript 6;
@@ -55,7 +53,7 @@ npm run preview
 
 ## 3. Routing baseline
 
-`src/App.tsx` defines these application routes under browser basename `/easy/`:
+`src/App.tsx` defines these routes under browser basename `/easy/`:
 
 - `/` — Dashboard;
 - `/items` — Items;
@@ -64,17 +62,13 @@ npm run preview
 - `/transactions` — Transactions/Lançamentos;
 - `/backup` — Backup.
 
-The main layout provides desktop/mobile navigation, global search and theme controls.
-
-## 4. Persistence model
-
-### Database
+## 4. Persistence model after P1
 
 Database name: `ResellerManagerDB`.
 
-Current Dexie schema version after P1-S2: `3`.
+Current Dexie schema version: **3**.
 
-Tables remain:
+Tables:
 
 ```text
 items
@@ -84,14 +78,13 @@ transactions
 
 Migration path:
 
-- V1 → V2 materializes `reseller.isActive = true` where absent;
-- V2 → V3 materializes `item.isActive = true` where absent;
-- the V3 upgrade does not rewrite existing reseller lifecycle state;
-- legacy missing lifecycle values remain backward-safe at read time through `isResellerActive` / `isItemActive` (`isActive !== false`).
+- V1 → V2 materializes `reseller.isActive = true` only where lifecycle state is absent/non-boolean;
+- V2 → V3 materializes `item.isActive = true` only where lifecycle state is absent/non-boolean;
+- explicit `false` lifecycle state is preserved;
+- P1-S3 adds no persistent field and therefore no V4;
+- complete V1 → V2 → V3 tests verify preservation of IDs, dates, snapshots, row counts and lifecycle state.
 
 ### Item
-
-Current fields:
 
 ```text
 id?
@@ -102,11 +95,9 @@ createdAt
 updatedAt
 ```
 
-`isActive !== false` is interpreted as active. New items created through the hook default explicitly to active.
+`isActive !== false` is interpreted as active.
 
 ### Reseller
-
-Current fields:
 
 ```text
 id?
@@ -119,24 +110,14 @@ createdAt
 updatedAt
 ```
 
-`isActive !== false` is interpreted as active. This keeps legacy/unmigrated reads backward-safe while the V2 migration explicitly writes `true` for existing data.
+`isActive !== false` is interpreted as active.
 
 ### Transaction
-
-Current transaction types:
-
-```text
-order
-payment
-signal
-```
-
-Current fields:
 
 ```text
 id?
 resellerId
-type
+type: order | payment | signal
 itemId?
 itemName?
 quantity?
@@ -146,11 +127,64 @@ observation?
 createdAt
 ```
 
-IndexedDB/Dexie still does not provide relational foreign-key constraints. P1 therefore enforces critical lifecycle/reference rules in application mutations and migration logic.
+IndexedDB/Dexie has no relational foreign-key constraints. P1 therefore enforces current-activity reference integrity in application mutations while preserving legacy history in storage.
 
-## 5. Financial model currently implemented
+## 5. P1 lifecycle and reference model
 
-At the reseller level, the current balance semantics are effectively:
+### Resellers
+
+- new resellers default active;
+- archive/reactivate is the normal lifecycle;
+- inactive resellers remain historically discoverable;
+- inactive resellers are unavailable for new transactions;
+- hard deletion is rejected when any transaction references the reseller.
+
+### Items
+
+- new items default active;
+- archive/reactivate is the normal lifecycle;
+- inactive items remain visible in catalog/search;
+- inactive items are unavailable for new orders;
+- hard deletion is rejected when any transaction references the item;
+- historical order rendering uses stored snapshots rather than current catalog state.
+
+### New transaction reference acceptance matrix
+
+All new transactions created through `useCreateTransaction` require:
+
+```text
+resellerId -> positive integer -> existing reseller -> active reseller
+```
+
+Additional rules:
+
+```text
+order
+  -> requires positive itemId
+  -> item must exist and be active
+  -> itemName snapshot is derived from resolved item
+
+payment/signal
+  -> itemId is invalid
+  -> movement remains reseller-level
+```
+
+The mutation validates these rules below the UI so stale/alternate callers cannot bypass them.
+
+### Historical compatibility
+
+P1 migration deliberately does **not** revalidate or rewrite stored transactions.
+
+Consequences:
+
+- historical `itemName`, quantity, unit price, total price, observation and dates remain unchanged;
+- an old `itemId` that no longer resolves is preserved when the transaction snapshot still explains the order;
+- P1 does not invent a replacement catalog identity or delete old financial history;
+- deep validation/repair of imported malformed backup data remains P5.
+
+## 6. Financial model currently implemented
+
+At reseller level, balance semantics remain effectively:
 
 ```text
 sum(order.totalPrice)
@@ -160,170 +194,77 @@ sum(payment/signal.totalPrice)
 balance
 ```
 
-This calculation is reproduced in multiple parts of the application, which creates a consistency risk if future rules change without a shared domain service.
+This calculation still exists in multiple surfaces. P2/P3 must avoid allowing reversal/date semantics to diverge between dashboard, detail, search and PDF.
 
-P1-S1/P1-S2 do not alter these financial semantics.
+## 7. Current correction behavior entering P2
 
-## 6. Current mutation and lifecycle behavior
+The data layer still contains `useDeleteTransaction`, which physically deletes a transaction.
 
-### Resellers — P1-S1
+This is **not** the approved V2 correction model. P2 must inventory every caller/dependency and design audited reversal/cancellation behavior that preserves the original entry.
 
-The normal lifecycle is reversible archive/reactivate:
+P1 does not modify transaction deletion semantics because that would cross into P2.
 
-```text
-active (isActive !== false)
-  -> archive
-inactive (isActive === false)
-  -> reactivate
-active
-```
+## 8. Statement and date behavior
 
-Rules:
+Transactions still have only `createdAt` as their date field.
 
-- new resellers default to active;
-- archive preserves the reseller row and all linked transactions;
-- inactive resellers remain available for historical attribution, detail/history and statements;
-- inactive resellers are excluded from new transaction selection;
-- transaction creation independently checks the reseller and rejects inactive or missing identities;
-- physical reseller deletion is protected by a Dexie transaction and is rejected when any transaction references that reseller;
-- physical deletion is therefore limited to resellers with no financial history and is not the normal archival UI action.
+The reseller detail page filters by that field and computes period net movement rather than a formally defined opening → movement → closing statement.
 
-### Items — P1-S2
+P3 owns occurrence-date and statement semantics.
 
-Items now use the same reversible lifecycle shape while retaining order-specific snapshot semantics:
+## 9. Backup architecture
 
-```text
-active (isActive !== false)
-  -> archive
-inactive (isActive === false)
-  -> reactivate
-active
-```
+Backup export/import still serializes/reloads items, resellers and transactions with shallow structural validation.
 
-Rules:
+Lifecycle fields present in records are preserved by object spread. Old records without lifecycle fields remain backward-safe as active at read time.
 
-- new items created through the item hook default to active;
-- archive preserves the item row and does not modify historical transactions;
-- inactive items remain visible/identified in the catalog and global search/recent results;
-- inactive items are excluded from new-order selection;
-- order creation independently rejects an inactive or missing referenced item when `itemId` is supplied;
-- physical item deletion is protected by a Dexie transaction and is rejected when any transaction references that item;
-- physical deletion is therefore limited to unused items and is not the normal catalog archival action;
-- historical rendering continues to use stored transaction snapshots such as `itemName`, quantity, unit price and total price rather than resolving current catalog state.
+Deep schema/reference/value validation, duplicate detection, restore preview and migration-version contracts remain P5.
 
-### Transactions
-
-The data layer still has a `useDeleteTransaction` mutation that physically deletes a transaction.
-
-The V2 roadmap does not treat physical deletion as the desired financial correction model; P2 must design reversal/cancellation semantics deliberately.
-
-P1-S1/P1-S2 add creation-time lifecycle/reference guards only; they do not change correction semantics.
-
-## 7. Statement and date behavior
-
-Current transactions have only `createdAt` as their date field.
-
-The reseller detail page can filter transactions by a date range and display a "Saldo do Período" calculated only from transactions inside that range.
-
-Current period semantics therefore represent **net movement in the selected interval**, not necessarily:
-
-```text
-opening balance
-+ period orders
-- period payments
-= closing balance
-```
-
-P3 is responsible for defining the final commercial semantics.
-
-Archiving a reseller does not remove access to detail/history or PDF statements. Archiving an item does not alter the item snapshot already stored in an order, so historical table/PDF output remains independent of current catalog lifecycle state.
-
-## 8. Backup architecture
-
-Backup export produces JSON containing:
-
-- version;
-- exportedAt;
-- items;
-- resellers;
-- transactions.
-
-Current export serializes the entity objects, so lifecycle fields present in IndexedDB are included. Current import spreads entity fields and converts date fields before replacing the three tables.
-
-Known gap: validation does not yet deeply verify every field, reference, duplicate ID, semantic value or schema compatibility. Old imported records without lifecycle fields remain backward-safe as active at read time, but robust backup schema/version migration remains P5. P1-S3 owns remaining runtime reference/migration validation before then.
-
-## 9. Search architecture
+## 10. Search architecture
 
 The global Command Center searches local Dexie data for resellers/items and calculates reseller balances in-browser.
 
-After P1-S1/P1-S2:
+After P1:
 
-- inactive resellers remain searchable/recent and are explicitly labeled inactive;
-- inactive items remain searchable/recent and are explicitly labeled inactive;
-- lifecycle visibility is therefore preserved without making inactive entities eligible for new financial/order activity.
+- inactive resellers/items remain discoverable and labeled inactive;
+- inactive entities are not eligible for new financial/order activity;
+- item result navigation still has known UX limitations owned by P7.
 
-Known incomplete behavior still includes item results/actions that navigate to a general page instead of always opening the exact intended operation. That remains outside P1-S2.
+## 11. Testing baseline
 
-## 10. Testing baseline
+P1 targeted coverage now includes:
 
-The project contains:
-
-- Vitest unit/integration tests;
-- fake IndexedDB support;
-- Testing Library tests;
-- Playwright configuration and E2E tests.
-
-P1-S1 adds targeted automated coverage for reseller migration, archive/reactivation, hard-delete protection, inactive search visibility, transaction selection/guarding and reseller list/detail behavior.
-
-P1-S2 adds targeted coverage for:
-
-- V2 → V3 item migration and reseller-state regression;
-- item archive/reactivation;
-- hard-delete protection with historical references;
-- active-only new-order selection;
-- mutation-level inactive/missing item guards;
-- inactive item search visibility;
-- catalog integration;
-- historical item snapshot rendering;
-- reseller lifecycle regression;
+- V1 → V2 → V3 migration preservation;
+- reseller/item lifecycle and hard-delete guards;
+- inactive search visibility;
+- active-only transaction/order selection;
+- strict new-transaction reference matrix;
+- new-order snapshot derivation;
+- catalog/reseller integration regressions;
+- historical snapshot rendering;
 - production build.
 
-Known global issue: the repository still contains pre-existing lint/unit/integration/E2E debt outside the targeted P1 slices. P6 owns test-suite reconciliation and CI hardening; passing phase gates must not be represented as a globally green suite.
+GitHub Actions P1-S3 gate: `32039763539` — PASS.
 
-## 11. Deployment baseline
+The repository-wide lint/unit/integration/E2E baseline still contains pre-existing debt outside targeted P1 scope. P6 owns full-suite reconciliation and CI hardening.
 
-`.github/workflows/deploy.yml` currently:
+## 12. Deployment baseline
 
-1. triggers on push to `main`;
-2. checks out code;
-3. uses Node 22;
-4. runs `npm install`;
-5. runs `npm run build`;
-6. deploys `dist` to GitHub Pages.
+`.github/workflows/deploy.yml` still builds/deploys from `main` with Node 22 and does not require the full quality suite before publication.
 
-The production workflow does not currently gate publication on lint, full unit/integration tests or critical Playwright E2E flows.
+P6 owns deployment gating.
 
-## 12. Architectural constraints until decision gates
+## 13. Architectural constraints entering P2
 
-Until P4 is completed:
+Until P4:
 
-- IndexedDB/Dexie remains the current persistence baseline;
-- do not introduce Supabase/backend/authentication by assumption;
-- do not redesign the product around multi-user behavior before requirements are known;
-- changes in P1–P3 should be designed so a later persistence migration remains possible.
+- Dexie/IndexedDB remains the persistence baseline;
+- do not introduce backend/authentication by assumption;
+- do not redesign around multi-user behavior before requirements are known.
 
-P1-S3 must complete the remaining reference/migration acceptance matrix without reinterpreting transaction snapshots or starting P2 correction semantics.
+For P2 specifically:
 
-## 13. Architecture decision gate P4
-
-P4 must decide whether the future architecture remains local or becomes cloud-backed based on actual operation:
-
-- number of users;
-- simultaneous access;
-- devices/locations;
-- need for author attribution;
-- sensitivity of data;
-- offline requirements;
-- backup/recovery expectations.
-
-Any cloud architecture described before that gate is a candidate, not an approved design.
+- preserve original financial entries during correction;
+- do not silently delete history as the normal correction mechanism;
+- do not change P3 date/statement semantics while implementing reversal/cancellation;
+- ensure future correction status can be consumed consistently by balance/dashboard/search/PDF logic.
