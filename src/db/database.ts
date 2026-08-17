@@ -14,8 +14,13 @@ export interface Reseller {
     phone?: string;
     email?: string;
     notes?: string;
+    isActive?: boolean;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export function isResellerActive(reseller: Pick<Reseller, 'isActive'>) {
+    return reseller.isActive !== false;
 }
 
 export type TransactionType = 'order' | 'payment' | 'signal';
@@ -47,6 +52,18 @@ class AppDatabase extends Dexie {
             resellers: '++id, name',
             transactions: '++id, resellerId, type, createdAt'
         });
+
+        this.version(2).stores({
+            items: '++id, name',
+            resellers: '++id, name',
+            transactions: '++id, resellerId, type, createdAt'
+        }).upgrade(transaction =>
+            transaction.table('resellers').toCollection().modify((reseller: Reseller) => {
+                if (typeof reseller.isActive !== 'boolean') {
+                    reseller.isActive = true;
+                }
+            })
+        );
     }
 }
 

@@ -107,16 +107,16 @@ The real need for multi-device/multi-user synchronization has not yet been forma
 
 ## D-007 — Financial history should favor preservation over destructive deletion
 
-**Status:** DIRECTION ACCEPTED; exact P1 implementation pending  
+**Status:** DIRECTION ACCEPTED  
 **Date:** 2026-08-17
 
 ### Decision
 
-The V2 should prefer historical preservation for entities involved in financial records. P1 will specify the exact active/inactive/archive and deletion rules.
+The V2 should prefer historical preservation for entities involved in financial records. P1 specifies the exact lifecycle/deletion rules slice by slice.
 
 ### Rationale
 
-Deleting an identity that owns financial history can make balances and statements untraceable. The exact schema/UI behavior still needs implementation design and tests.
+Deleting an identity that owns financial history can make balances and statements untraceable. P1-S1 now resolves this for resellers; item lifecycle remains for P1-S2.
 
 ---
 
@@ -135,11 +135,39 @@ The current application calculates related totals in multiple places. As reversa
 
 ---
 
+## D-009 — Reseller lifecycle is reversible archive, with guarded hard deletion
+
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
+
+### Decision
+
+For P1-S1:
+
+- reseller lifecycle is represented by `isActive`;
+- existing/legacy reseller records default to active, including Dexie V1 → V2 migration;
+- the normal reseller UI uses reversible archive/reactivate behavior;
+- an inactive reseller remains discoverable and historically attributable in list, global search, detail/history and statement flows;
+- inactive resellers are unavailable for new transaction selection;
+- transaction creation must also reject inactive or missing resellers in the mutation layer;
+- physical reseller deletion is permitted only when no financial transactions reference that reseller and is not the normal historical-removal path.
+
+### Rationale
+
+This preserves financial attribution without preventing operational cleanup. The rule is enforced both at UI selection points and below the UI, so stale/alternate callers cannot create new financial activity for an archived reseller. Hard deletion remains available only for identities that never acquired financial history.
+
+### Scope boundary
+
+This decision applies to resellers only. Item lifecycle semantics remain undecided until P1-S2; broader referential migration/validation remains P1-S3.
+
+---
+
 # Open decisions
 
 These are intentionally **not decided yet**:
 
-- exact reseller/item lifecycle schema (P1);
+- exact item lifecycle schema/behavior (P1-S2);
+- remaining referential validation/migration behavior (P1-S3);
 - reversal/correction data model (P2);
 - `occurredAt` and statement semantics (P3);
 - local vs cloud architecture (P4);

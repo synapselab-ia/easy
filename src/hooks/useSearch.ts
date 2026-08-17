@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Reseller } from '../db/database';
+import { db, isResellerActive, type Reseller } from '../db/database';
 
 export interface SearchResult {
     id: number;
     title: string;
     subtitle?: string;
     type: 'reseller' | 'item';
+    isActive?: boolean;
 }
 
 export interface SearchHookResult {
@@ -21,7 +22,7 @@ export function useSearch(query: string): SearchHookResult {
         if (!formattedQuery) return [];
 
         // 1. Search Resellers (using startsWith case-insensitively via filter if necessary)
-        // For performance, we'll try to use startsWith if possible, but for case-insensitivity 
+        // For performance, we'll try to use startsWith if possible, but for case-insensitivity
         // with small datasets, filter is safer.
         const foundResellers = await db.resellers
             .filter(r => r.name.toLowerCase().startsWith(formattedQuery))
@@ -53,6 +54,7 @@ export function useSearch(query: string): SearchHookResult {
                     title: r.name,
                     subtitle: `Saldo: R$ ${balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                     type: 'reseller',
+                    isActive: isResellerActive(r),
                 };
             })
         );
@@ -103,6 +105,7 @@ export function useSearch(query: string): SearchHookResult {
                     title: r.name,
                     subtitle: `Saldo: R$ ${balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                     type: 'reseller',
+                    isActive: isResellerActive(r),
                 };
             })
         );

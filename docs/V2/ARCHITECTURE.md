@@ -1,12 +1,12 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified baseline for V2 planning  
-**Branch inspected:** `develop`  
+**Status:** verified current architecture through P1-S1  
+**Integration target:** `develop`  
 **Date:** 2026-08-17
 
 ## 1. Current architecture
 
-Easy is currently a static single-page application that runs entirely in the browser.
+Easy is a static single-page application that runs entirely in the browser.
 
 ```text
 Browser
@@ -22,11 +22,11 @@ Static build
   `-- GitHub Pages
 ```
 
-There is no application backend, remote database or authentication layer in the current baseline.
+There is no application backend, remote database or authentication layer.
 
 ## 2. Verified stack
 
-From `package.json` on `develop`:
+From `package.json`:
 
 - React 19;
 - TypeScript 6;
@@ -72,15 +72,17 @@ The main layout provides desktop/mobile navigation, global search and theme cont
 
 Database name: `ResellerManagerDB`.
 
-Dexie schema version: `1`.
+Current Dexie schema version after P1-S1: `2`.
 
-Tables:
+Tables remain:
 
 ```text
 items
 resellers
 transactions
 ```
+
+The V2 migration preserves the V1 stores/indexes and materializes `reseller.isActive = true` for existing reseller rows where the field was absent.
 
 ### Item
 
@@ -94,6 +96,8 @@ createdAt
 updatedAt
 ```
 
+Item lifecycle has not changed yet; P1-S2 owns that slice.
+
 ### Reseller
 
 Current fields:
@@ -104,9 +108,12 @@ name
 phone?
 email?
 notes?
+isActive?
 createdAt
 updatedAt
 ```
+
+`isActive !== false` is interpreted as active. This keeps legacy/unmigrated reads backward-safe while the V2 migration explicitly writes `true` for existing data.
 
 ### Transaction
 
@@ -133,7 +140,7 @@ observation?
 createdAt
 ```
 
-Important baseline fact: there are no foreign-key constraints in IndexedDB/Dexie enforcing that `resellerId` or `itemId` continue to reference an existing entity.
+IndexedDB/Dexie still does not provide relational foreign-key constraints. P1 therefore enforces critical lifecycle/reference rules in application mutations and migration logic.
 
 ## 5. Financial model currently implemented
 
@@ -149,25 +156,45 @@ balance
 
 This calculation is reproduced in multiple parts of the application, which creates a consistency risk if future rules change without a shared domain service.
 
-## 6. Current mutation behavior
+P1-S1 does not alter these financial semantics.
 
-### Resellers
+## 6. Current mutation and lifecycle behavior
 
-Current deletion performs a physical `db.resellers.delete(id)`.
+### Resellers — P1-S1
 
-It does not automatically validate or remove linked transactions.
+The normal lifecycle is now reversible archive/reactivate:
+
+```text
+active (isActive !== false)
+  -> archive
+inactive (isActive === false)
+  -> reactivate
+active
+```
+
+Rules:
+
+- new resellers default to active;
+- archive preserves the reseller row and all linked transactions;
+- inactive resellers remain available for historical attribution, detail/history and statements;
+- inactive resellers are excluded from new transaction selection;
+- transaction creation independently checks the reseller and rejects inactive or missing identities;
+- physical reseller deletion is protected by a Dexie transaction and is rejected when any transaction references that reseller;
+- physical deletion is therefore limited to resellers with no financial history and is not the normal archival UI action.
 
 ### Items
 
-Current deletion performs a physical `db.items.delete(id)`.
+Current item deletion still performs a physical `db.items.delete(id)`.
 
-Transactions may preserve `itemName`, but a historical `itemId` can still reference a removed catalog record.
+Transactions may preserve `itemName`, but a historical `itemId` can still reference a removed catalog record. P1-S2 owns this risk.
 
 ### Transactions
 
-The data layer has a `useDeleteTransaction` mutation that physically deletes a transaction.
+The data layer still has a `useDeleteTransaction` mutation that physically deletes a transaction.
 
 The V2 roadmap does not treat physical deletion as the desired financial correction model; P2 must design reversal/cancellation semantics deliberately.
+
+P1-S1 adds only creation-time reseller validation; it does not change correction semantics.
 
 ## 7. Statement and date behavior
 
@@ -186,6 +213,8 @@ opening balance
 
 P3 is responsible for defining the final commercial semantics.
 
+Archiving a reseller does not remove access to this detail/history or its PDF statement flow.
+
 ## 8. Backup architecture
 
 Backup export produces JSON containing:
@@ -198,13 +227,15 @@ Backup export produces JSON containing:
 
 Current import validation checks broad structure/arrays and converts date fields, then clears and replaces the three tables inside a Dexie transaction.
 
-Known gap: validation does not yet deeply verify every field, reference, duplicate ID, semantic value or schema compatibility.
+Known gap: validation does not yet deeply verify every field, reference, duplicate ID, semantic value or schema compatibility. P5 owns the robust backup/restore contract; P1-S3 owns remaining reference/migration validation before then.
 
 ## 9. Search architecture
 
 The global Command Center searches local Dexie data for resellers/items and calculates reseller balances in-browser.
 
-Known incomplete behavior includes item results/actions that navigate to a general page instead of always opening the exact intended operation.
+After P1-S1, inactive resellers remain searchable/recent and are explicitly labeled inactive, so historical identities do not disappear from discovery.
+
+Known incomplete behavior still includes item results/actions that navigate to a general page instead of always opening the exact intended operation.
 
 ## 10. Testing baseline
 
@@ -215,9 +246,9 @@ The project contains:
 - Testing Library tests;
 - Playwright configuration and E2E tests.
 
-Known issue: at least part of the Playwright search flow is stale relative to the current UI (for example selectors/text expectations no longer match current components).
+P1-S1 adds targeted automated coverage for reseller migration, archive/reactivation, hard-delete protection, inactive search visibility, transaction selection/guarding and reseller list/detail behavior.
 
-P6 owns test-suite reconciliation and CI hardening.
+Known global issue: the repository still contains pre-existing lint/unit/integration/E2E debt outside the P1-S1 slice. P6 owns test-suite reconciliation and CI hardening; a targeted passing slice must not be represented as a globally green suite.
 
 ## 11. Deployment baseline
 
@@ -230,7 +261,7 @@ P6 owns test-suite reconciliation and CI hardening.
 5. runs `npm run build`;
 6. deploys `dist` to GitHub Pages.
 
-The workflow does not currently gate publication on lint, full unit/integration tests or critical Playwright E2E flows.
+The production workflow does not currently gate publication on lint, full unit/integration tests or critical Playwright E2E flows.
 
 ## 12. Architectural constraints until decision gates
 

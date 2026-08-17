@@ -23,6 +23,16 @@ interface CommandCenterProps {
     onOpenChange: (open: boolean) => void
 }
 
+function LifecycleBadge({ result }: { result: SearchResult }) {
+    if (result.type !== 'reseller' || result.isActive !== false) return null
+
+    return (
+        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-semibold tracking-wider">
+            Inativo
+        </span>
+    )
+}
+
 export function CommandCenter({ open, onOpenChange }: CommandCenterProps) {
     const [query, setQuery] = React.useState("")
     const { results, recent, isLoading } = useSearch(query)
@@ -68,16 +78,19 @@ export function CommandCenter({ open, onOpenChange }: CommandCenterProps) {
                                 className="cursor-pointer"
                             >
                                 <History className="mr-2 h-4 w-4 text-muted-foreground" />
-                                <div className="flex-1 flex justify-between items-center">
+                                <div className="flex-1 flex justify-between items-center gap-2">
                                     <div className="flex flex-col">
                                         <span className="font-medium">{result.title}</span>
                                         {result.subtitle && (
                                             <span className="text-xs text-muted-foreground">{result.subtitle}</span>
                                         )}
                                     </div>
-                                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-semibold tracking-wider">
-                                        {result.type === 'reseller' ? 'Revendedor' : 'Item'}
-                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                        <LifecycleBadge result={result} />
+                                        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-semibold tracking-wider">
+                                            {result.type === 'reseller' ? 'Revendedor' : 'Item'}
+                                        </span>
+                                    </div>
                                 </div>
                             </CommandItem>
                         ))}
@@ -93,11 +106,14 @@ export function CommandCenter({ open, onOpenChange }: CommandCenterProps) {
                                 className="cursor-pointer"
                             >
                                 <User className="mr-2 h-4 w-4 text-blue-500" />
-                                <div className="flex flex-col">
-                                    <span className="font-medium">{r.title}</span>
-                                    {r.subtitle && (
-                                        <span className="text-xs text-muted-foreground">{r.subtitle}</span>
-                                    )}
+                                <div className="flex-1 flex justify-between items-center gap-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{r.title}</span>
+                                        {r.subtitle && (
+                                            <span className="text-xs text-muted-foreground">{r.subtitle}</span>
+                                        )}
+                                    </div>
+                                    <LifecycleBadge result={r} />
                                 </div>
                             </CommandItem>
                         ))}

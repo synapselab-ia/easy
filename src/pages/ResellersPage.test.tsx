@@ -8,6 +8,10 @@ import ResellersPage from './ResellersPage';
 import ResellerDetailPage from './ResellerDetailPage';
 import { db } from '../db/database';
 
+vi.mock('@/hooks/use-media-query', () => ({
+    useMediaQuery: () => true,
+}));
+
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
@@ -22,6 +26,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('ResellersPage Tests', () => {
     beforeEach(async () => {
+        await db.transactions.clear();
         await db.resellers.clear();
         queryClient.clear();
     });
@@ -37,10 +42,8 @@ describe('ResellersPage Tests', () => {
     it('renders ResellerForm and ResellerTable components correctly', async () => {
         render(<ResellersPage />, { wrapper });
 
-        // Verifica renderização da tabela
         expect(await screen.findByText(/Nenhum revendedor encontrado/i)).toBeInTheDocument();
 
-        // Verifica abertura e renderização do form
         fireEvent.click(screen.getByRole('button', { name: /Novo Revendedor/i }));
         expect(await screen.findByText('Novo Revendedor', { selector: 'h2' })).toBeInTheDocument();
         expect(screen.getByLabelText(/Nome do Revendedor/i)).toBeInTheDocument();
@@ -48,10 +51,10 @@ describe('ResellersPage Tests', () => {
         expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
     });
 
-    it('creates, lists, searches, edits and deletes a reseller (Integration)', async () => {
+    it('creates, lists, searches, edits, archives and reactivates a reseller (Integration)', async () => {
         render(<ResellersPage />, { wrapper });
 
-        // 1. Create
+        // 1. Create first reseller.
         fireEvent.click(screen.getByRole('button', { name: /Novo Revendedor/i }));
         expect(await screen.findByText('Novo Revendedor', { selector: 'h2' })).toBeInTheDocument();
 
@@ -66,18 +69,21 @@ describe('ResellersPage Tests', () => {
             expect(screen.queryByText('Salvar')).not.toBeInTheDocument();
         });
 
-        // 2. List
         expect(await screen.findByText('João da Silva')).toBeInTheDocument();
         expect(screen.getByText('11999999999')).toBeInTheDocument();
 
-        // 3. Create another one for search test
+        // 2. Create another reseller for the list/search flow.
         fireEvent.click(screen.getByRole('button', { name: /Novo Revendedor/i }));
         const nameInput2 = await screen.findByLabelText(/Nome do Revendedor/i);
         fireEvent.change(nameInput2, { target: { value: 'Maria Souza' } });
         fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+        await waitFor(() => {
+            expect(screen.queryByText('Salvar')).not.toBeInTheDocument();
+        });
         expect(await screen.findByText('Maria Souza')).toBeInTheDocument();
 
-        // 4. Search Filter
+        // 3. Search remains functional.
         const searchInput = screen.getByPlaceholderText(/Buscar por nome.../i);
         fireEvent.change(searchInput, { target: { value: 'Maria' } });
 
@@ -86,14 +92,12 @@ describe('ResellersPage Tests', () => {
             expect(screen.queryByText('João da Silva')).not.toBeInTheDocument();
         });
 
-        // Clear search
         fireEvent.change(searchInput, { target: { value: '' } });
         expect(await screen.findByText('João da Silva')).toBeInTheDocument();
 
-        // 5. Edit
-        // Pega os botões da linha do João
+        // 4. Edit João.
         const editButtons = screen.getAllByRole('button', { name: /Editar/i });
-        fireEvent.click(editButtons[0]); // João
+        fireEvent.click(editButtons[0]);
 
         expect(await screen.findByText('Editar Revendedor', { selector: 'h2' })).toBeInTheDocument();
         const editNameInput = screen.getByLabelText(/Nome do Revendedor/i);
@@ -103,42 +107,53 @@ describe('ResellersPage Tests', () => {
         await waitFor(() => {
             expect(screen.queryByText('Editar Revendedor', { selector: 'h2' })).not.toBeInTheDocument();
         });
-
         expect(await screen.findByText('João da Silva Santos')).toBeInTheDocument();
 
-        // 6. Delete
-        const deleteButtons = screen.getAllByRole('button', { name: /Excluir/i });
-        fireEvent.click(deleteButtons[0]);
-
-        expect(await screen.findByText(/Tem certeza que deseja excluir "João da Silva Santos"/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: /Confirmar Exclusão/i }));
-
+        // 5. Archive instead of deleting. Keep João filtered so lifecycle controls are unambiguous.
+        fireEvent.change(searchInput, { target: { value: 'João da Silva Santos' } });
         await waitFor(() => {
-            expect(screen.queryByText(/Confirmar Exclusão/i)).not.toBeInTheDocument();
+            expect(screen.getByText('João da Silva Santos')).toBeInTheDocument();
+            expect(screen.queryByText('Maria Souza')).not.toBeInTheDocument();
         });
 
+        fireEvent.click(screen.getByRole('button', { name: 'Arquivar' }));
+        expect(await screen.findByText(/remove o revendedor dos novos lançamentos, mas preserva integralmente sua ficha e histórico financeiro/i)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /Confirmar Arquivamento/i }));
+
         await waitFor(() => {
-            expect(screen.queryByText('João da Silva Santos')).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: /Confirmar Arquivamento/i })).not.toBeInTheDocument();
         });
-        expect(screen.getByText('Maria Souza')).toBeInTheDocument();
+
+        // The archived reseller remains in list/search and becomes inactive.
+        expect(await screen.findByText('João da Silva Santos')).toBeInTheDocument();
+        expect(await screen.findByText('Inativo')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Reativar' })).toBeInTheDocument();
+
+        // 6. Reactivation is reversible and restores active state.
+        fireEvent.click(screen.getByRole('button', { name: 'Reativar' }));
+        await waitFor(() => {
+            expect(screen.getByText('Ativo')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Arquivar' })).toBeInTheDocument();
+        });
+
+        fireEvent.change(searchInput, { target: { value: '' } });
+        expect(await screen.findByText('Maria Souza')).toBeInTheDocument();
     });
 
     it('navigates to reseller details page when clicking on the reseller name', async () => {
-        // Render com a rota base já em /resellers e ResellersPage como element
         render(<ResellersPage />, { wrapper });
 
-        // Cria revendedor
         fireEvent.click(screen.getByRole('button', { name: /Novo Revendedor/i }));
         const nameInput = await screen.findByLabelText(/Nome do Revendedor/i);
         fireEvent.change(nameInput, { target: { value: 'José Pereira' } });
         fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
-        // Encontra nome e clica
         const resellerName = await screen.findByText('José Pereira');
         fireEvent.click(resellerName);
 
-        // Verifica renderização da página de detalhes (route match)
         expect(await screen.findByText('Ficha do Revendedor')).toBeInTheDocument();
-        expect(screen.getByText('José Pereira', { exact: false })).toBeInTheDocument();
+        expect(screen.getByText('Visualizando dados de José Pereira')).toBeInTheDocument();
+        expect(screen.getByText('Status:')).toBeInTheDocument();
+        expect(screen.getByText('Ativo')).toBeInTheDocument();
     });
 });

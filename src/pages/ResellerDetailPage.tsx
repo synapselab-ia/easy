@@ -11,6 +11,7 @@ import { addToRecentResellers } from '../hooks/useSearch';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import { isResellerActive } from '../db/database';
 
 export default function ResellerDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -85,6 +86,8 @@ export default function ResellerDetailPage() {
         );
     }
 
+    const resellerActive = isResellerActive(reseller);
+
     const handleGeneratePDF = () => {
         if (!transactions) return;
 
@@ -130,6 +133,12 @@ export default function ResellerDetailPage() {
                 </div>
             </div>
 
+            {!resellerActive && (
+                <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                    Revendedor inativo: histórico e extratos permanecem disponíveis, mas novos lançamentos estão bloqueados até a reativação.
+                </div>
+            )}
+
             {/* Filtro de datas e geração de PDF */}
             <div className="flex flex-col sm:flex-row gap-3 items-end">
                 <div className="flex flex-col gap-1">
@@ -172,6 +181,10 @@ export default function ResellerDetailPage() {
                         <div className="flex justify-between">
                             <span className="font-medium text-muted-foreground">Nome:</span>
                             <span>{reseller.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="font-medium text-muted-foreground">Status:</span>
+                            <span>{resellerActive ? 'Ativo' : 'Inativo'}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="font-medium text-muted-foreground">Telefone:</span>
