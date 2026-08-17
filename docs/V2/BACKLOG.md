@@ -64,26 +64,36 @@ A fresh conversation must be able to read the V2 documents and correctly identif
 ## P1 — Referential integrity and safe entity lifecycle
 
 **Priority:** Critical  
-**Status:** `NOT_STARTED`
+**Status:** `IN_PROGRESS`
 
 ### P1-S1 — Safe reseller lifecycle
 
+**Status:** `DONE`  
+**Completed:** 2026-08-17
+
 Goal: prevent financial history from becoming orphaned when a reseller is removed from active use.
 
-Expected direction:
+Implemented behavior:
 
-- introduce active/inactive or archived lifecycle;
-- preserve reseller identity for historical transactions;
-- block destructive deletion when financial history exists unless an explicit, tested exception is designed;
-- ensure inactive resellers are handled consistently in lists, search, transaction forms, statements and analytics.
+- reseller lifecycle uses reversible active/inactive state;
+- existing reseller data migrates to active by default;
+- normal UI archives/reactivates instead of destructively deleting historical identities;
+- physical deletion is blocked when transactions exist;
+- inactive resellers remain identifiable in list, search, detail, history and statements;
+- inactive/missing resellers are rejected for new transaction creation;
+- automated migration/lifecycle/search/transaction guards are covered by targeted tests.
 
 Acceptance gate:
 
-- no transaction can become financially unidentifiable because a reseller was removed;
-- historical statements remain reproducible;
-- dashboard totals remain traceable to a reseller identity.
+- [x] no transaction can become financially unidentifiable because a reseller was removed;
+- [x] historical statements remain reproducible after archive;
+- [x] inactive resellers remain traceable while being unavailable for new transactions;
+- [x] migration and lifecycle behavior are covered by automated tests;
+- [x] targeted P1-S1 tests and build pass.
 
 ### P1-S2 — Safe item lifecycle
+
+**Status:** `NOT_STARTED`
 
 Goal: preserve historical order identity while allowing catalog cleanup.
 
@@ -101,20 +111,22 @@ Acceptance gate:
 
 ### P1-S3 — Referential validation and migration
 
-Goal: make the schema transition safe for existing local databases/backups.
+**Status:** `NOT_STARTED`
+
+Goal: complete broader reference validation and make remaining schema transition behavior safe for existing local databases/backups.
 
 Expected work:
 
-- create the next Dexie schema version only after lifecycle fields/rules are specified;
-- migrate existing items/resellers to a valid default state;
-- add domain-level validation before transaction creation;
-- create tests for migration and invalid references.
+- reconcile lifecycle schema/migration behavior after P1-S1 and P1-S2;
+- add remaining domain-level validation for invalid references;
+- cover invalid historical/new references that are not already protected by the lifecycle slices;
+- ensure old valid local data upgrades without loss across the completed P1 schema path.
 
 Acceptance gate:
 
 - old valid local data upgrades without loss;
 - invalid new references are rejected;
-- migration behavior is covered by automated tests.
+- remaining migration/reference behavior is covered by automated tests.
 
 ---
 
