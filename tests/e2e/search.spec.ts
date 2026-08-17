@@ -42,6 +42,24 @@ test.describe('Global Search (Command Center)', () => {
         await expect(page.getByText('Cadastrar produto: "NonExistentThing"')).toBeVisible();
     });
 
+    test('should preserve signal shortcut intent and clear the standalone form on cancel', async ({ page }) => {
+        await page.keyboard.press('Control+k');
+        await page.getByText('Novo Lançamento: Sinal', { exact: true }).click();
+
+        await expect(page).toHaveURL(/\/transactions\?type=signal$/);
+        await expect(page.locator('#type')).toContainText('Sinal');
+
+        const valueInput = page.getByLabel('Valor para Abatimento (R$)');
+        await valueInput.fill('123.45');
+        await expect(valueInput).toHaveValue('123.45');
+
+        await page.getByRole('button', { name: 'Cancelar' }).click();
+
+        await expect(valueInput).toHaveValue('');
+        await expect(page.locator('#type')).toContainText('Sinal');
+        await expect(page).toHaveURL(/\/transactions\?type=signal$/);
+    });
+
     test('should open command center via mobile trigger', async ({ page }) => {
         await page.setViewportSize({ width: 375, height: 667 });
 
