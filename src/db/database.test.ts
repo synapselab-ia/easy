@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { db } from './database';
 
@@ -46,5 +47,32 @@ describe('AppDatabase', () => {
         expect(transaction).toBeDefined();
         expect(transaction?.type).toBe('order');
         expect(transaction?.totalPrice).toBe(200);
+    });
+
+    it('should migrate existing resellers to active by default', async () => {
+        await db.delete();
+
+        const legacyDb = new Dexie('ResellerManagerDB');
+        legacyDb.version(1).stores({
+            items: '++id, name',
+            resellers: '++id, name',
+            transactions: '++id, resellerId, type, createdAt'
+        });
+
+        await legacyDb.open();
+        const now = new Date();
+        await legacyDb.table('resellers').add({
+            name: 'Legacy Reseller',
+            createdAt: now,
+            updatedAt: now,
+        });
+        legacyDb.close();
+
+        await db.open();
+        const reseller = await db.resellers.toCollection().first();
+
+        expect(reseller).toBeDefined();
+        expect(reseller?.name).toBe('Legacy Reseller');
+        expect(reseller?.isActive).toBe(true);
     });
 });
