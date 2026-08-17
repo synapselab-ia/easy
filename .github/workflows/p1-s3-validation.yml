@@ -1,0 +1,57 @@
+name: P1-S3 validation
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Complete P1 migration tests
+        run: npx vitest run src/db/database.test.ts
+
+      - name: P1-S3 reference acceptance matrix
+        run: npx vitest run src/hooks/useTransactions.test.tsx
+
+      - name: Reseller lifecycle regression
+        run: npx vitest run src/hooks/useResellers.test.tsx
+
+      - name: Item lifecycle regression
+        run: npx vitest run src/hooks/useItems.test.tsx
+
+      - name: Search lifecycle regression
+        run: npx vitest run src/hooks/useSearch.test.tsx
+
+      - name: Transaction form regression
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx
+
+      - name: Command Center regression
+        run: npx vitest run src/components/search/CommandCenter.test.tsx
+
+      - name: Reseller integration regression
+        run: npx vitest run src/pages/ResellersPage.test.tsx
+
+      - name: Item integration regression
+        run: npx vitest run src/pages/ItemsPage.test.tsx
+
+      - name: Historical snapshot regression
+        run: npx vitest run src/pages/ResellerDetailPage.test.tsx
+
+      - name: Build
+        run: npm run build
