@@ -1,0 +1,84 @@
+name: P3-S2 validation
+
+on:
+  push:
+    branches:
+      - feature/p3-s2-statement-semantics
+  pull_request:
+    branches:
+      - develop
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: P3-S2 statement and aging domain
+        run: npx vitest run src/domain/transactions.p3s2.test.ts
+
+      - name: P3-S2 dashboard semantics
+        run: npx vitest run src/hooks/useDashboard.p3s2.test.tsx
+
+      - name: P3-S2 reseller statement UI
+        run: npx vitest run src/pages/ResellerDetailPage.statement.test.tsx
+
+      - name: P3-S2 PDF statement
+        run: npx vitest run src/services/pdfService.statement.test.ts
+
+      - name: Shared transaction domain regression
+        run: npx vitest run src/domain/transactions.test.ts
+
+      - name: P3-S1 dashboard occurrence regression
+        run: npx vitest run src/hooks/useDashboard.occurrence.test.tsx
+
+      - name: Dashboard regression
+        run: npx vitest run src/hooks/useDashboard.test.tsx
+
+      - name: P3-S1 reseller occurrence regression
+        run: npx vitest run src/pages/ResellerDetailPage.occurrence.test.tsx
+
+      - name: Reseller detail regression
+        run: npx vitest run src/pages/ResellerDetailPage.test.tsx
+
+      - name: P3-S1 PDF occurrence regression
+        run: npx vitest run src/services/pdfService.occurrence.test.ts
+
+      - name: PDF regression
+        run: npx vitest run src/services/pdfService.test.ts
+
+      - name: Search balance regression
+        run: npx vitest run src/hooks/useSearch.test.tsx
+
+      - name: P2 transaction mutation regression
+        run: npx vitest run src/hooks/useTransactions.test.tsx
+
+      - name: P2 correction dialog regression
+        run: npx vitest run src/components/transactions/TransactionCorrectionDialog.test.tsx
+
+      - name: P2 history regression
+        run: npx vitest run src/components/transactions/TransactionTable.test.tsx
+
+      - name: P1-P3 database migration regression
+        run: npx vitest run src/db/database.test.ts
+
+      - name: P1 reseller lifecycle regression
+        run: npx vitest run src/hooks/useResellers.test.tsx
+
+      - name: P1 item lifecycle regression
+        run: npx vitest run src/hooks/useItems.test.tsx
+
+      - name: Build
+        run: npm run build
