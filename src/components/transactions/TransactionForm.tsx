@@ -20,9 +20,23 @@ interface TransactionFormProps {
     initialType?: TransactionType;
 }
 
+function formatDateInput(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function occurrenceFromDateInput(value: string) {
+    if (!value) return null;
+    const date = new Date(`${value}T12:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "order" }: TransactionFormProps) {
     const [resellerId, setResellerId] = useState<string>("");
     const [type, setType] = useState<TransactionType>(initialType);
+    const [occurrenceDate, setOccurrenceDate] = useState<string>(() => formatDateInput());
 
     // Pass order fields
     const [itemId, setItemId] = useState<string>("");
@@ -73,6 +87,10 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
             newErrors.resellerId = "Revendedor inativo não pode receber novos lançamentos";
         }
 
+        if (!occurrenceFromDateInput(occurrenceDate)) {
+            newErrors.occurrenceDate = "Data de ocorrência inválida";
+        }
+
         if (type === "order") {
             if (!itemId) {
                 newErrors.itemId = "Item é obrigatório";
@@ -98,10 +116,13 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
         e.preventDefault();
         if (!validate()) return;
 
+        const occurredAt = occurrenceFromDateInput(occurrenceDate);
+        if (!occurredAt) return;
+
         let data: any = {
             resellerId: parseInt(resellerId, 10),
             type,
-            createdAt: new Date(),
+            occurredAt,
         };
 
         if (type === "order") {
@@ -127,6 +148,7 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
             onSubmitSuccess();
             // Reset form
             setResellerId("");
+            setOccurrenceDate(formatDateInput());
             setItemId("");
             setQuantity("1");
             setUnitPrice("");
@@ -139,7 +161,7 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="resellerId">Revendedor</Label>
                     <Select value={resellerId} onValueChange={(val) => setResellerId(val ?? "")}>
@@ -176,6 +198,18 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
                             <SelectItem value="signal">Sinal</SelectItem>
                         </SelectContent>
                     </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="occurrenceDate">Data da ocorrência</Label>
+                    <Input
+                        id="occurrenceDate"
+                        type="date"
+                        value={occurrenceDate}
+                        onChange={(event) => setOccurrenceDate(event.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Data financeira da movimentação. O momento de registro é salvo automaticamente.</p>
+                    {errors.occurrenceDate && <p className="text-red-500 text-sm">{errors.occurrenceDate}</p>}
                 </div>
             </div>
 
