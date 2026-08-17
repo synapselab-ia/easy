@@ -4,53 +4,66 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
-## 2026-08-17 — P5-S1 versioned backup contract and restore preflight
+## 2026-08-17 — P5-S2 checkpointed atomic restore and P5 closure
 
 ### Added
 
-- logical `easy-backup` format version 2, distinct from Dexie schema V4;
-- complete serialization contract for current Item, Reseller, Transaction, reversal and correction fields;
-- in-memory compatibility normalization for backup v1;
-- path-level backup validation and normalized preview;
-- preview counts for lifecycle state, transaction types and P2 audit/correction records;
-- targeted backup-service and preview-UI tests.
+- local `restoreService` that accepts only a successful P5-S1 preflight result;
+- validated v2 checkpoint generation/download before destructive replacement;
+- one-transaction replacement of items, resellers and transactions;
+- in-transaction post-restore invariant validation and canonical dataset comparison;
+- explicit restore success/failure result with checkpoint/recovery information;
+- restore action in the validated backup preview UI;
+- integration tests using real Dexie/fake IndexedDB transaction semantics.
 
-### Changed
+### Recovery behavior
 
-- export now emits v2 and validates the logical dataset before download;
-- v1 missing item/reseller `isActive` normalizes to `true`;
-- v1 missing transaction `occurredAt` normalizes from `createdAt`;
-- selecting a backup now runs parse, migration, validation and preview only;
-- the prior immediate replacement flow was removed pending P5-S2 recovery guarantees;
-- P5 is now `IN_PROGRESS`; P5-S1 is `DONE`.
+Before replacement, the live database is serialized as `easy-checkpoint-v2-*`, passed through the P5-S1 validator and downloaded. The normalized restore target is also revalidated immediately before recovery, so a mutated in-memory target cannot bypass the preflight contract.
+
+All table clears, inserts and restored-data verification occur inside one Dexie transaction. A write or verification error aborts the transaction and leaves the previous dataset intact rather than partially replaced.
+
+### Migration proof
+
+Tests demonstrate:
+
+- current v2 `exportData()` -> preflight -> clean restore preserves IDs, lifecycle state, P2 reversal/correction linkage, P3 occurrence dates and financial balance;
+- supported v1 input -> migration -> restore preserves IDs/financial effect and materializes the accepted lifecycle/occurrence defaults;
+- simulated failure after table clears begin rolls back the full replacement;
+- altered normalized input is rejected before checkpoint/write.
 
 ### Validation
 
-Preflight rejects unsupported or malformed envelopes, invalid/duplicate IDs, broken references, invalid dates/numbers and inconsistent P2/P3 correction metadata/linkage. It produces normalized in-memory rows without writing IndexedDB.
+GitHub Actions run `32060729538` passed the P5-S2 restore/UI gates, P5-S1 regressions, Dexie migrations, P1/P2/P3 regressions and `npm run build`.
 
-GitHub Actions run `32058028793` passed P5-S1 service/UI gates, occurrence compatibility, Dexie migrations, P1/P2/P3 regressions and `npm run build`.
+### Decision and canonical state
 
-### Decision and scope
-
-D-017 accepted: backup v2 is the canonical logical recovery contract and successful preflight is required before the P5-S2 replacement workflow. Dexie remains V4; D-016 local-first architecture remains accepted; no backend/auth/cloud or P6 work was introduced.
-
-### Canonical state
-
-P5 `IN_PROGRESS`; P5-S1 `DONE`; P5-S2 `NOT_STARTED`; `NEXT_ACTION` is P5-S2 checkpointed atomic restore and migration proof.
+- D-018 accepted: destructive restore requires a validated downloaded checkpoint and one verified atomic Dexie transaction;
+- Dexie remains V4 and D-016 remains local-first;
+- P5 is `DONE`;
+- QG-006 backup validation/recovery depth is resolved;
+- `NEXT_ACTION` advances to P6-S1 repository-wide QA baseline and deployment safety.
 
 ---
+
+## 2026-08-17 — P5-S1 versioned backup contract and restore preflight
+
+- `easy-backup` version 2 introduced as logical recovery/interchange contract;
+- current v1 JSON migrated in memory before deep validation;
+- backup selection changed to validation/preview without mutation;
+- D-017 accepted;
+- validation `32058028793` passed.
 
 ## 2026-08-17 — P4 local-first persistence decision
 
 - D-016 accepted local-first/single-user Dexie V4 under evidenced requirements;
 - no backend/auth/cloud implementation;
-- P4 closed and NEXT_ACTION advanced to P5-S1.
+- P4 closed.
 
 ## 2026-08-17 — P3-S2 formal statements, FIFO debt aging and P3 closure
 
 - shared opening → movements → closing statement model;
 - per-reseller total debt semantics and FIFO-derived open-debt aging;
-- validation `32053837309`; P3 closed; D-015 accepted.
+- validation `32053837309`; D-015 accepted.
 
 ## 2026-08-17 — P3-S1 occurrence-date model
 
@@ -60,7 +73,7 @@ P5 `IN_PROGRESS`; P5-S1 `DONE`; P5-S2 `NOT_STARTED`; `NEXT_ACTION` is P5-S2 chec
 ## 2026-08-17 — P2-S2 linked/guided correction and P2 closure
 
 - atomic linked replacement and correction;
-- validation `32042373332`; P2 closed.
+- validation `32042373332`.
 
 ## 2026-08-17 — P2-S1 audited transaction reversal
 
@@ -70,7 +83,7 @@ P5 `IN_PROGRESS`; P5-S1 `DONE`; P5-S2 `NOT_STARTED`; `NEXT_ACTION` is P5-S2 chec
 ## 2026-08-17 — P1-S3 referential validation and P1 closure
 
 - strict reference matrix and migration preservation coverage;
-- validation `32039763539`; P1 closed.
+- validation `32039763539`.
 
 ## 2026-08-17 — P1-S2 safe item lifecycle
 

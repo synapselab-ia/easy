@@ -46,66 +46,80 @@ D-016 keeps V2 local-first/single-user on Dexie V4 until an explicit cloud/auth 
 ## P5 — Backup, restore and migration
 
 **Priority:** High  
-**Status:** `IN_PROGRESS`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Goal: make the accepted local-first dataset recoverable and portable through a versioned, validated and tested backup/restore contract.
+Goal achieved: the local-first dataset now has a versioned, validated, checkpointed and atomically restorable recovery path.
 
 ### P5-S1 — Versioned backup contract and non-destructive restore preflight
+
+**Status:** `DONE`
+
+- `easy-backup` v2 logical envelope;
+- full persisted-field contract;
+- v1 in-memory compatibility migration;
+- deep path-level preflight and preview;
+- no mutation before successful preflight.
+
+Validation: `32058028793` — PASS.
+
+### P5-S2 — Checkpointed atomic restore and migration proof
 
 **Status:** `DONE`  
 **Completed:** 2026-08-17
 
 Implemented:
 
-- complete Dexie V4 persisted-field inventory;
-- logical backup envelope `easy-backup`, backup version 2, source schema version 4;
-- new exports use v2 and self-validate before download;
-- current v1 JSON remains supported through in-memory compatibility migration;
-- v1 missing lifecycle state becomes active and missing `occurredAt` falls back to `createdAt`;
-- strict preflight of required fields, positive IDs, duplicate IDs, dates, numeric values and table/reference integrity;
-- P2 reversal/correction metadata, bidirectional links and replacement rules are validated;
-- P3 occurrence preservation across linked correction is validated;
-- successful preflight produces normalized rows plus entity/audit/migration preview;
-- invalid input cannot invoke Dexie transaction/clear/bulkAdd;
-- old destructive import-confirm path removed from UI pending P5-S2 checkpoint guarantees.
+- restore consumes only the successful P5-S1 normalized result and revalidates it before recovery;
+- current live database is serialized, validated and downloaded as an `easy-checkpoint-v2-*` checkpoint before replacement;
+- all three tables are replaced inside one Dexie transaction;
+- restored rows are read back and re-run through P5-S1 invariant validation before commit;
+- a canonical projection verifies exact restored IDs/fields/dates/P2-P3 links;
+- write or verification failure aborts the transaction and preserves the prior database;
+- explicit success/failure result exposes checkpoint/recovery status;
+- UI exposes restore only after successful preflight;
+- v2 export -> clean restore and v1 migration -> restore are covered with real IndexedDB transaction semantics via `fake-indexeddb`;
+- financial outcomes are compared before/after restore.
 
 Acceptance gate:
 
-- [x] current v2 envelope validates;
-- [x] v1 compatibility migration validates supported historical fields;
-- [x] unsupported/malformed backup is rejected;
-- [x] duplicate IDs and broken reseller/item references are rejected;
-- [x] invalid dates and financial values are rejected;
-- [x] P2 correction links/audit semantics are checked;
-- [x] P3 occurrence fallback/preservation is covered;
-- [x] preview is shown without destructive import action;
-- [x] preflight does not mutate current IndexedDB;
-- [x] P1/P2/P3 regressions and build pass;
-- [x] targeted run `32058028793` passes.
+- [x] validated preview precedes restore;
+- [x] recoverable checkpoint precedes destructive replacement;
+- [x] replacement is one atomic Dexie transaction;
+- [x] partial replacement is impossible on tested write failure;
+- [x] restored dataset is verified before transaction commit;
+- [x] IDs and lifecycle state preserved;
+- [x] P2 audit/reversal/correction links preserved;
+- [x] P3 occurrence dates and financial results preserved;
+- [x] v1 compatibility restore proven;
+- [x] targeted run `32060729538` passes.
 
-### P5-S2 — Checkpointed atomic restore and migration proof
+P5 gate: **PASS / DONE**.
 
-**Status:** `NOT_STARTED`
-
-Expected work:
-
-- use only successfully preflighted normalized input;
-- create a recoverable checkpoint of the current dataset before replacement;
-- perform full-table replacement inside one atomic Dexie transaction;
-- ensure any failure leaves the previous live database intact rather than partially replaced;
-- validate post-restore counts, IDs, references and P1/P2/P3 invariants;
-- prove current v2 export -> clean restore preserves the canonical dataset;
-- prove supported v1 migration -> restore preserves IDs, lifecycle state, audit/correction links, occurrence dates and financial outcomes;
-- expose a clear restore result/recovery path.
-
-P5 gate: versioned export -> validated preview -> checkpoint -> atomic restore reproduces the canonical dataset and invariants.
+---
 
 ## P6 — Tests, CI and deployment safety
 
 **Priority:** High  
 **Status:** `NOT_STARTED`
 
-Reconcile repository-wide lint/unit/integration/E2E debt and make deployment conditional on critical quality gates.
+Goal: reconcile repository-wide QA debt and ensure publication from `main` is conditional on accepted critical validation.
+
+### P6-S1 — Reconcile repository-wide QA baseline and deployment safety
+
+**Status:** `NOT_STARTED`
+
+Expected work:
+
+- inventory npm scripts, lint, Vitest, Playwright and GitHub workflows;
+- run the complete existing lint/unit/integration/E2E/build baseline before changing expectations;
+- classify each failure as real product regression vs stale test/tooling expectation;
+- fix real regressions without changing accepted P1–P5 semantics;
+- intentionally update obsolete expectations where product behavior is already canonical;
+- make the critical validation gate mandatory before publication from `main`;
+- keep P7+ UX/business work out of this phase.
+
+P6 gate: critical repository suite reconciled and deployment cannot publish an unvalidated change.
 
 ## P7 — Complete incomplete UX flows
 

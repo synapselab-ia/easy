@@ -35,70 +35,84 @@ State/governance established; no runtime QA claim.
 **Status:** PASS / DONE.  
 Decision-only gate; D-016 accepts local-first/single-user Dexie V4. No runtime test claim.
 
-## P5-S1 — Versioned backup contract and non-destructive restore preflight
+## P5 — Backup, restore and migration
 
-**Runtime changed:** Yes — export/preflight service and backup flow.  
+**Status:** PASS / DONE.
+
+### P5-S1 — versioned backup and non-destructive preflight
+
+Validation run **`32058028793` — PASS**.
+
+Verified:
+
+- `easy-backup` v2 logical envelope and source schema V4;
+- v1 in-memory lifecycle/occurrence migration;
+- required fields, IDs/duplicates, dates, values and references;
+- P1 lifecycle and P2/P3 audit/linkage invariants;
+- valid/invalid preflight performs no destructive mutation;
+- preview UI is gated on successful validation;
+- migrations/P1/P2/P3 regressions and build.
+
+### P5-S2 — checkpointed atomic restore and migration proof
+
+**Runtime changed:** Yes — restore service and restore UI.  
 **Schema changed:** No; remains Dexie V4.  
-**UI changed:** Yes — import confirmation replaced by validation/preview only.
+**Architecture changed:** Recovery workflow only; D-016 local-first remains unchanged.
 
-### Contract and migration verified
+GitHub Actions run **`32060729538`**, job `95481183478` — **PASS**.
 
-- [x] v2 logical envelope identifies `easy-backup`, backup version 2 and source Dexie schema 4;
-- [x] export reads all three tables and self-validates before download;
-- [x] current v1 input remains supported through in-memory normalization;
-- [x] v1 missing item/reseller `isActive` becomes `true`;
-- [x] v1 missing transaction `occurredAt` becomes `createdAt`;
-- [x] explicit P3 occurrence remains preserved;
-- [x] unsupported/malformed JSON is rejected.
+Targeted matrix passed:
 
-### Deep preflight verified
-
-- [x] required arrays/fields are validated;
-- [x] IDs must be positive integers and duplicate IDs are rejected per table;
-- [x] required text, dates and positive finite numeric values are validated;
-- [x] item/reseller lifecycle date chronology is validated;
-- [x] order item snapshot fields are required and payment/signal item fields are rejected;
-- [x] transaction reseller/item references must resolve;
-- [x] reversal reason/timestamp and correction/replacement IDs are validated;
-- [x] P2 linked correction must be bidirectional;
-- [x] linked replacement preserves transaction type;
-- [x] corrected orders preserve item identity;
-- [x] P3 linked replacement preserves original `occurredAt`;
-- [x] replacement registration cannot precede original registration.
-
-### Non-destructive safety verified
-
-- [x] successful preflight returns normalized data plus preview only;
-- [x] preview includes versions, schema, timestamp, migration warnings and entity/audit counts;
-- [x] invalid input does not invoke Dexie write transaction, `clear()` or `bulkAdd()`;
-- [x] valid preflight also does not mutate IndexedDB;
-- [x] backup UI no longer exposes a destructive `Importar` action in P5-S1;
-- [x] invalid UI preflight does not open the preview;
-- [x] destructive restore is explicitly deferred to P5-S2 checkpoint/atomic-restore work.
-
-### Regression/build evidence
-
-GitHub Actions run **`32058028793`**, job `95472576213` — **PASS**.
-
-The targeted matrix passed:
-
-- P5-S1 backup contract tests;
-- backup preflight UI tests;
-- P3 occurrence backup compatibility;
+- P5-S2 atomic restore integration;
+- P5-S2 restore UI;
+- P5-S1 backup/preflight regressions;
 - Dexie V1→V4 migration regressions;
-- P2 transaction reversal/correction/history regressions;
+- P2 reversal/correction/history regressions;
 - P1 item/reseller lifecycle regressions;
 - P3 shared financial-domain regressions;
 - `npm run build`.
 
-### P5 result so far
+#### Checkpoint gate
 
-P5-S1: **PASS / DONE**.  
-P5 remains **IN_PROGRESS** because recoverable checkpoint, atomic replacement and post-restore migration proof belong to P5-S2.
+- [x] live database is read before destructive mutation;
+- [x] current live rows are serialized as canonical v2 checkpoint;
+- [x] checkpoint is deep-validated before replacement;
+- [x] checkpoint JSON is downloaded before the destructive transaction starts;
+- [x] checkpoint creation failure would prevent replacement from starting.
+
+#### Restore-input gate
+
+- [x] restore consumes the successful P5-S1 `BackupPreflightResult`;
+- [x] normalized target is reserialized/revalidated immediately before checkpoint/write;
+- [x] a mutated normalized target is rejected before checkpoint or database mutation.
+
+#### Atomicity/post-restore gate
+
+- [x] items/resellers/transactions are replaced in one Dexie transaction;
+- [x] restored rows are read back inside the transaction;
+- [x] complete P5-S1 reference/P1/P2/P3 validation reruns before commit;
+- [x] canonical field/date/link projection must exactly match the expected target;
+- [x] simulated `transactions.bulkAdd` failure after clears begin rolls back all table changes;
+- [x] failure result explicitly reports previous database preserved.
+
+#### Migration/financial proof
+
+- [x] actual v2 `exportData()` output can be preflighted and restored into a clean database;
+- [x] item/reseller/transaction IDs survive v2 round-trip;
+- [x] active/inactive lifecycle state survives;
+- [x] P2 reversal/replacement bidirectional links survive;
+- [x] P3 occurrence date survives;
+- [x] calculated financial balance is identical before/after v2 restore;
+- [x] supported v1 restore materializes `isActive = true` and `occurredAt = createdAt` defaults;
+- [x] v1 IDs and financial effect remain preserved.
+
+### P5 result
+
+**PASS / DONE.** QG-006 is resolved for the accepted local-first V2 recovery contract.
 
 ## Global baseline caveat
 
-Targeted phase gates do **not** claim repository-wide lint/unit/integration/E2E health is green. Global reconciliation and deployment gating remain P6.
+Targeted P1–P5 gates do **not** claim repository-wide lint/unit/integration/E2E health is green. Reconciliation and publication gating are the active P6 concern.
 
 ## Known baseline QA gaps
 
@@ -107,12 +121,12 @@ Targeted phase gates do **not** claim repository-wide lint/unit/integration/E2E 
 - **QG-003 financial correction flow:** RESOLVED / P2.
 - **QG-004 date semantics:** RESOLVED / P3-S1.
 - **QG-005 period statement/aging semantics:** RESOLVED / P3-S2.
-- **QG-006 backup validation depth:** PARTIALLY RESOLVED / P5-S1. Versioned deep preflight is resolved; checkpointed atomic restore and recovery proof remain P5-S2.
+- **QG-006 backup validation/recovery depth:** RESOLVED / P5.
 - **QG-007 stale/global test expectations:** OPEN / P6.
 - **QG-008 deployment does not require full QA:** OPEN / P6.
 - **QG-009 remaining reference validation/migration:** RESOLVED / P1.
 - **QG-010 persistence architecture:** RESOLVED / P4.
 
-## QA policy
+## QA policy entering P6
 
-For each functional phase: define acceptance first, add targeted tests with behavior changes, verify cross-surface consistency, record evidence/unresolved gaps, and distinguish the phase gate from global repository QA.
+Run the existing repository-wide baseline before editing expectations. Classify failures as real regressions vs stale tests/tooling, preserve accepted product semantics, and make publication conditional on the agreed critical gates rather than merely making CI appear green.
