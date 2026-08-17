@@ -48,37 +48,14 @@ P5 recovery validation covers v2/v1 migration, checkpoint-before-write, one-tran
 
 **Status:** PASS / DONE.
 
-### Initial repository-wide baseline
+Initial repository-wide baseline was captured before changing expectations:
 
-The baseline was captured before changing expectations. Diagnostic evidence showed:
+- ESLint: 81 errors;
+- Vitest: 10 failed / 149 passed;
+- Playwright Chromium: 10 failed / 3 passed;
+- production build: PASS.
 
-- ESLint: **81 errors**;
-- Vitest: **10 failed / 149 passed**;
-- Playwright Chromium: **10 failed / 3 passed**;
-- production build: **PASS**.
-
-The failing output was classified before remediation.
-
-### Stale test/tooling findings
-
-The following were stale harness/tooling/expectation issues rather than accepted-product regressions:
-
-- `App.test` did not reproduce the deployed `/easy/` basename/root QueryClient context;
-- page tests omitted Router context or relied on incomplete child-hook mocks;
-- jsdom lacked browser APIs used by current UI (`ResizeObserver`, `scrollIntoView`);
-- dashboard tests used ambiguous selectors and an old styling token;
-- E2E used obsolete reseller placeholders, select/legend selectors and old command-center copy;
-- the old “no transactions in period => refuse PDF” E2E contradicted D-015, where a zero-movement period is a valid opening/movement/closing statement.
-
-These were reconciled in tests/harness without changing P1–P5 business/recovery semantics.
-
-### Real regression found and fixed
-
-One real integration defect was exposed by the full E2E gate: global command search was filtered twice. `useSearch()` already queries/filters Dexie results, while `cmdk` applied its internal filter again. `CommandDialog` now sets `shouldFilter={false}` so the external Dexie result set is authoritative. The search-and-navigate E2E remains in the critical suite as the regression proof.
-
-### Reconciled critical gate
-
-Canonical command:
+Stale provider/router/mock/jsdom expectations and obsolete selectors were reconciled. One real global-search double-filter defect was fixed. The accepted critical command is:
 
 ```text
 npm run qa:critical
@@ -88,48 +65,116 @@ npm run qa:critical
 + npm run build
 ```
 
-Persistent functional run **`32064801009`**, job `95494186349` — **PASS**.
+- persistent functional run `32064801009` — PASS;
+- final canonical-docs-head run `32065331102` — PASS;
+- post-merge `develop` run `32065713920` — PASS.
 
-Verified final state:
+Current accepted gate state at P6 closure: 0 blocking lint errors / 80 recorded warnings, 39 Vitest files / 159 tests passing, 13/13 Playwright tests passing, production build passing.
 
-- [x] ESLint completes with **0 errors**; 80 known warnings remain visible;
-- [x] Vitest: **39 files / 159 tests PASS**;
-- [x] Playwright Chromium: **13/13 PASS**;
-- [x] production build PASS;
-- [x] `npm ci` used for reproducible CI/deploy installation;
-- [x] `.github/workflows/ci.yml` runs Critical QA on PRs to `develop`/`main` and pushes to `develop`;
-- [x] `.github/workflows/deploy.yml` requires `quality -> build -> deploy` for `main`;
-- [x] a failing Critical QA job prevents Pages publication;
-- [x] temporary P6 baseline/diagnostic workflows are not part of the persistent repository gate.
+Known non-blocking maintenance debt remains recorded: lint warnings, some React test-harness warnings and dependency-audit findings. These do not redefine the Critical QA exit status.
 
-### Known non-blocking maintenance debt
+## P7 — Operational UX refinement
 
-P6 intentionally does not hide warning output:
+### P7-S1 — UX gap inventory and prioritization
 
-- 80 ESLint warnings remain, principally legacy `no-explicit-any`, `set-state-in-effect` and component-helper export patterns;
-- some passing hook tests emit React `act(...)` warnings;
-- mocked select harnesses emit known DOM nesting warnings;
-- `npm ci` reports 17 dependency vulnerabilities (2 low, 4 moderate, 11 high).
+**Status:** PASS / DONE as evidence/prioritization work.  
+**Runtime changed:** No.  
+**Schema/persistence changed:** No.  
+**Financial behavior changed:** No.
 
-None of these outputs currently changes the exit status of the accepted critical gate. They remain maintenance/security-review debt and are not represented as zero technical debt.
+P7-S1 inspected current operator-facing code and existing test coverage rather than inferring gaps from appearance alone.
 
-### P6 result
+#### Evidence inspected
 
-**PASS / DONE.** D-019 makes repository-wide Critical QA mandatory for integration/publication.
+- `src/App.tsx`, `MainLayout`, sidebar/header and command center for navigation/entry points;
+- `TransactionsPage`, `TransactionForm`, `useTransactions` and transaction integration tests;
+- reseller detail statement/PDF UI and Playwright date-filter coverage;
+- item/reseller forms/tables and lifecycle behavior;
+- Backup page, import/export restore component/dialog and P5-S2 restore tests;
+- current Playwright suite inventory: search, PDF date filter and performance analysis;
+- Project Spec usability objective: routine operations should require few steps on desktop/mobile.
+
+#### QG-011 — transaction entry intent/feedback
+
+**OPEN / P7-S2 — highest priority.**
+
+Evidence:
+
+- standalone `TransactionForm` renders **Cancelar**;
+- `TransactionsPage.handleCancel()` intentionally performs no state/reset action;
+- `TransactionForm` catches create failures with `console.error` only;
+- `useCreateTransaction` can reject invalid/inactive references or persistence writes, so an operator-visible failure path is meaningful;
+- command center labels one action `Pagamento/Sinal` but routes to `/transactions?type=payment` only;
+- current component/integration tests prove order/payment happy paths but do not cover cancel/error feedback or signal shortcut intent;
+- current E2E suite has no full transaction-entry operator path.
+
+Risk: uncertainty about whether a financial write succeeded, inert primary action, and possible payment-vs-signal audit misclassification.
+
+Accepted next slice: P7-S2.
+
+#### QG-012 — invalid reseller period silently displays all-time/current data
+
+**OPEN / later P7.**
+
+Evidence:
+
+- complete inverted dates make `periodStatement` null;
+- `displayedTransactions` then falls back to the full transaction list and the balance card falls back to current balance while the invalid dates remain filled;
+- Playwright verifies the error toast only after **Gerar PDF** is clicked.
+
+Risk: operator can visually interpret an invalid-range screen as a filtered statement before attempting PDF generation.
+
+#### QG-013 — stale Backup page recovery description
+
+**OPEN / later P7.**
+
+Evidence:
+
+- `BackupPage` still describes validation “antes da futura restauração” and says the preflight stage does not replace current data;
+- `ImportExport` and its P5-S2 tests already expose real `Restaurar Backup` behavior after successful preflight, with checkpoint and rollback-safe result handling.
+
+Risk: misleading top-level guidance around a destructive recovery workflow. Inner restore dialog is already accurate.
+
+#### QG-014 — item/reseller save failures are console-only
+
+**OPEN / later P7.**
+
+Evidence: both `ItemForm` and `ResellerForm` catch mutation failures and only log to the console, with no operator-visible error.
+
+#### QG-015 — reseller-context transaction launch friction
+
+**OPEN / later P7.**
+
+Evidence: reseller detail has the reseller context, but no launch action/prefill path; transaction creation requires navigating to `/transactions` and selecting the reseller again. This is an efficiency gap, not a correctness defect.
+
+#### Explicit non-findings
+
+P7-S1 does not classify broad visual redesign, dashboard rearrangement, theme/branding changes, table-density preferences or speculative catalog search as QA/UX gaps without stronger evidence of operational impact.
+
+### P7-S1 validation
+
+Persistent Critical QA run **`32066802100`**, job `95500700733` — **PASS** on the canonical P7-S1 content head before this evidence line was appended.
+
+Because P7-S1 changes documentation only, it makes no new runtime test claim. D-019 still requires the persistent `qa:critical` workflow to pass on the final PR head before integration. No test/workflow weakening is permitted to integrate the documentation change.
 
 ## Known baseline QA gaps
 
-- **QG-001 reseller referential integrity:** RESOLVED / P1.
-- **QG-002 historical item references:** RESOLVED / P1.
-- **QG-003 financial correction flow:** RESOLVED / P2.
-- **QG-004 date semantics:** RESOLVED / P3-S1.
-- **QG-005 period statement/aging semantics:** RESOLVED / P3-S2.
-- **QG-006 backup validation/recovery depth:** RESOLVED / P5.
-- **QG-007 stale/global test expectations:** RESOLVED / P6.
-- **QG-008 deployment does not require full QA:** RESOLVED / P6.
-- **QG-009 remaining reference validation/migration:** RESOLVED / P1.
-- **QG-010 persistence architecture:** RESOLVED / P4.
+- QG-001 reseller referential integrity: RESOLVED / P1.
+- QG-002 historical item references: RESOLVED / P1.
+- QG-003 financial correction flow: RESOLVED / P2.
+- QG-004 date semantics: RESOLVED / P3-S1.
+- QG-005 period statement/aging semantics: RESOLVED / P3-S2.
+- QG-006 backup validation/recovery depth: RESOLVED / P5.
+- QG-007 stale/global test expectations: RESOLVED / P6.
+- QG-008 deployment does not require full QA: RESOLVED / P6.
+- QG-009 remaining reference validation/migration: RESOLVED / P1.
+- QG-010 persistence architecture: RESOLVED / P4.
+- QG-011 transaction-entry intent/feedback: OPEN / P7-S2.
+- QG-012 invalid reseller period fallback: OPEN / later P7.
+- QG-013 stale Backup page recovery copy: OPEN / later P7.
+- QG-014 item/reseller save error feedback: OPEN / later P7.
+- QG-015 reseller-context transaction launch friction: OPEN / later P7.
 
-## QA policy entering P7
+## QA policy entering P7-S2
 
-Every P7 behavior change must preserve P1–P6 contracts and pass the persistent Critical QA gate. Do not weaken tests/workflows to accommodate a UX change; classify and fix real regressions, and keep new business-module work outside P7.
+P7-S2 must preserve all P1–P6 contracts, add targeted tests for the changed transaction-entry behavior, and pass the complete persistent `npm run qa:critical` gate. Do not weaken existing tests/workflows or use P7-S2 to implement lower-priority P7 gaps.

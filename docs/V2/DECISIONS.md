@@ -107,9 +107,7 @@ Targeted run `32060729538` satisfies the P5-S2 recovery gate.
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### One canonical critical command
-
-Repository-wide critical validation is defined by one reproducible command:
+Repository-wide critical validation is one reproducible command:
 
 ```text
 npm run qa:critical
@@ -119,39 +117,43 @@ npm run qa:critical
   -> npm run build
 ```
 
-CI/deploy uses Node 22, `npm ci` and explicit Playwright Chromium installation. A local or CI pass must execute the same ordered gate rather than substituting a smaller phase-specific matrix.
+CI/deploy uses Node 22, `npm ci` and explicit Playwright Chromium installation. `.github/workflows/ci.yml` runs Critical QA on pull requests targeting `develop` or `main`, on pushes to `develop`, and by manual dispatch. A push to `main` may publish GitHub Pages only through `quality -> build -> deploy`.
 
-### Integration gate
+P6 also established that failing QA output must be classified before product behavior is changed. Stale expectations may be reconciled to already accepted behavior; real regressions must be fixed without violating P1–P5 semantics. Objective ESLint errors remain blocking; explicitly recorded legacy warning debt does not redefine a passing gate.
 
-`.github/workflows/ci.yml` runs Critical QA on pull requests targeting `develop` or `main`, on pushes to `develop`, and by manual dispatch. This is the persistent repository-wide V2 integration signal.
+Persistent functional run `32064801009` and post-merge `develop` run `32065713920` pass the accepted gate.
 
-### Publication gate
+## D-020 — P7 prioritizes operator-intent/error risks before convenience or cosmetic refinement
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
 
-A push to `main` may publish GitHub Pages only through:
+P7-S1 inspected current operator-facing flows, tests and the Project Spec usability objective. P7 work is prioritized by demonstrated operational impact, error risk and routine frequency, not by visual preference.
 
-```text
-quality -> build -> deploy
-```
+Accepted ranking:
 
-The `quality` job executes `npm run qa:critical`; `build` depends on `quality`; `deploy` depends on `build`. Publication must therefore stop when critical validation fails.
+1. **Transaction-entry intent and feedback** — highest priority. The standalone Cancel action is inert; transaction mutation failures are console-only; and the command-center `Pagamento/Sinal` shortcut always initializes `payment`, risking loss of the operator’s intended audit classification.
+2. **Invalid reseller statement range UX** — a complete inverted period silently falls back to all-time/current view until PDF generation surfaces the error.
+3. **Stale recovery page copy** — top-level Backup page text still describes restore as future/preflight-only even though P5-S2 restore exists.
+4. **Item/reseller save error feedback** — mutation failures are console-only.
+5. **Reseller-context launch friction** — transaction creation requires redundant reseller reselection from a reseller detail context.
 
-### Baseline reconciliation policy
+Broad redesign, dashboard rearrangement, theme/branding changes, table-density preferences and convenience features without demonstrated operational impact are not P7 priorities merely because they could improve polish.
 
-P6 established that failing QA output must be classified before product code is changed. Stale test/tooling expectations may be reconciled to already accepted behavior; real regressions must be fixed without violating P1–P5 semantics.
+### First implementation slice
 
-The P6 baseline contained both categories. Provider/router/mock/jsdom gaps, obsolete selectors/copy and the old zero-movement PDF expectation were stale QA assumptions. One real defect was found in global search: Dexie `useSearch` already owns result filtering while `cmdk` also applied its default internal filter. `CommandDialog` now disables the second filter (`shouldFilter={false}`), making the external result set authoritative.
+P7-S2 is limited to the transaction-entry cluster:
 
-### Lint debt policy
+- Cancel must actually reset/clear the in-progress standalone transaction form while preserving the requested initial type;
+- transaction mutation failure must be visible to the operator and must not erase entered data needed for correction/retry;
+- payment and signal command-center shortcuts must be separate and preserve the intended transaction type.
 
-A green critical gate does not mean all warnings are erased. Objective ESLint errors remain blocking. Existing `no-explicit-any`, `react-hooks/set-state-in-effect` and `react-refresh/only-export-components` debt remains visible as warnings until intentionally refactored; P6 does not authorize behavior-changing refactors solely to reach zero warnings.
-
-Persistent functional run `32064801009` passes the reconciled gate.
+This decision does **not** change P1–P6 financial, persistence, recovery or QA semantics and does not authorize bundling the lower-ranked P7 gaps into P7-S2.
 
 ---
 
 # Open decisions
 
-- operational UX refinements after P7 evidence/prioritization;
+- implementation details for ranked P7 gaps after P7-S2;
 - new modules after real requirements discovery (P8/P9);
 - local vs cloud only if a D-016 reopen trigger is proven;
 - controlled beta/migration/cutover policy in P10.

@@ -4,6 +4,48 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-17 — P7-S1 operational UX gap inventory and prioritization
+
+### Scope
+
+P7-S1 executed only the evidence/prioritization slice. No runtime, schema, persistence, financial-domain, recovery or QA-workflow behavior changed.
+
+The inventory compared current operator-facing routes/components/tests with P1–P6 contracts and the Project Spec objective that routine operations should require few steps on desktop/mobile.
+
+### Evidenced gaps
+
+Ranked by operational impact, error risk and routine frequency:
+
+1. **Transaction-entry intent and feedback** — standalone Cancel is inert; transaction creation failures are console-only; command-center `Pagamento/Sinal` always opens `payment`.
+2. **Invalid reseller statement range** — a complete inverted range leaves dates filled but falls back to current/all-time view until PDF generation surfaces the error.
+3. **Stale Backup page recovery copy** — top-level text still describes restore as future/preflight-only although P5-S2 restore is implemented.
+4. **Item/reseller save error feedback** — mutation failures are console-only.
+5. **Reseller-context transaction launch friction** — operator must reselect a reseller already known by the detail page.
+
+Broad visual redesign, dashboard rearrangement, theme/branding, table-density preferences and speculative convenience features were not prioritized without stronger operational evidence.
+
+### Decision and next slice
+
+D-020 accepted: P7 fixes broken/misleading operator controls and intent/error risks before convenience/cosmetic refinement.
+
+P7-S1 is `DONE`; P7 remains `IN_PROGRESS`.
+
+`NEXT_ACTION` advances only to **P7-S2 — Reliable transaction-entry intent and feedback**:
+
+- make standalone Cancel reset/clear the in-progress transaction while preserving requested initial type;
+- surface transaction mutation failure visibly while preserving entered data for retry;
+- split command-center payment and signal shortcuts so each preserves operator intent;
+- add focused component/integration coverage plus a bounded Playwright operator path;
+- run full `npm run qa:critical`.
+
+Lower-priority P7 gaps, P8 discovery, new modules and cloud/auth work remain out of scope.
+
+### Validation
+
+Persistent Critical QA run **`32066802100` — PASS** on the canonical P7-S1 content head before validation evidence was appended. The final documentation head remains subject to the same D-019 gate before integration.
+
+---
+
 ## 2026-08-17 — P6 repository-wide QA reconciliation, gated deployment and P6 closure
 
 ### Baseline reconstructed
@@ -23,7 +65,7 @@ The failures were classified instead of treating every red test as permission to
 - incomplete child mocks and ambiguous dashboard assertions were corrected;
 - E2E selectors were aligned with current accessible form/select/command UI;
 - the PDF no-movement expectation was aligned with D-015: a zero-movement period remains a valid statement/extract;
-- the existing lint debt that would require broad behavior-changing refactors remains visible as warnings rather than being silently disabled or used to justify out-of-scope product changes.
+- existing lint debt that would require broad behavior-changing refactors remains visible as warnings rather than being used to justify out-of-scope product changes.
 
 ### Real regression fixed
 
@@ -38,32 +80,16 @@ The full E2E gate exposed one real integration defect in global search. `useSear
 
 ### Deployment safety
 
-GitHub Pages deployment from `main` now uses the strict dependency chain:
+GitHub Pages deployment from `main` uses the strict dependency chain `quality (qa:critical) -> build -> deploy`. CI/deploy installs dependencies with `npm ci`; Chromium is installed before Playwright. A failed critical suite blocks publication.
 
-```text
-quality (qa:critical) -> build -> deploy
-```
+### Validation and decision
 
-CI/deploy installs dependencies with `npm ci`; Chromium is installed before Playwright. A failed critical suite blocks publication.
-
-### Validation
-
-Persistent functional run **`32064801009` — PASS**:
-
-- ESLint: 0 errors / 80 recorded warnings;
-- Vitest: 39 files / 159 tests passing;
-- Playwright Chromium: 13/13 passing;
-- production build passing.
-
-Temporary P6 baseline/diagnostic workflows were removed; only the persistent Critical QA/deploy workflows remain.
-
-### Decision and canonical state
-
-- D-019 accepted: Critical QA is mandatory for V2 integration and publication from `main`;
-- QG-007 stale/global expectations resolved;
-- QG-008 unsafe deployment gating resolved;
-- P6 is `DONE`;
-- `NEXT_ACTION` advances only to P7-S1 operational UX gap inventory/prioritization.
+- persistent functional run `32064801009` — PASS;
+- final canonical-docs-head run `32065331102` — PASS;
+- post-merge `develop` run `32065713920` — PASS;
+- D-019 accepted;
+- QG-007/QG-008 resolved;
+- P6 closed.
 
 ---
 
