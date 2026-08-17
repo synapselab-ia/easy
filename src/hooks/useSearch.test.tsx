@@ -21,17 +21,19 @@ describe('useSearch hook', () => {
         expect(result.current.results).toHaveLength(0);
     });
 
-    it('should return recent items when query is empty', async () => {
+    it('should return recent items and explicitly tracked recent resellers when query is empty', async () => {
         const now = new Date();
-        await db.resellers.add({ name: 'Reseller 1', isActive: true, createdAt: now, updatedAt: now });
+        const resellerId = await db.resellers.add({ name: 'Reseller 1', isActive: true, createdAt: now, updatedAt: now }) as number;
         await db.items.add({ name: 'Item 1', basePrice: 10, createdAt: now, updatedAt: now });
+        localStorage.setItem('recent_resellers', JSON.stringify([resellerId]));
 
         const { result } = renderHook(() => useSearch(''));
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        expect(result.current.recent).toHaveLength(1);
-        expect(result.current.recent[0].title).toBe('Item 1');
+        expect(result.current.recent).toHaveLength(2);
+        expect(result.current.recent[0].title).toBe('Reseller 1');
+        expect(result.current.recent[1].title).toBe('Item 1');
     });
 
     it('should filter resellers and items by name', async () => {
