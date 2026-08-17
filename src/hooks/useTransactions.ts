@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, isItemActive, isResellerActive, type Transaction } from '../db/database';
+import {
+    db,
+    isItemActive,
+    isResellerActive,
+    type Transaction,
+    type TransactionCorrection,
+} from '../db/database';
 import { isTransactionReversed } from '../domain/transactions';
 
 export const ORDER_ITEM_REQUIRED_ERROR = 'Pedidos novos devem referenciar um item do catálogo.';
@@ -7,9 +13,93 @@ export const NON_ORDER_ITEM_REFERENCE_ERROR = 'Pagamentos e sinais não podem re
 export const REVERSAL_REASON_REQUIRED_ERROR = 'Informe o motivo do estorno.';
 export const TRANSACTION_NOT_FOUND_ERROR = 'Lançamento não encontrado.';
 export const TRANSACTION_ALREADY_REVERSED_ERROR = 'Este lançamento já foi estornado.';
+export const CORRECTION_ORDER_ITEM_PRESERVED_ERROR = 'A correção guiada deve preservar o item original do pedido.';
+export const CORRECTION_VALUE_REQUIRED_ERROR = 'Informe um valor válido para a correção.';
+
+export type NewTransactionInput = Omit<Transaction, 'id' | 'reversal' | 'correction'>;
+export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'createdAt'>;
 
 function isValidEntityId(value: unknown): value is number {
     return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
+function sanitizeNewTransaction(transaction: NewTransactionInput): NewTransactionInput {
+    return {
+        resellerId: transaction.resellerId,
+        type: transaction.type,
+        itemId: transaction.itemId,
+        itemName: transaction.itemName,
+        quantity: transaction.quantity,
+        unitPrice: transaction.unitPrice,
+        totalPrice: transaction.totalPrice,
+        observation: transaction.observation,
+        createdAt: transaction.createdAt,
+    };
+}
+
+async function addValidatedTransaction(
+    transaction: NewTransactionInput,
+    correction?: TransactionCorrection,
+) {
+    const cleanTransaction = sanitizeNewTransaction(transaction);
+
+    if (!isValidEntityId(cleanTransaction.resellerId)) {
+        throw new Error('Revendedor não encontrado.');
+    }
+
+    const reseller = await db.resellers.get(cleanTransaction.resellerId);
+
+    if (!reseller) {
+        throw new Error('Revendedor não encontrado.');
+    }
+
+    if (!isResellerActive(reseller)) {
+        throw new Error('Revendedores inativos não podem receber novos lançamentos.');
+    }
+
+    const correctionMetadata = correction ? { correction } : {};
+
+    if (cleanTransaction.type !== 'order') {
+        if (cleanTransaction.itemId !== undefined) {
+            throw new Error(NON_ORDER_ITEM_REFERENCE_ERROR);
+        }
+
+        return db.transactions.add({
+            ...cleanTransaction,
+            ...correctionMetadata,
+        });
+    }
+
+    if (!isValidEntityId(cleanTransaction.itemId)) {
+        throw new Error(ORDER_ITEM_REQUIRED_ERROR);
+    }
+
+    const item = await db.items.get(cleanTransaction.itemId);
+
+    if (!item) {
+        throw new Error('Item não encontrado.');
+    }
+
+    if (!isItemActive(item)) {
+        throw new Error('Itens inativos não podem ser usados em novos pedidos.');
+    }
+
+    return db.transactions.add({
+        ...cleanTransaction,
+        itemName: item.name,
+        ...correctionMetadata,
+    });
+}
+
+function invalidateTransactionConsumers(
+    queryClient: ReturnType<typeof useQueryClient>,
+    resellerIds: number[],
+) {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    resellerIds.forEach(resellerId => {
+        queryClient.invalidateQueries({ queryKey: ['transactions', resellerId] });
+    });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 }
 
 export function useTransactions(resellerId?: number) {
@@ -27,53 +117,12 @@ export function useTransactions(resellerId?: number) {
 export function useCreateTransaction() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (transaction: Omit<Transaction, 'id'>) =>
-            db.transaction('rw', db.resellers, db.items, db.transactions, async () => {
-                if (!isValidEntityId(transaction.resellerId)) {
-                    throw new Error('Revendedor não encontrado.');
-                }
-
-                const reseller = await db.resellers.get(transaction.resellerId);
-
-                if (!reseller) {
-                    throw new Error('Revendedor não encontrado.');
-                }
-
-                if (!isResellerActive(reseller)) {
-                    throw new Error('Revendedores inativos não podem receber novos lançamentos.');
-                }
-
-                if (transaction.type !== 'order') {
-                    if (transaction.itemId !== undefined) {
-                        throw new Error(NON_ORDER_ITEM_REFERENCE_ERROR);
-                    }
-
-                    return db.transactions.add(transaction);
-                }
-
-                if (!isValidEntityId(transaction.itemId)) {
-                    throw new Error(ORDER_ITEM_REQUIRED_ERROR);
-                }
-
-                const item = await db.items.get(transaction.itemId);
-
-                if (!item) {
-                    throw new Error('Item não encontrado.');
-                }
-
-                if (!isItemActive(item)) {
-                    throw new Error('Itens inativos não podem ser usados em novos pedidos.');
-                }
-
-                return db.transactions.add({
-                    ...transaction,
-                    itemName: item.name,
-                });
-            }),
+        mutationFn: (transaction: NewTransactionInput) =>
+            db.transaction('rw', db.resellers, db.items, db.transactions, () =>
+                addValidatedTransaction(transaction)
+            ),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions', variables.resellerId] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            invalidateTransactionConsumers(queryClient, [variables.resellerId]);
         },
     });
 }
@@ -115,9 +164,110 @@ export function useReverseTransaction() {
                 };
             }),
         onSuccess: ({ resellerId }) => {
-            queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions', resellerId] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            invalidateTransactionConsumers(queryClient, [resellerId]);
+        },
+    });
+}
+
+export function useReplaceTransaction() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            originalId,
+            reason,
+            replacement,
+        }: {
+            originalId: number;
+            reason: string;
+            replacement: CorrectionReplacementInput;
+        }) => db.transaction('rw', db.resellers, db.items, db.transactions, async () => {
+            if (!isValidEntityId(originalId)) {
+                throw new Error(TRANSACTION_NOT_FOUND_ERROR);
+            }
+
+            const normalizedReason = reason.trim();
+            if (!normalizedReason) {
+                throw new Error(REVERSAL_REASON_REQUIRED_ERROR);
+            }
+
+            const original = await db.transactions.get(originalId);
+            if (!original) {
+                throw new Error(TRANSACTION_NOT_FOUND_ERROR);
+            }
+
+            if (isTransactionReversed(original)) {
+                throw new Error(TRANSACTION_ALREADY_REVERSED_ERROR);
+            }
+
+            let normalizedReplacement: NewTransactionInput = {
+                ...replacement,
+                type: original.type,
+                createdAt: new Date(),
+            };
+
+            if (original.type === 'order') {
+                if (replacement.itemId !== original.itemId) {
+                    throw new Error(CORRECTION_ORDER_ITEM_PRESERVED_ERROR);
+                }
+
+                const quantity = replacement.quantity;
+                const unitPrice = replacement.unitPrice;
+                if (!Number.isInteger(quantity) || !quantity || quantity <= 0 || typeof unitPrice !== 'number' || unitPrice < 0) {
+                    throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                }
+
+                normalizedReplacement = {
+                    ...normalizedReplacement,
+                    itemId: original.itemId,
+                    itemName: original.itemName,
+                    quantity,
+                    unitPrice,
+                    totalPrice: quantity * unitPrice,
+                    observation: original.observation,
+                };
+            } else {
+                if (typeof replacement.totalPrice !== 'number' || !Number.isFinite(replacement.totalPrice) || replacement.totalPrice <= 0) {
+                    throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                }
+
+                normalizedReplacement = {
+                    ...normalizedReplacement,
+                    itemId: undefined,
+                    itemName: undefined,
+                    quantity: undefined,
+                    unitPrice: undefined,
+                    totalPrice: replacement.totalPrice,
+                    observation: original.observation,
+                };
+            }
+
+            const replacementTransactionId = await addValidatedTransaction(
+                normalizedReplacement,
+                { replacesTransactionId: originalId },
+            ) as number;
+
+            const reversal = {
+                reason: normalizedReason,
+                reversedAt: new Date().toISOString(),
+                replacementTransactionId,
+            };
+
+            await db.transactions.update(originalId, { reversal });
+
+            return {
+                originalResellerId: original.resellerId,
+                replacementResellerId: normalizedReplacement.resellerId,
+                originalId,
+                replacementTransactionId,
+                reversal,
+            };
+        }),
+        onSuccess: ({ originalResellerId, replacementResellerId }) => {
+            invalidateTransactionConsumers(
+                queryClient,
+                Array.from(new Set([originalResellerId, replacementResellerId])),
+            );
         },
     });
 }
