@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { CommandCenter } from './CommandCenter'
 import { MemoryRouter } from 'react-router-dom'
 import * as searchHook from '@/hooks/useSearch'
 
-// Mock useNavigate
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
     const actual = await vi.importActual('react-router-dom')
@@ -14,15 +13,21 @@ vi.mock('react-router-dom', async () => {
     }
 })
 
-// Mock useSearch
 vi.mock('@/hooks/useSearch', () => ({
     useSearch: vi.fn(),
 }))
 
 describe('CommandCenter', () => {
+    beforeAll(() => {
+        global.ResizeObserver = class ResizeObserver {
+            observe() { }
+            unobserve() { }
+            disconnect() { }
+        }
+    })
+
     beforeEach(() => {
         vi.clearAllMocks()
-        // Reset matchMedia mock
         Object.defineProperty(window, 'matchMedia', {
             writable: true,
             value: vi.fn().mockImplementation(query => ({
@@ -37,7 +42,6 @@ describe('CommandCenter', () => {
             })),
         })
 
-        // Default implementation for useSearch
         vi.mocked(searchHook.useSearch).mockReturnValue({
             results: [],
             recent: [],
@@ -58,7 +62,7 @@ describe('CommandCenter', () => {
     it('should navigate when a result is selected', () => {
         vi.mocked(searchHook.useSearch).mockReturnValue({
             results: [
-                { id: 1, title: 'Test Reseller', type: 'reseller' }
+                { id: 1, title: 'Test Reseller', type: 'reseller', isActive: true }
             ],
             recent: [],
             isLoading: false,
@@ -70,11 +74,29 @@ describe('CommandCenter', () => {
             </MemoryRouter>
         )
 
-        // Find the item and click it
         const item = screen.getByText('Test Reseller')
         fireEvent.click(item)
 
         expect(mockNavigate).toHaveBeenCalledWith('/resellers/1')
+    })
+
+    it('should keep inactive resellers visible and identify them as inactive', () => {
+        vi.mocked(searchHook.useSearch).mockReturnValue({
+            results: [
+                { id: 2, title: 'Archived Reseller', type: 'reseller', isActive: false }
+            ],
+            recent: [],
+            isLoading: false,
+        })
+
+        render(
+            <MemoryRouter>
+                <CommandCenter open={true} onOpenChange={() => { }} />
+            </MemoryRouter>
+        )
+
+        expect(screen.getByText('Archived Reseller')).toBeInTheDocument()
+        expect(screen.getByText('Inativo')).toBeInTheDocument()
     })
 
     it('should show suggestions when no results are found for a query', () => {
@@ -90,7 +112,6 @@ describe('CommandCenter', () => {
             </MemoryRouter>
         )
 
-        // Simulate typing
         const input = screen.getByPlaceholderText(/Digite um comando/i)
         fireEvent.change(input, { target: { value: 'New Reseller' } })
 
@@ -113,11 +134,9 @@ describe('CommandCenter', () => {
             </MemoryRouter>
         )
 
-        // Simulate typing
         const input = screen.getByPlaceholderText(/Digite um comando/i)
         fireEvent.change(input, { target: { value: 'New Reseller' } })
 
-        // Click a suggestion
         const suggestion = screen.getByText(/Cadastrar revendedor: "New Reseller"/i)
         fireEvent.click(suggestion)
 
