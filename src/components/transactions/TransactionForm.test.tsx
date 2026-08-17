@@ -127,9 +127,12 @@ describe('TransactionForm', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
         expect(onCancel).toHaveBeenCalledOnce();
-        expect((selects[0] as HTMLSelectElement).value).toBe('');
-        expect((selects[1] as HTMLSelectElement).value).toBe('signal');
-        expect((screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement).value).toBe('');
+        await waitFor(() => {
+            const resetSelects = screen.getAllByTestId('mock-select');
+            expect((resetSelects[0] as HTMLSelectElement).value).toBe('');
+            expect((resetSelects[1] as HTMLSelectElement).value).toBe('signal');
+            expect((screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement).value).toBe('');
+        });
     });
 
     it('should surface mutation failure and preserve entered data for retry', async () => {
