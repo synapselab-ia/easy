@@ -10,6 +10,7 @@ vi.mock('@/hooks/use-media-query', () => ({
 
 vi.mock('@/hooks/useTransactions', () => ({
     useReverseTransaction: vi.fn(),
+    useReplaceTransaction: vi.fn(),
 }));
 
 vi.mock('../ui/ResponsiveDialog', () => ({
@@ -41,7 +42,7 @@ const activeTransaction: Transaction = {
     createdAt: new Date('2026-08-17T10:00:00-03:00'),
 };
 
-describe('TransactionTable reversal flow', () => {
+describe('TransactionTable correction/reversal flow', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mutateAsync.mockResolvedValue({
@@ -55,6 +56,13 @@ describe('TransactionTable reversal flow', () => {
             mutateAsync,
             isPending: false,
         } as any);
+    });
+
+    it('offers both pure reversal and guided correction for an effective transaction', () => {
+        render(<TransactionTable transactions={[activeTransaction]} />);
+
+        expect(screen.getByRole('button', { name: /Corrigir/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Estornar/i })).toBeInTheDocument();
     });
 
     it('requires a reason before confirming and submits an audited reversal', async () => {
@@ -83,19 +91,38 @@ describe('TransactionTable reversal flow', () => {
         });
     });
 
-    it('shows reversal audit data and does not offer another reversal action', () => {
+    it('shows reversal audit/link data and does not offer another correction action', () => {
         const reversedTransaction: Transaction = {
             ...activeTransaction,
             reversal: {
-                reason: 'Pagamento duplicado',
+                reason: 'Valor incorreto',
                 reversedAt: '2026-08-17T15:00:00.000Z',
+                replacementTransactionId: 2,
             },
         };
 
         render(<TransactionTable transactions={[reversedTransaction]} />);
 
         expect(screen.getByText('Estornado')).toBeInTheDocument();
-        expect(screen.getByText(/Motivo do estorno: Pagamento duplicado/i)).toBeInTheDocument();
+        expect(screen.getByText(/Motivo do estorno: Valor incorreto/i)).toBeInTheDocument();
+        expect(screen.getByText(/Substituído pelo lançamento #2/i)).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Estornar/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Corrigir/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the reverse link on a replacement transaction', () => {
+        const replacement: Transaction = {
+            ...activeTransaction,
+            id: 2,
+            totalPrice: 50,
+            correction: {
+                replacesTransactionId: 1,
+            },
+        };
+
+        render(<TransactionTable transactions={[replacement]} />);
+
+        expect(screen.getByText(/Correção do lançamento #1/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Corrigir/i })).toBeInTheDocument();
     });
 });
