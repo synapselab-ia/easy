@@ -22,7 +22,8 @@ Status vocabulary:
 ## P0 — State and governance
 
 **Priority:** Critical  
-**Status:** `IN_PROGRESS` until the P0 documentation PR is merged into `develop`.
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
 ### Scope
 
@@ -55,6 +56,8 @@ A fresh conversation must be able to read the V2 documents and correctly identif
 - the current phase;
 - the single next action;
 - what is out of scope at that moment.
+
+**Gate result:** satisfied by the canonical document set and startup protocol in `STATUS.md`.
 
 ---
 
