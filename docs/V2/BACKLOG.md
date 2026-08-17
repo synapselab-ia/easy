@@ -25,19 +25,7 @@ Status vocabulary:
 **Status:** `DONE`  
 **Completed:** 2026-08-17
 
-### Scope
-
-- establish `synapselab-ia/easy` as V2 laboratory;
-- preserve `main` as stable copied baseline;
-- use `develop` as V2 integration branch;
-- use `feature/*` branches for isolated work;
-- create canonical V2 documentation;
-- reconstruct actual technical/product state;
-- stop treating legacy task checkboxes as canonical status.
-
-### Gate
-
-A fresh conversation can reconstruct what Easy is, current architecture/risks, current phase, next action and scope boundaries from the canonical V2 documents.
+P0 established the V2 laboratory, branch roles, canonical documents and reconstructable project state.
 
 ---
 
@@ -49,87 +37,87 @@ A fresh conversation can reconstruct what Easy is, current architecture/risks, c
 
 ### P1-S1 — Safe reseller lifecycle
 
-**Status:** `DONE`  
-**Completed:** 2026-08-17
+**Status:** `DONE`
 
-Implemented:
-
-- reversible active/inactive reseller lifecycle;
-- V1 → V2 active-state migration;
-- archive/reactivate normal UI;
-- hard-delete protection when transactions exist;
-- historical discovery/detail/statement preservation;
-- inactive/missing reseller rejection for new transactions.
+Implemented reversible reseller lifecycle, V1 → V2 active-state migration, historical preservation, guarded hard deletion and strict new-transaction reseller validation.
 
 ### P1-S2 — Safe item lifecycle
 
-**Status:** `DONE`  
-**Completed:** 2026-08-17
+**Status:** `DONE`
 
-Implemented:
-
-- reversible active/inactive item lifecycle;
-- V2 → V3 active-state migration;
-- archive/reactivate catalog UI;
-- hard-delete protection when a transaction references the item;
-- inactive item visibility in catalog/search;
-- active-only new-order selection and mutation guard;
-- historical order snapshot preservation.
+Implemented reversible item lifecycle, V2 → V3 active-state migration, historical snapshot preservation, guarded hard deletion and active-only new-order behavior.
 
 ### P1-S3 — Referential validation and migration
 
-**Status:** `DONE`  
-**Completed:** 2026-08-17
+**Status:** `DONE`
 
-Implemented:
-
-- explicit new-transaction reference acceptance matrix;
-- positive/existing/active reseller reference required for all new transactions;
-- new orders require a positive/existing/active item reference;
-- new-order `itemName` snapshot is derived from the resolved item identity;
-- payment/signal creation rejects item references;
-- complete V1 → V2 → V3 migration-path tests preserve IDs, dates, lifecycle state and transaction snapshots;
-- historical unresolved item references with stored snapshots remain preserved rather than destructively repaired;
-- P1-S1/P1-S2 lifecycle/search/form/integration regressions remain green.
-
-Acceptance gate:
-
-- [x] old valid local data upgrades without loss across V1 → V2 → V3;
-- [x] invalid new references are rejected according to an explicit matrix;
-- [x] historical snapshots remain understandable and are not rewritten by migration;
-- [x] reseller/item lifecycle rules are reconciled across P1;
-- [x] targeted P1-S3 tests and build pass;
-- [x] P1 is closed.
+Implemented the strict new-transaction reference matrix and complete V1 → V2 → V3 preservation coverage without destructive historical repair.
 
 ---
 
 ## P2 — Correction, reversal and audit trail
 
 **Priority:** Critical  
-**Status:** `NOT_STARTED`
+**Status:** `IN_PROGRESS`
 
 Goal: correct common human financial-entry errors without silently destroying history.
 
-Expected capabilities:
+### P2-S1 — Audited transaction reversal
 
-- transaction detail;
-- reversal/cancellation action;
-- mandatory reason;
-- correction timestamp;
-- preserved original entry;
-- visible reversed status;
-- correct balance/dashboard recalculation;
-- future-ready actor attribution field/strategy.
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Required cases:
+Implemented behavior:
 
-- R$500 order entered as R$5,000;
-- duplicate payment;
-- payment/signal posted to wrong reseller;
-- old order reversal;
-- PDF/dashboard consistency after reversal.
+- original transaction remains stored;
+- optional `reversal` metadata carries mandatory reason and ISO reversal timestamp;
+- transaction can be reversed only once;
+- destructive transaction deletion is replaced as the correction path by `useReverseTransaction`;
+- reseller-history UI exposes reversal with mandatory reason;
+- reversed entries remain visible with audit metadata;
+- shared transaction-domain rules make reversed entries financially ineffective;
+- reseller detail, dashboard totals/today orders/aging/performance, search balances and PDF balance inputs use reversal-aware semantics;
+- PDF statements keep reversed rows and show status/reason;
+- Dexie schema remains V3 because reversal metadata is optional/non-indexed;
+- P1 regression gates remain green.
 
-Gate: common input errors can be corrected through the UI with traceability and no manual database editing.
+Acceptance gate:
+
+- [x] original row preserved;
+- [x] reason mandatory;
+- [x] correction timestamp/status persisted;
+- [x] no double reversal;
+- [x] visible audit trail in history/PDF;
+- [x] balance/dashboard/search consistency after reversal;
+- [x] targeted tests and build pass.
+
+### P2-S2 — Linked/guided correction replacement
+
+**Status:** `NOT_STARTED`
+
+Goal: make wrong-value and wrong-reseller correction explicit rather than relying on an unlinked manual reversal + new entry.
+
+Expected work:
+
+- define the minimum original/replacement relationship;
+- preserve both transactions and P2-S1 reversal audit metadata;
+- provide a guided recreate/correction flow for wrong amount and wrong reseller;
+- avoid in-place mutation of the original financial entry;
+- define a future actor-attribution strategy compatible with the later P4 persistence decision;
+- do not introduce authentication/backend yet;
+- do not change P3 occurrence-date or statement semantics.
+
+Acceptance direction:
+
+- a wrong-value entry can be reversed and replaced with explicit linkage;
+- a wrong-reseller entry can be reversed and recreated against the intended reseller with explicit linkage;
+- the original and replacement remain independently inspectable;
+- balances/dashboard/history/PDF remain coherent;
+- duplicate payment and pure cancellation remain supported by P2-S1 without forcing a replacement.
+
+### P2 remaining phase gate
+
+P2 is complete only when common entry errors can be corrected through the UI with traceability and no manual database editing, including wrong value, duplicate payment, wrong reseller and old-order reversal, with an explicit actor-attribution strategy for the future architecture.
 
 ---
 
@@ -143,7 +131,7 @@ Expected work:
 - separate `occurredAt` from `createdAt`;
 - define opening/period/closing balance semantics;
 - make reseller detail, dashboard, search, PDF and analytics use consistent domain rules;
-- decide whether the current last-movement risk metric is sufficient or true debt aging is required.
+- decide whether current last-movement risk is sufficient or true debt aging is required.
 
 Gate: identical data produces coherent financial results across every view/export.
 
@@ -154,20 +142,7 @@ Gate: identical data produces coherent financial results across every view/expor
 **Priority:** High / Decision Gate  
 **Status:** `NOT_STARTED`
 
-Must answer before introducing backend/authentication:
-
-- how many people use Easy;
-- whether they use it simultaneously;
-- whether they need multiple devices/locations;
-- whether per-user authorship is required;
-- sensitivity/security requirements;
-- offline requirement;
-- recovery expectations.
-
-Possible outcomes:
-
-- strengthen local Dexie architecture; or
-- approve a cloud-backed architecture with migration plan.
+Must answer before introducing backend/authentication: users, concurrency, devices/locations, authorship, security, offline and recovery requirements.
 
 Gate: one documented architecture decision with rationale, costs, risks and migration implications.
 
@@ -202,8 +177,7 @@ Expected work:
 - reconcile stale unit/integration/E2E tests;
 - cover integrity, balances, reversals, dates, statements, backups and lifecycle rules;
 - establish critical E2E business flow;
-- make deployment conditional on quality gates;
-- reconcile Node/tooling documentation with workflow reality.
+- make deployment conditional on quality gates.
 
 Target CI sequence:
 
@@ -225,17 +199,7 @@ Gate: critical failure prevents publication.
 **Priority:** Medium-High  
 **Status:** `NOT_STARTED`
 
-Candidate work:
-
-- global search opens exact item/action;
-- quick actions arrive preconfigured;
-- consistent validation/toasts/loading;
-- duplicate-submit protection;
-- better reseller search/filtering;
-- phone formatting;
-- only catalog fields proven useful by operation.
-
-Inventory is **not** assumed to belong here until confirmed.
+Candidate work includes exact item/action navigation from global search, preconfigured quick actions, consistent validation/toasts/loading, duplicate-submit protection and proven-useful catalog refinements.
 
 ---
 
@@ -244,15 +208,7 @@ Inventory is **not** assumed to belong here until confirmed.
 **Priority:** Mandatory before P9  
 **Status:** `NOT_STARTED`
 
-Discovery must cover:
-
-- users/devices/frequency;
-- work still done in paper/WhatsApp/spreadsheets;
-- reseller credit, regions, commissions and inactivity;
-- multi-item orders, statuses, discounts, shipping and payment terms;
-- due dates, partial payments, credits and monthly closing;
-- product variants, price tables and inventory;
-- required reports/exports.
+Discovery covers users/devices, current manual work, reseller/commercial rules, orders, payments, variants/inventory and reporting needs.
 
 Output: prioritized user stories with acceptance criteria.
 
@@ -265,31 +221,11 @@ Output: prioritized user stories with acceptance criteria.
 
 No candidate module is approved before P8.
 
-Potential epics only if confirmed:
-
-- richer orders;
-- accounts receivable;
-- professional catalog;
-- users/permissions;
-- reports/exports.
-
 ---
 
 ## P10 — Controlled beta, migration and cutover
 
 **Priority:** Critical before replacement of real use  
 **Status:** `NOT_STARTED`
-
-Expected work:
-
-- freeze release-candidate schema;
-- pass all tests;
-- use preview/homologation environment;
-- import controlled copy of real data;
-- compare entity counts and balances old vs V2;
-- sample PDFs;
-- operational testing by Duda/store;
-- final backup;
-- migration and rollback plan.
 
 Gate: V2 replaces the old system only when balances match, history is preserved, restore is proven, critical flows pass and rollback is known.
