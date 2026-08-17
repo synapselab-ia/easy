@@ -17,9 +17,7 @@ export const CORRECTION_ORDER_ITEM_PRESERVED_ERROR = 'A correção guiada deve p
 export const CORRECTION_VALUE_REQUIRED_ERROR = 'Informe um valor válido para a correção.';
 export const OCCURRENCE_DATE_REQUIRED_ERROR = 'Informe uma data de ocorrência válida.';
 
-export type NewTransactionInput = Omit<Transaction, 'id' | 'reversal' | 'correction' | 'createdAt'> & {
-    occurredAt: Date;
-};
+export type NewTransactionInput = Omit<Transaction, 'id' | 'reversal' | 'correction' | 'createdAt'>;
 export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'occurredAt'>;
 
 function isValidEntityId(value: unknown): value is number {
@@ -49,10 +47,13 @@ async function addValidatedTransaction(
     correction?: TransactionCorrection,
 ) {
     const cleanTransaction = sanitizeNewTransaction(transaction);
+    const registrationTimestamp = new Date();
 
-    if (!isValidOccurrenceDate(cleanTransaction.occurredAt)) {
+    if (cleanTransaction.occurredAt !== undefined && !isValidOccurrenceDate(cleanTransaction.occurredAt)) {
         throw new Error(OCCURRENCE_DATE_REQUIRED_ERROR);
     }
+
+    const occurrenceTimestamp = cleanTransaction.occurredAt ?? registrationTimestamp;
 
     if (!isValidEntityId(cleanTransaction.resellerId)) {
         throw new Error('Revendedor não encontrado.');
@@ -69,7 +70,6 @@ async function addValidatedTransaction(
     }
 
     const correctionMetadata = correction ? { correction } : {};
-    const registrationTimestamp = new Date();
 
     if (cleanTransaction.type !== 'order') {
         if (cleanTransaction.itemId !== undefined) {
@@ -78,6 +78,7 @@ async function addValidatedTransaction(
 
         return db.transactions.add({
             ...cleanTransaction,
+            occurredAt: occurrenceTimestamp,
             ...correctionMetadata,
             createdAt: registrationTimestamp,
         });
@@ -99,6 +100,7 @@ async function addValidatedTransaction(
 
     return db.transactions.add({
         ...cleanTransaction,
+        occurredAt: occurrenceTimestamp,
         itemName: item.name,
         ...correctionMetadata,
         createdAt: registrationTimestamp,
