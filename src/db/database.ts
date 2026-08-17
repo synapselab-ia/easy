@@ -55,7 +55,9 @@ export interface Transaction {
     reversal?: TransactionReversal;
     // Presente apenas em uma transação criada como substituição auditável.
     correction?: TransactionCorrection;
-    // Comum
+    // Data financeira em que a movimentação ocorreu. Opcional apenas para leitura de dados legados.
+    occurredAt?: Date;
+    // Momento de registro/auditoria do lançamento no Easy.
     createdAt: Date;
 }
 
@@ -92,6 +94,18 @@ class AppDatabase extends Dexie {
             transaction.table('items').toCollection().modify((item: Item) => {
                 if (typeof item.isActive !== 'boolean') {
                     item.isActive = true;
+                }
+            })
+        );
+
+        this.version(4).stores({
+            items: '++id, name',
+            resellers: '++id, name',
+            transactions: '++id, resellerId, type, createdAt, occurredAt'
+        }).upgrade(transaction =>
+            transaction.table('transactions').toCollection().modify((financialTransaction: Transaction) => {
+                if (!(financialTransaction.occurredAt instanceof Date)) {
+                    financialTransaction.occurredAt = financialTransaction.createdAt;
                 }
             })
         );
