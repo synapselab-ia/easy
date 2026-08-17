@@ -6,7 +6,7 @@ import {
     type Transaction,
     type TransactionCorrection,
 } from '../db/database';
-import { isTransactionReversed } from '../domain/transactions';
+import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
 
 export const ORDER_ITEM_REQUIRED_ERROR = 'Pedidos novos devem referenciar um item do catálogo.';
 export const NON_ORDER_ITEM_REFERENCE_ERROR = 'Pagamentos e sinais não podem referenciar itens do catálogo.';
@@ -15,12 +15,19 @@ export const TRANSACTION_NOT_FOUND_ERROR = 'Lançamento não encontrado.';
 export const TRANSACTION_ALREADY_REVERSED_ERROR = 'Este lançamento já foi estornado.';
 export const CORRECTION_ORDER_ITEM_PRESERVED_ERROR = 'A correção guiada deve preservar o item original do pedido.';
 export const CORRECTION_VALUE_REQUIRED_ERROR = 'Informe um valor válido para a correção.';
+export const OCCURRENCE_DATE_REQUIRED_ERROR = 'Informe uma data de ocorrência válida.';
 
-export type NewTransactionInput = Omit<Transaction, 'id' | 'reversal' | 'correction'>;
-export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'createdAt'>;
+export type NewTransactionInput = Omit<Transaction, 'id' | 'reversal' | 'correction' | 'createdAt'> & {
+    occurredAt: Date;
+};
+export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'occurredAt'>;
 
 function isValidEntityId(value: unknown): value is number {
     return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
+function isValidOccurrenceDate(value: unknown): value is Date {
+    return value instanceof Date && !Number.isNaN(value.getTime());
 }
 
 function sanitizeNewTransaction(transaction: NewTransactionInput): NewTransactionInput {
@@ -33,7 +40,7 @@ function sanitizeNewTransaction(transaction: NewTransactionInput): NewTransactio
         unitPrice: transaction.unitPrice,
         totalPrice: transaction.totalPrice,
         observation: transaction.observation,
-        createdAt: transaction.createdAt,
+        occurredAt: transaction.occurredAt,
     };
 }
 
@@ -42,6 +49,10 @@ async function addValidatedTransaction(
     correction?: TransactionCorrection,
 ) {
     const cleanTransaction = sanitizeNewTransaction(transaction);
+
+    if (!isValidOccurrenceDate(cleanTransaction.occurredAt)) {
+        throw new Error(OCCURRENCE_DATE_REQUIRED_ERROR);
+    }
 
     if (!isValidEntityId(cleanTransaction.resellerId)) {
         throw new Error('Revendedor não encontrado.');
@@ -58,6 +69,7 @@ async function addValidatedTransaction(
     }
 
     const correctionMetadata = correction ? { correction } : {};
+    const registrationTimestamp = new Date();
 
     if (cleanTransaction.type !== 'order') {
         if (cleanTransaction.itemId !== undefined) {
@@ -67,6 +79,7 @@ async function addValidatedTransaction(
         return db.transactions.add({
             ...cleanTransaction,
             ...correctionMetadata,
+            createdAt: registrationTimestamp,
         });
     }
 
@@ -88,6 +101,7 @@ async function addValidatedTransaction(
         ...cleanTransaction,
         itemName: item.name,
         ...correctionMetadata,
+        createdAt: registrationTimestamp,
     });
 }
 
@@ -203,7 +217,7 @@ export function useReplaceTransaction() {
             let normalizedReplacement: NewTransactionInput = {
                 ...replacement,
                 type: original.type,
-                createdAt: new Date(),
+                occurredAt: transactionOccurredAt(original),
             };
 
             if (original.type === 'order') {
