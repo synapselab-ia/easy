@@ -1,0 +1,54 @@
+name: P1-S2 validation
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: P1-S2 database migration tests
+        run: npx vitest run src/db/database.test.ts
+
+      - name: P1-S2 item lifecycle hook tests
+        run: npx vitest run src/hooks/useItems.test.tsx
+
+      - name: P1-S2 transaction guard tests
+        run: npx vitest run src/hooks/useTransactions.test.tsx
+
+      - name: P1-S2 search lifecycle tests
+        run: npx vitest run src/hooks/useSearch.test.tsx
+
+      - name: P1-S2 transaction form tests
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx
+
+      - name: P1-S2 command center tests
+        run: npx vitest run src/components/search/CommandCenter.test.tsx
+
+      - name: P1-S2 item page integration tests
+        run: npx vitest run src/pages/ItemsPage.test.tsx
+
+      - name: Historical snapshot regression tests
+        run: npx vitest run src/pages/ResellerDetailPage.test.tsx
+
+      - name: Reseller lifecycle regression tests
+        run: npx vitest run src/hooks/useResellers.test.tsx
+
+      - name: Build
+        run: npm run build
