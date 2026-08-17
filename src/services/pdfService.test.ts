@@ -92,11 +92,12 @@ describe('pdfService', () => {
         generateResellerExtract(mockReseller, [reversed], 0);
 
         const callArgs = vi.mocked(autoTable).mock.calls[0][1];
+        const row = callArgs.body?.[0] as string[];
         expect(callArgs.head).toEqual([['Data', 'Tipo', 'Item', 'Qtd', 'Valor', 'Status', 'Observação']]);
         expect(callArgs.body).toHaveLength(1);
-        expect(callArgs.body?.[0][5]).toBe('Estornado');
-        expect(callArgs.body?.[0][6]).toContain('PIX');
-        expect(callArgs.body?.[0][6]).toContain('Motivo do estorno: Pagamento duplicado');
+        expect(row[5]).toBe('Estornado');
+        expect(row[6]).toContain('PIX');
+        expect(row[6]).toContain('Motivo do estorno: Pagamento duplicado');
     });
 
     it('gera PDF com dateRange — nome do arquivo inclui as datas formatadas', () => {
