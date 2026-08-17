@@ -56,82 +56,101 @@ P5 gate: versioned export -> validated preview -> downloaded checkpoint -> verif
 ## P6 — Tests, CI and deployment safety
 
 **Priority:** High  
-**Status:** `DONE`  
-**Completed:** 2026-08-17
+**Status:** `DONE` — 2026-08-17.
 
-Goal achieved: the repository-wide critical suite is reconciled and publication from `main` is gated on the same accepted QA command used during integration.
+P6 established the persistent `npm run qa:critical` gate (lint + full Vitest + Playwright Chromium + production build), Critical QA for V2 integration and `quality -> build -> deploy` protection for publication from `main`.
 
-### P6-S1 — Reconcile repository-wide QA baseline and deployment safety
-
-**Status:** `DONE`
-
-Baseline captured before expectation changes:
-
-- lint: 81 errors;
-- Vitest: 10 failed / 149 passed;
-- Playwright: 10 failed / 3 passed;
-- production build: pass.
-
-Classification and remediation:
-
-- stale provider/router/mocking/jsdom harness expectations were corrected;
-- ambiguous/obsolete UI selectors were updated to current accessible UI contracts;
-- the PDF zero-movement E2E was updated to D-015 statement semantics rather than changing product behavior;
-- a real command-center integration bug was fixed by disabling `cmdk` internal filtering where Dexie `useSearch` already owns the result set;
-- existing lint debt that would require broad behavior-changing refactors remains visible as warnings, while objective errors remain blocking.
-
-Persistent gate:
-
-```text
-npm run qa:critical
-= lint + full Vitest + Playwright Chromium + production build
-```
-
-Infrastructure:
-
-- `.github/workflows/ci.yml` runs Critical QA on PRs to `develop`/`main`, pushes to `develop` and manual dispatch;
-- `.github/workflows/deploy.yml` requires `quality -> build -> deploy` on pushes to `main`;
-- CI/deploy use Node 22, `npm ci` and explicit Playwright Chromium installation.
-
-Acceptance gate:
-
-- [x] scripts/lint/Vitest/Playwright/deployment workflow inventoried first;
-- [x] initial full baseline captured before edits;
-- [x] every failure classified as regression vs stale test/tooling expectation;
-- [x] stale Vitest harness/expectations reconciled;
-- [x] stale E2E selectors/expectations reconciled;
-- [x] real command-center double-filter regression fixed;
-- [x] ESLint has 0 blocking errors; known debt remains visible as warnings;
-- [x] full Vitest passes — 39 files / 159 tests;
-- [x] full Playwright Chromium passes — 13 tests;
-- [x] production build passes;
-- [x] one reproducible `qa:critical` command exists;
-- [x] V2 integration has a persistent Critical QA workflow;
-- [x] `main` Pages publication cannot proceed before Critical QA passes;
-- [x] persistent functional run `32064801009` passes.
-
-P6 gate: **PASS / DONE**.
+Persistent functional validation: `32064801009` — PASS. Post-merge `develop` validation: `32065713920` — PASS.
 
 ---
 
 ## P7 — Complete incomplete UX flows / operational refinement
 
-**Status:** `NOT_STARTED`.
+**Priority:** High  
+**Status:** `IN_PROGRESS`
 
 Goal: complete evidenced operator-facing flows that are incomplete, misleading or materially high-friction without turning P7 into a visual redesign or speculative feature phase.
 
 ### P7-S1 — Operational UX gap inventory and prioritization
 
+**Status:** `DONE` — 2026-08-17.
+
+Evidence inspected:
+
+- current routes/navigation and command center;
+- transaction-entry form/page and transaction domain hook;
+- reseller detail statement/PDF flow;
+- item/reseller lifecycle forms and tables;
+- P5 backup/restore page, preflight dialog and restore tests;
+- existing transaction/component/integration tests and the three Playwright suites;
+- Project Spec usability objective and P1–P6 accepted contracts.
+
+#### Ranked evidenced gaps
+
+**1. Transaction-entry intent and feedback — first implementation priority.**
+
+- visible `Cancelar` button is wired to a no-op on the standalone transaction page;
+- transaction mutation failures are caught with console-only logging, providing no operator-visible failure state;
+- command-center action labelled `Pagamento/Sinal` always opens `?type=payment`, so signal intent is not preserved automatically.
+
+Impact: high-frequency routine financial workflow; direct intent/error risk. These three behaviors form one bounded slice and require no financial/schema change.
+
+**2. Invalid reseller statement range silently falls back to all-time view.**
+
+A complete inverted period leaves the entered dates visible but shows current balance/all transactions because no `StatementPeriod` is built; the error is surfaced only after PDF generation is attempted. This can mislead on-screen review.
+
+**3. Backup page top-level recovery copy is stale.**
+
+The page still describes a “future restore”/preflight-only stage even though P5-S2 already exposes checkpointed atomic restore. Inner restore UI is correct; the page-level description is not.
+
+**4. Item/reseller save failures are console-only.**
+
+Creation/edit forms catch mutation failures but do not show the operator a visible error. Lower direct financial risk than transaction entry, so scheduled later in P7.
+
+**5. Reseller-context launch requires redundant reselection.**
+
+From a reseller detail page the operator must navigate to the transaction page and select that same reseller again. This is evidenced routine friction against the “few steps” objective but does not threaten correctness, so it ranks below misleading/error-feedback gaps.
+
+#### Explicitly not prioritized from current evidence
+
+- broad visual redesign;
+- dashboard rearrangement;
+- theme/branding changes;
+- table-density preferences;
+- catalog search solely because it might be convenient.
+
+Current evidence does not establish enough operational impact to outrank the ranked gaps.
+
+P7-S1 gate: **PASS / DONE as evidence/prioritization work; no runtime behavior changed.** D-019 still requires Critical QA before integration.
+
+### P7-S2 — Reliable transaction-entry intent and feedback
+
 **Status:** `NOT_STARTED`
 
-Expected work:
+Bounded scope:
 
-- inspect existing operator-facing flows against P1–P6 contracts and current tests/UI;
-- identify incomplete, misleading or materially high-friction interactions;
-- separate genuine workflow gaps from cosmetic preferences;
-- rank evidenced gaps by operational impact, error risk and frequency;
-- record one bounded first implementation slice for the next action;
-- do not implement new business modules or begin P8 discovery in this inventory slice.
+- make standalone transaction `Cancelar` reset/clear the in-progress form while preserving requested initial transaction type;
+- show transaction mutation failures visibly and keep entered data available for correction/retry;
+- replace the ambiguous command-center `Pagamento/Sinal` action with separate `Pagamento` and `Sinal` actions whose query parameter preserves intent;
+- add focused component/integration tests for reset/error/type intent;
+- add one bounded Playwright operator path covering shortcut/cancel behavior;
+- run `npm run qa:critical`.
+
+Out of scope for P7-S2:
+
+- financial/domain-rule changes;
+- schema/persistence changes;
+- correction/reversal changes;
+- backup/restore copy or behavior;
+- reseller date-range UX;
+- contextual reseller launch shortcut;
+- P8/P9 work.
+
+### Later P7 slices
+
+After P7-S2, select the next bounded slice from priorities 2–5 based on the canonical ranking; do not batch unrelated gaps merely to close P7 faster.
+
+---
 
 ## P8 — Real store requirements discovery
 
