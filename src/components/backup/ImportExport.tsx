@@ -1,14 +1,20 @@
 import React, { useRef, type ChangeEvent } from 'react';
-import { exportData, preflightBackupFile, type BackupPreview } from '@/services/backupService';
+import {
+    exportData,
+    preflightBackupFile,
+    type BackupPreflightResult,
+} from '@/services/backupService';
+import { restorePreflightedBackup } from '@/services/restoreService';
 import { toast } from 'sonner';
 import BackupPreflightDialog from './BackupPreflightDialog';
 
 export default function ImportExport() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [dialogOpen, setDialogOpen] = React.useState(false);
-    const [preview, setPreview] = React.useState<BackupPreview | null>(null);
+    const [preflight, setPreflight] = React.useState<BackupPreflightResult | null>(null);
     const [fileName, setFileName] = React.useState<string>();
     const [isPreflighting, setIsPreflighting] = React.useState(false);
+    const [isRestoring, setIsRestoring] = React.useState(false);
 
     const resetFileInput = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -29,12 +35,12 @@ export default function ImportExport() {
         if (!file) return;
 
         setIsPreflighting(true);
-        setPreview(null);
+        setPreflight(null);
         setFileName(file.name);
 
         try {
             const result = await preflightBackupFile(file);
-            setPreview(result.preview);
+            setPreflight(result);
             setDialogOpen(true);
             toast.success('Backup validado. Nenhum dado atual foi alterado.');
         } catch (error) {
@@ -46,6 +52,27 @@ export default function ImportExport() {
             setIsPreflighting(false);
             resetFileInput();
         }
+    };
+
+    const handleRestore = async () => {
+        if (!preflight || isRestoring) return;
+
+        setIsRestoring(true);
+        const result = await restorePreflightedBackup(preflight);
+        setIsRestoring(false);
+
+        if (result.status === 'success') {
+            toast.success(`Backup restaurado com sucesso. Checkpoint salvo em ${result.checkpointFilename}.`);
+            setDialogOpen(false);
+            setPreflight(null);
+            setFileName(undefined);
+            return;
+        }
+
+        const checkpoint = result.checkpointFilename
+            ? ` Checkpoint disponível em ${result.checkpointFilename}.`
+            : '';
+        toast.error(`Restauração falhou; o banco anterior foi preservado.${checkpoint} ${result.message}`.trim());
     };
 
     return (
@@ -65,25 +92,27 @@ export default function ImportExport() {
                 onChange={handleFileChange}
                 className="hidden"
                 id="backup-import"
-                disabled={isPreflighting}
+                disabled={isPreflighting || isRestoring}
             />
             <label
                 htmlFor="backup-import"
-                aria-disabled={isPreflighting}
+                aria-disabled={isPreflighting || isRestoring}
                 className="cursor-pointer inline-block px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 aria-disabled:opacity-50 aria-disabled:pointer-events-none"
             >
                 {isPreflighting ? 'Validando Backup...' : 'Validar Backup para Restauração'}
             </label>
 
             <p className="text-sm text-muted-foreground">
-                Nesta etapa, selecionar um arquivo executa apenas validação e prévia. O banco atual não é substituído.
+                A restauração só é liberada após o preflight. Antes de qualquer substituição, o Easy baixa automaticamente um checkpoint v2 recuperável do banco atual.
             </p>
 
             <BackupPreflightDialog
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                preview={preview}
+                preview={preflight?.preview ?? null}
                 fileName={fileName}
+                onRestore={handleRestore}
+                isRestoring={isRestoring}
             />
         </div>
     );
