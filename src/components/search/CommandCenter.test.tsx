@@ -176,4 +176,18 @@ describe('CommandCenter', () => {
 
         expect(mockNavigate).toHaveBeenCalledWith('/resellers?name=New%20Reseller')
     })
+
+    it('should route payment and signal shortcuts with distinct transaction intent', () => {
+        render(
+            <MemoryRouter>
+                <CommandCenter open={true} onOpenChange={() => { }} />
+            </MemoryRouter>
+        )
+
+        fireEvent.click(screen.getByText('Novo Lançamento: Pagamento'))
+        expect(mockNavigate).toHaveBeenCalledWith('/transactions?type=payment')
+
+        fireEvent.click(screen.getByText('Novo Lançamento: Sinal'))
+        expect(mockNavigate).toHaveBeenCalledWith('/transactions?type=signal')
+    })
 })

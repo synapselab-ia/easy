@@ -12,11 +12,6 @@ export default function TransactionsPage() {
         toast.success("Lançamento salvo com sucesso!");
     };
 
-    const handleCancel = () => {
-        // Here we could clear form or similar, but the form resets itself on success.
-        // We'll just maybe show a message or do nothing.
-    };
-
     return (
         <div className="p-4 lg:p-6 space-y-6">
             <div>
@@ -36,9 +31,8 @@ export default function TransactionsPage() {
                 <CardContent>
                     <TransactionForm
                         onSubmitSuccess={handleSuccess}
-                        onCancel={handleCancel}
                         initialType={initialType}
-                        key={initialType} // Force remount when type changes
+                        key={initialType}
                     />
                 </CardContent>
             </Card>

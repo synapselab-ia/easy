@@ -4,92 +4,68 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-17 — P7-S2 reliable transaction-entry intent and feedback
+
+### Runtime refinement
+
+P7-S2 completed only the highest-ranked P7-S1 transaction-entry cluster:
+
+- standalone **Cancelar** now clears the in-progress transaction form instead of invoking a no-op;
+- reset restores the requested `initialType`, so a Signal shortcut remains Signal after Cancel;
+- transaction-create failures now surface through `toast.error` and preserve entered data for correction/retry;
+- successful creation still resets only after the existing validated mutation succeeds;
+- command center now has separate **Pagamento** and **Sinal** actions routing to `?type=payment` and `?type=signal` respectively;
+- the standalone transaction page no longer provides the inert cancel callback.
+
+No financial calculations, occurrence-date rules, lifecycle/reference validation, correction/reversal semantics, Dexie schema, persistence, backup/restore or lower-ranked P7 flows changed.
+
+### Regression coverage
+
+Added focused proof for:
+
+- Cancel reset and requested initial-type preservation;
+- visible rejected-mutation feedback with retry input retained;
+- transaction page Signal intent from URL;
+- distinct payment/signal command routing;
+- bounded Playwright Signal shortcut → entered value → Cancel → cleared value with Signal intent preserved.
+
+### Validation classification
+
+The first two Critical QA attempts exposed a defect in the **new test harness**, not a product regression:
+
+- `32068747287` — FAIL in the new Cancel unit assertion;
+- `32069051473` — FAIL in the same assertion.
+
+The mocked Select rendered invalid native HTML with `<span>` elements inside `<select>`, so jsdom did not represent an empty controlled value correctly. The harness was corrected to valid option-only Select HTML. Runtime behavior and D-019 were not weakened.
+
+Functional persistent run **`32069261401`**, job `95508465043` — **PASS**:
+
+- lint: 0 errors / 78 warnings;
+- Vitest: 39 files / 163 tests passing;
+- Playwright Chromium: 14/14 passing;
+- production build: PASS.
+
+### Canonical state
+
+- QG-011 transaction-entry intent/feedback: RESOLVED / P7-S2;
+- P7-S2: `DONE`;
+- P7 remains `IN_PROGRESS`;
+- D-020 remains the accepted prioritization decision; no new architecture/product decision was required;
+- `NEXT_ACTION` advances only to **P7-S3 — Explicit invalid reseller statement-range state**.
+
+Remaining Backup copy, item/reseller error-feedback and reseller-context launch gaps remain out of this slice. P8/P9 remain untouched.
+
+---
+
 ## 2026-08-17 — P7-S1 operational UX gap inventory and prioritization
 
-### Scope
-
-P7-S1 executed only the evidence/prioritization slice. No runtime, schema, persistence, financial-domain, recovery or QA-workflow behavior changed.
-
-The inventory compared current operator-facing routes/components/tests with P1–P6 contracts and the Project Spec objective that routine operations should require few steps on desktop/mobile.
-
-### Evidenced gaps
-
-Ranked by operational impact, error risk and routine frequency:
-
-1. **Transaction-entry intent and feedback** — standalone Cancel is inert; transaction creation failures are console-only; command-center `Pagamento/Sinal` always opens `payment`.
-2. **Invalid reseller statement range** — a complete inverted range leaves dates filled but falls back to current/all-time view until PDF generation surfaces the error.
-3. **Stale Backup page recovery copy** — top-level text still describes restore as future/preflight-only although P5-S2 restore is implemented.
-4. **Item/reseller save error feedback** — mutation failures are console-only.
-5. **Reseller-context transaction launch friction** — operator must reselect a reseller already known by the detail page.
-
-Broad visual redesign, dashboard rearrangement, theme/branding, table-density preferences and speculative convenience features were not prioritized without stronger operational evidence.
-
-### Decision and next slice
-
-D-020 accepted: P7 fixes broken/misleading operator controls and intent/error risks before convenience/cosmetic refinement.
-
-P7-S1 is `DONE`; P7 remains `IN_PROGRESS`.
-
-`NEXT_ACTION` advances only to **P7-S2 — Reliable transaction-entry intent and feedback**:
-
-- make standalone Cancel reset/clear the in-progress transaction while preserving requested initial type;
-- surface transaction mutation failure visibly while preserving entered data for retry;
-- split command-center payment and signal shortcuts so each preserves operator intent;
-- add focused component/integration coverage plus a bounded Playwright operator path;
-- run full `npm run qa:critical`.
-
-Lower-priority P7 gaps, P8 discovery, new modules and cloud/auth work remain out of scope.
-
-### Validation
-
-Persistent Critical QA run **`32066802100` — PASS** on the canonical P7-S1 content head before validation evidence was appended. The final documentation head remains subject to the same D-019 gate before integration.
+P7-S1 executed only evidence/prioritization work. It ranked five operator-facing gaps, accepted D-020, left runtime unchanged and advanced only to transaction-entry intent/feedback. Validation `32066802100` passed; PR/final/post-merge heads remained protected by D-019.
 
 ---
 
 ## 2026-08-17 — P6 repository-wide QA reconciliation, gated deployment and P6 closure
 
-### Baseline reconstructed
-
-Before changing expectations, P6-S1 inventoried npm scripts, ESLint, Vitest, Playwright and GitHub Actions and ran the full repository baseline. Initial results were:
-
-- lint: 81 errors;
-- Vitest: 10 failed / 149 passed;
-- Playwright: 10 failed / 3 passed;
-- build: PASS.
-
-The failures were classified instead of treating every red test as permission to change product behavior.
-
-### Reconciled stale QA debt
-
-- test harnesses now reproduce required Router/QueryClient/browser API context;
-- incomplete child mocks and ambiguous dashboard assertions were corrected;
-- E2E selectors were aligned with current accessible form/select/command UI;
-- the PDF no-movement expectation was aligned with D-015: a zero-movement period remains a valid statement/extract;
-- existing lint debt that would require broad behavior-changing refactors remains visible as warnings rather than being used to justify out-of-scope product changes.
-
-### Real regression fixed
-
-The full E2E gate exposed one real integration defect in global search. `useSearch()` already produces the filtered Dexie result set, but `cmdk` applied an additional internal filter. `CommandDialog` now uses `shouldFilter={false}` so external search results are authoritative; the search-and-navigate E2E protects this behavior.
-
-### Added
-
-- `npm run test:run` for non-watch Vitest;
-- `npm run test:e2e` for Playwright;
-- `npm run qa:critical` combining lint + full Vitest + Playwright + production build;
-- persistent `.github/workflows/ci.yml` Critical QA on PRs to `develop`/`main`, pushes to `develop` and manual dispatch.
-
-### Deployment safety
-
-GitHub Pages deployment from `main` uses the strict dependency chain `quality (qa:critical) -> build -> deploy`. CI/deploy installs dependencies with `npm ci`; Chromium is installed before Playwright. A failed critical suite blocks publication.
-
-### Validation and decision
-
-- persistent functional run `32064801009` — PASS;
-- final canonical-docs-head run `32065331102` — PASS;
-- post-merge `develop` run `32065713920` — PASS;
-- D-019 accepted;
-- QG-007/QG-008 resolved;
-- P6 closed.
+P6 reconciled the repository-wide baseline, fixed the command-center double-filter regression, established `npm run qa:critical`, added persistent CI, made Pages deployment require `quality -> build -> deploy`, accepted D-019 and closed P6. Functional validation `32064801009`; final docs `32065331102`; post-merge `32065713920`.
 
 ---
 

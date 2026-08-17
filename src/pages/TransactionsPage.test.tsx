@@ -25,13 +25,16 @@ vi.mock('../components/ui/select', () => ({
 }));
 
 const queryClient = new QueryClient();
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <MemoryRouter>
-        <QueryClientProvider client={queryClient}>
-            {children}
-        </QueryClientProvider>
-    </MemoryRouter>
-);
+
+function renderPage(initialEntry = '/transactions') {
+    return render(
+        <MemoryRouter initialEntries={[initialEntry]}>
+            <QueryClientProvider client={queryClient}>
+                <TransactionsPage />
+            </QueryClientProvider>
+        </MemoryRouter>,
+    );
+}
 
 describe('TransactionsPage Integration', () => {
     beforeEach(async () => {
@@ -45,7 +48,7 @@ describe('TransactionsPage Integration', () => {
     });
 
     it('executes the full order launch flow', async () => {
-        render(<TransactionsPage />, { wrapper });
+        renderPage();
 
         const selects = await screen.findAllByTestId('mock-select');
 
@@ -76,7 +79,7 @@ describe('TransactionsPage Integration', () => {
     });
 
     it('executes the full payment launch flow', async () => {
-        render(<TransactionsPage />, { wrapper });
+        renderPage();
 
         const selects = await screen.findAllByTestId('mock-select');
 
@@ -100,5 +103,14 @@ describe('TransactionsPage Integration', () => {
             expect(transactions[0].type).toBe('payment');
             expect(transactions[0].totalPrice).toBe(250.5);
         });
+    });
+
+    it('preserves signal intent from the transaction URL', async () => {
+        renderPage('/transactions?type=signal');
+
+        const selects = await screen.findAllByTestId('mock-select');
+        expect((selects[1] as HTMLSelectElement).value).toBe('signal');
+        expect(screen.getByLabelText(/Valor para Abatimento/i)).toBeInTheDocument();
+        expect(screen.queryByLabelText(/Item do Catálogo/i)).not.toBeInTheDocument();
     });
 });

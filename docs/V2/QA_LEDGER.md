@@ -42,20 +42,11 @@ Decision-only gate; D-016 accepts local-first/single-user Dexie V4. No runtime t
 - P5-S1 versioned backup/preflight: `32058028793` — PASS.
 - P5-S2 checkpointed atomic restore/migration proof: `32060729538` — PASS.
 
-P5 recovery validation covers v2/v1 migration, checkpoint-before-write, one-transaction replacement, in-transaction restored-data verification, rollback on write failure and preservation of P1/P2/P3 IDs/history/financial semantics.
-
 ## P6 — Tests, CI and deployment safety
 
 **Status:** PASS / DONE.
 
-Initial repository-wide baseline was captured before changing expectations:
-
-- ESLint: 81 errors;
-- Vitest: 10 failed / 149 passed;
-- Playwright Chromium: 10 failed / 3 passed;
-- production build: PASS.
-
-Stale provider/router/mock/jsdom expectations and obsolete selectors were reconciled. One real global-search double-filter defect was fixed. The accepted critical command is:
+D-019 defines the critical command:
 
 ```text
 npm run qa:critical
@@ -65,97 +56,99 @@ npm run qa:critical
 + npm run build
 ```
 
+P6 evidence:
+
+- initial baseline: 81 lint errors, 10 Vitest failures / 149 passes, 10 Playwright failures / 3 passes, build PASS;
 - persistent functional run `32064801009` — PASS;
 - final canonical-docs-head run `32065331102` — PASS;
 - post-merge `develop` run `32065713920` — PASS.
 
-Current accepted gate state at P6 closure: 0 blocking lint errors / 80 recorded warnings, 39 Vitest files / 159 tests passing, 13/13 Playwright tests passing, production build passing.
-
-Known non-blocking maintenance debt remains recorded: lint warnings, some React test-harness warnings and dependency-audit findings. These do not redefine the Critical QA exit status.
+Known warning/dependency debt remains non-blocking under D-019 and must not be hidden by weakening the gate.
 
 ## P7 — Operational UX refinement
 
 ### P7-S1 — UX gap inventory and prioritization
 
 **Status:** PASS / DONE as evidence/prioritization work.  
-**Runtime changed:** No.  
-**Schema/persistence changed:** No.  
-**Financial behavior changed:** No.
+**Runtime changed:** No.
 
-P7-S1 inspected current operator-facing code and existing test coverage rather than inferring gaps from appearance alone.
+P7-S1 established QG-011 through QG-015 and D-020 ranking. Validation `32066802100` — PASS; final documentation/post-merge evidence remained green under the persistent gate.
 
-#### Evidence inspected
+### QG-011 — transaction entry intent/feedback
 
-- `src/App.tsx`, `MainLayout`, sidebar/header and command center for navigation/entry points;
-- `TransactionsPage`, `TransactionForm`, `useTransactions` and transaction integration tests;
-- reseller detail statement/PDF UI and Playwright date-filter coverage;
-- item/reseller forms/tables and lifecycle behavior;
-- Backup page, import/export restore component/dialog and P5-S2 restore tests;
-- current Playwright suite inventory: search, PDF date filter and performance analysis;
-- Project Spec usability objective: routine operations should require few steps on desktop/mobile.
+**RESOLVED / P7-S2.**
 
-#### QG-011 — transaction entry intent/feedback
+Original evidence:
 
-**OPEN / P7-S2 — highest priority.**
+- standalone Cancel was wired to a no-op;
+- transaction-create failures were console-only;
+- one `Pagamento/Sinal` command shortcut always routed to `payment`.
+
+P7-S2 remediation:
+
+- `TransactionForm` owns one reset path for successful submission and explicit Cancel;
+- Cancel clears in-progress fields/errors/mutation state and restores the requested `initialType`;
+- rejected transaction creation shows `toast.error` and intentionally does not reset fields, preserving retry context;
+- command center routes Payment and Signal through distinct actions/query parameters;
+- P1/P2/P3 transaction validation, audit and financial effects were not changed.
+
+Targeted regression coverage added:
+
+- `TransactionForm.test.tsx`: reset + initial-type preservation;
+- `TransactionForm.test.tsx`: real rejected create mutation + visible error + entered data retained;
+- `TransactionsPage.test.tsx`: URL `type=signal` intent;
+- `CommandCenter.test.tsx`: payment/signal shortcut routing;
+- `tests/e2e/search.spec.ts`: Signal shortcut → form → entered value → Cancel → value cleared with Signal still selected.
+
+#### P7-S2 validation classification
+
+Two initial Critical QA runs failed only in the newly introduced Cancel unit assertion:
+
+1. `32068747287`, job `95506837405` — FAIL: 1 new Vitest assertion failed; lint passed and E2E/build were not reached.
+2. `32069051473`, job `95507799159` — FAIL: same new assertion. Investigation showed the test mock rendered invalid HTML (`<span>` inside `<select>`), so jsdom retained the first option instead of representing the controlled empty value.
+
+The harness was corrected to a valid controlled select (`<option value="" />` plus option children; trigger/value renderers removed from the native select). No runtime behavior, business rule or QA gate was weakened to obtain green status.
+
+Functional persistent run **`32069261401`**, job **`95508465043`** — **PASS**:
+
+- ESLint: **0 errors / 78 warnings**;
+- Vitest: **39 files / 163 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+The lower warning count versus the P6 closure snapshot comes from the touched test harness and does not redefine or claim global warning-debt resolution. Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain recorded non-blocking debt.
+
+**P7-S2 result: PASS / DONE.**
+
+### QG-012 — invalid reseller period silently displays all-time/current data
+
+**OPEN / P7-S3 — current next gap.**
 
 Evidence:
 
-- standalone `TransactionForm` renders **Cancelar**;
-- `TransactionsPage.handleCancel()` intentionally performs no state/reset action;
-- `TransactionForm` catches create failures with `console.error` only;
-- `useCreateTransaction` can reject invalid/inactive references or persistence writes, so an operator-visible failure path is meaningful;
-- command center labels one action `Pagamento/Sinal` but routes to `/transactions?type=payment` only;
-- current component/integration tests prove order/payment happy paths but do not cover cancel/error feedback or signal shortcut intent;
-- current E2E suite has no full transaction-entry operator path.
+- a complete inverted date range makes `periodStatement` null;
+- the page then falls back to current balance plus all transactions while invalid dates remain filled;
+- the current explicit error is deferred until PDF generation.
 
-Risk: uncertainty about whether a financial write succeeded, inert primary action, and possible payment-vs-signal audit misclassification.
+Risk: operator can interpret unfiltered data as the requested period view.
 
-Accepted next slice: P7-S2.
-
-#### QG-012 — invalid reseller period silently displays all-time/current data
+### QG-013 — stale Backup page recovery description
 
 **OPEN / later P7.**
 
-Evidence:
+Top-level Backup copy still describes restore as future/preflight-only although P5-S2 restore is available.
 
-- complete inverted dates make `periodStatement` null;
-- `displayedTransactions` then falls back to the full transaction list and the balance card falls back to current balance while the invalid dates remain filled;
-- Playwright verifies the error toast only after **Gerar PDF** is clicked.
-
-Risk: operator can visually interpret an invalid-range screen as a filtered statement before attempting PDF generation.
-
-#### QG-013 — stale Backup page recovery description
+### QG-014 — item/reseller save failures are console-only
 
 **OPEN / later P7.**
 
-Evidence:
+Creation/edit forms do not yet surface mutation failures visibly.
 
-- `BackupPage` still describes validation “antes da futura restauração” and says the preflight stage does not replace current data;
-- `ImportExport` and its P5-S2 tests already expose real `Restaurar Backup` behavior after successful preflight, with checkpoint and rollback-safe result handling.
-
-Risk: misleading top-level guidance around a destructive recovery workflow. Inner restore dialog is already accurate.
-
-#### QG-014 — item/reseller save failures are console-only
+### QG-015 — reseller-context transaction launch friction
 
 **OPEN / later P7.**
 
-Evidence: both `ItemForm` and `ResellerForm` catch mutation failures and only log to the console, with no operator-visible error.
-
-#### QG-015 — reseller-context transaction launch friction
-
-**OPEN / later P7.**
-
-Evidence: reseller detail has the reseller context, but no launch action/prefill path; transaction creation requires navigating to `/transactions` and selecting the reseller again. This is an efficiency gap, not a correctness defect.
-
-#### Explicit non-findings
-
-P7-S1 does not classify broad visual redesign, dashboard rearrangement, theme/branding changes, table-density preferences or speculative catalog search as QA/UX gaps without stronger evidence of operational impact.
-
-### P7-S1 validation
-
-Persistent Critical QA run **`32066802100`**, job `95500700733` — **PASS** on the canonical P7-S1 content head before this evidence line was appended.
-
-Because P7-S1 changes documentation only, it makes no new runtime test claim. D-019 still requires the persistent `qa:critical` workflow to pass on the final PR head before integration. No test/workflow weakening is permitted to integrate the documentation change.
+Reseller detail knows the identity but transaction entry requires reselecting it on a separate page.
 
 ## Known baseline QA gaps
 
@@ -169,12 +162,12 @@ Because P7-S1 changes documentation only, it makes no new runtime test claim. D-
 - QG-008 deployment does not require full QA: RESOLVED / P6.
 - QG-009 remaining reference validation/migration: RESOLVED / P1.
 - QG-010 persistence architecture: RESOLVED / P4.
-- QG-011 transaction-entry intent/feedback: OPEN / P7-S2.
-- QG-012 invalid reseller period fallback: OPEN / later P7.
+- QG-011 transaction-entry intent/feedback: RESOLVED / P7-S2.
+- QG-012 invalid reseller period fallback: OPEN / P7-S3.
 - QG-013 stale Backup page recovery copy: OPEN / later P7.
 - QG-014 item/reseller save error feedback: OPEN / later P7.
 - QG-015 reseller-context transaction launch friction: OPEN / later P7.
 
-## QA policy entering P7-S2
+## QA policy entering P7-S3
 
-P7-S2 must preserve all P1–P6 contracts, add targeted tests for the changed transaction-entry behavior, and pass the complete persistent `npm run qa:critical` gate. Do not weaken existing tests/workflows or use P7-S2 to implement lower-priority P7 gaps.
+P7-S3 must preserve D-015 statement mathematics and all P1–P6 contracts, add focused coverage for invalid→corrected period state, and pass the complete persistent `npm run qa:critical` gate. Do not weaken tests/workflows or bundle unrelated P7 gaps.
