@@ -4,6 +4,43 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-17 — P1-S2 safe item lifecycle
+
+### Added
+
+- item `isActive` lifecycle state;
+- Dexie schema V3 migration that defaults existing items to active without changing reseller lifecycle state;
+- reversible item archive/reactivate mutations;
+- hard-delete protection when a transaction references an item;
+- order-creation guard that rejects inactive or missing referenced items when `itemId` is supplied;
+- inactive-state visibility in catalog and global search/recent results;
+- targeted automated coverage for item lifecycle, migration, search, new-order selection/guards, catalog integration and P1-S1/history regressions.
+
+### Changed
+
+- normal item removal now archives instead of destructively deleting the catalog identity;
+- new-order forms list only active items;
+- archived item records remain discoverable for catalog/history traceability;
+- historical transaction snapshots such as `itemName`, quantity and stored values remain unchanged;
+- canonical P1 state advanced: P1-S2 is complete and P1-S3 is the new `NEXT_ACTION`.
+
+### QA
+
+- targeted P1-S2 test gate passed in GitHub Actions run `32038951903`;
+- historical snapshot and reseller-lifecycle regression tests passed in the same gate;
+- `npm run build` passed in the same run;
+- repository-wide lint/test debt remains explicitly open for P6 and is not represented as resolved by this slice.
+
+### Scope not changed
+
+- remaining referential validation/migration acceptance matrix remains P1-S3;
+- transaction reversal/correction remains P2;
+- date/statement semantics remain P3;
+- persistence remains Dexie/IndexedDB pending P4;
+- backup schema/version hardening remains P5.
+
+---
+
 ## 2026-08-17 — P1-S1 safe reseller lifecycle
 
 ### Added
