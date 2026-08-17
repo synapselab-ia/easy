@@ -31,17 +31,29 @@ jobs:
         continue-on-error: true
         run: npm run test -- --run
 
-      - name: P1-S1 targeted test gate
-        run: >-
-          npx vitest run
-          src/db/database.test.ts
-          src/hooks/useResellers.test.tsx
-          src/hooks/useTransactions.test.tsx
-          src/hooks/useSearch.test.tsx
-          src/components/transactions/TransactionForm.test.tsx
-          src/components/search/CommandCenter.test.tsx
-          src/pages/ResellersPage.test.tsx
-          src/pages/ResellerDetailPage.test.tsx
+      - name: P1-S1 database migration tests
+        run: npx vitest run src/db/database.test.ts
+
+      - name: P1-S1 reseller lifecycle hook tests
+        run: npx vitest run src/hooks/useResellers.test.tsx
+
+      - name: P1-S1 transaction guard tests
+        run: npx vitest run src/hooks/useTransactions.test.tsx
+
+      - name: P1-S1 search lifecycle tests
+        run: npx vitest run src/hooks/useSearch.test.tsx
+
+      - name: P1-S1 transaction form tests
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx
+
+      - name: P1-S1 command center tests
+        run: npx vitest run src/components/search/CommandCenter.test.tsx
+
+      - name: P1-S1 reseller page integration tests
+        run: npx vitest run src/pages/ResellersPage.test.tsx
+
+      - name: P1-S1 reseller detail tests
+        run: npx vitest run src/pages/ResellerDetailPage.test.tsx
 
       - name: Build
         run: npm run build
