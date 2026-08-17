@@ -2,8 +2,13 @@ import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTransactions, useCreateTransaction } from './useTransactions';
-import { db } from '../db/database';
+import {
+    NON_ORDER_ITEM_REFERENCE_ERROR,
+    ORDER_ITEM_REQUIRED_ERROR,
+    useTransactions,
+    useCreateTransaction,
+} from './useTransactions';
+import { db, type TransactionType } from '../db/database';
 import React, { ReactNode } from 'react';
 
 const queryClient = new QueryClient({
@@ -53,7 +58,7 @@ describe('useTransactions hooks', () => {
         expect(transactions[0].type).toBe('payment');
     });
 
-    it('should create an order for an active reseller and active item', async () => {
+    it('should create an order for an active reseller and active item and derive the item snapshot from the reference', async () => {
         const now = new Date();
         const resellerId = await db.resellers.add({
             name: 'Active Reseller',
@@ -62,7 +67,7 @@ describe('useTransactions hooks', () => {
             updatedAt: now,
         }) as number;
         const itemId = await db.items.add({
-            name: 'Active Item',
+            name: 'Canonical Item Name',
             basePrice: 25,
             isActive: true,
             createdAt: now,
@@ -75,7 +80,7 @@ describe('useTransactions hooks', () => {
             resellerId,
             type: 'order',
             itemId,
-            itemName: 'Active Item',
+            itemName: 'Stale Caller Name',
             quantity: 2,
             unitPrice: 25,
             totalPrice: 50,
@@ -84,7 +89,8 @@ describe('useTransactions hooks', () => {
 
         const transactions = await db.transactions.toArray();
         expect(transactions).toHaveLength(1);
-        expect(transactions[0].itemName).toBe('Active Item');
+        expect(transactions[0].itemId).toBe(itemId);
+        expect(transactions[0].itemName).toBe('Canonical Item Name');
     });
 
     it('should reject a new transaction for an inactive reseller', async () => {
@@ -116,6 +122,43 @@ describe('useTransactions hooks', () => {
             totalPrice: 50,
             createdAt: new Date(),
         })).rejects.toThrow('Revendedor não encontrado.');
+
+        expect(await db.transactions.count()).toBe(0);
+    });
+
+    it('should reject a new transaction with an invalid reseller identifier', async () => {
+        const { result } = renderHook(() => useCreateTransaction(), { wrapper });
+
+        await expect(result.current.mutateAsync({
+            resellerId: 0,
+            type: 'payment',
+            totalPrice: 50,
+            createdAt: new Date(),
+        })).rejects.toThrow('Revendedor não encontrado.');
+
+        expect(await db.transactions.count()).toBe(0);
+    });
+
+    it('should reject a new order without an item reference', async () => {
+        const now = new Date();
+        const resellerId = await db.resellers.add({
+            name: 'Active Reseller',
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+        }) as number;
+
+        const { result } = renderHook(() => useCreateTransaction(), { wrapper });
+
+        await expect(result.current.mutateAsync({
+            resellerId,
+            type: 'order',
+            itemName: 'Snapshot Only',
+            quantity: 1,
+            unitPrice: 30,
+            totalPrice: 30,
+            createdAt: now,
+        })).rejects.toThrow(ORDER_ITEM_REQUIRED_ERROR);
 
         expect(await db.transactions.count()).toBe(0);
     });
@@ -173,6 +216,35 @@ describe('useTransactions hooks', () => {
             totalPrice: 30,
             createdAt: now,
         })).rejects.toThrow('Item não encontrado.');
+
+        expect(await db.transactions.count()).toBe(0);
+    });
+
+    it.each<TransactionType>(['payment', 'signal'])('should reject an item reference on a new %s', async (type) => {
+        const now = new Date();
+        const resellerId = await db.resellers.add({
+            name: 'Active Reseller',
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+        }) as number;
+        const itemId = await db.items.add({
+            name: 'Unrelated Item',
+            basePrice: 20,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+        }) as number;
+
+        const { result } = renderHook(() => useCreateTransaction(), { wrapper });
+
+        await expect(result.current.mutateAsync({
+            resellerId,
+            type,
+            itemId,
+            totalPrice: 20,
+            createdAt: now,
+        })).rejects.toThrow(NON_ORDER_ITEM_REFERENCE_ERROR);
 
         expect(await db.transactions.count()).toBe(0);
     });
