@@ -12,49 +12,7 @@ This ledger records verified quality evidence, known gaps and required validatio
 **Database schema changed:** No.  
 **UI behavior changed:** No.
 
-### Baseline evidence reviewed
-
-The P0 reconstruction inspected representative current files on `develop`, including:
-
-- `package.json` — stack, scripts and test dependencies;
-- `src/App.tsx` — routes and browser basename;
-- `src/db/database.ts` — entities, Dexie schema and transaction types;
-- `src/hooks/useResellers.ts` — physical reseller deletion behavior;
-- `src/hooks/useItems.ts` — physical item deletion behavior;
-- `src/hooks/useTransactions.ts` — transaction create/delete mutations;
-- `src/pages/ResellerDetailPage.tsx` — balance/date-filter behavior;
-- `src/services/backupService.ts` — backup/restore structure and validation depth;
-- `src/components/search/CommandCenter.tsx` — search/quick-action behavior;
-- `tests/e2e/search.spec.ts` — current E2E expectations;
-- `.github/workflows/deploy.yml` — production deployment gate.
-
-### P0 documentation gate
-
-Required canonical files:
-
-- [x] `PROJECT_SPEC.md`
-- [x] `ARCHITECTURE.md`
-- [x] `BACKLOG.md`
-- [x] `DECISIONS.md`
-- [x] `QA_LEDGER.md`
-- [x] `CHANGELOG.md`
-- [x] `STATUS.md`
-
-Required reconstructability questions:
-
-- [x] What is Easy?
-- [x] What is V2 trying to solve?
-- [x] What is the current architecture?
-- [x] What risks have already been identified?
-- [x] What phase is current?
-- [x] What is the single next action?
-- [x] What is explicitly out of scope now?
-
-### Tests executed for P0
-
-No runtime test command was executed as part of P0 because P0 changes documentation only and the initial ChatGPT/GitHub workflow did not provide a checked-out runtime environment in that step.
-
-This was never evidence that the existing test suite passed.
+P0 established the canonical document set and reconstructable project state. No runtime test command was represented as evidence for P0.
 
 ---
 
@@ -62,47 +20,22 @@ This was never evidence that the existing test suite passed.
 
 **Runtime code changed:** Yes.  
 **Database schema changed:** Yes, Dexie V1 → V2.  
-**UI behavior changed:** Yes, reseller archive/reactivation and inactive-state handling.
+**UI behavior changed:** Yes.
 
-### Acceptance behavior verified
+### Result
 
-- [x] existing resellers migrate to active by default;
-- [x] new resellers default to active;
-- [x] reseller archive is reversible and does not delete the identity;
-- [x] physical deletion is rejected when financial history exists;
-- [x] physical deletion remains possible for an unused reseller with no transactions;
-- [x] archived resellers remain searchable and explicitly identifiable as inactive;
-- [x] archived reseller detail/history remains accessible;
-- [x] inactive resellers are excluded from the new-transaction selector;
-- [x] transaction mutation rejects inactive resellers independently of the UI;
-- [x] transaction mutation rejects missing resellers;
-- [x] reseller list integration covers create/search/edit/archive/reactivate;
-- [x] production build succeeds after the slice.
+**PASS for canonical P1-S1 scope.**
 
-### Automated evidence
+Verified:
 
-GitHub Actions validation run: `32037965651` on `feature/p1-s1-reseller-lifecycle`.
+- reseller active-default migration;
+- archive/reactivate lifecycle;
+- hard-delete protection with financial history;
+- inactive reseller search/detail/history availability;
+- inactive/missing reseller rejection for new transactions;
+- reseller integration and production build.
 
-Targeted passing test files:
-
-- `src/db/database.test.ts`;
-- `src/hooks/useResellers.test.tsx`;
-- `src/hooks/useTransactions.test.tsx`;
-- `src/hooks/useSearch.test.tsx`;
-- `src/components/transactions/TransactionForm.test.tsx`;
-- `src/components/search/CommandCenter.test.tsx`;
-- `src/pages/ResellersPage.test.tsx`;
-- `src/pages/ResellerDetailPage.test.tsx`.
-
-Build evidence:
-
-- `npm run build` — PASS on run `32037965651`.
-
-### P1-S1 QA result
-
-**PASS for the canonical P1-S1 scope.**
-
-The original critical reseller-orphaning path is closed for normal lifecycle use and guarded at the data mutation layer.
+GitHub Actions evidence: run `32037965651`.
 
 ---
 
@@ -110,77 +43,106 @@ The original critical reseller-orphaning path is closed for normal lifecycle use
 
 **Runtime code changed:** Yes.  
 **Database schema changed:** Yes, Dexie V2 → V3.  
-**UI behavior changed:** Yes, item archive/reactivation, inactive-state visibility and active-only new-order selection.
+**UI behavior changed:** Yes.
 
-### Acceptance behavior verified
+### Result
 
-- [x] existing V2 items migrate to active by default;
-- [x] the V3 migration preserves existing reseller lifecycle state;
-- [x] new items created through the item hook default to active;
-- [x] item archive is reversible and does not delete the catalog identity;
-- [x] physical deletion is rejected when a transaction references the item;
-- [x] physical deletion remains possible for an unused item with no transaction references;
-- [x] archived items remain visible in the catalog and global search/recent results;
-- [x] archived items are explicitly identified as inactive;
-- [x] inactive items are excluded from new-order selection;
-- [x] order mutation rejects an inactive referenced item independently of the UI;
-- [x] order mutation rejects a missing referenced item when an `itemId` is supplied;
-- [x] active item + active reseller orders remain creatable;
-- [x] historical item snapshots remain renderable in reseller history/PDF-oriented flows;
-- [x] item list integration covers create/edit/archive/reactivate;
-- [x] reseller lifecycle regression tests remain green;
-- [x] production build succeeds after the slice.
+**PASS for canonical P1-S2 scope.**
+
+Verified:
+
+- item active-default migration without reseller lifecycle regression;
+- archive/reactivate lifecycle;
+- hard-delete protection with transaction references;
+- inactive item catalog/search visibility;
+- active-only new-order selection;
+- inactive/missing item rejection when referenced by a new order;
+- historical item snapshot preservation;
+- reseller lifecycle regression and production build.
+
+GitHub Actions evidence: run `32038951903`.
+
+---
+
+## P1-S3 — Referential validation and migration
+
+**Runtime code changed:** Yes, transaction creation reference validation only.  
+**Database schema changed:** No; schema remains Dexie V3.  
+**UI behavior changed:** No.
+
+### Explicit reference acceptance matrix verified
+
+For new transaction creation:
+
+- [x] reseller ID must be a positive integer;
+- [x] reseller must exist;
+- [x] reseller must be active;
+- [x] new `order` requires a positive `itemId`;
+- [x] referenced order item must exist;
+- [x] referenced order item must be active;
+- [x] new-order `itemName` snapshot is derived from the resolved item identity;
+- [x] new `payment`/`signal` rejects `itemId` references.
+
+For existing historical data/migration:
+
+- [x] V1 → V2 → V3 preserves entity/transaction row counts;
+- [x] entity and transaction IDs are preserved;
+- [x] dates are preserved;
+- [x] explicit inactive lifecycle state is preserved;
+- [x] missing lifecycle state receives the existing active default;
+- [x] transaction snapshots are preserved without reinterpretation;
+- [x] a historical unresolved item reference with a stored snapshot remains stored/readable rather than being deleted or repaired destructively.
+
+### Regression evidence
+
+The same targeted gate also passed:
+
+- reseller lifecycle hooks;
+- item lifecycle hooks;
+- search lifecycle tests;
+- transaction form tests;
+- Command Center tests;
+- reseller page integration;
+- item page integration;
+- reseller-detail historical snapshot tests;
+- production build.
 
 ### Automated evidence
 
-GitHub Actions validation run: `32038951903` on `feature/p1-s2-item-lifecycle`.
+GitHub Actions validation run: `32039763539` on `feature/p1-s3-referential-validation`.
 
 Targeted passing test files:
 
 - `src/db/database.test.ts`;
-- `src/hooks/useItems.test.tsx`;
 - `src/hooks/useTransactions.test.tsx`;
+- `src/hooks/useResellers.test.tsx`;
+- `src/hooks/useItems.test.tsx`;
 - `src/hooks/useSearch.test.tsx`;
 - `src/components/transactions/TransactionForm.test.tsx`;
 - `src/components/search/CommandCenter.test.tsx`;
+- `src/pages/ResellersPage.test.tsx`;
 - `src/pages/ItemsPage.test.tsx`;
-- `src/pages/ResellerDetailPage.test.tsx`;
-- `src/hooks/useResellers.test.tsx`.
+- `src/pages/ResellerDetailPage.test.tsx`.
 
 Build evidence:
 
-- `npm run build` — PASS on run `32038951903`.
+- `npm run build` — PASS on run `32039763539`.
 
-### Scope boundary verified
+### P1-S3 QA result
 
-P1-S2 did not:
+**PASS. P1 referential-integrity/lifecycle acceptance gates are reconciled and P1 can close.**
 
-- rewrite historical transactions or item snapshots;
-- define every optional/invalid transaction-reference combination;
-- change transaction correction/deletion semantics;
-- change financial date/balance/statement semantics;
-- introduce backend/authentication/cloud persistence;
-- claim the repository-wide QA baseline is green.
-
-### P1-S2 QA result
-
-**PASS for the canonical P1-S2 scope.**
-
-The item-deletion/history risk is closed for normal catalog lifecycle use and guarded below the UI. Remaining reference/migration acceptance cases are intentionally left to P1-S3.
+P1-S3 deliberately does not apply new-creation guards to historical rows or backup restore. Deep validation of imported backup content remains P5, while transaction correction/reversal begins in P2.
 
 ---
 
 ## Global baseline caveat
 
-P1-S1/P1-S2 do **not** claim the repository-wide quality baseline is green.
+P1 does **not** claim the repository-wide quality baseline is green.
 
-During P1-S1 diagnostics, the pre-existing baseline showed:
+Pre-existing diagnostics recorded during P1-S1 included repository-wide lint and Vitest failures outside the targeted P1 slices. Those were not expanded into P1 fixes because P6 owns general test/CI reconciliation.
 
-- lint debt with 61 reported errors across legacy/unrelated files and existing patterns;
-- full Vitest baseline with 22 test files: 14 passed and 8 failed; 71 tests: 54 passed and 17 failed at that diagnostic point;
-- failures included unrelated router/basename, dashboard mock/expectation, layout/environment and other legacy test issues.
-
-Those failures were not expanded into P1 lifecycle fixes because P6 owns general test/CI reconciliation. P1-S2 used a targeted gate for the changed item lifecycle plus relevant reseller/history regressions and a successful production build.
+All P1 completion claims therefore refer to the targeted phase gates plus successful production builds, not a globally clean suite.
 
 ---
 
@@ -190,21 +152,17 @@ Those failures were not expanded into P1 lifecycle fixes because P6 owns general
 
 **Severity:** Critical  
 **Owner phase:** P1-S1  
-**Status:** RESOLVED for the reseller lifecycle/deletion path
+**Status:** RESOLVED
 
-P1-S1 replaces normal destructive reseller removal with archive/reactivate, preserves historical identity and blocks hard deletion when transactions exist. New transactions also reject inactive/missing resellers.
-
-Evidence is recorded in the P1-S1 section above.
+Reseller lifecycle, historical attribution, hard-delete guarding and new-transaction reseller validation are covered by P1-S1/P1-S3 evidence.
 
 ### QG-002 — Historical item references
 
 **Severity:** High  
 **Owner phase:** P1-S2  
-**Status:** RESOLVED for the item lifecycle/deletion path
+**Status:** RESOLVED
 
-P1-S2 replaces normal destructive catalog removal with archive/reactivate, blocks hard deletion when transactions reference the item, preserves historical transaction snapshots and prevents inactive items from being used in new orders.
-
-Evidence is recorded in the P1-S2 section above.
+Item lifecycle, hard-delete guarding, historical snapshots and new-order item validation are covered by P1-S2/P1-S3 evidence.
 
 ### QG-003 — Financial correction flow
 
@@ -228,25 +186,13 @@ Required future evidence:
 
 Transactions currently have only `createdAt`; occurrence time and record-creation time are not distinct.
 
-Required future evidence:
-
-- historical entry tests;
-- date-boundary tests;
-- timezone/date filtering tests where applicable.
-
 ### QG-005 — Period statement semantics
 
 **Severity:** High  
 **Owner phase:** P3  
 **Status:** OPEN
 
-The current period balance represents net movement inside the filter window, not a formally defined opening and closing balance statement.
-
-Required future evidence:
-
-- opening balance cases;
-- mixed order/payment interval cases;
-- PDF vs on-screen equality.
+The current period balance represents net movement inside the filter window, not a formally defined opening/closing statement.
 
 ### QG-006 — Backup validation depth
 
@@ -254,15 +200,7 @@ Required future evidence:
 **Owner phase:** P5  
 **Status:** OPEN
 
-Backup import validates broad structure but does not deeply verify every field/reference/schema relationship before replacing current data.
-
-Required future evidence:
-
-- malformed data tests;
-- invalid references;
-- duplicate IDs;
-- incompatible versions;
-- full clean restore comparison.
+Backup import remains structurally shallow and can bypass new-activity mutation guards by directly restoring historical rows. P5 must validate fields, references, duplicates and schema compatibility before destructive replacement.
 
 ### QG-007 — Stale/global test expectations
 
@@ -270,13 +208,7 @@ Required future evidence:
 **Owner phase:** P6  
 **Status:** OPEN
 
-The repository contains stale or environment-dependent unit/integration/E2E expectations outside the targeted P1 slices, including historical search/UI selectors and other baseline failures observed during P1-S1 diagnostics.
-
-Required future evidence:
-
-- reconciled unit/integration suite;
-- updated stable E2E selectors;
-- critical business-flow E2E suite.
+Repository-wide unit/integration/E2E reconciliation remains required.
 
 ### QG-008 — Deployment does not require full QA
 
@@ -284,29 +216,15 @@ Required future evidence:
 **Owner phase:** P6  
 **Status:** OPEN
 
-The GitHub Pages workflow currently builds and deploys from `main` without requiring lint, full tests and critical E2E success.
-
-Required future evidence:
-
-- CI job graph;
-- intentionally failing test blocks deploy;
-- successful pipeline publishes expected artifact.
+GitHub Pages deployment still builds/publishes from `main` without requiring the full quality suite.
 
 ### QG-009 — Remaining reference validation/migration
 
 **Severity:** High  
 **Owner phase:** P1-S3  
-**Status:** OPEN
+**Status:** RESOLVED
 
-P1-S1 and P1-S2 protect the main reseller/item lifecycle and new-activity paths, but P1 still needs a complete acceptance matrix for remaining reference combinations and migration-path edge cases.
-
-Required future evidence:
-
-- old valid databases migrate through V1 → V2 → V3 without loss or lifecycle regression;
-- remaining invalid new references are rejected according to explicit rules;
-- valid optional historical shapes are not incorrectly rejected or destructively rewritten;
-- migration/reference edge cases are automated;
-- P1 lifecycle acceptance gates are reconciled before P1 closure.
+P1-S3 defines/enforces the remaining new-transaction reference matrix and proves the complete P1 migration path while preserving historical snapshots. Evidence: run `32039763539`.
 
 ---
 
@@ -319,5 +237,5 @@ For each functional phase:
 3. add/modify automated tests with the behavior change;
 4. verify cross-surface financial consistency where relevant;
 5. record evidence and unresolved gaps here;
-6. do not mark the phase done solely from visual inspection;
-7. distinguish a targeted phase gate from repository-wide QA health.
+6. do not mark a phase done solely from visual inspection;
+7. distinguish targeted phase gates from repository-wide QA health.
