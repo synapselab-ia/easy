@@ -15,7 +15,6 @@ describe('useSearch hook', () => {
     it('should return empty results when query is empty', async () => {
         const { result } = renderHook(() => useSearch(''));
 
-        // Wait for loading to finish
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         expect(result.current.results).toHaveLength(0);
@@ -24,7 +23,7 @@ describe('useSearch hook', () => {
     it('should return recent items and explicitly tracked recent resellers when query is empty', async () => {
         const now = new Date();
         const resellerId = await db.resellers.add({ name: 'Reseller 1', isActive: true, createdAt: now, updatedAt: now }) as number;
-        await db.items.add({ name: 'Item 1', basePrice: 10, createdAt: now, updatedAt: now });
+        await db.items.add({ name: 'Item 1', basePrice: 10, isActive: true, createdAt: now, updatedAt: now });
         localStorage.setItem('recent_resellers', JSON.stringify([resellerId]));
 
         const { result } = renderHook(() => useSearch(''));
@@ -34,13 +33,14 @@ describe('useSearch hook', () => {
         expect(result.current.recent).toHaveLength(2);
         expect(result.current.recent[0].title).toBe('Reseller 1');
         expect(result.current.recent[1].title).toBe('Item 1');
+        expect(result.current.recent[1].isActive).toBe(true);
     });
 
     it('should filter resellers and items by name', async () => {
         const now = new Date();
         await db.resellers.add({ name: 'Apple', isActive: true, createdAt: now, updatedAt: now });
         await db.resellers.add({ name: 'Banana', isActive: true, createdAt: now, updatedAt: now });
-        await db.items.add({ name: 'Apricot', basePrice: 5, createdAt: now, updatedAt: now });
+        await db.items.add({ name: 'Apricot', basePrice: 5, isActive: true, createdAt: now, updatedAt: now });
 
         const { result } = renderHook(() => useSearch('Ap'));
 
@@ -68,6 +68,26 @@ describe('useSearch hook', () => {
 
         expect(result.current.results[0].title).toBe('Archived Ana');
         expect(result.current.results[0].type).toBe('reseller');
+        expect(result.current.results[0].isActive).toBe(false);
+    });
+
+    it('should keep inactive items searchable and mark their lifecycle state', async () => {
+        const now = new Date();
+        await db.items.add({
+            name: 'Archived Perfume',
+            basePrice: 75,
+            isActive: false,
+            createdAt: now,
+            updatedAt: now,
+        });
+
+        const { result } = renderHook(() => useSearch('Archived'));
+
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        await waitFor(() => expect(result.current.results).toHaveLength(1));
+
+        expect(result.current.results[0].title).toBe('Archived Perfume');
+        expect(result.current.results[0].type).toBe('item');
         expect(result.current.results[0].isActive).toBe(false);
     });
 
@@ -106,7 +126,6 @@ describe('useSearch hook', () => {
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        // Total results should be 5 (limit per category)
         expect(result.current.results).toHaveLength(5);
     });
 });
