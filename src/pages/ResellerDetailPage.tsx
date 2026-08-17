@@ -12,6 +12,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { isResellerActive } from '../db/database';
+import { calculateBalance } from '../domain/transactions';
 
 export default function ResellerDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -34,24 +35,12 @@ export default function ResellerDetailPage() {
         return [...transactionsData].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     }, [transactionsData]);
 
-    const balance = useMemo(() => {
-        if (!transactions) return 0;
-        const totalOrders = transactions
-            .filter(t => t.type === 'order')
-            .reduce((sum, t) => sum + t.totalPrice, 0);
-
-        const totalPayments = transactions
-            .filter(t => t.type !== 'order')
-            .reduce((sum, t) => sum + t.totalPrice, 0);
-
-        return totalOrders - totalPayments;
-    }, [transactions]);
+    const balance = useMemo(() => calculateBalance(transactions), [transactions]);
 
     const hasFilter = dateFilter.startDate !== '' || dateFilter.endDate !== '';
     const isFilterComplete = dateFilter.startDate !== '' && dateFilter.endDate !== '';
     const isPdfButtonDisabled = hasFilter && !isFilterComplete;
 
-    // Transações exibidas na tabela: filtradas pelo período quando ambas as datas estão preenchidas e válidas
     const displayedTransactions = useMemo(() => {
         if (!isFilterComplete) return transactions;
         const startDate = new Date(dateFilter.startDate + 'T00:00:00');
@@ -60,12 +49,10 @@ export default function ResellerDetailPage() {
         return transactions.filter(t => t.createdAt >= startDate && t.createdAt <= endDate);
     }, [transactions, isFilterComplete, dateFilter.startDate, dateFilter.endDate]);
 
-    // Saldo exibido: recalculado sobre as transações filtradas
-    const displayedBalance = useMemo(() => {
-        const totalOrders = displayedTransactions.filter(t => t.type === 'order').reduce((s, t) => s + t.totalPrice, 0);
-        const totalPayments = displayedTransactions.filter(t => t.type !== 'order').reduce((s, t) => s + t.totalPrice, 0);
-        return totalOrders - totalPayments;
-    }, [displayedTransactions]);
+    const displayedBalance = useMemo(
+        () => calculateBalance(displayedTransactions),
+        [displayedTransactions]
+    );
 
     const isLoading = isLoadingReseller || isLoadingTransactions;
 
@@ -109,11 +96,7 @@ export default function ResellerDetailPage() {
                 return;
             }
 
-            const filteredBalance =
-                filtered.filter(t => t.type === 'order').reduce((s, t) => s + t.totalPrice, 0) -
-                filtered.filter(t => t.type !== 'order').reduce((s, t) => s + t.totalPrice, 0);
-
-            generateResellerExtract(reseller, filtered, filteredBalance, { startDate, endDate });
+            generateResellerExtract(reseller, filtered, calculateBalance(filtered), { startDate, endDate });
         } else {
             generateResellerExtract(reseller, transactions, balance);
         }
@@ -139,7 +122,6 @@ export default function ResellerDetailPage() {
                 </div>
             )}
 
-            {/* Filtro de datas e geração de PDF */}
             <div className="flex flex-col sm:flex-row gap-3 items-end">
                 <div className="flex flex-col gap-1">
                     <Label htmlFor="startDate">Data Início</Label>
