@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "qa:critical": "npm run lint && npm run test:run && npm run test:e2e && npm run build"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-17
 
-This ledger records targeted phase evidence separately from repository-wide QA health.
+This ledger records targeted phase evidence and the current repository-wide critical QA state.
 
 ## P0
 
@@ -39,80 +39,83 @@ Decision-only gate; D-016 accepts local-first/single-user Dexie V4. No runtime t
 
 **Status:** PASS / DONE.
 
-### P5-S1 — versioned backup and non-destructive preflight
+- P5-S1 versioned backup/preflight: `32058028793` — PASS.
+- P5-S2 checkpointed atomic restore/migration proof: `32060729538` — PASS.
 
-Validation run **`32058028793` — PASS**.
+P5 recovery validation covers v2/v1 migration, checkpoint-before-write, one-transaction replacement, in-transaction restored-data verification, rollback on write failure and preservation of P1/P2/P3 IDs/history/financial semantics.
 
-Verified:
+## P6 — Tests, CI and deployment safety
 
-- `easy-backup` v2 logical envelope and source schema V4;
-- v1 in-memory lifecycle/occurrence migration;
-- required fields, IDs/duplicates, dates, values and references;
-- P1 lifecycle and P2/P3 audit/linkage invariants;
-- valid/invalid preflight performs no destructive mutation;
-- preview UI is gated on successful validation;
-- migrations/P1/P2/P3 regressions and build.
+**Status:** PASS / DONE.
 
-### P5-S2 — checkpointed atomic restore and migration proof
+### Initial repository-wide baseline
 
-**Runtime changed:** Yes — restore service and restore UI.  
-**Schema changed:** No; remains Dexie V4.  
-**Architecture changed:** Recovery workflow only; D-016 local-first remains unchanged.
+The baseline was captured before changing expectations. Diagnostic evidence showed:
 
-GitHub Actions run **`32060729538`**, job `95481183478` — **PASS**.
+- ESLint: **81 errors**;
+- Vitest: **10 failed / 149 passed**;
+- Playwright Chromium: **10 failed / 3 passed**;
+- production build: **PASS**.
 
-Targeted matrix passed:
+The failing output was classified before remediation.
 
-- P5-S2 atomic restore integration;
-- P5-S2 restore UI;
-- P5-S1 backup/preflight regressions;
-- Dexie V1→V4 migration regressions;
-- P2 reversal/correction/history regressions;
-- P1 item/reseller lifecycle regressions;
-- P3 shared financial-domain regressions;
-- `npm run build`.
+### Stale test/tooling findings
 
-#### Checkpoint gate
+The following were stale harness/tooling/expectation issues rather than accepted-product regressions:
 
-- [x] live database is read before destructive mutation;
-- [x] current live rows are serialized as canonical v2 checkpoint;
-- [x] checkpoint is deep-validated before replacement;
-- [x] checkpoint JSON is downloaded before the destructive transaction starts;
-- [x] checkpoint creation failure would prevent replacement from starting.
+- `App.test` did not reproduce the deployed `/easy/` basename/root QueryClient context;
+- page tests omitted Router context or relied on incomplete child-hook mocks;
+- jsdom lacked browser APIs used by current UI (`ResizeObserver`, `scrollIntoView`);
+- dashboard tests used ambiguous selectors and an old styling token;
+- E2E used obsolete reseller placeholders, select/legend selectors and old command-center copy;
+- the old “no transactions in period => refuse PDF” E2E contradicted D-015, where a zero-movement period is a valid opening/movement/closing statement.
 
-#### Restore-input gate
+These were reconciled in tests/harness without changing P1–P5 business/recovery semantics.
 
-- [x] restore consumes the successful P5-S1 `BackupPreflightResult`;
-- [x] normalized target is reserialized/revalidated immediately before checkpoint/write;
-- [x] a mutated normalized target is rejected before checkpoint or database mutation.
+### Real regression found and fixed
 
-#### Atomicity/post-restore gate
+One real integration defect was exposed by the full E2E gate: global command search was filtered twice. `useSearch()` already queries/filters Dexie results, while `cmdk` applied its internal filter again. `CommandDialog` now sets `shouldFilter={false}` so the external Dexie result set is authoritative. The search-and-navigate E2E remains in the critical suite as the regression proof.
 
-- [x] items/resellers/transactions are replaced in one Dexie transaction;
-- [x] restored rows are read back inside the transaction;
-- [x] complete P5-S1 reference/P1/P2/P3 validation reruns before commit;
-- [x] canonical field/date/link projection must exactly match the expected target;
-- [x] simulated `transactions.bulkAdd` failure after clears begin rolls back all table changes;
-- [x] failure result explicitly reports previous database preserved.
+### Reconciled critical gate
 
-#### Migration/financial proof
+Canonical command:
 
-- [x] actual v2 `exportData()` output can be preflighted and restored into a clean database;
-- [x] item/reseller/transaction IDs survive v2 round-trip;
-- [x] active/inactive lifecycle state survives;
-- [x] P2 reversal/replacement bidirectional links survive;
-- [x] P3 occurrence date survives;
-- [x] calculated financial balance is identical before/after v2 restore;
-- [x] supported v1 restore materializes `isActive = true` and `occurredAt = createdAt` defaults;
-- [x] v1 IDs and financial effect remain preserved.
+```text
+npm run qa:critical
+= npm run lint
++ npm run test:run
++ npm run test:e2e
++ npm run build
+```
 
-### P5 result
+Persistent functional run **`32064801009`**, job `95494186349` — **PASS**.
 
-**PASS / DONE.** QG-006 is resolved for the accepted local-first V2 recovery contract.
+Verified final state:
 
-## Global baseline caveat
+- [x] ESLint completes with **0 errors**; 80 known warnings remain visible;
+- [x] Vitest: **39 files / 159 tests PASS**;
+- [x] Playwright Chromium: **13/13 PASS**;
+- [x] production build PASS;
+- [x] `npm ci` used for reproducible CI/deploy installation;
+- [x] `.github/workflows/ci.yml` runs Critical QA on PRs to `develop`/`main` and pushes to `develop`;
+- [x] `.github/workflows/deploy.yml` requires `quality -> build -> deploy` for `main`;
+- [x] a failing Critical QA job prevents Pages publication;
+- [x] temporary P6 baseline/diagnostic workflows are not part of the persistent repository gate.
 
-Targeted P1–P5 gates do **not** claim repository-wide lint/unit/integration/E2E health is green. Reconciliation and publication gating are the active P6 concern.
+### Known non-blocking maintenance debt
+
+P6 intentionally does not hide warning output:
+
+- 80 ESLint warnings remain, principally legacy `no-explicit-any`, `set-state-in-effect` and component-helper export patterns;
+- some passing hook tests emit React `act(...)` warnings;
+- mocked select harnesses emit known DOM nesting warnings;
+- `npm ci` reports 17 dependency vulnerabilities (2 low, 4 moderate, 11 high).
+
+None of these outputs currently changes the exit status of the accepted critical gate. They remain maintenance/security-review debt and are not represented as zero technical debt.
+
+### P6 result
+
+**PASS / DONE.** D-019 makes repository-wide Critical QA mandatory for integration/publication.
 
 ## Known baseline QA gaps
 
@@ -122,11 +125,11 @@ Targeted P1–P5 gates do **not** claim repository-wide lint/unit/integration/E2
 - **QG-004 date semantics:** RESOLVED / P3-S1.
 - **QG-005 period statement/aging semantics:** RESOLVED / P3-S2.
 - **QG-006 backup validation/recovery depth:** RESOLVED / P5.
-- **QG-007 stale/global test expectations:** OPEN / P6.
-- **QG-008 deployment does not require full QA:** OPEN / P6.
+- **QG-007 stale/global test expectations:** RESOLVED / P6.
+- **QG-008 deployment does not require full QA:** RESOLVED / P6.
 - **QG-009 remaining reference validation/migration:** RESOLVED / P1.
 - **QG-010 persistence architecture:** RESOLVED / P4.
 
-## QA policy entering P6
+## QA policy entering P7
 
-Run the existing repository-wide baseline before editing expectations. Classify failures as real regressions vs stale tests/tooling, preserve accepted product semantics, and make publication conditional on the agreed critical gates rather than merely making CI appear green.
+Every P7 behavior change must preserve P1–P6 contracts and pass the persistent Critical QA gate. Do not weaken tests/workflows to accommodate a UX change; classify and fix real regressions, and keep new business-module work outside P7.

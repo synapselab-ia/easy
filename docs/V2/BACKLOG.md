@@ -41,89 +41,97 @@ Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `IN_REVIEW`, `BLOCKED`, `DONE`.
 
 D-016 keeps V2 local-first/single-user on Dexie V4 until an explicit cloud/auth reopen trigger is proven.
 
----
-
 ## P5 — Backup, restore and migration
 
 **Priority:** High  
-**Status:** `DONE`  
-**Completed:** 2026-08-17
+**Status:** `DONE` — 2026-08-17.
 
-Goal achieved: the local-first dataset now has a versioned, validated, checkpointed and atomically restorable recovery path.
+- P5-S1 versioned backup/preflight — `DONE`; validation `32058028793`.
+- P5-S2 checkpointed atomic restore/migration proof — `DONE`; validation `32060729538`.
 
-### P5-S1 — Versioned backup contract and non-destructive restore preflight
-
-**Status:** `DONE`
-
-- `easy-backup` v2 logical envelope;
-- full persisted-field contract;
-- v1 in-memory compatibility migration;
-- deep path-level preflight and preview;
-- no mutation before successful preflight.
-
-Validation: `32058028793` — PASS.
-
-### P5-S2 — Checkpointed atomic restore and migration proof
-
-**Status:** `DONE`  
-**Completed:** 2026-08-17
-
-Implemented:
-
-- restore consumes only the successful P5-S1 normalized result and revalidates it before recovery;
-- current live database is serialized, validated and downloaded as an `easy-checkpoint-v2-*` checkpoint before replacement;
-- all three tables are replaced inside one Dexie transaction;
-- restored rows are read back and re-run through P5-S1 invariant validation before commit;
-- a canonical projection verifies exact restored IDs/fields/dates/P2-P3 links;
-- write or verification failure aborts the transaction and preserves the prior database;
-- explicit success/failure result exposes checkpoint/recovery status;
-- UI exposes restore only after successful preflight;
-- v2 export -> clean restore and v1 migration -> restore are covered with real IndexedDB transaction semantics via `fake-indexeddb`;
-- financial outcomes are compared before/after restore.
-
-Acceptance gate:
-
-- [x] validated preview precedes restore;
-- [x] recoverable checkpoint precedes destructive replacement;
-- [x] replacement is one atomic Dexie transaction;
-- [x] partial replacement is impossible on tested write failure;
-- [x] restored dataset is verified before transaction commit;
-- [x] IDs and lifecycle state preserved;
-- [x] P2 audit/reversal/correction links preserved;
-- [x] P3 occurrence dates and financial results preserved;
-- [x] v1 compatibility restore proven;
-- [x] targeted run `32060729538` passes.
-
-P5 gate: **PASS / DONE**.
+P5 gate: versioned export -> validated preview -> downloaded checkpoint -> verified atomic restore reproduces the canonical dataset/invariants.
 
 ---
 
 ## P6 — Tests, CI and deployment safety
 
 **Priority:** High  
-**Status:** `NOT_STARTED`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Goal: reconcile repository-wide QA debt and ensure publication from `main` is conditional on accepted critical validation.
+Goal achieved: the repository-wide critical suite is reconciled and publication from `main` is gated on the same accepted QA command used during integration.
 
 ### P6-S1 — Reconcile repository-wide QA baseline and deployment safety
+
+**Status:** `DONE`
+
+Baseline captured before expectation changes:
+
+- lint: 81 errors;
+- Vitest: 10 failed / 149 passed;
+- Playwright: 10 failed / 3 passed;
+- production build: pass.
+
+Classification and remediation:
+
+- stale provider/router/mocking/jsdom harness expectations were corrected;
+- ambiguous/obsolete UI selectors were updated to current accessible UI contracts;
+- the PDF zero-movement E2E was updated to D-015 statement semantics rather than changing product behavior;
+- a real command-center integration bug was fixed by disabling `cmdk` internal filtering where Dexie `useSearch` already owns the result set;
+- existing lint debt that would require broad behavior-changing refactors remains visible as warnings, while objective errors remain blocking.
+
+Persistent gate:
+
+```text
+npm run qa:critical
+= lint + full Vitest + Playwright Chromium + production build
+```
+
+Infrastructure:
+
+- `.github/workflows/ci.yml` runs Critical QA on PRs to `develop`/`main`, pushes to `develop` and manual dispatch;
+- `.github/workflows/deploy.yml` requires `quality -> build -> deploy` on pushes to `main`;
+- CI/deploy use Node 22, `npm ci` and explicit Playwright Chromium installation.
+
+Acceptance gate:
+
+- [x] scripts/lint/Vitest/Playwright/deployment workflow inventoried first;
+- [x] initial full baseline captured before edits;
+- [x] every failure classified as regression vs stale test/tooling expectation;
+- [x] stale Vitest harness/expectations reconciled;
+- [x] stale E2E selectors/expectations reconciled;
+- [x] real command-center double-filter regression fixed;
+- [x] ESLint has 0 blocking errors; known debt remains visible as warnings;
+- [x] full Vitest passes — 39 files / 159 tests;
+- [x] full Playwright Chromium passes — 13 tests;
+- [x] production build passes;
+- [x] one reproducible `qa:critical` command exists;
+- [x] V2 integration has a persistent Critical QA workflow;
+- [x] `main` Pages publication cannot proceed before Critical QA passes;
+- [x] persistent functional run `32064801009` passes.
+
+P6 gate: **PASS / DONE**.
+
+---
+
+## P7 — Complete incomplete UX flows / operational refinement
+
+**Status:** `NOT_STARTED`.
+
+Goal: complete evidenced operator-facing flows that are incomplete, misleading or materially high-friction without turning P7 into a visual redesign or speculative feature phase.
+
+### P7-S1 — Operational UX gap inventory and prioritization
 
 **Status:** `NOT_STARTED`
 
 Expected work:
 
-- inventory npm scripts, lint, Vitest, Playwright and GitHub workflows;
-- run the complete existing lint/unit/integration/E2E/build baseline before changing expectations;
-- classify each failure as real product regression vs stale test/tooling expectation;
-- fix real regressions without changing accepted P1–P5 semantics;
-- intentionally update obsolete expectations where product behavior is already canonical;
-- make the critical validation gate mandatory before publication from `main`;
-- keep P7+ UX/business work out of this phase.
-
-P6 gate: critical repository suite reconciled and deployment cannot publish an unvalidated change.
-
-## P7 — Complete incomplete UX flows
-
-**Status:** `NOT_STARTED`.
+- inspect existing operator-facing flows against P1–P6 contracts and current tests/UI;
+- identify incomplete, misleading or materially high-friction interactions;
+- separate genuine workflow gaps from cosmetic preferences;
+- rank evidenced gaps by operational impact, error risk and frequency;
+- record one bounded first implementation slice for the next action;
+- do not implement new business modules or begin P8 discovery in this inventory slice.
 
 ## P8 — Real store requirements discovery
 

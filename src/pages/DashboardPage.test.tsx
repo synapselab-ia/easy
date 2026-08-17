@@ -8,6 +8,14 @@ vi.mock('../hooks/useDashboard', () => ({
     useTodayOrders: vi.fn(),
 }));
 
+vi.mock('../components/dashboard/DebtHealthAgingCard', () => ({
+    DebtHealthAgingCard: () => <div>Debt aging</div>,
+}));
+
+vi.mock('../components/dashboard/PerformanceAnalysisSection', () => ({
+    PerformanceAnalysisSection: () => <div>Performance analysis</div>,
+}));
+
 describe('DashboardPage integration', () => {
     beforeEach(() => {
         vi.clearAllMocks();
