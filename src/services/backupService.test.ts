@@ -1,19 +1,25 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { exportData, importData } from './backupService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+    BACKUP_FORMAT,
+    BACKUP_SCHEMA_VERSION,
+    BACKUP_VERSION,
+    BackupValidationError,
+    exportData,
+    preflightBackupPayload,
+    preflightBackupText,
+} from './backupService';
 import { db } from '../db/database';
 
-// Mock Dexie
 vi.mock('../db/database', () => ({
     db: {
         items: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
         resellers: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
         transactions: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
-        transaction: vi.fn((_type, _tables, cb) => cb()),
+        transaction: vi.fn(),
     },
 }));
 
-// Mock DOM/Browser APIs
 const mockClick = vi.fn();
 const mockCreateObjectURL = vi.fn().mockReturnValue('blob:url');
 const mockRevokeObjectURL = vi.fn();
@@ -24,79 +30,246 @@ vi.stubGlobal('URL', {
 });
 
 vi.stubGlobal('document', {
-    createElement: vi.fn().mockReturnValue({
-        click: mockClick,
-        setAttribute: vi.fn(),
-        href: '',
-        download: '',
-    }),
+    createElement: vi.fn().mockReturnValue({ click: mockClick, href: '', download: '' }),
 });
 
-describe('backupService', () => {
+const exportedAt = '2026-08-17T18:00:00.000Z';
+const entityCreatedAt = '2026-01-01T12:00:00.000Z';
+const entityUpdatedAt = '2026-01-02T12:00:00.000Z';
+const transactionCreatedAt = '2026-08-17T16:00:00.000Z';
+const transactionOccurredAt = '2026-08-10T12:00:00.000Z';
+
+function validV2Payload() {
+    return {
+        format: BACKUP_FORMAT,
+        version: BACKUP_VERSION,
+        exportedAt,
+        source: {
+            database: 'ResellerManagerDB',
+            schemaVersion: BACKUP_SCHEMA_VERSION,
+        },
+        data: {
+            items: [{
+                id: 1,
+                name: 'Item 1',
+                basePrice: 25,
+                isActive: true,
+                createdAt: entityCreatedAt,
+                updatedAt: entityUpdatedAt,
+            }],
+            resellers: [{
+                id: 1,
+                name: 'Revendedor 1',
+                phone: '',
+                email: '',
+                notes: '',
+                isActive: true,
+                createdAt: entityCreatedAt,
+                updatedAt: entityUpdatedAt,
+            }],
+            transactions: [{
+                id: 1,
+                resellerId: 1,
+                type: 'order',
+                itemId: 1,
+                itemName: 'Item 1',
+                quantity: 2,
+                unitPrice: 25,
+                totalPrice: 50,
+                observation: 'Pedido',
+                occurredAt: transactionOccurredAt,
+                createdAt: transactionCreatedAt,
+            }],
+        },
+    };
+}
+
+describe('P5-S1 backup contract', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    describe('exportData', () => {
-        it('should fetch data from all tables and trigger download', async () => {
-            const mockItems = [{ id: 1, name: 'Item 1' }];
-            const mockResellers = [{ id: 1, name: 'Reseller 1' }];
-            const mockTransactions = [{ id: 1, total: 100 }];
+    it('accepts the current v2 envelope and returns a non-destructive preview', () => {
+        const result = preflightBackupPayload(validV2Payload());
 
-            (db.items.toArray as any).mockResolvedValue(mockItems);
-            (db.resellers.toArray as any).mockResolvedValue(mockResellers);
-            (db.transactions.toArray as any).mockResolvedValue(mockTransactions);
+        expect(result.preview).toMatchObject({
+            sourceVersion: 2,
+            targetVersion: 2,
+            schemaVersion: 4,
+            migrated: false,
+            counts: {
+                items: 1,
+                resellers: 1,
+                transactions: 1,
+                orders: 1,
+            },
+        });
+        expect(result.normalized.data.transactions[0].occurredAt).toEqual(new Date(transactionOccurredAt));
+        expect(db.transaction).not.toHaveBeenCalled();
+        expect(db.items.clear).not.toHaveBeenCalled();
+        expect(db.resellers.clear).not.toHaveBeenCalled();
+        expect(db.transactions.clear).not.toHaveBeenCalled();
+        expect(db.items.bulkAdd).not.toHaveBeenCalled();
+    });
 
-            await exportData();
+    it('migrates legacy v1 lifecycle and occurrence defaults in memory', () => {
+        const legacy = {
+            version: 1,
+            exportedAt,
+            data: {
+                items: [{
+                    id: 1,
+                    name: 'Legado',
+                    basePrice: 10,
+                    createdAt: entityCreatedAt,
+                    updatedAt: entityUpdatedAt,
+                }],
+                resellers: [{
+                    id: 1,
+                    name: 'Revendedor legado',
+                    createdAt: entityCreatedAt,
+                    updatedAt: entityUpdatedAt,
+                }],
+                transactions: [{
+                    id: 1,
+                    resellerId: 1,
+                    type: 'payment',
+                    totalPrice: 10,
+                    createdAt: transactionCreatedAt,
+                }],
+            },
+        };
 
-            expect(db.items.toArray).toHaveBeenCalled();
-            expect(db.resellers.toArray).toHaveBeenCalled();
-            expect(db.transactions.toArray).toHaveBeenCalled();
+        const result = preflightBackupPayload(legacy);
 
-            expect(mockCreateObjectURL).toHaveBeenCalled();
-            expect(mockClick).toHaveBeenCalled();
-            expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:url');
+        expect(result.preview.sourceVersion).toBe(1);
+        expect(result.preview.migrated).toBe(true);
+        expect(result.preview.warnings.length).toBeGreaterThanOrEqual(3);
+        expect(result.normalized.data.items[0].isActive).toBe(true);
+        expect(result.normalized.data.resellers[0].isActive).toBe(true);
+        expect(result.normalized.data.transactions[0].occurredAt).toEqual(new Date(transactionCreatedAt));
+        expect(db.transaction).not.toHaveBeenCalled();
+    });
+
+    it('rejects invalid JSON before touching the database', () => {
+        expect(() => preflightBackupText('{not-json')).toThrow(BackupValidationError);
+        expect(db.transaction).not.toHaveBeenCalled();
+        expect(db.transactions.clear).not.toHaveBeenCalled();
+    });
+
+    it('rejects duplicate IDs', () => {
+        const payload = validV2Payload();
+        payload.data.items.push({ ...payload.data.items[0], name: 'Duplicado' });
+
+        expect(() => preflightBackupPayload(payload)).toThrow(/ID duplicado 1/);
+    });
+
+    it('rejects missing reseller and item references', () => {
+        const payload = validV2Payload();
+        payload.data.transactions[0].resellerId = 99;
+        payload.data.transactions[0].itemId = 88;
+
+        expect(() => preflightBackupPayload(payload)).toThrow(/revendedor inexistente 99/);
+        expect(() => preflightBackupPayload(payload)).toThrow(/item inexistente 88/);
+    });
+
+    it('rejects invalid dates and financial numbers', () => {
+        const payload = validV2Payload();
+        payload.data.items[0].basePrice = 0;
+        payload.data.transactions[0].totalPrice = Number.NaN;
+        payload.data.transactions[0].createdAt = 'not-a-date';
+
+        expect(() => preflightBackupPayload(payload)).toThrow(/maior que zero/);
+        expect(() => preflightBackupPayload(payload)).toThrow(/data inválida/);
+    });
+
+    it('accepts a valid P2 correction pair and preserves audit metadata', () => {
+        const payload = validV2Payload();
+        payload.data.transactions = [
+            {
+                id: 10,
+                resellerId: 1,
+                type: 'payment',
+                totalPrice: 20,
+                occurredAt: transactionOccurredAt,
+                createdAt: '2026-08-17T15:00:00.000Z',
+                reversal: {
+                    reason: 'Valor incorreto',
+                    reversedAt: '2026-08-17T16:00:00.000Z',
+                    replacementTransactionId: 11,
+                },
+            },
+            {
+                id: 11,
+                resellerId: 1,
+                type: 'payment',
+                totalPrice: 25,
+                occurredAt: transactionOccurredAt,
+                createdAt: '2026-08-17T16:00:00.000Z',
+                correction: { replacesTransactionId: 10 },
+            },
+        ];
+
+        const result = preflightBackupPayload(payload);
+        expect(result.preview.counts.reversedTransactions).toBe(1);
+        expect(result.preview.counts.correctionTransactions).toBe(1);
+        expect(result.normalized.data.transactions[0].reversal).toMatchObject({
+            reason: 'Valor incorreto',
+            replacementTransactionId: 11,
         });
     });
 
-    describe('importData', () => {
-        it('should throw error for invalid JSON', async () => {
-            const file = new File(['invalid'], 'backup.json', { type: 'application/json' });
-            await expect(importData(file)).rejects.toThrow('Invalid JSON file');
-        });
+    it('rejects broken P2 correction linkage', () => {
+        const payload = validV2Payload();
+        payload.data.transactions = [{
+            id: 11,
+            resellerId: 1,
+            type: 'payment',
+            totalPrice: 25,
+            occurredAt: transactionOccurredAt,
+            createdAt: transactionCreatedAt,
+            correction: { replacesTransactionId: 999 },
+        }];
 
-        it('should throw error for missing data arrays', async () => {
-            const data = JSON.stringify({ version: 1, data: { items: [] } });
-            const file = new File([data], 'backup.json', { type: 'application/json' });
-            await expect(importData(file)).rejects.toThrow('Backup file missing required data arrays');
-        });
+        expect(() => preflightBackupPayload(payload)).toThrow(/lançamento inexistente 999/);
+    });
 
-        it('should clear database and add new data on valid import', async () => {
-            const mockData = {
-                version: 1,
-                data: {
-                    items: [{ id: 1, name: 'New Item', createdAt: '2024-01-01', updatedAt: '2024-01-01' }],
-                    resellers: [{ id: 1, name: 'New Reseller', createdAt: '2024-01-01', updatedAt: '2024-01-01' }],
-                    transactions: [{ id: 1, resellerId: 1, totalPrice: 100, createdAt: '2024-01-01' }],
-                },
-            };
-            const file = new File([JSON.stringify(mockData)], 'backup.json', { type: 'application/json' });
+    it('exports the current database through the versioned v2 contract', async () => {
+        (db.items.toArray as any).mockResolvedValue([{
+            id: 1,
+            name: 'Item 1',
+            basePrice: 25,
+            isActive: true,
+            createdAt: new Date(entityCreatedAt),
+            updatedAt: new Date(entityUpdatedAt),
+        }]);
+        (db.resellers.toArray as any).mockResolvedValue([{
+            id: 1,
+            name: 'Revendedor 1',
+            isActive: true,
+            createdAt: new Date(entityCreatedAt),
+            updatedAt: new Date(entityUpdatedAt),
+        }]);
+        (db.transactions.toArray as any).mockResolvedValue([{
+            id: 1,
+            resellerId: 1,
+            type: 'order',
+            itemId: 1,
+            itemName: 'Item 1',
+            quantity: 2,
+            unitPrice: 25,
+            totalPrice: 50,
+            occurredAt: new Date(transactionOccurredAt),
+            createdAt: new Date(transactionCreatedAt),
+        }]);
 
-            await importData(file);
+        await exportData();
 
-            expect(db.items.clear).toHaveBeenCalled();
-            expect(db.resellers.clear).toHaveBeenCalled();
-            expect(db.transactions.clear).toHaveBeenCalled();
-
-            expect(db.items.bulkAdd).toHaveBeenCalledWith(expect.arrayContaining([
-                expect.objectContaining({ name: 'New Item', createdAt: expect.any(Date) })
-            ]));
-            expect(db.resellers.bulkAdd).toHaveBeenCalledWith(expect.arrayContaining([
-                expect.objectContaining({ name: 'New Reseller', createdAt: expect.any(Date) })
-            ]));
-            expect(db.transactions.bulkAdd).toHaveBeenCalledWith(expect.arrayContaining([
-                expect.objectContaining({ totalPrice: 100, createdAt: expect.any(Date) })
-            ]));
-        });
+        expect(db.items.toArray).toHaveBeenCalled();
+        expect(db.resellers.toArray).toHaveBeenCalled();
+        expect(db.transactions.toArray).toHaveBeenCalled();
+        expect(mockCreateObjectURL).toHaveBeenCalledTimes(1);
+        expect(mockClick).toHaveBeenCalledTimes(1);
+        expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:url');
     });
 });
