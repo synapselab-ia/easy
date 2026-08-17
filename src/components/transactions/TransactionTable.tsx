@@ -5,8 +5,9 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { ResponsiveDialog } from '../ui/ResponsiveDialog';
+import { TransactionCorrectionDialog } from './TransactionCorrectionDialog';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { Calendar, Tag, Layers, CircleDollarSign, Undo2 } from 'lucide-react';
+import { Calendar, Tag, Layers, CircleDollarSign, Undo2, PencilLine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Transaction } from '@/db/database';
 import { isTransactionReversed } from '@/domain/transactions';
@@ -26,16 +27,29 @@ function StatusLabel({ transaction }: { transaction: Transaction }) {
     );
 }
 
-function reversalDescription(transaction: Transaction) {
-    if (!transaction.reversal) return null;
-    const reversedAt = new Date(transaction.reversal.reversedAt).toLocaleString('pt-BR');
-    return `Motivo do estorno: ${transaction.reversal.reason} · ${reversedAt}`;
+function auditDescriptions(transaction: Transaction) {
+    const descriptions: string[] = [];
+
+    if (transaction.reversal) {
+        const reversedAt = new Date(transaction.reversal.reversedAt).toLocaleString('pt-BR');
+        descriptions.push(`Motivo do estorno: ${transaction.reversal.reason} · ${reversedAt}`);
+        if (transaction.reversal.replacementTransactionId) {
+            descriptions.push(`Substituído pelo lançamento #${transaction.reversal.replacementTransactionId}`);
+        }
+    }
+
+    if (transaction.correction?.replacesTransactionId) {
+        descriptions.push(`Correção do lançamento #${transaction.correction.replacesTransactionId}`);
+    }
+
+    return descriptions;
 }
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
     const isDesktop = useMediaQuery('(min-width: 1024px)');
     const reverseMutation = useReverseTransaction();
     const [transactionToReverse, setTransactionToReverse] = useState<Transaction | null>(null);
+    const [transactionToCorrect, setTransactionToCorrect] = useState<Transaction | null>(null);
     const [reason, setReason] = useState('');
 
     const formatCurrency = (value: number) => {
@@ -98,6 +112,41 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         </ResponsiveDialog>
     );
 
+    const correctionDialog = transactionToCorrect ? (
+        <TransactionCorrectionDialog
+            transaction={transactionToCorrect}
+            open
+            onOpenChange={(open) => !open && setTransactionToCorrect(null)}
+        />
+    ) : null;
+
+    const actionButtons = (transaction: Transaction) => {
+        if (isTransactionReversed(transaction)) return null;
+
+        return (
+            <div className="flex gap-2 justify-end flex-wrap">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTransactionToCorrect(transaction)}
+                    disabled={!transaction.id}
+                >
+                    <PencilLine className="h-4 w-4 mr-1" />
+                    Corrigir
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTransactionToReverse(transaction)}
+                    disabled={!transaction.id}
+                >
+                    <Undo2 className="h-4 w-4 mr-1" />
+                    Estornar
+                </Button>
+            </div>
+        );
+    };
+
     if (!isDesktop) {
         return (
             <div className="space-y-4">
@@ -108,6 +157,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 ) : (
                     transactions.map((t) => {
                         const reversed = isTransactionReversed(t);
+                        const descriptions = auditDescriptions(t);
                         return (
                             <Card key={t.id} className={cn('overflow-hidden', reversed && 'opacity-75')}>
                                 <CardContent className="p-4 space-y-3">
@@ -157,18 +207,15 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                         </div>
                                     )}
 
-                                    {reversalDescription(t) && (
-                                        <div className="text-xs text-muted-foreground border-t pt-2">
-                                            {reversalDescription(t)}
+                                    {descriptions.length > 0 && (
+                                        <div className="text-xs text-muted-foreground border-t pt-2 space-y-1">
+                                            {descriptions.map(description => <div key={description}>{description}</div>)}
                                         </div>
                                     )}
 
                                     {!reversed && (
-                                        <div className="flex justify-end pt-1">
-                                            <Button variant="outline" size="sm" onClick={() => setTransactionToReverse(t)}>
-                                                <Undo2 className="h-4 w-4 mr-1" />
-                                                Estornar
-                                            </Button>
+                                        <div className="pt-1">
+                                            {actionButtons(t)}
                                         </div>
                                     )}
                                 </CardContent>
@@ -178,6 +225,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 )}
 
                 {reversalDialog}
+                {correctionDialog}
             </div>
         );
     }
@@ -208,6 +256,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         ) : (
                             transactions.map((t) => {
                                 const reversed = isTransactionReversed(t);
+                                const descriptions = auditDescriptions(t);
                                 return (
                                     <TableRow key={t.id} className={cn(reversed && 'opacity-75')}>
                                         <TableCell>{t.createdAt.toLocaleDateString()}</TableCell>
@@ -225,19 +274,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                         <TableCell><StatusLabel transaction={t} /></TableCell>
                                         <TableCell className="max-w-[280px]">
                                             <div className="truncate">{t.observation || '-'}</div>
-                                            {reversalDescription(t) && (
-                                                <div className="text-xs text-muted-foreground mt-1">
-                                                    {reversalDescription(t)}
+                                            {descriptions.length > 0 && (
+                                                <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                                                    {descriptions.map(description => <div key={description}>{description}</div>)}
                                                 </div>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {!reversed && (
-                                                <Button variant="outline" size="sm" onClick={() => setTransactionToReverse(t)}>
-                                                    <Undo2 className="h-4 w-4 mr-1" />
-                                                    Estornar
-                                                </Button>
-                                            )}
+                                            {actionButtons(t)}
                                         </TableCell>
                                     </TableRow>
                                 );
@@ -248,6 +292,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             </div>
 
             {reversalDialog}
+            {correctionDialog}
         </div>
     );
 }
