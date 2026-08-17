@@ -180,7 +180,11 @@ export function CommandCenter({ open, onOpenChange }: CommandCenterProps) {
                     </CommandItem>
                     <CommandItem onSelect={() => { onOpenChange(false); navigate('/transactions?type=payment') }} className="cursor-pointer">
                         <Zap className="mr-2 h-4 w-4" />
-                        <span>Novo Lançamento: Pagamento/Sinal</span>
+                        <span>Novo Lançamento: Pagamento</span>
+                    </CommandItem>
+                    <CommandItem onSelect={() => { onOpenChange(false); navigate('/transactions?type=signal') }} className="cursor-pointer">
+                        <Zap className="mr-2 h-4 w-4" />
+                        <span>Novo Lançamento: Sinal</span>
                     </CommandItem>
                 </CommandGroup>
             </CommandList>
