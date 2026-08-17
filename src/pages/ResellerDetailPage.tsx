@@ -12,7 +12,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { isResellerActive } from '../db/database';
-import { calculateBalance } from '../domain/transactions';
+import { calculateBalance, transactionOccurredAt } from '../domain/transactions';
 
 export default function ResellerDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -32,7 +32,9 @@ export default function ResellerDetailPage() {
 
     const transactions = useMemo(() => {
         if (!transactionsData) return [];
-        return [...transactionsData].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        return [...transactionsData].sort(
+            (a, b) => transactionOccurredAt(b).getTime() - transactionOccurredAt(a).getTime()
+        );
     }, [transactionsData]);
 
     const balance = useMemo(() => calculateBalance(transactions), [transactions]);
@@ -44,9 +46,12 @@ export default function ResellerDetailPage() {
     const displayedTransactions = useMemo(() => {
         if (!isFilterComplete) return transactions;
         const startDate = new Date(dateFilter.startDate + 'T00:00:00');
-        const endDate = new Date(dateFilter.endDate + 'T23:59:59');
+        const endDate = new Date(dateFilter.endDate + 'T23:59:59.999');
         if (startDate > endDate) return transactions;
-        return transactions.filter(t => t.createdAt >= startDate && t.createdAt <= endDate);
+        return transactions.filter(t => {
+            const occurredAt = transactionOccurredAt(t);
+            return occurredAt >= startDate && occurredAt <= endDate;
+        });
     }, [transactions, isFilterComplete, dateFilter.startDate, dateFilter.endDate]);
 
     const displayedBalance = useMemo(
@@ -80,16 +85,17 @@ export default function ResellerDetailPage() {
 
         if (isFilterComplete) {
             const startDate = new Date(dateFilter.startDate + 'T00:00:00');
-            const endDate = new Date(dateFilter.endDate + 'T23:59:59');
+            const endDate = new Date(dateFilter.endDate + 'T23:59:59.999');
 
             if (startDate > endDate) {
                 toast.error('A data de início não pode ser posterior à data de fim.');
                 return;
             }
 
-            const filtered = transactions.filter(
-                t => t.createdAt >= startDate && t.createdAt <= endDate
-            );
+            const filtered = transactions.filter(t => {
+                const occurredAt = transactionOccurredAt(t);
+                return occurredAt >= startDate && occurredAt <= endDate;
+            });
 
             if (filtered.length === 0) {
                 toast.warning('Nenhuma transação encontrada no período selecionado.');

@@ -10,7 +10,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { Calendar, Tag, Layers, CircleDollarSign, Undo2, PencilLine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Transaction } from '@/db/database';
-import { isTransactionReversed } from '@/domain/transactions';
+import { isTransactionReversed, transactionOccurredAt } from '@/domain/transactions';
 import { useReverseTransaction } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
 
@@ -164,7 +164,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                     <div className="flex justify-between items-start gap-3">
                                         <div className="flex items-center gap-2 text-sm font-medium">
                                             <Calendar size={14} className="text-muted-foreground" />
-                                            {t.createdAt.toLocaleDateString()}
+                                            {transactionOccurredAt(t).toLocaleDateString()}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <StatusLabel transaction={t} />
@@ -259,7 +259,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                 const descriptions = auditDescriptions(t);
                                 return (
                                     <TableRow key={t.id} className={cn(reversed && 'opacity-75')}>
-                                        <TableCell>{t.createdAt.toLocaleDateString()}</TableCell>
+                                        <TableCell>{transactionOccurredAt(t).toLocaleDateString()}</TableCell>
                                         <TableCell>
                                             {t.type === 'order' ? 'Pedido' : t.type === 'payment' ? 'Pagamento' : 'Sinal'}
                                         </TableCell>

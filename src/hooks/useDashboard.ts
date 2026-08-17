@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../db/database';
-import { calculateBalance, effectiveTransactions } from '../domain/transactions';
+import { calculateBalance, effectiveTransactions, transactionOccurredAt } from '../domain/transactions';
 import { differenceInDays, subDays } from 'date-fns';
 
 export interface AgingData {
@@ -56,13 +56,15 @@ export function useTodayOrders() {
         queryFn: async () => {
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(startOfDay);
+            endOfDay.setHours(23, 59, 59, 999);
 
-            const transactions = await db.transactions
-                .where('createdAt')
-                .aboveOrEqual(startOfDay)
-                .toArray();
+            const transactions = effectiveTransactions(await db.transactions.toArray()).filter(transaction => {
+                const occurredAt = transactionOccurredAt(transaction);
+                return occurredAt >= startOfDay && occurredAt <= endOfDay;
+            });
 
-            const todayOrders = effectiveTransactions(transactions).filter(t => t.type === 'order');
+            const todayOrders = transactions.filter(t => t.type === 'order');
 
             const totalVolume = todayOrders.reduce((sum, current) => sum + current.totalPrice, 0);
 
@@ -98,8 +100,9 @@ export function useDebtAging() {
                         data.balance -= t.totalPrice;
                     }
 
-                    if (!data.lastDate || t.createdAt > data.lastDate) {
-                        data.lastDate = t.createdAt;
+                    const occurredAt = transactionOccurredAt(t);
+                    if (!data.lastDate || occurredAt > data.lastDate) {
+                        data.lastDate = occurredAt;
                     }
                 }
             });
@@ -217,7 +220,7 @@ export function usePerformanceAnalysis(days: AnalysisPeriod) {
                         data.balance -= t.totalPrice;
                     }
 
-                    if (t.type === 'order' && t.createdAt >= startDate) {
+                    if (t.type === 'order' && transactionOccurredAt(t) >= startDate) {
                         data.revenue += t.totalPrice;
                     }
                 }

@@ -79,10 +79,14 @@ export async function importData(file: File): Promise<void> {
         updatedAt: new Date(reseller.updatedAt),
     }));
 
-    const processedTransactions = transactions.map((tx: any) => ({
-        ...tx,
-        createdAt: new Date(tx.createdAt),
-    }));
+    const processedTransactions = transactions.map((tx: any) => {
+        const createdAt = new Date(tx.createdAt);
+        return {
+            ...tx,
+            createdAt,
+            occurredAt: new Date(tx.occurredAt ?? tx.createdAt),
+        };
+    });
 
     // Replace database content inside a transaction for atomicity
     await db.transaction('rw', [db.items, db.resellers, db.transactions], async () => {

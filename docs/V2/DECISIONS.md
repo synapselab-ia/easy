@@ -36,87 +36,70 @@ P1 applies preservation to entity lifecycle and P2 applies it to transaction cor
 
 ## D-008 — Centralize financial domain rules over time
 **Status:** DIRECTION ACCEPTED  
-Balance, effective/reversed treatment and statement totals should come from shared domain rules rather than independent screen calculations. P2-S1 starts this with shared transaction-effect rules.
+Balance, effective/reversed treatment and statement totals should come from shared domain rules rather than independent screen calculations.
 
 ## D-009 — Reseller lifecycle is reversible archive
 **Status:** ACCEPTED  
-Resellers use `isActive`; archive/reactivate is normal behavior; inactive identities remain historical; new activity rejects missing/inactive resellers; hard delete is allowed only without transaction references.
+Resellers use `isActive`; archive/reactivate is normal behavior; historical identity is preserved and unsafe hard deletion is guarded.
 
 ## D-010 — Item lifecycle is reversible archive
 **Status:** ACCEPTED  
-Items use `isActive`; inactive items remain traceable but unavailable for new orders; hard deletion is guarded; historical order snapshots are preserved.
+Items use `isActive`; inactive items remain traceable but unavailable for new orders; historical snapshots are preserved.
 
 ## D-011 — New references are strict; historical rows are preserved
 **Status:** ACCEPTED  
-New transactions require an existing active reseller. Orders also require an existing active item and derive `itemName` from that identity. Payment/signal do not carry item references. Historical rows are not destructively repaired. P1 schema remains V3.
+New transactions require an active reseller; orders require an active item and derive the item snapshot from it. Historical rows are not destructively repaired.
 
 ## D-012 — Financial correction uses audited reversal
 **Status:** ACCEPTED  
-P2-S1 defines pure reversal/cancellation:
+Preserve the original row, require reversal reason/timestamp, keep reversed rows visible with zero financial effect, and expose audit status in history/PDF.
 
-- preserve the original transaction row and business fields;
-- persist `reversal.reason` and ISO `reversal.reversedAt`;
-- reason is mandatory and a transaction can be reversed only once;
-- reversed rows remain visible but have zero financial effect;
-- reseller history/PDF expose reversal status and reason;
-- shared effect is order `+value`, payment/signal `-value`, reversed `0`;
-- `createdAt` is not reinterpreted; P3 owns financial-date semantics;
-- no Dexie V4 is required because reversal metadata is optional/non-indexed.
+## D-013 — Replacement correction is atomic, linked and actor-neutral until P4
+**Status:** ACCEPTED  
+Wrong-value/wrong-reseller correction performs replacement creation and original reversal in one Dexie transaction with bidirectional linkage. Type and relevant snapshots remain preserved; P1 validation applies. No fake actor identity is recorded before P4.
 
-Pure cancellation covers duplicate payment and old-order reversal. Replacement correction is defined by D-013.
-
-## D-013 — Replacement correction is atomic, bidirectionally linked and actor-neutral until P4
+## D-014 — Financial occurrence is distinct from registration/audit time
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-P2-S2 defines the correction primitive for wrong-value and wrong-reseller cases.
+P3-S1 separates business time from audit time.
 
-### Atomic linked replacement
+### Timestamp contract
 
-A linked correction must validate the original, mandatory reason and intended replacement, then create the replacement and reverse the original in **one Dexie write transaction**. Failure leaves the original effective and creates no partial replacement.
+- `occurredAt` is the financial/business occurrence date used for date-window semantics;
+- `createdAt` is the record-registration timestamp and is generated internally for new transaction writes;
+- `reversal.reversedAt` is a P2 audit timestamp and is never financial occurrence;
+- the supported date-only transaction UI maps the selected local day to local noon; time-of-day is not business-significant in P3-S1;
+- old lower-level callers that omit occurrence default it to registration time for compatibility; explicitly invalid occurrence values are rejected.
 
-Linkage is stored in both directions:
+### Persistence and migration
 
-```text
-original.reversal.replacementTransactionId -> replacement.id
-replacement.correction.replacesTransactionId -> original.id
-```
+Dexie **V4** adds an `occurredAt` index. Rows upgrading from older schemas materialize missing occurrence as `occurredAt = createdAt`. Existing valid occurrence, `createdAt`, P1 snapshots/lifecycle data and P2 reversal/correction metadata remain unchanged.
 
-Both records remain independently inspectable. No Dexie V4 is required because these fields are optional/non-indexed.
+`transactionOccurredAt()` is the canonical backward-read helper: explicit occurrence first, legacy `createdAt` fallback second.
 
-### Guided correction boundary
+### Correction semantics
 
-- replacement type remains the original type;
-- replacement may target another active reseller;
-- payment/signal amount may change;
-- order quantity/unit price may change and total is recomputed as quantity × unit price;
-- order item identity and original observation are preserved;
-- P1 active reseller/item validation still applies;
-- an unavailable historical item may be purely reversed, but is not silently recreated through the guided flow;
-- normal transaction creation strips caller-supplied `reversal`/`correction` metadata, so audit links can only be produced by approved correction mutations.
+A P2 linked replacement represents the corrected version of the same financial event:
 
-The shared P2-S1 financial rule remains sufficient: reversed original contributes `0`; effective replacement contributes normally.
+- original occurrence stays unchanged;
+- replacement inherits the original occurrence;
+- replacement receives a new registration `createdAt`;
+- reversal receives its own new `reversedAt` audit timestamp.
 
-### Future actor attribution
+### Consumer boundary
 
-P2 closes without fabricating a user identity before P4. Future correction metadata may add an optional opaque `actorRef` that is provider-neutral:
+Occurrence date drives history ordering/display, reseller range filtering, PDF range/display, today-order metrics, current last-effective-movement aging and performance revenue windows. Global search has no independent time-window calculation and remains an all-time balance consumer.
 
-- local/single-user outcome: it may resolve to a stable local operator/installation identity;
-- authenticated multi-user outcome: it may resolve to the stable application-user identifier;
-- display names are resolved separately;
-- existing audit records without `actorRef` stay valid;
-- no actor is recorded until P4 provides a trustworthy identity source.
+### Scope boundary
 
-### Phase consequence
-
-P2 required cases are now covered: duplicate payment/cancellation and old-order reversal by P2-S1; wrong value and wrong reseller by P2-S2. P2 can close.
+P3-S1 does **not** define opening/closing statement balances or decide whether the existing aging model is sufficient; those belong to P3-S2. Backup restore date conversion here is compatibility only; P5 retains deep backup validation/versioning.
 
 ---
 
 # Open decisions
 
-- `occurredAt` vs registration date and backward migration (P3-S1);
-- opening/closing statement semantics and debt-aging model (P3-S2);
+- opening/closing statement semantics and aging model (P3-S2);
 - local vs cloud architecture and concrete actor identity source (P4);
 - backup version/migration strategy (P5);
 - preview/deployment and global QA gating (P6);

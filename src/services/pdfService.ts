@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { type Reseller, type Transaction } from '../db/database';
-import { isTransactionReversed } from '../domain/transactions';
+import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
 
 export interface DateRange {
     startDate: Date;
@@ -43,7 +43,10 @@ export function generateResellerExtract(
     doc.text(balanceText, 14, saldoY);
 
     const filtered = dateRange
-        ? transactions.filter(t => t.createdAt >= dateRange.startDate && t.createdAt <= dateRange.endDate)
+        ? transactions.filter(transaction => {
+            const occurredAt = transactionOccurredAt(transaction);
+            return occurredAt >= dateRange.startDate && occurredAt <= dateRange.endDate;
+        })
         : transactions;
 
     const tableData = filtered.map(t => {
@@ -60,7 +63,7 @@ export function generateResellerExtract(
         ].filter(Boolean).join(' | ') || '-';
 
         return [
-            t.createdAt.toLocaleDateString(),
+            transactionOccurredAt(t).toLocaleDateString(),
             t.type === 'order' ? 'Pedido' : t.type === 'payment' ? 'Pagamento' : 'Sinal',
             t.itemName || '-',
             t.quantity ? t.quantity.toString() : '-',
