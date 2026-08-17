@@ -8,141 +8,135 @@ This ledger records verified quality evidence, known gaps and required validatio
 
 ## P0 — State and governance
 
-**Runtime code changed:** No.  
-**Database schema changed:** No.  
-**UI behavior changed:** No.
-
 P0 established the canonical document set and reconstructable project state. No runtime test command was represented as evidence for P0.
 
 ---
 
-## P1-S1 — Safe reseller lifecycle
+## P1 — Referential integrity and safe lifecycle
 
-**Runtime code changed:** Yes.  
-**Database schema changed:** Yes, Dexie V1 → V2.  
-**UI behavior changed:** Yes.
+**Status:** PASS / DONE.
 
-### Result
+### P1-S1
 
-**PASS for canonical P1-S1 scope.**
+Verified reseller active-default migration, archive/reactivate lifecycle, hard-delete guarding, historical attribution and inactive/missing reseller rejection.
 
-Verified:
+Evidence: GitHub Actions run `32037965651`.
 
-- reseller active-default migration;
-- archive/reactivate lifecycle;
-- hard-delete protection with financial history;
-- inactive reseller search/detail/history availability;
-- inactive/missing reseller rejection for new transactions;
-- reseller integration and production build.
+### P1-S2
 
-GitHub Actions evidence: run `32037965651`.
+Verified item active-default migration, archive/reactivate lifecycle, hard-delete guarding, inactive item behavior, historical snapshots and order guards.
 
----
+Evidence: GitHub Actions run `32038951903`.
 
-## P1-S2 — Safe item lifecycle
+### P1-S3
 
-**Runtime code changed:** Yes.  
-**Database schema changed:** Yes, Dexie V2 → V3.  
-**UI behavior changed:** Yes.
+Verified strict new-transaction reference matrix, complete V1 → V2 → V3 preservation, historical unresolved-reference preservation and P1 regressions.
 
-### Result
+Evidence: GitHub Actions run `32039763539`.
 
-**PASS for canonical P1-S2 scope.**
-
-Verified:
-
-- item active-default migration without reseller lifecycle regression;
-- archive/reactivate lifecycle;
-- hard-delete protection with transaction references;
-- inactive item catalog/search visibility;
-- active-only new-order selection;
-- inactive/missing item rejection when referenced by a new order;
-- historical item snapshot preservation;
-- reseller lifecycle regression and production build.
-
-GitHub Actions evidence: run `32038951903`.
+P1 is closed.
 
 ---
 
-## P1-S3 — Referential validation and migration
+## P2-S1 — Audited transaction reversal
 
-**Runtime code changed:** Yes, transaction creation reference validation only.  
-**Database schema changed:** No; schema remains Dexie V3.  
-**UI behavior changed:** No.
+**Runtime code changed:** Yes.  
+**Database schema version changed:** No; remains Dexie V3.  
+**UI behavior changed:** Yes, reseller-history reversal/status/audit metadata.
 
-### Explicit reference acceptance matrix verified
+### Reversal mutation verified
 
-For new transaction creation:
+- [x] original transaction row remains stored after reversal;
+- [x] original type, value, observation, snapshot and `createdAt` remain unchanged;
+- [x] mandatory reason is enforced below the UI;
+- [x] persisted reason is trimmed;
+- [x] reversal timestamp is persisted as an ISO string;
+- [x] missing transaction is rejected;
+- [x] already reversed transaction cannot be reversed again;
+- [x] physical deletion is no longer the correction mutation used by the slice.
 
-- [x] reseller ID must be a positive integer;
-- [x] reseller must exist;
-- [x] reseller must be active;
-- [x] new `order` requires a positive `itemId`;
-- [x] referenced order item must exist;
-- [x] referenced order item must be active;
-- [x] new-order `itemName` snapshot is derived from the resolved item identity;
-- [x] new `payment`/`signal` rejects `itemId` references.
+### Shared financial semantics verified
 
-For existing historical data/migration:
+- [x] effective order contributes positive value;
+- [x] effective payment/signal contributes negative value;
+- [x] reversed transaction contributes zero while remaining stored;
+- [x] shared `calculateBalance`/effective-transaction rules are covered directly.
 
-- [x] V1 → V2 → V3 preserves entity/transaction row counts;
-- [x] entity and transaction IDs are preserved;
-- [x] dates are preserved;
-- [x] explicit inactive lifecycle state is preserved;
-- [x] missing lifecycle state receives the existing active default;
-- [x] transaction snapshots are preserved without reinterpretation;
-- [x] a historical unresolved item reference with a stored snapshot remains stored/readable rather than being deleted or repaired destructively.
+### Cross-surface consistency verified
+
+- [x] reseller total balance ignores reversed transactions;
+- [x] reseller date-filtered balance ignores reversed transactions without hiding audit rows;
+- [x] dashboard total debt ignores reversed transactions;
+- [x] today-order count/volume ignore reversed orders;
+- [x] debt-aging calculations ignore reversed movements;
+- [x] performance revenue/ranking ignore reversed movements;
+- [x] global-search reseller balance ignores reversed movements;
+- [x] reseller history retains reversed rows and shows status/reason/timestamp;
+- [x] PDF retains reversed rows and exposes `Válido`/`Estornado` plus reversal reason;
+- [x] PDF balance input from reseller detail is reversal-aware.
+
+### UI correction flow verified
+
+- [x] effective row offers `Estornar`;
+- [x] confirmation explains original history is preserved;
+- [x] confirmation is disabled until a reason is entered;
+- [x] mutation receives transaction ID and reason;
+- [x] already reversed row displays audit metadata and no second reversal action.
 
 ### Regression evidence
 
-The same targeted gate also passed:
+The same gate passed:
 
+- P1 database migration tests;
 - reseller lifecycle hooks;
 - item lifecycle hooks;
-- search lifecycle tests;
-- transaction form tests;
-- Command Center tests;
+- transaction form reference/lifecycle tests;
+- Command Center lifecycle tests;
 - reseller page integration;
 - item page integration;
-- reseller-detail historical snapshot tests;
 - production build.
 
 ### Automated evidence
 
-GitHub Actions validation run: `32039763539` on `feature/p1-s3-referential-validation`.
+GitHub Actions validation run: `32041280504` on `feature/p2-s1-audited-reversal`.
 
-Targeted passing test files:
+Targeted P2-S1 files:
+
+- `src/domain/transactions.test.ts`;
+- `src/hooks/useTransactions.test.tsx`;
+- `src/components/transactions/TransactionTable.test.tsx`;
+- `src/hooks/useDashboard.test.tsx`;
+- `src/hooks/useSearch.test.tsx`;
+- `src/pages/ResellerDetailPage.test.tsx`;
+- `src/services/pdfService.test.ts`.
+
+P1 regression files:
 
 - `src/db/database.test.ts`;
-- `src/hooks/useTransactions.test.tsx`;
 - `src/hooks/useResellers.test.tsx`;
 - `src/hooks/useItems.test.tsx`;
-- `src/hooks/useSearch.test.tsx`;
 - `src/components/transactions/TransactionForm.test.tsx`;
 - `src/components/search/CommandCenter.test.tsx`;
 - `src/pages/ResellersPage.test.tsx`;
-- `src/pages/ItemsPage.test.tsx`;
-- `src/pages/ResellerDetailPage.test.tsx`.
+- `src/pages/ItemsPage.test.tsx`.
 
 Build evidence:
 
-- `npm run build` — PASS on run `32039763539`.
+- `npm run build` — PASS on run `32041280504`.
 
-### P1-S3 QA result
+### P2-S1 QA result
 
-**PASS. P1 referential-integrity/lifecycle acceptance gates are reconciled and P1 can close.**
+**PASS for the canonical P2-S1 scope. P2 remains IN_PROGRESS.**
 
-P1-S3 deliberately does not apply new-creation guards to historical rows or backup restore. Deep validation of imported backup content remains P5, while transaction correction/reversal begins in P2.
+The first audited correction primitive is coherent across the inventoried financial surfaces. Explicit original/replacement linkage, guided wrong-value/wrong-reseller correction and actor-attribution strategy remain P2-S2.
 
 ---
 
 ## Global baseline caveat
 
-P1 does **not** claim the repository-wide quality baseline is green.
+Targeted P1/P2 gates do **not** claim the repository-wide quality baseline is green.
 
-Pre-existing diagnostics recorded during P1-S1 included repository-wide lint and Vitest failures outside the targeted P1 slices. Those were not expanded into P1 fixes because P6 owns general test/CI reconciliation.
-
-All P1 completion claims therefore refer to the targeted phase gates plus successful production builds, not a globally clean suite.
+Pre-existing diagnostics recorded during P1 showed lint and Vitest debt outside these slices. P6 owns full suite reconciliation and deployment gating.
 
 ---
 
@@ -151,80 +145,72 @@ All P1 completion claims therefore refer to the targeted phase gates plus succes
 ### QG-001 — Reseller referential integrity
 
 **Severity:** Critical  
-**Owner phase:** P1-S1  
+**Owner:** P1  
 **Status:** RESOLVED
-
-Reseller lifecycle, historical attribution, hard-delete guarding and new-transaction reseller validation are covered by P1-S1/P1-S3 evidence.
 
 ### QG-002 — Historical item references
 
 **Severity:** High  
-**Owner phase:** P1-S2  
+**Owner:** P1  
 **Status:** RESOLVED
-
-Item lifecycle, hard-delete guarding, historical snapshots and new-order item validation are covered by P1-S2/P1-S3 evidence.
 
 ### QG-003 — Financial correction flow
 
 **Severity:** Critical  
-**Owner phase:** P2  
-**Status:** OPEN
+**Owner:** P2  
+**Status:** PARTIALLY RESOLVED / P2 IN_PROGRESS
 
-A physical delete mutation exists for transactions, but the application lacks a deliberate audited correction/reversal workflow.
+P2-S1 resolves the destructive-delete problem for the first correction path: reversal preserves the original, requires reason/timestamp, remains visible and is financially neutral across the inventoried surfaces.
 
-Required future evidence:
+Still required:
 
-- reversal calculation tests;
-- duplicate/wrong-reseller/error-entry cases;
-- PDF/dashboard consistency after reversal.
+- explicit original/replacement linkage;
+- guided wrong-value correction;
+- guided wrong-reseller correction;
+- future actor-attribution strategy;
+- final P2 acceptance across all required correction cases.
 
 ### QG-004 — Date semantics
 
 **Severity:** High  
-**Owner phase:** P3  
+**Owner:** P3  
 **Status:** OPEN
 
-Transactions currently have only `createdAt`; occurrence time and record-creation time are not distinct.
+Transactions still use `createdAt` for financial date semantics. `reversal.reversedAt` is audit-only and does not resolve P3.
 
 ### QG-005 — Period statement semantics
 
 **Severity:** High  
-**Owner phase:** P3  
+**Owner:** P3  
 **Status:** OPEN
 
-The current period balance represents net movement inside the filter window, not a formally defined opening/closing statement.
+Current period balance remains net movement in the filter window, not formal opening/closing semantics.
 
 ### QG-006 — Backup validation depth
 
 **Severity:** High  
-**Owner phase:** P5  
+**Owner:** P5  
 **Status:** OPEN
 
-Backup import remains structurally shallow and can bypass new-activity mutation guards by directly restoring historical rows. P5 must validate fields, references, duplicates and schema compatibility before destructive replacement.
+Backup validation remains structurally shallow. P2-S1 reversal metadata is JSON-serializable but this does not constitute P5 hardening.
 
 ### QG-007 — Stale/global test expectations
 
 **Severity:** Medium-High  
-**Owner phase:** P6  
+**Owner:** P6  
 **Status:** OPEN
-
-Repository-wide unit/integration/E2E reconciliation remains required.
 
 ### QG-008 — Deployment does not require full QA
 
 **Severity:** High  
-**Owner phase:** P6  
+**Owner:** P6  
 **Status:** OPEN
-
-GitHub Pages deployment still builds/publishes from `main` without requiring the full quality suite.
 
 ### QG-009 — Remaining reference validation/migration
 
 **Severity:** High  
-**Owner phase:** P1-S3  
+**Owner:** P1  
 **Status:** RESOLVED
-
-P1-S3 defines/enforces the remaining new-transaction reference matrix and proves the complete P1 migration path while preserving historical snapshots. Evidence: run `32039763539`.
 
 ---
 
