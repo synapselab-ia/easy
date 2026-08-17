@@ -12,25 +12,21 @@ test.describe('Performance Analysis Section', () => {
     });
 
     test('should change period filter and update insights', async ({ page }) => {
-        // Initial state (90 days)
         await expect(page.getByText('Janela:')).toBeVisible();
 
-        // Open select
         await page.getByRole('combobox').click();
+        await page.getByRole('option', { name: 'Últimos 180 dias' }).click();
 
-        // Select 180 days
-        await page.getByLabel('Últimos 180 dias').click();
-
-        // Check if insights cards are still there (they should update, but at least exist)
         await expect(page.getByText('Concentração de Vendas')).toBeVisible();
     });
 
-    test('should show pareto chart with corect axes', async ({ page }) => {
-        await expect(page.getByText('Faturamento')).toBeVisible();
-        await expect(page.getByText('% Acumulado')).toBeVisible();
+    test('should show pareto chart with correct axes', async ({ page }) => {
+        await expect(page.getByText('Faturamento', { exact: true })).toBeVisible();
+        await expect(page.getByText('% Acumulado', { exact: true })).toBeVisible();
     });
 
     test('should show ranking of debtors', async ({ page }) => {
-        await expect(page.getByText('Saldo Devedor')).toBeVisible();
+        await expect(page.getByText('Ranking de Inadimplência')).toBeVisible();
+        await expect(page.getByText('Top 10 revendedores com maior saldo devedor acumulado')).toBeVisible();
     });
 });
