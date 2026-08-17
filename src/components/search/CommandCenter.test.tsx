@@ -112,6 +112,25 @@ describe('CommandCenter', () => {
         expect(screen.getByText('Inativo')).toBeInTheDocument()
     })
 
+    it('should keep inactive items visible and identify them as inactive', () => {
+        vi.mocked(searchHook.useSearch).mockReturnValue({
+            results: [
+                { id: 3, title: 'Archived Item', type: 'item', isActive: false }
+            ],
+            recent: [],
+            isLoading: false,
+        })
+
+        render(
+            <MemoryRouter>
+                <CommandCenter open={true} onOpenChange={() => { }} />
+            </MemoryRouter>
+        )
+
+        expect(screen.getByText('Archived Item')).toBeInTheDocument()
+        expect(screen.getByText('Inativo')).toBeInTheDocument()
+    })
+
     it('should show suggestions when no results are found for a query', () => {
         vi.mocked(searchHook.useSearch).mockReturnValue({
             results: [],
