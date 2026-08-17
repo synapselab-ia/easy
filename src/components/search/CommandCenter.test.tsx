@@ -24,6 +24,7 @@ describe('CommandCenter', () => {
             unobserve() { }
             disconnect() { }
         }
+        HTMLElement.prototype.scrollIntoView = vi.fn()
     })
 
     beforeEach(() => {
