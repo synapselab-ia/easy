@@ -4,11 +4,10 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useDebtAging } from "@/hooks/useDashboard";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { differenceInDays } from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { CriticalReseller } from "@/hooks/useDashboard";
 
-// Formatter for BRL
 const formatBRL = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -44,10 +43,11 @@ export function DebtHealthAgingCard() {
                 title="Radar de Recebimentos"
                 description={
                     <>
-                        Distribuição do saldo devedor total por tempo desde a última movimentação.
+                        Distribuição do saldo devedor pela idade dos pedidos ainda em aberto.
                         <br className="sm:hidden" />
                         <span className="sm:ml-2">
-                            Total: <span className="font-semibold text-foreground">{formatBRL(totalDebt)}</span>
+                            Pagamentos e sinais abatem primeiro os pedidos mais antigos (FIFO). Total:{' '}
+                            <span className="font-semibold text-foreground">{formatBRL(totalDebt)}</span>
                         </span>
                     </>
                 }
@@ -55,7 +55,6 @@ export function DebtHealthAgingCard() {
             <Card className="w-full overflow-hidden">
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {/* Coluna 1: Gráfico e Legenda */}
                         <div className="flex flex-col items-center">
                             <div className="h-[240px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -88,7 +87,6 @@ export function DebtHealthAgingCard() {
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Legenda compacta */}
                             <div className="w-full grid grid-cols-1 gap-2 mt-4">
                                 {buckets.map((bucket) => (
                                     <div key={bucket.category} className="flex items-center justify-between text-[11px] p-2 rounded border bg-muted/30">
@@ -105,7 +103,6 @@ export function DebtHealthAgingCard() {
                             </div>
                         </div>
 
-                        {/* Coluna 2: Principais Alertas (Críticos) */}
                         <ResellerAlertList
                             title="Principais Alertas (Crítico)"
                             resellers={criticalResellers}
@@ -113,7 +110,6 @@ export function DebtHealthAgingCard() {
                             now={now}
                         />
 
-                        {/* Coluna 3: Em Atenção */}
                         <ResellerAlertList
                             title="Em Atenção"
                             resellers={attentionResellers}
@@ -156,9 +152,10 @@ function ResellerAlertList({
                     <Table>
                         <TableBody>
                             {resellers.map((reseller) => {
-                                const daysInactive = reseller.lastMovement.getTime() === 0
-                                    ? 'Nunca'
-                                    : `${differenceInDays(now, reseller.lastMovement)}d`;
+                                const daysOutstanding = Math.max(
+                                    0,
+                                    differenceInCalendarDays(now, reseller.oldestOutstandingAt),
+                                );
 
                                 return (
                                     <TableRow
@@ -175,7 +172,10 @@ function ResellerAlertList({
                                         )}>
                                             {formatBRL(reseller.balance)}
                                             <div className="text-[9.5px] text-muted-foreground font-normal leading-none mt-0.5">
-                                                {daysInactive} inativo
+                                                {daysOutstanding}d em aberto
+                                                {reseller.totalBalance > reseller.balance + 0.01
+                                                    ? ` · saldo total ${formatBRL(reseller.totalBalance)}`
+                                                    : ''}
                                             </div>
                                         </TableCell>
                                     </TableRow>
