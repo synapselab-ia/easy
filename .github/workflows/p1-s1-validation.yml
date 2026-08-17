@@ -46,7 +46,27 @@ jobs:
       - name: P1-S1 transaction form tests
         run: npx vitest run src/components/transactions/TransactionForm.test.tsx
 
-      - name: P1-S1 command center tests
+      - name: CommandCenter render diagnostic
+        continue-on-error: true
+        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should render basic structure when open"
+
+      - name: CommandCenter result navigation diagnostic
+        continue-on-error: true
+        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should navigate when a result is selected"
+
+      - name: CommandCenter inactive lifecycle diagnostic
+        continue-on-error: true
+        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should keep inactive resellers visible and identify them as inactive"
+
+      - name: CommandCenter suggestions diagnostic
+        continue-on-error: true
+        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should show suggestions when no results are found for a query"
+
+      - name: CommandCenter suggestion navigation diagnostic
+        continue-on-error: true
+        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should navigate with pre-filled name when clicking a suggestion"
+
+      - name: P1-S1 command center gate
         run: npx vitest run src/components/search/CommandCenter.test.tsx
 
       - name: P1-S1 reseller page integration tests
