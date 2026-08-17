@@ -4,6 +4,41 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-17 — P1-S1 safe reseller lifecycle
+
+### Added
+
+- reseller `isActive` lifecycle state;
+- Dexie schema V2 migration that defaults existing resellers to active;
+- reversible reseller archive/reactivate mutations;
+- hard-delete protection when a reseller has financial transactions;
+- transaction-creation guard that rejects inactive or missing resellers;
+- inactive-state visibility in reseller list, global search and detail/history;
+- targeted automated coverage for lifecycle, migration, search, transaction selection/guards and reseller integration.
+
+### Changed
+
+- normal reseller removal now archives instead of destructively deleting the identity;
+- new transaction forms list only active resellers;
+- archived reseller records remain available for historical attribution and statement/PDF flows;
+- canonical P1 state advanced: P1-S1 is complete and P1-S2 is the new `NEXT_ACTION`.
+
+### QA
+
+- targeted P1-S1 test gate passed in GitHub Actions run `32037965651`;
+- `npm run build` passed in the same run;
+- repository-wide lint/test debt remains explicitly open for P6 and is not represented as resolved by this slice.
+
+### Scope not changed
+
+- item lifecycle remains P1-S2;
+- remaining referential validation/migration remains P1-S3;
+- transaction reversal/correction remains P2;
+- date/statement semantics remain P3;
+- persistence remains Dexie/IndexedDB pending P4.
+
+---
+
 ## 2026-08-17 — P0 governance and state reconstruction
 
 ### Added
