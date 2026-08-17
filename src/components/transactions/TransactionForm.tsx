@@ -70,7 +70,7 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
     }, [itemId, activeItems, type]);
 
     const orderTotalPrice = type === "order"
-        ? (parseFloat(quantity) || 0) * (parseFloat(unitPrice.replace(",", ".")) || 0
+        ? (parseFloat(quantity) || 0) * (parseFloat(unitPrice.replace(",", ".")) || 0)
         : 0;
 
     const resetForm = () => {
