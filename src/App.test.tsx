@@ -1,11 +1,18 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect } from 'vitest'
 import App from './App'
 
 describe('App Integration Tests', () => {
     it('navigates to the resellers page when the link is clicked', async () => {
         window.history.pushState({}, '', '/easy/')
-        render(<App />)
+        const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+        render(
+            <QueryClientProvider client={queryClient}>
+                <App />
+            </QueryClientProvider>
+        )
 
         expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
 
