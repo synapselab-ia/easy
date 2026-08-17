@@ -7,14 +7,16 @@
 
 ## Current phase
 
-**P2 — Correction, reversal and audit trail**  
-**State:** `IN_PROGRESS`
+**P3 — Dates, balances and financial statements**  
+**State:** `NOT_STARTED`
 
-**P1 — Referential integrity and safe entity lifecycle:** `DONE`.
+**P1 — Referential integrity and safe entity lifecycle:** `DONE`.  
+**P2 — Correction, reversal and audit trail:** `DONE`.
 
-**P2-S1 — Audited transaction reversal:** `DONE` on `feature/p2-s1-audited-reversal`, with targeted automated validation and build passing before integration into `develop`.
+- **P2-S1 — Audited transaction reversal:** `DONE`, integrated into `develop`.
+- **P2-S2 — Linked/guided correction replacement:** `DONE` on `feature/p2-s2-linked-correction`, with targeted automated validation and build passing before integration into `develop`.
 
-P2-S1 establishes the first non-destructive correction path: an existing financial transaction can be estornado with a mandatory reason and audit timestamp while the original row remains stored and visible. Reversed transactions have zero financial effect across the currently inventoried balance/dashboard/search/PDF surfaces.
+P2 now provides non-destructive cancellation and guided replacement for the canonical correction cases while preserving the original financial record and a visible audit trail.
 
 ## Startup protocol for a new conversation
 
@@ -54,101 +56,104 @@ Easy remains a browser-only reseller/order/payment management SPA with:
 - the complete Dexie V1 → V2 → V3 path preserves valid lifecycle/history data;
 - historical transaction snapshots are not destructively repaired.
 
-## P2-S1 implemented behavior
+## P2 completed behavior
 
-### Reversal audit model
+### P2-S1 — cancellation/reversal
 
-- `Transaction` now has optional `reversal` metadata;
-- `reversal.reason` is mandatory and trimmed before persistence;
-- `reversal.reversedAt` is stored as an ISO timestamp string;
-- absence of `reversal` means the transaction is financially effective;
-- a transaction can be reversed only once;
-- the original transaction row, value, item snapshot, observation and `createdAt` remain unchanged;
-- no Dexie schema version change is required because the metadata is optional/non-indexed; schema remains V3.
+- `Transaction.reversal` preserves mandatory reason and ISO reversal timestamp;
+- original transaction values/snapshots/`createdAt` remain unchanged;
+- reversed transactions stay visible but have zero financial effect;
+- reseller history exposes explicit `Estornar` with reason required;
+- history/PDF show `Válido`/`Estornado`, reason and timestamp;
+- reseller balance, dashboard, search and PDF balance inputs share reversal-aware semantics;
+- pure cancellation remains valid for cases such as duplicate payment and old-order reversal.
 
-### Correction UI
+### P2-S2 — linked/guided replacement
 
-- reseller transaction history exposes an `Estornar` action for effective transactions;
-- confirmation requires an explicit reason before submission;
-- reversed rows remain visible with `Estornado` status, reason and reversal timestamp;
-- an already reversed row has no second reversal action;
-- the previous destructive transaction-delete mutation is no longer the correction path.
+A correction that requires a replacement is now atomic and bidirectionally linked:
 
-### Shared financial effect
+- original reversal may carry `replacementTransactionId`;
+- replacement carries `correction.replacesTransactionId`;
+- reversal + replacement creation occur inside one Dexie transaction;
+- if replacement validation fails, neither reversal nor replacement is persisted;
+- the original type, item identity and observation remain preserved;
+- guided correction permits changing the target active reseller and the financial value fields;
+- order corrections recalculate total from corrected quantity × unit price;
+- order replacement preserves the original item and still obeys P1 active-item rules;
+- normal transaction creation strips correction/reversal metadata so callers cannot forge audit linkage;
+- linked rows remain independently visible in history and PDF with both directions of the relationship;
+- the original is financially neutral and only the replacement contributes to balances/dashboard/search.
 
-`src/domain/transactions.ts` now defines the shared rule used by the changed surfaces:
+### Persistence
 
-- effective order → positive financial effect;
-- effective payment/signal → negative financial effect;
-- reversed transaction → zero financial effect while remaining auditable.
+- Dexie schema remains **V3**;
+- P2 audit/linkage metadata is optional and non-indexed, so no V4 migration is required;
+- P2 does not modify P1 migration semantics.
 
-P2-S1 applies that rule to:
+### Future actor-attribution strategy
 
-- reseller total/filtered balances;
-- dashboard total debt;
-- today-order count and volume;
-- debt-aging balances;
-- performance revenue/debtor ranking;
-- global-search reseller balances;
-- PDF balance inputs.
+P2 closes without inventing a user identity before P4.
 
-### Historical/PDF visibility
+Accepted strategy:
 
-- reversed transactions remain in the reseller history;
-- PDF statements include both valid and reversed rows;
-- PDF rows identify `Válido`/`Estornado` and preserve the reversal reason;
-- P2-S1 does not change P3 occurrence-date or opening/closing statement semantics.
+- future correction audit metadata may add an optional opaque `actorRef`;
+- `actorRef` is provider-neutral and must not encode assumptions about Supabase/authentication;
+- if P4 keeps a local/single-user architecture, the ref may resolve to a stable local operator/installation identity;
+- if P4 approves authenticated multi-user persistence, the ref may resolve to the stable application-user identifier;
+- display names are resolved separately from the stored audit reference;
+- existing P2 audit records without actor attribution remain valid;
+- until P4 provides an identity source, Easy records no fabricated actor.
 
-## Verified high-priority risks after P2-S1
+## Verified high-priority risks after P2
 
-1. Correction can be performed by reversing the wrong entry and manually creating a new one, but the original/replacement pair is not yet explicitly linked or guided — P2-S2.
-2. There is no authenticated actor identity; a future-ready attribution strategy still needs an explicit P2 decision without prematurely adding auth/backend.
-3. `createdAt` still carries occurrence/registration ambiguity — P3.
-4. Period statements still use current net-movement semantics — P3.
-5. Backup restore validation remains shallow — P5.
-6. Repository-wide lint/test debt and deployment gating remain P6.
+1. `createdAt` still conflates financial occurrence and registration semantics — P3.
+2. Period statements still use net movement in the selected window rather than formal opening → movements → closing balance semantics — P3.
+3. Aging remains based on current last-effective-movement behavior rather than a decided debt-aging model — P3.
+4. Backup restore validation remains shallow — P5.
+5. Repository-wide lint/test debt and deployment gating remain P6.
+6. Item-result navigation/global UX limitations remain P7.
 
-## P2-S1 completion evidence
+## P2-S2 completion evidence
 
-- [x] original transaction remains stored after reversal;
-- [x] mandatory non-empty correction reason is enforced below the UI;
-- [x] reversal timestamp/status is persisted;
-- [x] a second reversal is rejected;
-- [x] reseller-history UI supports reversal and shows audit metadata;
-- [x] reversed rows remain visible in history/PDF;
-- [x] reversed rows have zero effect on reseller balances;
-- [x] reversed rows have zero effect on dashboard total/today/aging/performance metrics;
-- [x] reversed rows have zero effect on search balances;
-- [x] PDF carries reversal status/reason while using reversal-aware balance input;
-- [x] P1 migration/lifecycle/reference regressions pass;
-- [x] GitHub Actions P2-S1 targeted gate passed on run `32041280504`;
+- [x] wrong-value correction performs one atomic reversal + replacement operation;
+- [x] wrong-reseller correction moves financial effect to the intended active reseller;
+- [x] both original and replacement remain stored and independently inspectable;
+- [x] linkage is persisted in both directions;
+- [x] replacement creation remains subject to P1 active-reference validation;
+- [x] guided order correction preserves original item/type/observation and derives corrected total from quantity × unit price;
+- [x] invalid replacement rolls the whole correction operation back;
+- [x] normal creation cannot forge reversal/correction audit metadata;
+- [x] history and PDF expose original/replacement linkage;
+- [x] domain balance, dashboard and search count only the effective replacement after correction;
+- [x] P2-S1 pure cancellation/double-reversal behavior remains green;
+- [x] P1 migration/lifecycle/reference regressions remain green;
+- [x] GitHub Actions P2-S2 targeted gate passed on run `32042373332`;
 - [x] `npm run build` passed on the same run;
-- [x] canonical V2 documentation updated with exact scope boundary and next action.
+- [x] future actor-attribution strategy defined without introducing auth/backend;
+- [x] P2 acceptance gates reconciled and P2 closed.
 
-## Active constraints entering P2-S2
+## Active constraints entering P3
 
 - do not work directly on `main`;
 - do not modify the original `viniciuscasarin/easy` repository;
 - do not introduce backend/authentication before P4;
-- preserve original and reversed financial entries;
-- do not mutate `createdAt` or introduce P3 occurrence-date semantics;
-- do not redesign statement-period semantics;
+- preserve P1 lifecycle/reference guarantees and P2 reversal/correction audit metadata;
+- do not mutate historical financial rows destructively during date migration;
+- distinguish transaction occurrence from audit timestamps such as `reversal.reversedAt`;
+- do not expand P3-S1 into full statement redesign before occurrence-date semantics are established;
 - do not expand into backup hardening (P5) or global CI cleanup (P6);
-- preserve P1 lifecycle/reference guarantees;
-- add targeted tests for every new correction-linkage behavior.
+- add targeted tests for every date/migration behavior change.
 
 ## NEXT_ACTION
 
-**P2-S2 — Linked/guided correction replacement. Create a new feature branch from `develop`, inventory the minimum data/UI needed to connect a reversed transaction to an optional replacement transaction, define acceptance criteria for wrong-value and wrong-reseller correction flows, and implement only that linkage/guided-recreate slice. Preserve both records and the P2-S1 reversal audit metadata. Define the future actor-attribution strategy explicitly, but do not introduce authentication/backend or P3 date semantics.**
+**P3-S1 — Occurrence-date model and backward-safe migration. Create a new feature branch from `develop`, inventory every current `createdAt` consumer across transaction creation, reseller history/filtering/PDF, dashboard/aging/performance, search, backup and tests; define exact `occurredAt` vs `createdAt` semantics and backward-read/migration rules; then implement only the occurrence-date slice with migration and targeted cross-surface tests. Preserve P2 audit timestamps and do not yet redesign opening/closing statement semantics.**
 
-## P2 completion direction
+## P3 completion direction
 
-P2 is not complete yet. It must ultimately make common entry errors correctable with traceability, including:
+P3 must eventually establish one coherent financial time/balance model, including:
 
-- preserved original entry;
-- visible reversal status/reason/timestamp;
-- guided correction for wrong values and wrong reseller;
-- explicit original/replacement relationship where a replacement is created;
-- duplicate-payment and old-order reversal behavior;
-- consistent balance/dashboard/history/PDF treatment;
-- a future-ready actor attribution strategy compatible with the later P4 architecture decision.
+- explicit occurrence date distinct from record/audit creation time;
+- backward-safe historical migration;
+- consistent date filtering across history, dashboard/analytics and PDF;
+- formal opening balance → period movements → closing balance statement semantics;
+- an explicit decision on whether current last-effective-movement aging is sufficient or true debt aging is required.
