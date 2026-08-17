@@ -1,0 +1,63 @@
+name: P6-S1 baseline
+
+on:
+  push:
+    branches:
+      - feature/p6-s1-qa-deploy-gate
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Lint baseline
+        id: lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Vitest baseline
+        id: vitest
+        continue-on-error: true
+        run: npx vitest run
+
+      - name: Playwright baseline
+        id: playwright
+        continue-on-error: true
+        run: npx playwright test
+
+      - name: Build baseline
+        id: build
+        continue-on-error: true
+        run: npm run build
+
+      - name: Fail if any baseline gate failed
+        if: always()
+        run: |
+          echo "lint=${{ steps.lint.outcome }}"
+          echo "vitest=${{ steps.vitest.outcome }}"
+          echo "playwright=${{ steps.playwright.outcome }}"
+          echo "build=${{ steps.build.outcome }}"
+          if [ "${{ steps.lint.outcome }}" != "success" ] || \
+             [ "${{ steps.vitest.outcome }}" != "success" ] || \
+             [ "${{ steps.playwright.outcome }}" != "success" ] || \
+             [ "${{ steps.build.outcome }}" != "success" ]; then
+            exit 1
+          fi
