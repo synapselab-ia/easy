@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified current architecture through P1-S1  
+**Status:** verified current architecture through P1-S2  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
@@ -72,7 +72,7 @@ The main layout provides desktop/mobile navigation, global search and theme cont
 
 Database name: `ResellerManagerDB`.
 
-Current Dexie schema version after P1-S1: `2`.
+Current Dexie schema version after P1-S2: `3`.
 
 Tables remain:
 
@@ -82,7 +82,12 @@ resellers
 transactions
 ```
 
-The V2 migration preserves the V1 stores/indexes and materializes `reseller.isActive = true` for existing reseller rows where the field was absent.
+Migration path:
+
+- V1 → V2 materializes `reseller.isActive = true` where absent;
+- V2 → V3 materializes `item.isActive = true` where absent;
+- the V3 upgrade does not rewrite existing reseller lifecycle state;
+- legacy missing lifecycle values remain backward-safe at read time through `isResellerActive` / `isItemActive` (`isActive !== false`).
 
 ### Item
 
@@ -92,11 +97,12 @@ Current fields:
 id?
 name
 basePrice
+isActive?
 createdAt
 updatedAt
 ```
 
-Item lifecycle has not changed yet; P1-S2 owns that slice.
+`isActive !== false` is interpreted as active. New items created through the hook default explicitly to active.
 
 ### Reseller
 
@@ -156,13 +162,13 @@ balance
 
 This calculation is reproduced in multiple parts of the application, which creates a consistency risk if future rules change without a shared domain service.
 
-P1-S1 does not alter these financial semantics.
+P1-S1/P1-S2 do not alter these financial semantics.
 
 ## 6. Current mutation and lifecycle behavior
 
 ### Resellers — P1-S1
 
-The normal lifecycle is now reversible archive/reactivate:
+The normal lifecycle is reversible archive/reactivate:
 
 ```text
 active (isActive !== false)
@@ -182,11 +188,28 @@ Rules:
 - physical reseller deletion is protected by a Dexie transaction and is rejected when any transaction references that reseller;
 - physical deletion is therefore limited to resellers with no financial history and is not the normal archival UI action.
 
-### Items
+### Items — P1-S2
 
-Current item deletion still performs a physical `db.items.delete(id)`.
+Items now use the same reversible lifecycle shape while retaining order-specific snapshot semantics:
 
-Transactions may preserve `itemName`, but a historical `itemId` can still reference a removed catalog record. P1-S2 owns this risk.
+```text
+active (isActive !== false)
+  -> archive
+inactive (isActive === false)
+  -> reactivate
+active
+```
+
+Rules:
+
+- new items created through the item hook default to active;
+- archive preserves the item row and does not modify historical transactions;
+- inactive items remain visible/identified in the catalog and global search/recent results;
+- inactive items are excluded from new-order selection;
+- order creation independently rejects an inactive or missing referenced item when `itemId` is supplied;
+- physical item deletion is protected by a Dexie transaction and is rejected when any transaction references that item;
+- physical deletion is therefore limited to unused items and is not the normal catalog archival action;
+- historical rendering continues to use stored transaction snapshots such as `itemName`, quantity, unit price and total price rather than resolving current catalog state.
 
 ### Transactions
 
@@ -194,7 +217,7 @@ The data layer still has a `useDeleteTransaction` mutation that physically delet
 
 The V2 roadmap does not treat physical deletion as the desired financial correction model; P2 must design reversal/cancellation semantics deliberately.
 
-P1-S1 adds only creation-time reseller validation; it does not change correction semantics.
+P1-S1/P1-S2 add creation-time lifecycle/reference guards only; they do not change correction semantics.
 
 ## 7. Statement and date behavior
 
@@ -213,7 +236,7 @@ opening balance
 
 P3 is responsible for defining the final commercial semantics.
 
-Archiving a reseller does not remove access to this detail/history or its PDF statement flow.
+Archiving a reseller does not remove access to detail/history or PDF statements. Archiving an item does not alter the item snapshot already stored in an order, so historical table/PDF output remains independent of current catalog lifecycle state.
 
 ## 8. Backup architecture
 
@@ -225,17 +248,21 @@ Backup export produces JSON containing:
 - resellers;
 - transactions.
 
-Current import validation checks broad structure/arrays and converts date fields, then clears and replaces the three tables inside a Dexie transaction.
+Current export serializes the entity objects, so lifecycle fields present in IndexedDB are included. Current import spreads entity fields and converts date fields before replacing the three tables.
 
-Known gap: validation does not yet deeply verify every field, reference, duplicate ID, semantic value or schema compatibility. P5 owns the robust backup/restore contract; P1-S3 owns remaining reference/migration validation before then.
+Known gap: validation does not yet deeply verify every field, reference, duplicate ID, semantic value or schema compatibility. Old imported records without lifecycle fields remain backward-safe as active at read time, but robust backup schema/version migration remains P5. P1-S3 owns remaining runtime reference/migration validation before then.
 
 ## 9. Search architecture
 
 The global Command Center searches local Dexie data for resellers/items and calculates reseller balances in-browser.
 
-After P1-S1, inactive resellers remain searchable/recent and are explicitly labeled inactive, so historical identities do not disappear from discovery.
+After P1-S1/P1-S2:
 
-Known incomplete behavior still includes item results/actions that navigate to a general page instead of always opening the exact intended operation.
+- inactive resellers remain searchable/recent and are explicitly labeled inactive;
+- inactive items remain searchable/recent and are explicitly labeled inactive;
+- lifecycle visibility is therefore preserved without making inactive entities eligible for new financial/order activity.
+
+Known incomplete behavior still includes item results/actions that navigate to a general page instead of always opening the exact intended operation. That remains outside P1-S2.
 
 ## 10. Testing baseline
 
@@ -248,7 +275,20 @@ The project contains:
 
 P1-S1 adds targeted automated coverage for reseller migration, archive/reactivation, hard-delete protection, inactive search visibility, transaction selection/guarding and reseller list/detail behavior.
 
-Known global issue: the repository still contains pre-existing lint/unit/integration/E2E debt outside the P1-S1 slice. P6 owns test-suite reconciliation and CI hardening; a targeted passing slice must not be represented as a globally green suite.
+P1-S2 adds targeted coverage for:
+
+- V2 → V3 item migration and reseller-state regression;
+- item archive/reactivation;
+- hard-delete protection with historical references;
+- active-only new-order selection;
+- mutation-level inactive/missing item guards;
+- inactive item search visibility;
+- catalog integration;
+- historical item snapshot rendering;
+- reseller lifecycle regression;
+- production build.
+
+Known global issue: the repository still contains pre-existing lint/unit/integration/E2E debt outside the targeted P1 slices. P6 owns test-suite reconciliation and CI hardening; passing phase gates must not be represented as a globally green suite.
 
 ## 11. Deployment baseline
 
@@ -271,6 +311,8 @@ Until P4 is completed:
 - do not introduce Supabase/backend/authentication by assumption;
 - do not redesign the product around multi-user behavior before requirements are known;
 - changes in P1–P3 should be designed so a later persistence migration remains possible.
+
+P1-S3 must complete the remaining reference/migration acceptance matrix without reinterpreting transaction snapshots or starting P2 correction semantics.
 
 ## 13. Architecture decision gate P4
 

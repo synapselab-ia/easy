@@ -4,8 +4,13 @@ export interface Item {
     id?: number;
     name: string;
     basePrice: number;
+    isActive?: boolean;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export function isItemActive(item: Pick<Item, 'isActive'>) {
+    return item.isActive !== false;
 }
 
 export interface Reseller {
@@ -61,6 +66,18 @@ class AppDatabase extends Dexie {
             transaction.table('resellers').toCollection().modify((reseller: Reseller) => {
                 if (typeof reseller.isActive !== 'boolean') {
                     reseller.isActive = true;
+                }
+            })
+        );
+
+        this.version(3).stores({
+            items: '++id, name',
+            resellers: '++id, name',
+            transactions: '++id, resellerId, type, createdAt'
+        }).upgrade(transaction =>
+            transaction.table('items').toCollection().modify((item: Item) => {
+                if (typeof item.isActive !== 'boolean') {
+                    item.isActive = true;
                 }
             })
         );

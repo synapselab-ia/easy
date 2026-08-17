@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select";
-import { isResellerActive, type TransactionType } from "../../db/database";
+import { isItemActive, isResellerActive, type TransactionType } from "../../db/database";
 
 interface TransactionFormProps {
     onSubmitSuccess: () => void;
@@ -40,6 +40,10 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
 
     const { data: items = [] } = useItems();
     const { data: resellers = [] } = useResellers();
+    const activeItems = useMemo(
+        () => items.filter(isItemActive),
+        [items]
+    );
     const activeResellers = useMemo(
         () => resellers.filter(isResellerActive),
         [resellers]
@@ -48,12 +52,12 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
     // Auto-fill unit price when item is selected
     useEffect(() => {
         if (type === "order" && itemId) {
-            const selectedItem = items.find(i => i.id?.toString() === itemId);
+            const selectedItem = activeItems.find(i => i.id?.toString() === itemId);
             if (selectedItem) {
                 setUnitPrice(selectedItem.basePrice.toString());
             }
         }
-    }, [itemId, items, type]);
+    }, [itemId, activeItems, type]);
 
     // Computed total price for orders
     const orderTotalPrice = type === "order"
@@ -70,7 +74,11 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
         }
 
         if (type === "order") {
-            if (!itemId) newErrors.itemId = "Item é obrigatório";
+            if (!itemId) {
+                newErrors.itemId = "Item é obrigatório";
+            } else if (!activeItems.some(i => i.id?.toString() === itemId)) {
+                newErrors.itemId = "Item inativo não pode ser usado em novos pedidos";
+            }
 
             const qty = parseInt(quantity, 10);
             if (isNaN(qty) || qty <= 0) newErrors.quantity = "Quantidade inválida";
@@ -97,7 +105,7 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
         };
 
         if (type === "order") {
-            const selectedItem = items.find(i => i.id?.toString() === itemId);
+            const selectedItem = activeItems.find(i => i.id?.toString() === itemId);
             data = {
                 ...data,
                 itemId: parseInt(itemId, 10),
@@ -179,17 +187,20 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
                             <Select value={itemId} onValueChange={(val) => setItemId(val ?? "")}>
                                 <SelectTrigger id="itemId">
                                     <SelectValue>
-                                        {itemId ? items.find(i => i.id!.toString() === itemId)?.name : "Selecione o item..."}
+                                        {itemId ? activeItems.find(i => i.id!.toString() === itemId)?.name : "Selecione o item..."}
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {items.map((i) => (
+                                    {activeItems.map((i) => (
                                         <SelectItem key={i.id} value={i.id!.toString()}>
                                             {i.name} (R$ {i.basePrice.toFixed(2)})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {activeItems.length === 0 && (
+                                <p className="text-sm text-muted-foreground">Nenhum item ativo disponível para novos pedidos.</p>
+                            )}
                             {errors.itemId && <p className="text-red-500 text-sm">{errors.itemId}</p>}
                         </div>
 

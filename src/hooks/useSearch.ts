@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, isResellerActive, type Reseller } from '../db/database';
+import { db, isItemActive, isResellerActive, type Reseller } from '../db/database';
 
 export interface SearchResult {
     id: number;
@@ -29,7 +29,7 @@ export function useSearch(query: string): SearchHookResult {
             .limit(5)
             .toArray();
 
-        // 2. Search Items
+        // 2. Search Items, including inactive catalog identities for traceability.
         const foundItems = await db.items
             .filter(i => i.name.toLowerCase().startsWith(formattedQuery))
             .limit(5)
@@ -64,6 +64,7 @@ export function useSearch(query: string): SearchHookResult {
             title: item.name,
             subtitle: `R$ ${item.basePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
             type: 'item',
+            isActive: isItemActive(item),
         }));
 
         return [...resellerResults, ...itemResults];
@@ -79,7 +80,7 @@ export function useSearch(query: string): SearchHookResult {
         );
         const validResellers = foundResellers.filter((r): r is Reseller => !!r);
 
-        // 2. Get 2 most recent items from Dexie (by id desc)
+        // 2. Get 2 most recent items from Dexie (by id desc), including inactive identities.
         const recentItems = await db.items
             .orderBy('id')
             .reverse()
@@ -115,6 +116,7 @@ export function useSearch(query: string): SearchHookResult {
             title: item.name,
             subtitle: `R$ ${item.basePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
             type: 'item',
+            isActive: isItemActive(item),
         }));
 
         return [...resellerResults, ...itemResults];

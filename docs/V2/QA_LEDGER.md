@@ -98,9 +98,81 @@ Build evidence:
 
 - `npm run build` — PASS on run `32037965651`.
 
-### Global baseline caveat
+### P1-S1 QA result
 
-P1-S1 does **not** claim the repository-wide quality baseline is green.
+**PASS for the canonical P1-S1 scope.**
+
+The original critical reseller-orphaning path is closed for normal lifecycle use and guarded at the data mutation layer.
+
+---
+
+## P1-S2 — Safe item lifecycle
+
+**Runtime code changed:** Yes.  
+**Database schema changed:** Yes, Dexie V2 → V3.  
+**UI behavior changed:** Yes, item archive/reactivation, inactive-state visibility and active-only new-order selection.
+
+### Acceptance behavior verified
+
+- [x] existing V2 items migrate to active by default;
+- [x] the V3 migration preserves existing reseller lifecycle state;
+- [x] new items created through the item hook default to active;
+- [x] item archive is reversible and does not delete the catalog identity;
+- [x] physical deletion is rejected when a transaction references the item;
+- [x] physical deletion remains possible for an unused item with no transaction references;
+- [x] archived items remain visible in the catalog and global search/recent results;
+- [x] archived items are explicitly identified as inactive;
+- [x] inactive items are excluded from new-order selection;
+- [x] order mutation rejects an inactive referenced item independently of the UI;
+- [x] order mutation rejects a missing referenced item when an `itemId` is supplied;
+- [x] active item + active reseller orders remain creatable;
+- [x] historical item snapshots remain renderable in reseller history/PDF-oriented flows;
+- [x] item list integration covers create/edit/archive/reactivate;
+- [x] reseller lifecycle regression tests remain green;
+- [x] production build succeeds after the slice.
+
+### Automated evidence
+
+GitHub Actions validation run: `32038951903` on `feature/p1-s2-item-lifecycle`.
+
+Targeted passing test files:
+
+- `src/db/database.test.ts`;
+- `src/hooks/useItems.test.tsx`;
+- `src/hooks/useTransactions.test.tsx`;
+- `src/hooks/useSearch.test.tsx`;
+- `src/components/transactions/TransactionForm.test.tsx`;
+- `src/components/search/CommandCenter.test.tsx`;
+- `src/pages/ItemsPage.test.tsx`;
+- `src/pages/ResellerDetailPage.test.tsx`;
+- `src/hooks/useResellers.test.tsx`.
+
+Build evidence:
+
+- `npm run build` — PASS on run `32038951903`.
+
+### Scope boundary verified
+
+P1-S2 did not:
+
+- rewrite historical transactions or item snapshots;
+- define every optional/invalid transaction-reference combination;
+- change transaction correction/deletion semantics;
+- change financial date/balance/statement semantics;
+- introduce backend/authentication/cloud persistence;
+- claim the repository-wide QA baseline is green.
+
+### P1-S2 QA result
+
+**PASS for the canonical P1-S2 scope.**
+
+The item-deletion/history risk is closed for normal catalog lifecycle use and guarded below the UI. Remaining reference/migration acceptance cases are intentionally left to P1-S3.
+
+---
+
+## Global baseline caveat
+
+P1-S1/P1-S2 do **not** claim the repository-wide quality baseline is green.
 
 During P1-S1 diagnostics, the pre-existing baseline showed:
 
@@ -108,13 +180,7 @@ During P1-S1 diagnostics, the pre-existing baseline showed:
 - full Vitest baseline with 22 test files: 14 passed and 8 failed; 71 tests: 54 passed and 17 failed at that diagnostic point;
 - failures included unrelated router/basename, dashboard mock/expectation, layout/environment and other legacy test issues.
 
-Those failures were not expanded into P1-S1 fixes because P6 owns general test/CI reconciliation. The P1-S1 gate was therefore scoped to files covering the changed reseller lifecycle plus a successful production build.
-
-### P1-S1 QA result
-
-**PASS for the canonical P1-S1 scope.**
-
-The original critical reseller-orphaning path is closed for normal lifecycle use and guarded at the data mutation layer. Item lifecycle and broader reference validation remain separate P1 work.
+Those failures were not expanded into P1 lifecycle fixes because P6 owns general test/CI reconciliation. P1-S2 used a targeted gate for the changed item lifecycle plus relevant reseller/history regressions and a successful production build.
 
 ---
 
@@ -134,14 +200,11 @@ Evidence is recorded in the P1-S1 section above.
 
 **Severity:** High  
 **Owner phase:** P1-S2  
-**Status:** OPEN
+**Status:** RESOLVED for the item lifecycle/deletion path
 
-Physical item deletion can leave historical transactions pointing to a removed item ID, even though `itemName` snapshots mitigate display loss.
+P1-S2 replaces normal destructive catalog removal with archive/reactivate, blocks hard deletion when transactions reference the item, preserves historical transaction snapshots and prevents inactive items from being used in new orders.
 
-Required future evidence:
-
-- item lifecycle tests;
-- historical order preservation tests.
+Evidence is recorded in the P1-S2 section above.
 
 ### QG-003 — Financial correction flow
 
@@ -207,7 +270,7 @@ Required future evidence:
 **Owner phase:** P6  
 **Status:** OPEN
 
-The repository contains stale or environment-dependent unit/integration/E2E expectations outside the P1-S1 slice, including historical search/UI selectors and other baseline failures observed during P1-S1 diagnostics.
+The repository contains stale or environment-dependent unit/integration/E2E expectations outside the targeted P1 slices, including historical search/UI selectors and other baseline failures observed during P1-S1 diagnostics.
 
 Required future evidence:
 
@@ -235,13 +298,15 @@ Required future evidence:
 **Owner phase:** P1-S3  
 **Status:** OPEN
 
-P1-S1 protects reseller creation/deletion references, but P1 still needs to reconcile the completed lifecycle migrations and remaining invalid-reference cases after P1-S2.
+P1-S1 and P1-S2 protect the main reseller/item lifecycle and new-activity paths, but P1 still needs a complete acceptance matrix for remaining reference combinations and migration-path edge cases.
 
 Required future evidence:
 
-- old valid databases migrate through the complete P1 schema path without loss;
-- remaining invalid new references are rejected;
-- migration/reference edge cases are automated.
+- old valid databases migrate through V1 → V2 → V3 without loss or lifecycle regression;
+- remaining invalid new references are rejected according to explicit rules;
+- valid optional historical shapes are not incorrectly rejected or destructively rewritten;
+- migration/reference edge cases are automated;
+- P1 lifecycle acceptance gates are reconciled before P1 closure.
 
 ---
 

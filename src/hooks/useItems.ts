@@ -23,7 +23,7 @@ export function useItem(id?: number) {
 export function useCreateItem() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (item: Omit<Item, 'id'>) => db.items.add(item),
+        mutationFn: (item: Omit<Item, 'id'>) => db.items.add({ ...item, isActive: item.isActive !== false }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
         },
@@ -42,10 +42,40 @@ export function useUpdateItem() {
     });
 }
 
+function useSetItemActive(isActive: boolean) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => db.items.update(id, { isActive, updatedAt: new Date() }),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: ['items'] });
+            queryClient.invalidateQueries({ queryKey: ['items', id] });
+        },
+    });
+}
+
+export function useArchiveItem() {
+    return useSetItemActive(false);
+}
+
+export function useReactivateItem() {
+    return useSetItemActive(true);
+}
+
 export function useDeleteItem() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => db.items.delete(id),
+        mutationFn: (id: number) =>
+            db.transaction('rw', db.items, db.transactions, async () => {
+                const referencedTransaction = await db.transactions
+                    .filter(transaction => transaction.itemId === id)
+                    .first();
+
+                if (referencedTransaction) {
+                    throw new Error('Itens com histórico de pedidos não podem ser excluídos permanentemente.');
+                }
+
+                return db.items.delete(id);
+            }),
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
             queryClient.invalidateQueries({ queryKey: ['items', id] });

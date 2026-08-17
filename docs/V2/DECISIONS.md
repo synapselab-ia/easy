@@ -116,7 +116,7 @@ The V2 should prefer historical preservation for entities involved in financial 
 
 ### Rationale
 
-Deleting an identity that owns financial history can make balances and statements untraceable. P1-S1 now resolves this for resellers; item lifecycle remains for P1-S2.
+Deleting an identity that owns financial history can make balances, statements or historical orders untraceable. P1-S1 resolves this for resellers and P1-S2 resolves it for catalog items; P1-S3 still owns broader reference reconciliation.
 
 ---
 
@@ -158,7 +158,36 @@ This preserves financial attribution without preventing operational cleanup. The
 
 ### Scope boundary
 
-This decision applies to resellers only. Item lifecycle semantics remain undecided until P1-S2; broader referential migration/validation remains P1-S3.
+This decision applies to resellers only. Broader referential migration/validation remains P1-S3.
+
+---
+
+## D-010 — Item lifecycle is reversible archive, with preserved order snapshots and guarded hard deletion
+
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
+
+### Decision
+
+For P1-S2:
+
+- item lifecycle is represented by `isActive`;
+- existing/legacy item records default to active through Dexie V2 → V3 migration, while missing `isActive` remains backward-safe as active at read time;
+- the normal catalog UI uses reversible archive/reactivate behavior;
+- inactive items remain visible and explicitly identifiable in catalog and global search/recent results;
+- inactive items are unavailable for new-order selection;
+- order creation must also reject an inactive or missing referenced item when an `itemId` is supplied;
+- physical item deletion is rejected whenever any transaction references the item and is not the normal catalog-removal path;
+- physical deletion remains available only for unused items;
+- historical transaction snapshots such as `itemName`, quantity, unit price and total price are not rewritten when an item is archived or later edited.
+
+### Rationale
+
+Catalog cleanup must not make historical orders unintelligible. Preserving the item identity plus the transaction snapshot provides two independent sources of historical context, while excluding inactive items from new orders prevents accidental reuse. The mutation-level guard protects against stale or alternate callers that bypass the form.
+
+### Scope boundary
+
+This decision does not define every valid/invalid optional transaction-reference combination. The complete acceptance matrix, migration-path reconciliation and remaining invalid-reference handling belong to P1-S3.
 
 ---
 
@@ -166,8 +195,7 @@ This decision applies to resellers only. Item lifecycle semantics remain undecid
 
 These are intentionally **not decided yet**:
 
-- exact item lifecycle schema/behavior (P1-S2);
-- remaining referential validation/migration behavior (P1-S3);
+- remaining referential validation/migration behavior and acceptance matrix (P1-S3);
 - reversal/correction data model (P2);
 - `occurredAt` and statement semantics (P3);
 - local vs cloud architecture (P4);

@@ -24,7 +24,7 @@ interface CommandCenterProps {
 }
 
 function LifecycleBadge({ result }: { result: SearchResult }) {
-    if (result.type !== 'reseller' || result.isActive !== false) return null
+    if (result.isActive !== false) return null
 
     return (
         <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-semibold tracking-wider">
@@ -129,11 +129,14 @@ export function CommandCenter({ open, onOpenChange }: CommandCenterProps) {
                                 className="cursor-pointer"
                             >
                                 <Tag className="mr-2 h-4 w-4 text-green-500" />
-                                <div className="flex flex-col">
-                                    <span className="font-medium">{i.title}</span>
-                                    {i.subtitle && (
-                                        <span className="text-xs text-muted-foreground">{i.subtitle}</span>
-                                    )}
+                                <div className="flex-1 flex justify-between items-center gap-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{i.title}</span>
+                                        {i.subtitle && (
+                                            <span className="text-xs text-muted-foreground">{i.subtitle}</span>
+                                        )}
+                                    </div>
+                                    <LifecycleBadge result={i} />
                                 </div>
                             </CommandItem>
                         ))}

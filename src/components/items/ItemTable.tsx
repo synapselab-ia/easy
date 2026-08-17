@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { Item } from "../../db/database";
-import { useDeleteItem } from "../../hooks/useItems";
+import { isItemActive, type Item } from "../../db/database";
+import { useArchiveItem, useReactivateItem } from "../../hooks/useItems";
 import {
     Table,
     TableBody,
@@ -22,8 +22,9 @@ interface ItemTableProps {
 
 export function ItemTable({ items, onEdit }: ItemTableProps) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
-    const deleteMutation = useDeleteItem();
-    const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
+    const archiveMutation = useArchiveItem();
+    const reactivateMutation = useReactivateItem();
+    const [itemToArchive, setItemToArchive] = useState<Item | null>(null);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -32,12 +33,83 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
         }).format(value);
     };
 
-    const handleDelete = async () => {
-        if (itemToDelete?.id) {
-            await deleteMutation.mutateAsync(itemToDelete.id);
-            setItemToDelete(null);
+    const handleArchive = async () => {
+        if (itemToArchive?.id) {
+            await archiveMutation.mutateAsync(itemToArchive.id);
+            setItemToArchive(null);
         }
     };
+
+    const handleReactivate = async (item: Item) => {
+        if (item.id) {
+            await reactivateMutation.mutateAsync(item.id);
+        }
+    };
+
+    const lifecycleActions = (item: Item) => {
+        const active = isItemActive(item);
+        return (
+            <div className="flex gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(item)}
+                >
+                    Editar
+                </Button>
+                {active ? (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setItemToArchive(item)}
+                        disabled={archiveMutation.isPending}
+                    >
+                        Arquivar
+                    </Button>
+                ) : (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReactivate(item)}
+                        disabled={reactivateMutation.isPending}
+                    >
+                        {reactivateMutation.isPending ? "Reativando..." : "Reativar"}
+                    </Button>
+                )}
+            </div>
+        );
+    };
+
+    const archiveDialog = (
+        <ResponsiveDialog
+            open={!!itemToArchive}
+            onOpenChange={(open) => !open && setItemToArchive(null)}
+            title="Arquivar Item"
+            description={`Arquivar o item "${itemToArchive?.name}"? Ele permanecerá no catálogo e no histórico, mas não poderá ser usado em novos pedidos até ser reativado.`}
+            footer={
+                <>
+                    <Button
+                        variant="outline"
+                        onClick={() => setItemToArchive(null)}
+                        disabled={archiveMutation.isPending}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={handleArchive}
+                        disabled={archiveMutation.isPending}
+                    >
+                        {archiveMutation.isPending ? "Arquivando..." : "Confirmar Arquivamento"}
+                    </Button>
+                </>
+            }
+        >
+            <div className="py-2 text-sm text-muted-foreground">
+                O histórico de pedidos e os snapshots do item serão preservados.
+            </div>
+        </ResponsiveDialog>
+    );
 
     if (!isDesktop) {
         return (
@@ -47,68 +119,34 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
                         Nenhum item cadastrado.
                     </div>
                 ) : (
-                    items.map((item) => (
-                        <Card key={item.id} className="overflow-hidden">
-                            <CardContent className="p-4 space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div className="font-bold text-lg text-primary flex items-center gap-2">
-                                        <Tag size={18} />
-                                        {item.name}
+                    items.map((item) => {
+                        const active = isItemActive(item);
+                        return (
+                            <Card key={item.id} className={active ? "overflow-hidden" : "overflow-hidden opacity-75"}>
+                                <CardContent className="p-4 space-y-4">
+                                    <div className="flex justify-between items-start gap-3">
+                                        <div className="font-bold text-lg text-primary flex items-center gap-2 min-w-0">
+                                            <Tag size={18} className="shrink-0" />
+                                            <span className="truncate">{item.name}</span>
+                                            {!active && (
+                                                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-semibold tracking-wider">
+                                                    Inativo
+                                                </span>
+                                            )}
+                                        </div>
+                                        {lifecycleActions(item)}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => onEdit(item)}
-                                        >
-                                            Editar
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => setItemToDelete(item)}
-                                        >
-                                            Excluir
-                                        </Button>
+                                    <div className="flex items-center gap-2 text-lg font-semibold text-muted-foreground">
+                                        <CircleDollarSign size={20} className="text-payment" />
+                                        <span>{formatCurrency(item.basePrice)}</span>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-2 text-lg font-semibold text-muted-foreground">
-                                    <CircleDollarSign size={20} className="text-payment" />
-                                    <span>{formatCurrency(item.basePrice)}</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
+                                </CardContent>
+                            </Card>
+                        );
+                    })
                 )}
 
-                <ResponsiveDialog
-                    open={!!itemToDelete}
-                    onOpenChange={(open) => !open && setItemToDelete(null)}
-                    title="Excluir Item"
-                    description={`Tem certeza que deseja excluir o item "${itemToDelete?.name}"? Esta ação não pode ser desfeita.`}
-                    footer={
-                        <>
-                            <Button
-                                variant="outline"
-                                onClick={() => setItemToDelete(null)}
-                                disabled={deleteMutation.isPending}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                                disabled={deleteMutation.isPending}
-                            >
-                                {deleteMutation.isPending ? "Excluindo..." : "Confirmar Exclusão"}
-                            </Button>
-                        </>
-                    }
-                >
-                    <div className="py-2 text-sm text-muted-foreground">
-                        A exclusão removerá o item do catálogo permanentemente.
-                    </div>
-                </ResponsiveDialog>
+                {archiveDialog}
             </div>
         );
     }
@@ -120,6 +158,7 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Nome</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead>Preço Base</TableHead>
                             <TableHead className="text-right">Ações</TableHead>
                         </TableRow>
@@ -127,66 +166,32 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
                     <TableBody>
                         {items.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                                     Nenhum item cadastrado.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            items.map((item) => (
-                                <TableRow key={item.id}>
-                                    <TableCell className="font-medium">{item.name}</TableCell>
-                                    <TableCell>{formatCurrency(item.basePrice)}</TableCell>
-                                    <TableCell className="text-right space-x-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => onEdit(item)}
-                                        >
-                                            Editar
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => setItemToDelete(item)}
-                                        >
-                                            Excluir
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                            items.map((item) => {
+                                const active = isItemActive(item);
+                                return (
+                                    <TableRow key={item.id} className={active ? undefined : "opacity-75"}>
+                                        <TableCell className="font-medium">{item.name}</TableCell>
+                                        <TableCell>{active ? 'Ativo' : 'Inativo'}</TableCell>
+                                        <TableCell>{formatCurrency(item.basePrice)}</TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                {lifecycleActions(item)}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
             </div>
 
-            <ResponsiveDialog
-                open={!!itemToDelete}
-                onOpenChange={(open) => !open && setItemToDelete(null)}
-                title="Excluir Item"
-                description={`Tem certeza que deseja excluir o item "${itemToDelete?.name}"? Esta ação não pode ser desfeita.`}
-                footer={
-                    <>
-                        <Button
-                            variant="outline"
-                            onClick={() => setItemToDelete(null)}
-                            disabled={deleteMutation.isPending}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDelete}
-                            disabled={deleteMutation.isPending}
-                        >
-                            {deleteMutation.isPending ? "Excluindo..." : "Confirmar Exclusão"}
-                        </Button>
-                    </>
-                }
-            >
-                <div className="text-sm text-muted-foreground">
-                    Esta ação não pode ser desfeita.
-                </div>
-            </ResponsiveDialog>
+            {archiveDialog}
         </div>
     );
 }

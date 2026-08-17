@@ -49,7 +49,7 @@ export default function ItemsPage() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Catálogo de Itens</h1>
                     <p className="text-muted-foreground">
-                        Gerencie os itens disponíveis para lançamento nos pedidos.
+                        Gerencie itens ativos e arquivados; apenas os ativos ficam disponíveis para novos pedidos.
                     </p>
                 </div>
                 <Button onClick={handleCreateNew} className="w-full sm:w-auto">

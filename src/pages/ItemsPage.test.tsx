@@ -1,25 +1,32 @@
 import 'fake-indexeddb/auto';
 import React from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import ItemsPage from './ItemsPage';
 import { db } from '../db/database';
+
+vi.mock('@/hooks/use-media-query', () => ({
+    useMediaQuery: () => true,
+}));
 
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-        {children}
+        <MemoryRouter initialEntries={['/items']}>
+            {children}
+        </MemoryRouter>
     </QueryClientProvider>
 );
 
 describe('ItemsPage Integration', () => {
     beforeEach(async () => {
+        await db.transactions.clear();
         await db.items.clear();
         queryClient.clear();
     });
 
-    // Handle ResizeObserver not defined in jsdom
     beforeAll(() => {
         global.ResizeObserver = class ResizeObserver {
             observe() { }
@@ -28,13 +35,12 @@ describe('ItemsPage Integration', () => {
         };
     });
 
-    it('creates, lists, edits and deletes an item', async () => {
+    it('creates, lists, edits, archives and reactivates an item', async () => {
         render(<ItemsPage />, { wrapper });
 
-        // Ensure table is empty
         expect(await screen.findByText(/Nenhum item cadastrado/i)).toBeInTheDocument();
 
-        // 1. Create string
+        // 1. Create
         fireEvent.click(screen.getByRole('button', { name: /Novo Item/i }));
         expect(await screen.findByText('Novo Item', { selector: 'h2' })).toBeInTheDocument();
 
@@ -45,14 +51,14 @@ describe('ItemsPage Integration', () => {
         fireEvent.change(priceInput, { target: { value: '150.50' } });
         fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
-        // Wait for modal to close and table to refresh
         await waitFor(() => {
             expect(screen.queryByText('Salvar')).not.toBeInTheDocument();
         });
 
-        // 2. List
+        // 2. List as active
         expect(await screen.findByText('Perfume Teste')).toBeInTheDocument();
         expect(screen.getByText(/150,50/)).toBeInTheDocument();
+        expect(screen.getByText('Ativo')).toBeInTheDocument();
 
         // 3. Edit
         fireEvent.click(screen.getByRole('button', { name: /Editar/i }));
@@ -68,17 +74,25 @@ describe('ItemsPage Integration', () => {
 
         expect(await screen.findByText(/160,00/)).toBeInTheDocument();
 
-        // 4. Delete
-        fireEvent.click(screen.getByRole('button', { name: /Excluir/i }));
-
-        expect(await screen.findByText(/excluir o item/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: /Confirmar Exclusão/i }));
+        // 4. Archive instead of deleting
+        fireEvent.click(screen.getByRole('button', { name: 'Arquivar' }));
+        expect(await screen.findByText(/não poderá ser usado em novos pedidos até ser reativado/i)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /Confirmar Arquivamento/i }));
 
         await waitFor(() => {
-            expect(screen.queryByText(/Confirmar Exclusão/i)).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: /Confirmar Arquivamento/i })).not.toBeInTheDocument();
         });
 
-        // Table empty
-        expect(await screen.findByText(/Nenhum item cadastrado/i)).toBeInTheDocument();
+        // Archived item remains visible and explicitly inactive.
+        expect(await screen.findByText('Perfume Teste')).toBeInTheDocument();
+        expect(await screen.findByText('Inativo')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Reativar' })).toBeInTheDocument();
+
+        // 5. Reactivate
+        fireEvent.click(screen.getByRole('button', { name: 'Reativar' }));
+        await waitFor(() => {
+            expect(screen.getByText('Ativo')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Arquivar' })).toBeInTheDocument();
+        });
     });
 });

@@ -39,7 +39,8 @@ describe('TransactionForm', () => {
         queryClient.clear();
 
         // Seed basic data
-        await db.items.add({ name: 'Perfume', basePrice: 150, createdAt: new Date(), updatedAt: new Date() });
+        await db.items.add({ name: 'Perfume', basePrice: 150, isActive: true, createdAt: new Date(), updatedAt: new Date() });
+        await db.items.add({ name: 'Perfume Arquivado', basePrice: 90, isActive: false, createdAt: new Date(), updatedAt: new Date() });
         await db.resellers.add({ name: 'Joãozinho', isActive: true, createdAt: new Date(), updatedAt: new Date() });
         await db.resellers.add({ name: 'Maria Arquivada', isActive: false, createdAt: new Date(), updatedAt: new Date() });
     });
@@ -74,6 +75,13 @@ describe('TransactionForm', () => {
         expect(screen.queryByText('Maria Arquivada')).not.toBeInTheDocument();
     });
 
+    it('should only list active items for new orders', async () => {
+        render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
+
+        await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150\.00\)/i)).toBeInTheDocument());
+        expect(screen.queryByText(/Perfume Arquivado/i)).not.toBeInTheDocument();
+    });
+
     it('should auto fill price and calculate total automatically', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
@@ -82,12 +90,11 @@ describe('TransactionForm', () => {
 
         // Wait for items to be loaded and reflected in the options
         await waitFor(() => {
-            const dbItemOption = screen.queryByText(/Perfume/);
+            const dbItemOption = screen.queryByText(/Perfume \(R\$ 150\.00\)/i);
             expect(dbItemOption).toBeInTheDocument();
         });
 
-        // The item in dexie gets ID 1 if it's the first. Let's just grab the option for perfume.
-        const itemOption = screen.getByText(/Perfume/i) as HTMLOptionElement;
+        const itemOption = screen.getByText(/Perfume \(R\$ 150\.00\)/i) as HTMLOptionElement;
         fireEvent.change(selects[2], { target: { value: itemOption.value } });
 
         // Wait for price to be auto-filled
