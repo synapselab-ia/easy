@@ -30,46 +30,71 @@ State/governance established; no runtime QA claim.
 - P3-S1 occurrence-date model: `32052076684`.
 - P3-S2 formal statements/FIFO debt aging: `32053837309`.
 
-P3 verifies backward-safe financial occurrence, formal opening → movements → closing statements, per-reseller total-debt semantics and FIFO-derived outstanding debt aging while preserving P1/P2 invariants.
-
 ## P4 — Persistence architecture decision
 
-**Runtime changed:** No.  
+**Status:** PASS / DONE.  
+Decision-only gate; D-016 accepts local-first/single-user Dexie V4. No runtime test claim.
+
+## P5-S1 — Versioned backup contract and non-destructive restore preflight
+
+**Runtime changed:** Yes — export/preflight service and backup flow.  
 **Schema changed:** No; remains Dexie V4.  
-**UI changed:** No.  
-**Decision changed:** Yes; D-016 accepts local-first/single-user persistence.
+**UI changed:** Yes — import confirmation replaced by validation/preview only.
 
-### Evidence inventory verified
+### Contract and migration verified
 
-P4 reviewed:
+- [x] v2 logical envelope identifies `easy-backup`, backup version 2 and source Dexie schema 4;
+- [x] export reads all three tables and self-validates before download;
+- [x] current v1 input remains supported through in-memory normalization;
+- [x] v1 missing item/reseller `isActive` becomes `true`;
+- [x] v1 missing transaction `occurredAt` becomes `createdAt`;
+- [x] explicit P3 occurrence remains preserved;
+- [x] unsupported/malformed JSON is rejected.
 
-- `tasks/prd-gestao-revendedores/prd.md` — administrator/business-owner persona; IndexedDB/Dexie; single-user local; no auth/backend/cloud sync;
-- `prompts/prompt1.md` — local browser persistence and JSON backup/computer portability;
-- `README.md` — 100% client-side/static portability model;
-- `src/db/database.ts` — authoritative Dexie V4 dataset;
-- `src/services/backupService.ts` — user-managed JSON recovery/portability and shallow restore validation;
-- `src/hooks/useSearch.ts` — browser-local auxiliary state;
-- `package.json` — no auth/cloud persistence client;
-- `.github/workflows/deploy.yml` — static GitHub Pages delivery.
+### Deep preflight verified
 
-### Architecture gate verified
+- [x] required arrays/fields are validated;
+- [x] IDs must be positive integers and duplicate IDs are rejected per table;
+- [x] required text, dates and positive finite numeric values are validated;
+- [x] item/reseller lifecycle date chronology is validated;
+- [x] order item snapshot fields are required and payment/signal item fields are rejected;
+- [x] transaction reseller/item references must resolve;
+- [x] reversal reason/timestamp and correction/replacement IDs are validated;
+- [x] P2 linked correction must be bidirectional;
+- [x] linked replacement preserves transaction type;
+- [x] corrected orders preserve item identity;
+- [x] P3 linked replacement preserves original `occurredAt`;
+- [x] replacement registration cannot precede original registration.
 
-- [x] only evidenced operator is one administrator/business owner;
-- [x] browser-local dataset/manual computer handoff is evidenced; live shared multi-device state is not;
-- [x] no simultaneous multi-writer/conflict requirement is evidenced;
-- [x] person-level auth/access-control requirement is not evidenced;
-- [x] future local actor source is defined as opaque installation identity, not human identity;
-- [x] data/security trust boundary is the local browser/device plus explicit exported backup;
-- [x] local data operations are backend-independent; offline startup is not claimed;
-- [x] user-managed backup/recovery limitations are assigned to P5;
-- [x] local vs cloud benefits/costs/failure modes are documented;
-- [x] objective D-016 cloud-reopen triggers are documented;
-- [x] future cloud migration invariants and ID/conflict concerns are documented;
-- [x] no backend/auth/cloud code was introduced.
+### Non-destructive safety verified
 
-### P4 result
+- [x] successful preflight returns normalized data plus preview only;
+- [x] preview includes versions, schema, timestamp, migration warnings and entity/audit counts;
+- [x] invalid input does not invoke Dexie write transaction, `clear()` or `bulkAdd()`;
+- [x] valid preflight also does not mutate IndexedDB;
+- [x] backup UI no longer exposes a destructive `Importar` action in P5-S1;
+- [x] invalid UI preflight does not open the preview;
+- [x] destructive restore is explicitly deferred to P5-S2 checkpoint/atomic-restore work.
 
-**PASS / DONE.** The decision gate is satisfied by repository evidence and D-016. No runtime test run is claimed because P4 changes canonical architecture documentation only.
+### Regression/build evidence
+
+GitHub Actions run **`32058028793`**, job `95472576213` — **PASS**.
+
+The targeted matrix passed:
+
+- P5-S1 backup contract tests;
+- backup preflight UI tests;
+- P3 occurrence backup compatibility;
+- Dexie V1→V4 migration regressions;
+- P2 transaction reversal/correction/history regressions;
+- P1 item/reseller lifecycle regressions;
+- P3 shared financial-domain regressions;
+- `npm run build`.
+
+### P5 result so far
+
+P5-S1: **PASS / DONE**.  
+P5 remains **IN_PROGRESS** because recoverable checkpoint, atomic replacement and post-restore migration proof belong to P5-S2.
 
 ## Global baseline caveat
 
@@ -82,12 +107,12 @@ Targeted phase gates do **not** claim repository-wide lint/unit/integration/E2E 
 - **QG-003 financial correction flow:** RESOLVED / P2.
 - **QG-004 date semantics:** RESOLVED / P3-S1.
 - **QG-005 period statement/aging semantics:** RESOLVED / P3-S2.
-- **QG-006 backup validation depth:** OPEN / P5.
+- **QG-006 backup validation depth:** PARTIALLY RESOLVED / P5-S1. Versioned deep preflight is resolved; checkpointed atomic restore and recovery proof remain P5-S2.
 - **QG-007 stale/global test expectations:** OPEN / P6.
 - **QG-008 deployment does not require full QA:** OPEN / P6.
 - **QG-009 remaining reference validation/migration:** RESOLVED / P1.
-- **QG-010 persistence architecture:** RESOLVED / P4. Local-first/single-user Dexie V4 accepted until a D-016 reopen trigger is proven.
+- **QG-010 persistence architecture:** RESOLVED / P4.
 
 ## QA policy
 
-For each functional phase: define acceptance first, add targeted tests with behavior changes, verify cross-surface consistency, record evidence/unresolved gaps, and distinguish the phase gate from global repository QA. Decision-only phases must record their evidence and must not fabricate runtime validation.
+For each functional phase: define acceptance first, add targeted tests with behavior changes, verify cross-surface consistency, record evidence/unresolved gaps, and distinguish the phase gate from global repository QA.

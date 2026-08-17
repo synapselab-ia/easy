@@ -1,42 +1,50 @@
-// src/components/backup/ImportExport.tsx
 import React, { useRef, type ChangeEvent } from 'react';
-import { exportData, importData } from '@/services/backupService';
+import { exportData, preflightBackupFile, type BackupPreview } from '@/services/backupService';
 import { toast } from 'sonner';
-import ConfirmImportDialog from './ConfirmImportDialog';
+import BackupPreflightDialog from './BackupPreflightDialog';
 
 export default function ImportExport() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [dialogOpen, setDialogOpen] = React.useState(false);
-    const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+    const [preview, setPreview] = React.useState<BackupPreview | null>(null);
+    const [fileName, setFileName] = React.useState<string>();
+    const [isPreflighting, setIsPreflighting] = React.useState(false);
+
+    const resetFileInput = () => {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     const handleExport = async () => {
         try {
             await exportData();
-            toast.success('Backup exported successfully');
-        } catch (e) {
-            toast.error('Failed to export backup');
+            toast.success('Backup v2 exportado com sucesso.');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Falha ao exportar backup.';
+            toast.error(message);
         }
     };
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] ?? null;
-        if (file) {
-            setSelectedFile(file);
-            setDialogOpen(true);
-        }
-    };
+    const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0] ?? null;
+        if (!file) return;
 
-    const handleImportConfirm = async () => {
-        if (!selectedFile) return;
+        setIsPreflighting(true);
+        setPreview(null);
+        setFileName(file.name);
+
         try {
-            await importData(selectedFile);
-            toast.success('Backup imported successfully');
-        } catch (err: any) {
-            toast.error(err.message ?? 'Failed to import backup');
-        } finally {
+            const result = await preflightBackupFile(file);
+            setPreview(result.preview);
+            setDialogOpen(true);
+            toast.success('Backup validado. Nenhum dado atual foi alterado.');
+        } catch (error) {
             setDialogOpen(false);
-            setSelectedFile(null);
-            if (fileInputRef.current) fileInputRef.current.value = '';
+            setFileName(undefined);
+            const message = error instanceof Error ? error.message : 'Falha ao validar backup.';
+            toast.error(message);
+        } finally {
+            setIsPreflighting(false);
+            resetFileInput();
         }
     };
 
@@ -47,27 +55,35 @@ export default function ImportExport() {
                 onClick={handleExport}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
-                Exportar Backup
+                Exportar Backup v2
             </button>
+
             <input
                 type="file"
-                accept=".json"
+                accept=".json,application/json"
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
                 id="backup-import"
+                disabled={isPreflighting}
             />
             <label
                 htmlFor="backup-import"
-                className="cursor-pointer inline-block px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+                aria-disabled={isPreflighting}
+                className="cursor-pointer inline-block px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 aria-disabled:opacity-50 aria-disabled:pointer-events-none"
             >
-                Importar Backup
+                {isPreflighting ? 'Validando Backup...' : 'Validar Backup para Restauração'}
             </label>
 
-            <ConfirmImportDialog
+            <p className="text-sm text-muted-foreground">
+                Nesta etapa, selecionar um arquivo executa apenas validação e prévia. O banco atual não é substituído.
+            </p>
+
+            <BackupPreflightDialog
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                onConfirm={handleImportConfirm}
+                preview={preview}
+                fileName={fileName}
             />
         </div>
     );

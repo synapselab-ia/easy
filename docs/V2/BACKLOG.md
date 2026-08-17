@@ -13,8 +13,6 @@ Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `IN_REVIEW`, `BLOCKED`, `DONE`.
 
 **Status:** `DONE` — 2026-08-17.
 
-Established V2 laboratory, branch roles, canonical documents and reconstructable project state.
-
 ## P1 — Referential integrity and safe entity lifecycle
 
 **Status:** `DONE` — 2026-08-17.
@@ -39,69 +37,68 @@ Established V2 laboratory, branch roles, canonical documents and reconstructable
 
 ## P4 — Persistence architecture decision: local vs cloud
 
-**Priority:** High / Decision Gate  
-**Status:** `DONE`  
-**Completed:** 2026-08-17
+**Status:** `DONE` — 2026-08-17.
 
-Decision: keep V2 **local-first, single-user on Dexie V4** under the requirements currently evidenced.
-
-Evidence and accepted consequences:
-
-- historical product persona is one administrator/business owner;
-- original requirements explicitly specify IndexedDB/Dexie, no backend, no authentication and no cloud sync;
-- portability is manual JSON export/import to move computers, not concurrent synchronization;
-- current runtime/dependencies/deployment remain static and browser-local;
-- no evidence requires simultaneous operators, live multi-device dataset, centralized roles, person-level authorship or remote recovery SLA;
-- provider-neutral future audit actor under local architecture maps to an opaque local installation identity, not fabricated human identity;
-- backend/auth/cloud is deferred unless objective reopen triggers appear;
-- cloud migration, if later justified, must preserve Dexie V4 IDs/history and P1/P2/P3 invariants while adding an explicit identity/conflict/offline/cutover model.
-
-Acceptance gate:
-
-- [x] users/operators inventoried;
-- [x] devices/locations and concurrency inventoried;
-- [x] authorship strategy resolved for local architecture;
-- [x] security/privacy/offline/recovery boundaries documented;
-- [x] local vs cloud costs, risks and migration implications compared;
-- [x] objective cloud-reopen triggers defined;
-- [x] one accepted architecture decision recorded as D-016;
-- [x] no backend/auth/cloud implementation introduced.
+D-016 keeps V2 local-first/single-user on Dexie V4 until an explicit cloud/auth reopen trigger is proven.
 
 ---
 
 ## P5 — Backup, restore and migration
 
 **Priority:** High  
-**Status:** `NOT_STARTED`
+**Status:** `IN_PROGRESS`
 
 Goal: make the accepted local-first dataset recoverable and portable through a versioned, validated and tested backup/restore contract.
 
 ### P5-S1 — Versioned backup contract and non-destructive restore preflight
 
-**Status:** `NOT_STARTED`
+**Status:** `DONE`  
+**Completed:** 2026-08-17
 
-Expected work:
+Implemented:
 
-- inventory every persisted Dexie V4 field and current export/import behavior;
-- define a formal backup schema/envelope version and backward migration from current v1 JSON;
-- validate required fields, IDs, duplicate IDs, references, dates, values, lifecycle state, occurrence timestamps and P2 audit/linkage metadata;
-- produce a restore preview/summary before mutation;
-- invalid input must leave the current database untouched;
-- do not perform final destructive replacement/checkpoint in this slice.
+- complete Dexie V4 persisted-field inventory;
+- logical backup envelope `easy-backup`, backup version 2, source schema version 4;
+- new exports use v2 and self-validate before download;
+- current v1 JSON remains supported through in-memory compatibility migration;
+- v1 missing lifecycle state becomes active and missing `occurredAt` falls back to `createdAt`;
+- strict preflight of required fields, positive IDs, duplicate IDs, dates, numeric values and table/reference integrity;
+- P2 reversal/correction metadata, bidirectional links and replacement rules are validated;
+- P3 occurrence preservation across linked correction is validated;
+- successful preflight produces normalized rows plus entity/audit/migration preview;
+- invalid input cannot invoke Dexie transaction/clear/bulkAdd;
+- old destructive import-confirm path removed from UI pending P5-S2 checkpoint guarantees.
+
+Acceptance gate:
+
+- [x] current v2 envelope validates;
+- [x] v1 compatibility migration validates supported historical fields;
+- [x] unsupported/malformed backup is rejected;
+- [x] duplicate IDs and broken reseller/item references are rejected;
+- [x] invalid dates and financial values are rejected;
+- [x] P2 correction links/audit semantics are checked;
+- [x] P3 occurrence fallback/preservation is covered;
+- [x] preview is shown without destructive import action;
+- [x] preflight does not mutate current IndexedDB;
+- [x] P1/P2/P3 regressions and build pass;
+- [x] targeted run `32058028793` passes.
 
 ### P5-S2 — Checkpointed atomic restore and migration proof
 
 **Status:** `NOT_STARTED`
 
-Expected later work:
+Expected work:
 
-- create a recoverable checkpoint before replacement;
-- perform atomic restore only after successful preflight;
-- validate post-restore invariants and counts;
-- test current-version clean restore plus supported legacy migration paths;
-- demonstrate export → clean restore preserves entities, financial history, correction links, occurrence dates, statements and balances.
+- use only successfully preflighted normalized input;
+- create a recoverable checkpoint of the current dataset before replacement;
+- perform full-table replacement inside one atomic Dexie transaction;
+- ensure any failure leaves the previous live database intact rather than partially replaced;
+- validate post-restore counts, IDs, references and P1/P2/P3 invariants;
+- prove current v2 export -> clean restore preserves the canonical dataset;
+- prove supported v1 migration -> restore preserves IDs, lifecycle state, audit/correction links, occurrence dates and financial outcomes;
+- expose a clear restore result/recovery path.
 
-Gate: versioned export → validated preview → checkpointed atomic restore reproduces the canonical dataset and invariants.
+P5 gate: versioned export -> validated preview -> checkpoint -> atomic restore reproduces the canonical dataset and invariants.
 
 ## P6 — Tests, CI and deployment safety
 
@@ -114,20 +111,16 @@ Reconcile repository-wide lint/unit/integration/E2E debt and make deployment con
 
 **Status:** `NOT_STARTED`.
 
-Operational UX refinement after foundation work.
-
 ## P8 — Real store requirements discovery
 
 **Status:** `NOT_STARTED`.
 
-Produce prioritized user stories from real operating requirements. If discovery proves a D-016 cloud-reopen trigger, persistence architecture must be explicitly reconsidered before multi-user/cloud implementation.
+If discovery proves a D-016 cloud-reopen trigger, persistence architecture must be explicitly reconsidered before multi-user/cloud implementation.
 
 ## P9 — Prioritized new modules
 
-**Status:** `NOT_STARTED`. No candidate module approved before P8.
+**Status:** `NOT_STARTED`.
 
 ## P10 — Controlled beta, migration and cutover
 
 **Status:** `NOT_STARTED`.
-
-V2 replaces old usage only when balances/history/restore/critical flows and rollback are proven.
