@@ -46,28 +46,25 @@ jobs:
       - name: P1-S1 transaction form tests
         run: npx vitest run src/components/transactions/TransactionForm.test.tsx
 
-      - name: CommandCenter render diagnostic
+      - name: Capture CommandCenter suite
+        id: command_center
         continue-on-error: true
-        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should render basic structure when open"
+        shell: bash
+        run: |
+          set -o pipefail
+          npx vitest run src/components/search/CommandCenter.test.tsx --reporter=verbose 2>&1 | tee command-center.log
 
-      - name: CommandCenter result navigation diagnostic
-        continue-on-error: true
-        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should navigate when a result is selected"
+      - name: Upload CommandCenter diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: command-center-log
+          path: command-center.log
+          if-no-files-found: error
 
-      - name: CommandCenter inactive lifecycle diagnostic
-        continue-on-error: true
-        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should keep inactive resellers visible and identify them as inactive"
-
-      - name: CommandCenter suggestions diagnostic
-        continue-on-error: true
-        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should show suggestions when no results are found for a query"
-
-      - name: CommandCenter suggestion navigation diagnostic
-        continue-on-error: true
-        run: npx vitest run src/components/search/CommandCenter.test.tsx -t "should navigate with pre-filled name when clicking a suggestion"
-
-      - name: P1-S1 command center gate
-        run: npx vitest run src/components/search/CommandCenter.test.tsx
+      - name: Enforce CommandCenter gate
+        if: steps.command_center.outcome != 'success'
+        run: exit 1
 
       - name: P1-S1 reseller page integration tests
         run: npx vitest run src/pages/ResellersPage.test.tsx
