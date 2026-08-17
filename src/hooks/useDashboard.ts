@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../db/database';
+import { calculateBalance, effectiveTransactions } from '../domain/transactions';
 import { differenceInDays, subDays } from 'date-fns';
 
 export interface AgingData {
@@ -45,20 +46,7 @@ export type AnalysisPeriod = 90 | 180 | 360;
 export function useTotalDebt() {
     return useQuery({
         queryKey: ['dashboard', 'total-debt'],
-        queryFn: async () => {
-            const transactions = await db.transactions.toArray();
-            let totalDebt = 0;
-
-            for (const t of transactions) {
-                if (t.type === 'order') {
-                    totalDebt += t.totalPrice;
-                } else if (t.type === 'payment' || t.type === 'signal') {
-                    totalDebt -= t.totalPrice;
-                }
-            }
-
-            return totalDebt;
-        },
+        queryFn: async () => calculateBalance(await db.transactions.toArray()),
     });
 }
 
@@ -74,7 +62,7 @@ export function useTodayOrders() {
                 .aboveOrEqual(startOfDay)
                 .toArray();
 
-            const todayOrders = transactions.filter(t => t.type === 'order');
+            const todayOrders = effectiveTransactions(transactions).filter(t => t.type === 'order');
 
             const totalVolume = todayOrders.reduce((sum, current) => sum + current.totalPrice, 0);
 
@@ -91,18 +79,16 @@ export function useDebtAging() {
         queryKey: ['dashboard', 'debt-aging'],
         queryFn: async (): Promise<DebtAgingResult> => {
             const resellers = await db.resellers.toArray();
-            const transactions = await db.transactions.toArray();
+            const transactions = effectiveTransactions(await db.transactions.toArray());
 
             const resellerMap = new Map<number, { name: string; balance: number; lastDate: Date | null }>();
 
-            // Initialize map with all resellers
             resellers.forEach(r => {
                 if (r.id) {
                     resellerMap.set(r.id, { name: r.name, balance: 0, lastDate: null });
                 }
             });
 
-            // Process transactions in a single pass
             transactions.forEach(t => {
                 const data = resellerMap.get(t.resellerId);
                 if (data) {
@@ -112,7 +98,6 @@ export function useDebtAging() {
                         data.balance -= t.totalPrice;
                     }
 
-                    // Update last movement date
                     if (!data.lastDate || t.createdAt > data.lastDate) {
                         data.lastDate = t.createdAt;
                     }
@@ -131,7 +116,7 @@ export function useDebtAging() {
             const attentionResellersList: CriticalReseller[] = [];
 
             resellerMap.forEach((data, id) => {
-                if (data.balance > 0.01) { // Deal with floating point precision
+                if (data.balance > 0.01) {
                     totalDebt += data.balance;
 
                     let category: 'recent' | 'attention' | 'critical';
@@ -175,21 +160,21 @@ export function useDebtAging() {
                     label: 'Recente (< 7d)',
                     value: buckets.recent,
                     percentage: totalDebt > 0 ? (buckets.recent / totalDebt) * 100 : 0,
-                    color: '#22c55e' // Green-500
+                    color: '#22c55e'
                 },
                 {
                     category: 'attention',
                     label: 'Em Atenção (8-30d)',
                     value: buckets.attention,
                     percentage: totalDebt > 0 ? (buckets.attention / totalDebt) * 100 : 0,
-                    color: '#eab308' // Yellow-500
+                    color: '#eab308'
                 },
                 {
                     category: 'critical',
                     label: 'Crítico (> 30d)',
                     value: buckets.critical,
                     percentage: totalDebt > 0 ? (buckets.critical / totalDebt) * 100 : 0,
-                    color: '#ef4444' // Red-500
+                    color: '#ef4444'
                 }
             ];
 
@@ -212,37 +197,32 @@ export function usePerformanceAnalysis(days: AnalysisPeriod) {
         queryKey: ['dashboard', 'performance-analysis', days],
         queryFn: async (): Promise<PerformanceData> => {
             const resellers = await db.resellers.toArray();
-            const transactions = await db.transactions.toArray();
+            const transactions = effectiveTransactions(await db.transactions.toArray());
             const startDate = subDays(new Date(), days);
 
             const resellerMap = new Map<number, { name: string; revenue: number; balance: number }>();
 
-            // Initialize Map
             resellers.forEach(r => {
                 if (r.id) {
                     resellerMap.set(r.id, { name: r.name, revenue: 0, balance: 0 });
                 }
             });
 
-            // Process all transactions for balance, but only recent for revenue
             transactions.forEach(t => {
                 const data = resellerMap.get(t.resellerId);
                 if (data) {
-                    // Always update balance (total debt)
                     if (t.type === 'order') {
                         data.balance += t.totalPrice;
                     } else {
                         data.balance -= t.totalPrice;
                     }
 
-                    // Update revenue only if within the period
                     if (t.type === 'order' && t.createdAt >= startDate) {
                         data.revenue += t.totalPrice;
                     }
                 }
             });
 
-            // Calculate Pareto
             const sortedByRevenue = Array.from(resellerMap.values())
                 .filter(d => d.revenue > 0)
                 .sort((a, b) => b.revenue - a.revenue);
@@ -270,7 +250,6 @@ export function usePerformanceAnalysis(days: AnalysisPeriod) {
                 };
             });
 
-            // Ranking by Debt
             const ranking = Array.from(resellerMap.values())
                 .filter(d => d.balance > 0.01)
                 .sort((a, b) => b.balance - a.balance)
