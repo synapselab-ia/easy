@@ -1,136 +1,106 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through completed P3  
+**Status:** verified through completed P4  
 **Integration target:** `develop`  
 **Date:** 2026-08-17
 
-Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB, deployed to GitHub Pages. There is no application backend or authentication layer.
+Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB, deployed to GitHub Pages.
 
-## Persistence
+## Accepted persistence architecture
 
-Database: `ResellerManagerDB`, current Dexie schema **V4**.
-
-Tables remain `items`, `resellers`, `transactions`.
-
-Migration path:
-
-- V1 → V2: missing reseller active state becomes active;
-- V2 → V3: missing item active state becomes active;
-- V3 → V4: transaction `occurredAt` is indexed and missing occurrence becomes `occurredAt = createdAt`.
-
-P3-S2 introduces no persistence fields or V5.
-
-## Transaction time and audit model
+D-016 accepts **local-first, single-user Dexie V4** under the requirements currently evidenced.
 
 ```text
-occurredAt?                   financial occurrence; legacy read fallback to createdAt
-createdAt                     registration/audit timestamp
-reversal.reversedAt           P2 reversal/correction audit timestamp
+GitHub Pages static assets
+        -> Browser profile/origin
+             -> React/TanStack Query
+             -> Dexie V4 / IndexedDB = authoritative business dataset
+             -> localStorage = non-critical local UI state
+
+User-controlled JSON export/import = backup and computer-to-computer handoff
 ```
 
-`transactionOccurredAt()` is the canonical backward-read helper. P2 linked replacement preserves original financial occurrence but gets a new registration timestamp; reversal keeps its own audit timestamp.
+There is no backend, remote database, authentication or synchronization layer.
 
-## Shared financial-effect model
+## Evidence and operating model
 
-`src/domain/transactions.ts` is the canonical financial domain boundary:
+P4 reviewed the historical PRD/prompt, README and current persistence/backup/deployment code. They establish one administrator/business owner, single-user local operation, IndexedDB/Dexie, static delivery and JSON portability. Authentication/backend/cloud sync are explicitly outside the original product model.
 
-```text
-effective order          +totalPrice
-effective payment/signal -totalPrice
-reversed transaction      0
-```
+Accepted operating model:
 
-It also owns all-time reseller balance, grouped reseller balances, total debt, formal statement periods and derived outstanding-debt aging.
+- one authoritative dataset per browser profile/origin at a time;
+- desktop/tablet support is UI capability, not live cross-device synchronization;
+- moving data to another computer is an explicit export/import handoff;
+- no simultaneous multi-writer/conflict-resolution requirement is evidenced.
 
-## Formal statement architecture
+## Persistence model
 
-`buildStatementPeriod(transactions, range)` returns one `StatementPeriod`:
+Database: `ResellerManagerDB`, Dexie **V4**; tables `items`, `resellers`, `transactions`.
 
-```text
-range
-openingBalance
-periodMovement
-closingBalance
-movements[]
-```
+Migration path remains:
 
-Rules:
+- V1 → V2 reseller active state;
+- V2 → V3 item active state;
+- V3 → V4 transaction `occurredAt`, with missing occurrence materialized from `createdAt`.
 
-- opening = effective balance for occurrence strictly before start;
-- movements = audit-visible rows whose occurrence is within the inclusive range;
-- periodMovement = shared effective signed amount of movements;
-- closing = opening + periodMovement;
-- reversed rows stay in movements but contribute zero;
-- linked corrected rows remain independently visible while only the effective replacement contributes;
-- zero-movement periods are valid.
+P4 adds no schema/runtime field.
 
-`ResellerDetailPage` and `pdfService` use this same statement object. The visible filtered history is `statement.movements`; PDF gets the full transaction set plus the formal statement so the summary and audit rows cannot diverge.
+## Trust, security and privacy boundary
 
-## Total-debt architecture
+The browser profile/device is the current data/trust boundary.
 
-Per-reseller all-time balances remain authoritative. Dashboard “Dívida Total” uses the sum of positive reseller balances instead of globally netting every transaction. This prevents an unrelated reseller credit from reducing another reseller's debt.
+- business data stays in IndexedDB unless explicitly exported;
+- GitHub Pages serves app assets and is not the business-data system of record;
+- no credential/auth/server-secret surface is added;
+- device/profile compromise or deletion can expose/lose data;
+- exported JSON contains sensitive contact/financial data and is user-controlled;
+- backup validation/recovery hardening belongs to P5.
 
-Search continues to display each reseller's own all-time balance. Performance debtor ranking also remains per-reseller and therefore consistent with the same sign/effect rules.
+## Actor attribution
 
-## Outstanding-debt aging architecture
+D-013's provider-neutral strategy is resolved for local architecture: a future `actorRef`, if materialized, uses a stable opaque **local installation identity** generated/stored client-side.
 
-P3-S2 replaces last-movement aging with derived open-order aging.
+It identifies an Easy installation, not a verified person. Historical rows without actor attribution remain valid. If person-level authorship becomes mandatory, D-016 must be revisited before pretending an installation ID is a human identity.
 
-`calculateOutstandingDebtLots()`:
+## Offline boundary
 
-1. filters to effective transactions;
-2. orders financial events deterministically by `occurredAt`, then registration time/id;
-3. treats orders as debt lots carrying their order occurrence;
-4. applies payment/signal credit to oldest debt first (FIFO);
-5. carries excess credit forward to later orders;
-6. returns only order amounts still outstanding.
+IndexedDB reads/writes require no backend once the static app is loaded. P4 does not claim guaranteed offline startup because there is no accepted service-worker/PWA caching contract.
 
-No persistent payment→order allocation is stored. FIFO is an explicit deterministic convention required by the current reseller-level payment model.
+## Recovery boundary entering P5
 
-`debtAgeCategory()` uses the occurrence of the debt still open:
+Current JSON backup:
 
-- recent: 0–6 calendar days;
-- attention: 7–30 days;
-- critical: >30 days.
+- exports all three tables in a `version: 1` envelope;
+- serializes P1/P2/P3 fields;
+- restores date fields and legacy `occurredAt` fallback;
+- performs only shallow structure validation before replacement.
 
-A reseller may have outstanding amounts in multiple buckets. Alert rows expose bucket amount, total balance and oldest outstanding order occurrence.
+P5 must make this a versioned logical recovery/interchange contract independent of physical IndexedDB details.
 
-## P1/P2 preservation
+## Cloud/auth reopen triggers
 
-- lifecycle/reference guarantees remain unchanged;
-- reversal/correction metadata remains audit-visible;
-- reversed originals have zero financial effect;
-- linked replacements preserve P3-S1 occurrence semantics;
-- P3-S2 does not mutate historical records.
+D-016 must be explicitly superseded before remote persistence/auth if real requirements mandate:
 
-## Backup boundary
+1. concurrent writes by multiple operators;
+2. automatic live sharing across devices/locations;
+3. verified person-level authorship or centralized access control;
+4. automatic remote backup/recovery SLA;
+5. trusted server credentials/webhooks/execution;
+6. security policy incompatible with browser-local storage.
 
-Current backup compatibility still converts `occurredAt` with fallback to `createdAt`. Formal versioning, deep validation, restore preview/checkpoint and migration contracts remain P5.
+A future cloud design must solve auth/account recovery, authorization, globally safe IDs, conflict/offline semantics, migration and cutover before multi-writer use.
 
-## Validation baseline
+## Migration invariants
 
-P3-S2 final targeted gate: **`32053837309` — PASS**, including:
+Any P5 restore or future persistence migration must preserve:
 
-- statement/aging domain rules;
-- total-debt per-reseller semantics;
-- reseller-detail/PDF formal statements;
-- P3-S1 occurrence regressions;
-- P2 mutation/history regressions;
-- P1 lifecycle/database migration regressions;
-- search/dashboard/PDF regressions;
-- production build.
+- P1 lifecycle/reference/history;
+- P2 reversal/correction links/audit and reversed-zero effect;
+- P3 occurrence/audit separation, statement semantics and FIFO-derived debt rules;
+- legacy rows without actor attribution.
 
-Earlier run `32053655161` stopped only on two obsolete pre-P3-S2 reseller-detail test expectations; runtime P3-S2 gates had already passed.
+Numeric auto-increment IDs remain acceptable for one authoritative local dataset; independent multi-device writers would require globally safe identity/mapping before cutover.
 
-Repository-wide QA debt remains P6.
+## Boundary entering P5-S1
 
-## Architecture boundary entering P4
-
-P4 must decide persistence architecture before any backend/auth implementation. It must evaluate actual operators, devices/locations, concurrency, actor attribution, security/privacy, offline requirements, recovery ownership and migration implications for the existing Dexie V4 dataset.
-
-Until that decision is accepted:
-
-- Dexie/local persistence remains the implementation baseline;
-- no provider/cloud/auth choice is assumed;
-- P1/P2/P3 invariants are migration requirements, not optional behavior;
-- P5 backup hardening and P6 global QA cleanup remain separate phases.
+P5-S1 may change backup envelope/validation/preview only. It must not add backend/auth/cloud, replace Dexie V4 as live source of truth, introduce synchronization, alter financial semantics, or perform destructive restore before preflight is proven.

@@ -27,7 +27,7 @@ Canonical status comes from V2 documents, merged code and QA evidence.
 Evolve working Easy incrementally; rewrite requires later evidence-backed decision.
 
 ## D-006 — Dexie/IndexedDB remains baseline until P4
-**Status:** ACCEPTED  
+**Status:** ACCEPTED / SUPERSEDED BY D-016  
 No backend, Supabase or authentication before P4 decides persistence architecture.
 
 ## D-007 — Preserve financial history over destructive deletion
@@ -73,52 +73,107 @@ Wrong-value/wrong-reseller correction performs replacement creation and original
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-### Formal period statement
+P3-S2 defines one shared period statement: opening is effective signed balance before the start, movements are all audit-visible rows inside the inclusive occurrence range, period movement uses shared financial effect, and closing = opening + movement. Zero-movement periods are valid.
 
-P3-S2 defines one shared `StatementPeriod` contract using P3-S1 financial occurrence:
+Dashboard total debt is the sum of positive per-reseller balances. Debt aging is derived from effective open order lots; payments/signals consume oldest debt first (FIFO), excess credit carries forward, reversed rows have zero effect, and no persistent payment↔order link is invented. Debt age uses open-order occurrence: 0–6d recent, 7–30d attention, >30d critical. Dexie remains V4.
 
-- opening balance is effective signed balance from rows with `occurredAt < startDate`;
-- movements contain every audit-visible row inside inclusive `[startDate, endDate]`;
-- reversed rows remain visible but contribute zero through P2 shared effect;
-- period movement is the signed effective total of those movements;
-- closing balance is `openingBalance + periodMovement`;
-- future rows after `endDate` do not affect closing;
-- zero-movement periods are valid statements and may have non-zero opening/closing balances;
-- reseller detail and PDF consume the same statement object.
+## D-016 — V2 remains local-first/single-user on Dexie V4 until an explicit cloud trigger is proven
+**Status:** ACCEPTED  
+**Date:** 2026-08-17
 
-### Total debt
+### Evidence reviewed
 
-“Dívida Total” is the sum of each reseller's positive all-time balance. A credit from one reseller must not reduce another reseller's debt.
+P4 reviewed the canonical V2 state and repository operating evidence:
 
-### Aging model
+- `tasks/prd-gestao-revendedores/prd.md` defines the product persona as one administrator/business owner, specifies Dexie/IndexedDB without backend, calls the application single-user local, and explicitly excludes authentication and cloud synchronization;
+- `prompts/prompt1.md` requires local browser persistence and JSON export/import for backup and moving to another computer;
+- `README.md` describes a 100% client-side, portable application with user-controlled data migration;
+- `src/db/database.ts` contains the authoritative Dexie V4 model;
+- `src/services/backupService.ts` makes JSON export/import the current recovery/portability mechanism;
+- `src/hooks/useSearch.ts` also uses browser-local `localStorage` for recent state;
+- `package.json` contains no authentication/cloud persistence client;
+- `.github/workflows/deploy.yml` deploys only static assets to GitHub Pages.
 
-The prior “time since last effective movement” model is rejected because a recent payment can make old unpaid debt appear recent.
+There is no evidenced requirement for simultaneous multi-user writes, live shared state across locations/devices, centralized roles/access control, person-level authorship, trusted server integrations or a remote recovery SLA.
 
-Because current payments/signals are reseller-level and have no persisted allocation to specific orders, P3-S2 adopts a deterministic derived convention rather than inventing new schema:
+### Decision
 
-- effective orders create debt lots at their `occurredAt`;
-- effective payments/signals consume the oldest open order debt first (**FIFO**);
-- excess credit is carried forward to later orders;
-- reversed rows have zero effect and linked replacements behave as the effective financial event;
-- no persistent payment↔order link is created;
-- debt age is the age of the order amount still open: 0–6d recent, 7–30d attention, >30d critical;
-- one reseller may contribute amounts to multiple buckets.
+Easy V2 keeps **local-first, single-user persistence on Dexie V4** as the accepted architecture.
 
-This convention can be revisited only if later real requirements justify explicit allocation/invoice semantics.
+- one authoritative dataset exists per browser profile/origin at a time;
+- moving data between machines is an explicit backup/export → import operation, not synchronization;
+- business data remains browser-local unless the operator explicitly exports it;
+- static hosting is application delivery, not the business-data system of record;
+- no backend, authentication, cloud database or synchronization layer is introduced by P4;
+- no schema V5 is required by this decision.
 
-### Persistence consequence
+### Users, devices and concurrency
 
-P3-S2 requires no schema change; Dexie remains **V4**.
+The only evidenced operator is the administrator/business owner. Desktop/tablet responsiveness does not imply a shared multi-device dataset. No concurrent writer or conflict-resolution requirement exists in the evidence, so adding remote synchronization now would solve an unproven problem.
+
+### Actor attribution
+
+D-013's provider-neutral actor strategy is resolved for the accepted local architecture: if actor attribution is later materialized, `actorRef` should use a stable opaque **local installation identity** generated/stored client-side. It identifies the Easy installation, not a verified person.
+
+Historical rows without `actorRef` remain valid. If the business later needs to distinguish multiple human operators, D-016 must be revisited; an installation ID must never be presented as person-level authorship.
+
+### Security and privacy
+
+Local-first avoids adding credentials, server secrets, remote authorization policy and a network data service. Reseller contact/financial data remains on the device/browser unless exported.
+
+This does not eliminate risk: device compromise, browser/profile deletion, IndexedDB loss or mishandled plaintext backup files can expose or destroy data. P5 owns recovery/backup hardening; P6 owns deployment/QA controls.
+
+### Offline behavior
+
+Data reads/writes do not require a backend once the static app is loaded. P4 does **not** claim guaranteed offline startup because the project has no accepted service-worker/PWA cache contract.
+
+### Local vs cloud tradeoff
+
+**Local/Dexie advantages under current evidence:** minimal architecture, no recurring backend operations/cost, no auth/account-recovery surface, strong data locality, existing V4 compatibility, and no sync/conflict complexity.
+
+**Local/Dexie risks:** device/browser-bound source of truth, manual backup responsibility, no automatic cross-device sync, no centralized access control or remote recovery.
+
+**Cloud/auth advantages if later required:** shared live dataset, centralized recovery/access control, verified person-level identity, server integrations.
+
+**Cloud/auth costs/risks:** backend/API/schema ownership, authentication/account recovery, authorization/RLS, secrets, monitoring, recurring service cost, network availability, offline/sync conflict semantics, migration and significantly larger QA/security scope.
+
+Given current requirements, those costs are not justified.
+
+### Reopen triggers
+
+D-016 must be explicitly superseded before cloud/auth work if any of these becomes mandatory:
+
+1. simultaneous writes by multiple operators;
+2. automatic live sharing of one dataset across multiple devices/locations;
+3. person-level authorship or centralized access control;
+4. automatic remote backup/recovery with a defined availability/recovery expectation;
+5. integrations requiring trusted server credentials/webhooks/execution;
+6. organizational security policy incompatible with browser-local storage.
+
+### Migration implications
+
+Dexie V4 remains the canonical persisted dataset through P5. The backup format should become a versioned logical interchange contract rather than exposing physical IndexedDB assumptions.
+
+Any later cloud migration must preserve:
+
+- stable entity/transaction identity or provide deterministic ID mapping;
+- P1 lifecycle/reference history;
+- P2 reversal/correction links and audit metadata;
+- P3 occurrence/statement/financial semantics;
+- legacy rows without actor attribution.
+
+Numeric auto-increment IDs are safe for the accepted single-authoritative-dataset model; they are **not** sufficient by themselves for independent multi-device writers. A future cloud decision must solve globally safe identity and conflict/cutover semantics before multi-writer operation.
 
 ### Phase consequence
 
-P3-S1 and P3-S2 together satisfy the P3 financial-time, formal-statement and aging gates. P3 can close.
+P4 is complete. P5 may harden backup/restore on the accepted local-first architecture without introducing auth/cloud. Real store discovery in P8 may reopen D-016 only if it produces one of the explicit triggers above.
 
 ---
 
 # Open decisions
 
-- local vs cloud persistence architecture and concrete actor identity source (P4);
-- backup version/migration/restore-hardening strategy (P5);
+- backup version/migration/restore-hardening details (P5);
 - repository-wide QA and deployment gating (P6);
-- new modules after real requirements discovery (P8/P9).
+- operational UX refinements (P7);
+- new modules after real requirements discovery (P8/P9);
+- local vs cloud only if a D-016 reopen trigger is proven.

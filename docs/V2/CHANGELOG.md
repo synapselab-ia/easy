@@ -4,46 +4,56 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
-## 2026-08-17 — P3-S2 formal statements, FIFO debt aging and P3 closure
+## 2026-08-17 — P4 local-first persistence decision
 
-### Added
+### Decision
 
-- shared `StatementPeriod` model: opening balance → period movements → closing balance;
-- grouped reseller balance and total-debt rules;
-- derived outstanding-debt lots with FIFO payment/signal allocation;
-- debt-age categories based on open order occurrence;
-- formal period summary in reseller detail and PDF;
-- targeted P3-S2 domain/dashboard/reseller/PDF tests;
-- D-015 documenting statement, debt-total and aging semantics.
+D-016 accepts **local-first, single-user Dexie V4** as the V2 persistence architecture under the requirements currently evidenced.
 
-### Changed
+### Evidence
 
-- filtered reseller balance no longer means only net movement in the selected window;
-- reseller detail and PDF consume the same statement object;
-- zero-movement periods remain valid statements;
-- dashboard `Dívida Total` sums positive reseller balances rather than netting unrelated credits;
-- aging no longer uses time since last activity: payments/signals reduce oldest effective order debt first for derived aging;
-- dashboard copy describes debt still open rather than reseller inactivity;
-- performance balance uses the shared signed-effect rule;
-- Dexie remains V4 and no payment↔order link is persisted;
-- P3 moved from `IN_PROGRESS` to `DONE`.
+- historical PRD defines one administrator/business owner persona, single-user local IndexedDB/Dexie and no auth/backend/cloud sync;
+- original prompt requires JSON backup/import for portability between computers;
+- README describes a 100% client-side portable app;
+- current runtime remains Dexie V4 plus browser-local state;
+- backup/restore is user-managed JSON;
+- package/deploy remain static with no auth/cloud client or server runtime;
+- no repository evidence establishes simultaneous operators, live shared multi-device state, centralized roles/person-level authorship or remote recovery SLA.
 
-### QA
+### Accepted architecture
 
-- run `32053655161` passed all new P3-S2 gates but stopped on two obsolete reseller-detail assertions for replaced period/PDF behavior;
-- those assertions were reconciled without runtime change;
-- final targeted P3-S2 gate, P3-S1/P2/P1 regressions and build passed in `32053837309`;
-- repository-wide QA debt remains P6.
+- one authoritative browser dataset per profile/origin at a time;
+- machine-to-machine movement remains explicit backup export/import, not synchronization;
+- static hosting is delivery only, not business-data persistence;
+- no backend/auth/cloud/schema change in P4;
+- if audit attribution is later materialized locally, `actorRef` maps to an opaque local installation identity, not a verified human;
+- local data operations do not require backend connectivity once loaded, but offline startup is not guaranteed;
+- backup/data-loss risks remain P5.
 
-### Scope unchanged
+### Cloud reopen triggers
 
-No backend/auth/cloud implementation, P5 backup hardening or P6 global CI/deploy cleanup.
+D-016 must be revisited before cloud/auth work if real requirements mandate concurrent operators, automatic live multi-device sharing, person-level identity/access control, remote recovery SLA, trusted server integrations, or security policy incompatible with browser-local storage.
+
+### Migration consequence
+
+Dexie V4 remains source of truth. P5 will formalize a versioned logical backup/interchange contract. Any later cloud migration must preserve P1/P2/P3 invariants and explicitly solve globally safe IDs, conflict/offline behavior, auth/authorization and cutover.
 
 ### Canonical state
 
-P3-S1 `DONE`; P3-S2 `DONE`; P3 `DONE`; D-015 accepted; `NEXT_ACTION` advances to P4 persistence architecture decision.
+- P4 `DONE`;
+- D-016 accepted;
+- P5 `NOT_STARTED`;
+- `NEXT_ACTION` advances to P5-S1 — versioned backup contract and non-destructive restore preflight.
+
+No runtime/schema/UI behavior changed in P4.
 
 ---
+
+## 2026-08-17 — P3-S2 formal statements, FIFO debt aging and P3 closure
+
+- shared opening → movements → closing statement model;
+- per-reseller total debt semantics and FIFO-derived open-debt aging;
+- validation `32053837309`; P3 closed; D-015 accepted.
 
 ## 2026-08-17 — P3-S1 occurrence-date model
 

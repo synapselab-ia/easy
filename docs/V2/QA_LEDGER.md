@@ -23,68 +23,53 @@ State/governance established; no runtime QA claim.
 - P2-S1 audited reversal: `32041280504`.
 - P2-S2 linked/guided replacement: `32042373332`.
 
-## P3-S1 — Occurrence-date model
+## P3 — Dates, statements and aging
 
-**Status:** PASS / DONE.  
-**Schema:** Dexie V3 → V4.
+**Status:** PASS / DONE.
 
-Evidence: `32052076684` — PASS.
+- P3-S1 occurrence-date model: `32052076684`.
+- P3-S2 formal statements/FIFO debt aging: `32053837309`.
 
-Verified financial occurrence separate from registration/audit, backward-safe migration, P2 correction occurrence preservation and occurrence-aware date consumers.
+P3 verifies backward-safe financial occurrence, formal opening → movements → closing statements, per-reseller total-debt semantics and FIFO-derived outstanding debt aging while preserving P1/P2 invariants.
 
-## P3-S2 — Statement and balance-period semantics
+## P4 — Persistence architecture decision
 
-**Runtime changed:** Yes.  
+**Runtime changed:** No.  
 **Schema changed:** No; remains Dexie V4.  
-**UI changed:** Yes, formal period summary and debt-aging semantics.
+**UI changed:** No.  
+**Decision changed:** Yes; D-016 accepts local-first/single-user persistence.
 
-### Formal statement verified
+### Evidence inventory verified
 
-- [x] opening balance uses effective rows before period start;
-- [x] movements use inclusive P3-S1 occurrence range;
-- [x] reversed rows remain visible but contribute zero;
-- [x] linked corrected rows remain auditable while only effective replacement contributes;
-- [x] period movement is the shared signed financial effect;
-- [x] closing balance = opening + movement;
-- [x] future rows do not affect closing;
-- [x] reseller detail and PDF use the same `StatementPeriod` object;
-- [x] zero-movement periods remain valid statements with meaningful opening/closing balances.
+P4 reviewed:
 
-### Debt/aging model verified
+- `tasks/prd-gestao-revendedores/prd.md` — administrator/business-owner persona; IndexedDB/Dexie; single-user local; no auth/backend/cloud sync;
+- `prompts/prompt1.md` — local browser persistence and JSON backup/computer portability;
+- `README.md` — 100% client-side/static portability model;
+- `src/db/database.ts` — authoritative Dexie V4 dataset;
+- `src/services/backupService.ts` — user-managed JSON recovery/portability and shallow restore validation;
+- `src/hooks/useSearch.ts` — browser-local auxiliary state;
+- `package.json` — no auth/cloud persistence client;
+- `.github/workflows/deploy.yml` — static GitHub Pages delivery.
 
-- [x] total debt sums positive reseller balances instead of globally netting credits/debts;
-- [x] a recent payment does not make old remaining debt recent;
-- [x] payment/signal credits apply FIFO to oldest effective order debt;
-- [x] excess/prepayment credit carries forward to later orders;
-- [x] reversed rows do not create/consume debt lots;
-- [x] aging uses occurrence of the order amount still open;
-- [x] buckets are 0–6d recent, 7–30d attention, >30d critical;
-- [x] no persistent order/payment link or new schema is required.
+### Architecture gate verified
 
-### Cross-surface/regression verified
+- [x] only evidenced operator is one administrator/business owner;
+- [x] browser-local dataset/manual computer handoff is evidenced; live shared multi-device state is not;
+- [x] no simultaneous multi-writer/conflict requirement is evidenced;
+- [x] person-level auth/access-control requirement is not evidenced;
+- [x] future local actor source is defined as opaque installation identity, not human identity;
+- [x] data/security trust boundary is the local browser/device plus explicit exported backup;
+- [x] local data operations are backend-independent; offline startup is not claimed;
+- [x] user-managed backup/recovery limitations are assigned to P5;
+- [x] local vs cloud benefits/costs/failure modes are documented;
+- [x] objective D-016 cloud-reopen triggers are documented;
+- [x] future cloud migration invariants and ID/conflict concerns are documented;
+- [x] no backend/auth/cloud code was introduced.
 
-- [x] dashboard total debt and aging agree with shared domain rules;
-- [x] search per-reseller balance remains green;
-- [x] performance debtor balance remains per-reseller and reversal-aware;
-- [x] P3-S1 dashboard/reseller/PDF occurrence regressions pass;
-- [x] P2 transaction mutation/correction/history regressions pass;
-- [x] P1 database migration/reseller/item lifecycle regressions pass;
-- [x] production build passes.
+### P4 result
 
-### Automated evidence
-
-Final successful GitHub Actions run: **`32053837309`**, job `95459326968` — **PASS**.
-
-Earlier run **`32053655161`** stopped at two `ResellerDetailPage.test.tsx` expectations that encoded the replaced pre-P3-S2 behavior:
-
-1. zero-movement period should warn and refuse PDF;
-2. PDF should receive filtered rows + net period balance + date range.
-
-The new P3-S2 domain/dashboard/ficha/PDF gates and earlier regressions were already green. Only those obsolete assertions were reconciled, with no runtime change, before the complete green run.
-
-### P3 result
-
-**PASS / DONE.** P3-S1 and P3-S2 are complete.
+**PASS / DONE.** The decision gate is satisfied by repository evidence and D-016. No runtime test run is claimed because P4 changes canonical architecture documentation only.
 
 ## Global baseline caveat
 
@@ -101,7 +86,8 @@ Targeted phase gates do **not** claim repository-wide lint/unit/integration/E2E 
 - **QG-007 stale/global test expectations:** OPEN / P6.
 - **QG-008 deployment does not require full QA:** OPEN / P6.
 - **QG-009 remaining reference validation/migration:** RESOLVED / P1.
+- **QG-010 persistence architecture:** RESOLVED / P4. Local-first/single-user Dexie V4 accepted until a D-016 reopen trigger is proven.
 
 ## QA policy
 
-For each functional phase: define acceptance first, add targeted tests with behavior changes, verify cross-surface consistency, record evidence/unresolved gaps, and distinguish the phase gate from global repository QA.
+For each functional phase: define acceptance first, add targeted tests with behavior changes, verify cross-surface consistency, record evidence/unresolved gaps, and distinguish the phase gate from global repository QA. Decision-only phases must record their evidence and must not fabricate runtime validation.
