@@ -75,4 +75,40 @@ describe('AppDatabase', () => {
         expect(reseller?.name).toBe('Legacy Reseller');
         expect(reseller?.isActive).toBe(true);
     });
+
+    it('should migrate V2 items to active without changing existing reseller lifecycle state', async () => {
+        await db.delete();
+
+        const legacyDb = new Dexie('ResellerManagerDB');
+        legacyDb.version(2).stores({
+            items: '++id, name',
+            resellers: '++id, name',
+            transactions: '++id, resellerId, type, createdAt'
+        });
+
+        await legacyDb.open();
+        const now = new Date();
+        await legacyDb.table('items').add({
+            name: 'Legacy Item',
+            basePrice: 42,
+            createdAt: now,
+            updatedAt: now,
+        });
+        await legacyDb.table('resellers').add({
+            name: 'Archived Reseller',
+            isActive: false,
+            createdAt: now,
+            updatedAt: now,
+        });
+        legacyDb.close();
+
+        await db.open();
+        const item = await db.items.toCollection().first();
+        const reseller = await db.resellers.toCollection().first();
+
+        expect(item).toBeDefined();
+        expect(item?.name).toBe('Legacy Item');
+        expect(item?.isActive).toBe(true);
+        expect(reseller?.isActive).toBe(false);
+    });
 });
