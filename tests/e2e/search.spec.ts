@@ -24,7 +24,7 @@ test.describe('Global Search (Command Center)', () => {
         const input = page.getByPlaceholder('Digite um comando ou pesquise...');
         await input.fill('Test');
 
-        const resultItem = page.getByRole('option', { name: 'Test Reseller' });
+        const resultItem = page.locator('[cmdk-item]').filter({ hasText: 'Test Reseller' }).first();
         await expect(resultItem).toBeVisible();
         await resultItem.click();
 
