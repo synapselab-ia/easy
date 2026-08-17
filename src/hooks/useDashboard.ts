@@ -59,12 +59,12 @@ export function useTodayOrders() {
             const endOfDay = new Date(startOfDay);
             endOfDay.setHours(23, 59, 59, 999);
 
-            const transactions = await db.transactions
-                .where('occurredAt')
-                .between(startOfDay, endOfDay, true, true)
-                .toArray();
+            const transactions = effectiveTransactions(await db.transactions.toArray()).filter(transaction => {
+                const occurredAt = transactionOccurredAt(transaction);
+                return occurredAt >= startOfDay && occurredAt <= endOfDay;
+            });
 
-            const todayOrders = effectiveTransactions(transactions).filter(t => t.type === 'order');
+            const todayOrders = transactions.filter(t => t.type === 'order');
 
             const totalVolume = todayOrders.reduce((sum, current) => sum + current.totalPrice, 0);
 
