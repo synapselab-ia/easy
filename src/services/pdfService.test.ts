@@ -72,8 +72,31 @@ describe('pdfService', () => {
 
         expect(autoTable).toHaveBeenCalled();
         const callArgs = vi.mocked(autoTable).mock.calls[0][1];
-        // Apenas as transações de jan e fev devem estar no body (não a de mar)
         expect(callArgs.body).toHaveLength(2);
+    });
+
+    it('includes reversed rows, visible status and mandatory audit reason in the PDF table', () => {
+        const reversed: Transaction = {
+            id: 4,
+            resellerId: 1,
+            type: 'payment',
+            totalPrice: 90,
+            observation: 'PIX',
+            reversal: {
+                reason: 'Pagamento duplicado',
+                reversedAt: '2026-08-17T15:00:00.000Z',
+            },
+            createdAt: feb10,
+        };
+
+        generateResellerExtract(mockReseller, [reversed], 0);
+
+        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
+        expect(callArgs.head).toEqual([['Data', 'Tipo', 'Item', 'Qtd', 'Valor', 'Status', 'Observação']]);
+        expect(callArgs.body).toHaveLength(1);
+        expect(callArgs.body?.[0][5]).toBe('Estornado');
+        expect(callArgs.body?.[0][6]).toContain('PIX');
+        expect(callArgs.body?.[0][6]).toContain('Motivo do estorno: Pagamento duplicado');
     });
 
     it('gera PDF com dateRange — nome do arquivo inclui as datas formatadas', () => {
