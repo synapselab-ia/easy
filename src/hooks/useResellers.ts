@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, type Reseller } from '../db/database';
 
+export const RESELLER_WITH_HISTORY_DELETE_ERROR =
+    'Revendedores com histórico financeiro não podem ser excluídos. Arquive o revendedor para preservar o histórico.';
+
 export function useResellers() {
     return useQuery({
         queryKey: ['resellers'],
@@ -23,7 +26,8 @@ export function useReseller(id?: number) {
 export function useCreateReseller() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (reseller: Omit<Reseller, 'id'>) => db.resellers.add(reseller),
+        mutationFn: (reseller: Omit<Reseller, 'id'>) =>
+            db.resellers.add({ ...reseller, isActive: reseller.isActive ?? true }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
         },
@@ -42,10 +46,49 @@ export function useUpdateReseller() {
     });
 }
 
+function useSetResellerActiveState(isActive: boolean) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: number) => {
+            const updated = await db.resellers.update(id, {
+                isActive,
+                updatedAt: new Date(),
+            });
+            if (!updated) {
+                throw new Error('Revendedor não encontrado.');
+            }
+        },
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: ['resellers'] });
+            queryClient.invalidateQueries({ queryKey: ['resellers', id] });
+        },
+    });
+}
+
+export function useArchiveReseller() {
+    return useSetResellerActiveState(false);
+}
+
+export function useReactivateReseller() {
+    return useSetResellerActiveState(true);
+}
+
 export function useDeleteReseller() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => db.resellers.delete(id),
+        mutationFn: (id: number) =>
+            db.transaction('rw', db.resellers, db.transactions, async () => {
+                const transactionCount = await db.transactions
+                    .where('resellerId')
+                    .equals(id)
+                    .count();
+
+                if (transactionCount > 0) {
+                    throw new Error(RESELLER_WITH_HISTORY_DELETE_ERROR);
+                }
+
+                await db.resellers.delete(id);
+            }),
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
             queryClient.invalidateQueries({ queryKey: ['resellers', id] });
