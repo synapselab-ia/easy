@@ -49,6 +49,39 @@ describe('useDashboard hooks', () => {
         expect(result.current.data).toBe(100);
     });
 
+    it('should count only the linked replacement after a wrong-value correction', async () => {
+        const now = new Date();
+        await db.transactions.add({
+            id: 1,
+            resellerId: 1,
+            type: 'order',
+            totalPrice: 5000,
+            reversal: {
+                reason: 'Valor incorreto',
+                reversedAt: '2026-08-17T15:00:00.000Z',
+                replacementTransactionId: 2,
+            },
+            createdAt: now,
+        });
+        await db.transactions.add({
+            id: 2,
+            resellerId: 1,
+            type: 'order',
+            totalPrice: 500,
+            correction: { replacesTransactionId: 1 },
+            createdAt: now,
+        });
+
+        const totalDebt = renderHook(() => useTotalDebt(), { wrapper });
+        const todayOrders = renderHook(() => useTodayOrders(), { wrapper });
+
+        await waitFor(() => expect(totalDebt.result.current.isSuccess).toBe(true));
+        await waitFor(() => expect(todayOrders.result.current.isSuccess).toBe(true));
+
+        expect(totalDebt.result.current.data).toBe(500);
+        expect(todayOrders.result.current.data).toEqual({ count: 1, volume: 500 });
+    });
+
     it('should calculate today orders', async () => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
