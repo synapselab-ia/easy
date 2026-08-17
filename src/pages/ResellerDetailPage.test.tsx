@@ -12,6 +12,7 @@ vi.mock('../hooks/useResellers', () => ({
 
 vi.mock('../hooks/useTransactions', () => ({
     useTransactions: vi.fn(),
+    useReverseTransaction: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
 }));
 
 vi.mock('../services/pdfService', () => ({
@@ -20,6 +21,7 @@ vi.mock('../services/pdfService', () => ({
 
 vi.mock('sonner', () => ({
     toast: {
+        success: vi.fn(),
         error: vi.fn(),
         warning: vi.fn(),
     },
@@ -49,6 +51,32 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         expect(screen.getByText('R$ 100.00')).toBeInTheDocument();
         const balanceDiv = screen.getByText('R$ 100.00');
         expect(balanceDiv.className).toContain('text-debt');
+    });
+
+    it('keeps a reversed transaction visible but excludes it from the displayed balance', () => {
+        vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
+        vi.mocked(useTransactions).mockReturnValue({
+            data: [
+                {
+                    id: 1,
+                    resellerId: 1,
+                    type: 'order',
+                    totalPrice: 150,
+                    itemName: 'Pedido Incorreto',
+                    reversal: { reason: 'Valor incorreto', reversedAt: '2026-08-17T15:00:00.000Z' },
+                    createdAt: new Date(),
+                },
+                { id: 2, resellerId: 1, type: 'payment', totalPrice: 50, createdAt: new Date() }
+            ],
+            isLoading: false
+        } as any);
+
+        render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
+
+        expect(screen.getByText('R$ -50.00')).toBeInTheDocument();
+        expect(screen.getByText('Pedido Incorreto')).toBeInTheDocument();
+        expect(screen.getByText('Estornado')).toBeInTheDocument();
+        expect(screen.getByText(/Motivo do estorno: Valor incorreto/i)).toBeInTheDocument();
     });
 
     it('displays history with correct colors', () => {
@@ -98,7 +126,26 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         expect(generateResellerExtract).toHaveBeenCalledWith(mockReseller, [], 0);
     });
 
-    // ── Novos cenários de filtro de datas ──────────────────────────────────────
+    it('passes all audit rows to PDF while using only effective transactions in the balance', () => {
+        const transactions = [
+            {
+                id: 1,
+                resellerId: 1,
+                type: 'order' as const,
+                totalPrice: 500,
+                reversal: { reason: 'Pedido duplicado', reversedAt: '2026-08-17T15:00:00.000Z' },
+                createdAt: new Date(),
+            },
+            { id: 2, resellerId: 1, type: 'order' as const, totalPrice: 100, createdAt: new Date() },
+        ];
+        vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
+        vi.mocked(useTransactions).mockReturnValue({ data: transactions, isLoading: false } as any);
+
+        render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
+        fireEvent.click(screen.getByText('Gerar PDF'));
+
+        expect(generateResellerExtract).toHaveBeenCalledWith(mockReseller, transactions, 100);
+    });
 
     it('desabilita o botão quando apenas startDate é preenchida', () => {
         vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
@@ -163,7 +210,6 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
 
-        // Período de jan/2025 a mar/2025 — transação é de jun/2024
         fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-01-01' } });
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-03-31' } });
         fireEvent.click(screen.getByText('Gerar PDF'));
