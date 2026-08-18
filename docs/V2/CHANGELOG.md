@@ -4,7 +4,7 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
-## 2026-08-18 — P9-S1 evidence-backed prioritization prepared for integration
+## 2026-08-18 — P9-S1 evidence-backed prioritization completed
 
 P9-S1 executed only the canonical prioritization requested after P8. No runtime, schema, backup-contract, backend/auth/cloud/live-sync or business-module implementation was performed.
 
@@ -28,20 +28,22 @@ Source-proven unsupported actions are recorded as technical gaps, not falsely at
 
 Weighted scoring uses operational consequence 35%, evidence confidence 30%, exposure/frequency 20% and delivery confidence under accepted contracts 15%.
 
-Accepted order under review:
+Accepted order:
 
 1. recovery durability / off-device protection — **94/100**;
 2. item categories + classification + category-level reporting — **83/100**;
 3. exact transaction edit/correction microflows — **70/100**;
 4. occurrence-date discoverability/usability — **69/100**.
 
-Detailed evidence, scoring and boundaries are recorded in `docs/V2/P9_PRIORITIZATION.md`.
+Detailed evidence, scoring and boundaries are recorded in `docs/V2/P9_PRIORITIZATION.md`. The accepted subsequent sequence is P9-S2 recovery durability decision gate, P9-S3 category contract, P9-S4 directly confirmed correction microflows and P9-S5 occurrence-date usability verification. Accounts/permissions, live synchronization, inventory/orders/store-management and external integrations remain later candidates unless new direct evidence makes them mandatory.
 
-Proposed sequence after integration is P9-S2 recovery durability decision gate, P9-S3 category contract, P9-S4 directly confirmed correction microflows and P9-S5 occurrence-date usability verification. Accounts/permissions, live synchronization, inventory/orders/store-management and external integrations remain later candidates unless new direct evidence makes them mandatory.
+### Validation and integration
 
-### Integration state
+Persistent Critical QA **`32166330198`**, job **`95806665221`** — PASS on PR #31 merge ref `85ffa8430de4c4b8a6ffedd84cc27b8049bf63d4`: 0 lint errors / 80 warnings, 43 Vitest files / 176 tests, 15/15 Playwright and production build PASS.
 
-P9-S1 is `IN_REVIEW`. Full D-019 `npm run qa:critical` is mandatory on the complete documentation head before integration. `NEXT_ACTION` remains only validation/integration and canonical closure of P9-S1; P9-S2 must not start yet.
+PR #31 was squash-merged into `develop` as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integrated commit share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`, proving content equivalence.
+
+P9-S1 is `DONE`. `NEXT_ACTION` advances to P9-S2 as a decision/evidence gate only; no P9-S2 design or implementation was executed during this closure.
 
 ---
 
