@@ -4,6 +4,45 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-18 — P8-S2 direct real-store validation blocked on missing evidence
+
+### Evidence intake outcome
+
+P8-S2 executed validation only. The project-accessible evidence boundary was checked for operator answers, interview/observation notes, production/support telemetry, RTO/RPO/SLA or security-policy material, and repository issues/artifacts describing real-store operation.
+
+No direct real-store evidence was supplied. Repository issue searches, including `Duda` and `loja`, returned no issues, and no new direct store artifact was found in repository content or the current project conversation.
+
+This absence is classified as an **evidence blocker**, not as proof that the store does not need multi-user operation, synchronization, access control, remote recovery, trusted integrations or a different security architecture.
+
+### D-016 outcome
+
+All six D-016 reopen triggers remain **UNRESOLVED from direct evidence** and none is proven. D-016 therefore remains authoritative under D-021 because the accepted reopen condition has not been met, but P8-S2 is not complete and remains `BLOCKED`.
+
+`docs/V2/P8_EVIDENCE_REQUEST.md` now defines the minimum direct evidence packet required to resume validation consistently.
+
+No runtime, backend/auth/cloud/synchronization, Dexie migration, architecture implementation or P9 prioritization/implementation changed.
+
+### Validation and integration
+
+Persistent Critical QA run **`32152466007`**, job **`95761457231`** — **PASS** on PR #25 merge ref `b90fdc76ced24d042cf73d1ce96cc8ece0ac8fed`:
+
+- lint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests passing;
+- Playwright Chromium: 15/15 passing;
+- production build: PASS.
+
+PR #25 was squash-merged into `develop` as `c8eda199b0a605306619b73f8d3b175f8c673e2f`. The validated merge ref and integration commit share tree `82a32b4a6d5c411d5a40d9eb0d587e2e7ecd8b15`.
+
+### Canonical state
+
+- P8 remains `IN_PROGRESS`;
+- P8-S2 remains `BLOCKED`, not `DONE`;
+- D-016 and D-021 remain authoritative;
+- `NEXT_ACTION` remains P8-S2 and may resume only when explicit direct real-store evidence is supplied;
+- P9 remains `NOT_STARTED`.
+
+---
+
 ## 2026-08-18 — P8-S1 repository-evidence discovery and D-016 assessment
 
 ### Evidence boundary
