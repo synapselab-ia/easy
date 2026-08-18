@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through accepted P9-S2 recovery mechanism decision  
+**Status:** verified through completed P9-S2 recovery durability  
 **Integration target:** `develop`  
 **Date:** 2026-08-18
 
@@ -10,7 +10,9 @@ Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Quer
 
 Database: `ResellerManagerDB`, Dexie **V4** with `items`, `resellers` and `transactions`.
 
-Migration path remains V1 -> V2 reseller lifecycle, V2 -> V3 item lifecycle, V3 -> V4 transaction `occurredAt`. P5 through the accepted P9-S2 decision add no Dexie V5.
+Migration path remains V1 -> V2 reseller lifecycle, V2 -> V3 item lifecycle, V3 -> V4 transaction `occurredAt`. P5 through completed P9-S2 add no Dexie V5.
+
+Recovery-health state is separate local control metadata in namespaced `localStorage` (`easy.recoveryHealth.v1`). It is not business persistence, is not part of the Dexie schema and is not serialized into `easy-backup` v2.
 
 ## Persisted recovery invariants
 
@@ -39,21 +41,23 @@ data.transactions[]
 
 New exports self-validate before download. Legacy `version: 1` JSON remains supported by in-memory normalization before the same deep validator runs.
 
+P9-S2 did not alter this envelope. `exportData()` now additionally returns local call metadata `{ filename, exportedAt }` after initiating the same validated v2 browser download; that return value is not a backup-format change.
+
 ## Preflight and atomic recovery boundary
 
 `preflightBackupPayload()` / `preflightBackupText()` / `preflightBackupFile()` validate restore input before mutation. `restoreService.ts` then creates a validated downloadable `easy-checkpoint-v2-*` checkpoint and replaces all three tables inside one Dexie `rw` transaction. Restored rows are validated and compared to the expected canonical projection before commit. Any write/verification error throws inside the transaction and rolls the replacement back.
 
-D-018 remains authoritative and unchanged by P9-S2.
+D-018 remains authoritative and unchanged by P9-S2. Restore is deliberately outside the recovery-freshness write gate so recovery remains possible from an unknown or overdue installation.
 
-## D-024 recovery durability architecture
+## D-024 recovery durability architecture — implemented
 
 D-024 selects **Synchronized recovery-copy folder + 24-hour freshness guard** while explicitly keeping D-016.
 
-### Data path
+### Recovery-copy data path
 
 ```text
 Dexie V4 live dataset
-  -> existing validated easy-backup v2 export
+  -> validated easy-backup v2 export
   -> browser download
   -> local folder configured for OS/provider synchronization
   -> off-device provider copy when the sync client completes synchronization
@@ -70,22 +74,49 @@ replacement computer/browser
   -> D-018 checkpoint + verified atomic Dexie restore
 ```
 
-### Recovery freshness boundary
+### Local recovery-health control plane
 
-The accepted store target is a newest usable off-device copy no more than **24 hours old**. P9-S2-I1 may persist local recovery-health metadata and use it to expose due/overdue status and gate normal data-changing operation at 24 hours.
+P9-S2-I1 implements recovery health in `src/services/recoveryHealth.ts` using namespaced local metadata only.
 
-Recovery-health metadata is control/UI metadata only:
+Implemented states:
 
-- it must not require Dexie V5;
-- it must not change `easy-backup` v2;
-- missing/cleared metadata is fail-safe `unknown/due`, never evidence of freshness;
-- Backup/Restore remains reachable even when freshness is unknown or overdue.
+- `unknown` — metadata absent/corrupt or otherwise unusable;
+- `due` — setup/export requirements are incomplete or invalid for freshness;
+- `current` — verified setup and export age below warning threshold;
+- `warning` — export age at least 20 hours but below the accepted 24-hour boundary;
+- `overdue` — export age at least 24 hours.
 
-Easy may confirm that validated backup generation and browser download initiation occurred. Under D-024 it **cannot claim provider-side synchronization completed**, because no provider API/status integration is present.
+The 20-hour threshold is an implementation warning only. The accepted contract boundary remains exactly **24 hours**.
+
+Fail-safe rules:
+
+- missing/corrupt metadata never implies freshness;
+- synchronized-folder setup is not considered verified until an export exists and the operator confirms the file was observed in Drive outside the local-PC-only context;
+- future/invalid timestamps fail due rather than fresh;
+- `unknown`, `due` and `overdue` block normal data-changing mutations;
+- `warning` and `current` allow normal writes;
+- all reads and Backup/Restore remain available.
+
+### Mutation enforcement
+
+Item, reseller and transaction mutation hooks call the centralized `assertRecoveryWriteAllowed()` guard before normal business writes. This protects creation, updates, archive/reactivation/deletion where supported, transaction creation, reversal and guided replacement correction without scattering freshness logic across individual screens.
+
+The shell-level `RecoveryHealthBanner` exposes global health, the latest export timestamp and navigation to Backup/Restore. The shell is visibility/navigation; enforcement remains in the centralized mutation boundary so bypassing a screen control does not bypass the recovery policy.
+
+### Synchronized-folder workflow
+
+The Backup/Restore page implements the one-time operating procedure:
+
+1. configure the browser's backup download destination inside a locally synchronized provider folder;
+2. export the validated v2 backup;
+3. verify outside the local-PC-only context that the exported file appears in Drive;
+4. explicitly confirm that verification in Easy.
+
+After validated download initiation, Easy records the exact generated filename and export timestamp. Easy does **not** inspect or attest provider-side synchronization completion.
 
 ### Explicit architecture exclusions
 
-D-024 does not authorize:
+P9-S2 introduced none of the following:
 
 - Google Drive API/OAuth or token handling;
 - backend/authentication;
@@ -129,8 +160,17 @@ main push
 
 ## Current accepted QA baseline
 
-Known warnings/test-harness/dependency debt remains visible and non-blocking only when objective commands pass. The accepted P9-S2 mechanism decision passed D-019 as run `32177687434`, job `95843265579`: 0 lint errors / 80 warnings, 43 Vitest files / 176 tests PASS, 15/15 Playwright PASS and production build PASS.
+P9-S2-I1's accepted Critical QA is run **`32180250834`**, job **`95851336506`**:
 
-## Boundary entering P9-S2-I1
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 44 files / 183 tests PASS;
+- Playwright Chromium: 17/17 PASS;
+- production build: PASS.
 
-P9-S2-I1 may implement only the D-024 recovery-copy freshness guard and synchronized-folder workflow. It must preserve D-016/D-017/D-018, must not introduce provider integration or persistence migration, and must pass full D-019 before integration.
+PR #39 validated merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a` and integrated squash `7e20d50be357d0179adf0afe4894ddfebbeb2eb9` share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
+
+Known warning/test-harness/dependency debt remains visible and non-blocking only when objective commands pass.
+
+## Boundary entering P9-S3
+
+P9-S3 is contract work before category persistence/runtime changes. The current Dexie V4 `Item` model and D-017 backup envelope contain no category dimension, while order transactions preserve historical item snapshots. P9-S3 must therefore define category lifecycle, assignment, historical transaction/report semantics, migration and backup compatibility before authorizing schema/UI/reporting implementation. P9-S3 must preserve D-016/D-017/D-018/D-019/D-024 and the completed recovery guard.
