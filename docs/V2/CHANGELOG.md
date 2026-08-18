@@ -4,6 +4,51 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-18 — P7-S5 item/reseller save failures made operator-visible
+
+### Retry-safe entity save feedback
+
+P7-S5 completed only QG-014, the fourth-ranked P7-S1 operational gap:
+
+- rejected item create/edit mutations now surface their domain/persistence error through `toast.error`;
+- rejected reseller create/edit mutations now surface their domain/persistence error through `toast.error`;
+- failure does not call the success callback or reset fields, so entered values remain available for correction/retry;
+- successful saves retain the existing success-only close/reset behavior.
+
+No `useItems` / `useResellers` mutation semantics, P1 lifecycle/reference rules, Dexie schema/persistence, transaction-entry behavior, financial/correction semantics, backup/restore mechanics or reseller-context launch behavior changed.
+
+### Regression coverage
+
+Added focused proof for:
+
+- item rejected create with visible error and retained name/price;
+- item rejected edit with visible error and retained edited name/price;
+- reseller rejected create with visible error and retained name/phone/email/notes;
+- reseller rejected edit with visible error and retained edited values.
+
+Existing item/reseller page integration and lifecycle tests remain green.
+
+### Validation
+
+Functional persistent Critical QA run **`32141425740`**, job **`95724735659`** — **PASS**:
+
+- lint: 0 errors / 80 warnings;
+- Vitest: 41 files / 169 tests passing;
+- Playwright Chromium: 14/14 passing;
+- production build: PASS.
+
+### Canonical state
+
+- QG-014 item/reseller save feedback: RESOLVED / P7-S5;
+- P7-S5: `DONE`;
+- P7 remains `IN_PROGRESS`;
+- D-016, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
+- `NEXT_ACTION` advances only to **P7-S6 — Remove redundant reseller reselection when launching a transaction from reseller detail**.
+
+P7-S6, P8 and P9 remain untouched.
+
+---
+
 ## 2026-08-18 — P7-S4 Backup recovery copy aligned with implemented restore
 
 ### Operator-facing recovery guidance
