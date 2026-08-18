@@ -67,6 +67,8 @@ Known warning/dependency debt remains non-blocking under D-019 and must not be h
 
 ## P7 — Operational UX refinement
 
+**Status:** PASS / DONE — 2026-08-18.
+
 ### P7-S1 — UX gap inventory and prioritization
 
 **Status:** PASS / DONE as evidence/prioritization work.  
@@ -246,9 +248,45 @@ Existing React `act(...)`, mocked-select DOM warnings, dependency-audit findings
 
 ### QG-015 — reseller-context transaction launch friction
 
-**OPEN / P7-S6 — current next gap.**
+**RESOLVED / P7-S6.**
 
-Reseller detail already knows the current reseller identity, but launching transaction entry from that context still requires the operator to reselect the reseller on the transaction page. P7-S6 must preserve that context into the existing transaction-entry flow without bypassing P1 active-reference validation or changing standalone transaction behavior/financial semantics.
+Original evidence:
+
+- reseller detail already knew the current reseller identity;
+- transaction entry still initialized reseller state as empty;
+- the operator therefore had to reselect the same reseller after leaving that reseller's detail page.
+
+P7-S6 remediation:
+
+- active reseller detail exposes `Novo lançamento` and routes to `/transactions?resellerId=<id>`;
+- inactive reseller detail keeps that contextual launch disabled;
+- `TransactionsPage` accepts only positive integer reseller context and passes it to `TransactionForm`;
+- `TransactionForm` preselects and preserves the contextual reseller across Cancel/success reset;
+- standalone entry without valid context remains unselected;
+- the existing `activeResellers` check remains the authorization/validation boundary, so inactive and missing reseller context cannot produce a transaction;
+- no command-center, financial, audit, occurrence-date, lifecycle, hook, Dexie, backup or restore behavior changed.
+
+Targeted regression coverage added:
+
+- `ResellerDetailPage.context.test.tsx`: active contextual navigation and inactive launch blocking;
+- `TransactionsPage.context.test.tsx`: valid URL context and malformed-context fallback;
+- `TransactionForm.test.tsx`: contextual reseller preservation plus inactive/missing context rejection with no writes;
+- `tests/e2e/reseller-transaction-context.spec.ts`: reseller detail → transaction entry → contextual reseller retained after Cancel.
+
+Functional persistent run **`32145620210`**, job **`95738535732`** — **PASS** on PR merge ref `5fab7de932eb7a62ffe58b21820f11a3ba1b904d`:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **43 files / 176 tests PASS**;
+- Playwright Chromium: **15/15 PASS**;
+- production build: **PASS**.
+
+Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action-runtime deprecation notices and build chunk-size warning remain visible non-blocking debt under D-019.
+
+**P7-S6 result: PASS / DONE.**
+
+### P7 closure result
+
+The accepted P7-S1 evidence inventory consisted of QG-011 through QG-015. All five are now resolved, and P7-S6 validation did not evidence another material in-scope P7 gap. **P7 result: PASS / DONE.**
 
 ## Known baseline QA gaps
 
@@ -266,8 +304,8 @@ Reseller detail already knows the current reseller identity, but launching trans
 - QG-012 invalid reseller period fallback: RESOLVED / P7-S3.
 - QG-013 stale Backup page recovery copy: RESOLVED / P7-S4.
 - QG-014 item/reseller save error feedback: RESOLVED / P7-S5.
-- QG-015 reseller-context transaction launch friction: OPEN / P7-S6.
+- QG-015 reseller-context transaction launch friction: RESOLVED / P7-S6.
 
-## QA policy entering P7-S6
+## QA policy entering P8-S1
 
-P7-S6 must preserve standalone transaction behavior, P1 active-reference semantics and all P1–P6 contracts, add focused coverage proving reseller context is carried into transaction entry without bypassing validation, and pass the complete persistent `npm run qa:critical` gate. If the implementation uses navigation, include one bounded Playwright reseller-detail → transaction-entry proof. Do not weaken tests/workflows or begin P8 work.
+P8-S1 is discovery-only. D-019 still requires the complete persistent `npm run qa:critical` gate before integration even if only canonical documentation changes. Preserve all P1–P7 contracts, keep D-016 authoritative unless explicit real-store evidence proves a reopen trigger, distinguish confirmed requirements from assumptions, and do not begin backend/auth/cloud/synchronization implementation or P9 modules during discovery.
