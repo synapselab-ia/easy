@@ -1,16 +1,16 @@
-# Easy V2 — P9-S2 Recovery Durability Evidence Request
+# Easy V2 — P9-S2 Recovery Durability Evidence
 
-**Status:** direct store recovery-target evidence received; blocker resolved for mechanism comparison  
+**Status:** direct store recovery-target evidence `ACCEPTED / INTEGRATED`; mechanism decision not yet executed  
 **Date:** 2026-08-18  
-**Scope:** decision/evidence only; no recovery implementation authorization
+**Scope:** evidence record and decision-gate input; no recovery implementation authorization
 
 ## 1. Original blocker
 
-P9-S2 requires a measurable current-store recovery target before comparing or selecting a recovery mechanism. The first P9-S2 attempt confirmed the continuity consequence but lacked the acceptable recoverable-copy age, recovery procedure, interruption expectation and destination/process constraints.
+P9-S2 requires a measurable current-store recovery target before comparing or selecting a recovery mechanism. The first P9-S2 attempt confirmed the continuity consequence but lacked acceptable recoverable-copy age, recovery procedure, interruption expectation and destination/process constraints.
 
 That evidence gap was correctly treated as a blocker. No SLA/RPO/RTO value, cloud requirement or recovery mechanism was invented.
 
-## 2. Previously accepted evidence
+## 2. Previously accepted continuity evidence
 
 The following remains direct, accepted store evidence:
 
@@ -24,67 +24,78 @@ The following remains direct, accepted store evidence:
 - reconstructing that loss may require recalculating tens of thousands of reais in sales and creates severe business/employment risk;
 - no current trusted server integration is mandatory.
 
-## 3. Direct recovery-target evidence received on 2026-08-18
-
-The store/operator supplied the missing answers directly.
+## 3. Direct recovery-target evidence supplied on 2026-08-18
 
 ### A. Maximum acceptable recoverable-copy age
 
 **Direct answer:** loss of up to **24 hours** of work is considered a solvable/acceptable recovery case.
 
-Canonical interpretation for P9-S2 mechanism comparison: the newest usable off-device recovery copy must be no more than 24 hours old. This records the store boundary without inventing a stricter target.
+Accepted bounded interpretation: the newest usable off-device recovery copy must be no more than **24 hours old**. This is the mechanism-comparison boundary; no stricter target is invented.
 
 ### B. Acceptable recovery procedure
 
 **Direct answer:** manual restoration on **any computer** is acceptable.
 
-Canonical interpretation: an operator-run recovery on a replacement computer/browser using the newest acceptable backup is sufficient. Provider-operated remote recovery is therefore **not mandatory** under the supplied current-store requirement.
+Accepted bounded interpretation: operator-run recovery on a replacement computer/browser using the newest acceptable backup is sufficient. Provider-operated remote recovery is therefore **not mandatory** under the supplied current-store requirement.
 
 ### C. Interruption expectation
 
 **Direct answer:** the system has **daily demand** and there is effectively no comfortable waiting period after loss.
 
-No numeric number of hours was supplied, so P9-S2 does **not** create a formal numeric RTO. For mechanism comparison, the evidence means that a multi-day recovery procedure is incompatible with current operation and that the recovery path must be practical for daily use on a replacement computer.
+No numeric number of hours was supplied. P9-S2 therefore does **not** create a formal numeric RTO. The accepted qualitative constraint is that a multi-day recovery procedure is incompatible with current operation and the recovery path must be practical for daily use on a replacement computer.
 
 ### D. Acceptable destinations/process constraints
 
-**Direct answer:** a **Google Drive** destination is acceptable, and a **local file on the PC** is also acceptable for day-to-day speed/convenience.
+**Direct answer:** **Google Drive** is acceptable, and a **local file on the PC** is also acceptable for day-to-day speed/convenience.
 
-The reference to the Google account currently connected to ChatGPT is not treated as an Easy credential or authorization path. Easy does not inherit ChatGPT account access. P9-S2 may treat Google Drive as an acceptable durable destination, but any direct Google API/OAuth integration would require its own explicit architecture/security assessment rather than being assumed from the ChatGPT connection.
+Accepted boundary:
 
-A local PC file is accepted as a convenience copy; whether it can satisfy the off-device durability target by itself is intentionally left to the mechanism-comparison step.
+- Google Drive may be considered an acceptable durable off-device destination;
+- a local PC file is accepted as a convenience copy but is not automatically considered sufficient off-device durability if the operating PC itself is lost;
+- the Google account connected to ChatGPT is not an Easy credential or authorization path;
+- Easy does not inherit ChatGPT account access;
+- any direct Google API/OAuth integration would require its own explicit architecture/security decision rather than being assumed from the ChatGPT connection.
 
 ## 4. Evidence disposition
 
-The direct-evidence blocker is resolved sufficiently to resume the P9-S2 decision gate:
+The direct-evidence availability blocker is closed. Accepted P9-S2 target entering mechanism comparison is:
 
-- measurable recoverable-copy-age boundary: **<= 24 hours**;
+- recoverable-copy age: **<= 24 hours**;
 - operator-run manual restore on a replacement computer: **acceptable**;
 - provider-operated remote recovery: **not mandatory**;
-- daily-use continuity constraint: **confirmed**, without inventing a numeric RTO;
-- Google Drive as a durable destination: **acceptable**;
-- local PC file as a convenience destination: **acceptable**.
+- daily-use continuity: **required qualitatively**, without inventing a numeric RTO;
+- Google Drive as durable destination: **acceptable**;
+- local PC file as convenience destination: **acceptable**.
 
-No supplied answer proves a D-016 reopen trigger. In particular, the store did not require concurrent operators, automatic live multi-device state, person-level access/authorship, provider-operated remote recovery, a trusted server integration, or automatic centrally hosted persistence.
+No supplied answer proves a D-016 reopen trigger. The store did not require concurrent operators, automatic live multi-device state, person-level access/authorship, provider-operated remote recovery, a trusted server integration or automatic centrally hosted persistence.
 
-## 5. Mechanism comparison remains intentionally unexecuted in this evidence-intake slice
+## 5. Accepted evidence-intake validation/integration
 
-This evidence-intake update does **not** rank, select or implement a recovery mechanism.
+Persistent Critical QA **`32175718073`**, job **`95837062983`** — PASS on PR #35 merge ref `68d8252c83ebab927e3953c7a6380f8b0473e9f7`:
 
-The next canonical action is to compare the smallest mechanisms against the accepted <=24-hour recoverable-copy target, manual-any-computer recovery procedure, daily-use constraint and acceptable Drive/local destinations while preserving D-016/D-017/D-018.
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
 
-Candidate families remain only candidates until that next action is executed. They may include reminder/age visibility, streamlined export to a durable synchronized location, permission-based repeated writes to a chosen location, or a design requiring remote/server persistence.
+PR #35 was squash-merged into `develop` as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`. The validated merge ref and integrated commit share exact tree `e1c32464b8260ae3b45094f20464ff3e5745687e`.
 
-No mechanism is accepted or authorized by this document.
+The evidence record is therefore accepted and integrated exactly as validated by D-019.
 
-## 6. Resume rule
+## 6. Mechanism comparison intentionally remains unexecuted
 
-After this evidence-intake record passes D-019 and is integrated:
+No recovery mechanism has yet been ranked, selected or implemented.
 
-1. compare the smallest mechanisms against the accepted direct target and D-016/D-017/D-018;
-2. explicitly keep or reopen D-016 based on the comparison and any proven trigger;
-3. record the accepted P9-S2 recovery decision;
-4. only then authorize a bounded implementation slice if the selected mechanism requires runtime work;
-5. run the full D-019 gate before each integration.
+The next decision slice must compare the smallest mechanisms capable of satisfying the accepted target while preserving D-016/D-017/D-018. Candidate families may include reminder/backup-age visibility, streamlined export to a durable synchronized location, permission-based repeated writes to a chosen location, or a design requiring remote/server persistence. These remain candidates only.
 
-Until a mechanism decision is accepted, do not implement recovery automation, direct cloud/backend/auth/live synchronization, category/schema work, correction work or another runtime feature under P9-S2.
+The comparison must explicitly:
+
+1. evaluate fit against the <=24-hour off-device recovery target and daily-use constraint;
+2. evaluate practical operator-run restore on another computer;
+3. distinguish durable Drive/off-device protection from local-only convenience copies;
+4. account for real browser/OS permission constraints rather than assuming capabilities;
+5. explicitly keep or reopen D-016;
+6. select and record the smallest fit-for-purpose mechanism;
+7. define a bounded implementation slice if runtime work is required.
+
+The comparison/decision slice must **not implement** the selected mechanism. Implementation requires a later canonical authorization and its own D-019 validation.
