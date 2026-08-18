@@ -59,7 +59,7 @@ D-019 established `npm run qa:critical` as the persistent integration/publicatio
 ## P7 — Complete incomplete UX flows / operational refinement
 
 **Priority:** High  
-**Status:** `IN_PROGRESS`
+**Status:** `DONE` — 2026-08-18.
 
 Goal: complete evidenced operator-facing flows that are incomplete, misleading or materially high-friction without broad visual redesign or speculative feature expansion.
 
@@ -183,37 +183,62 @@ P7-S5 gate: **PASS / DONE**.
 
 ### P7-S6 — Reseller-context transaction launch without redundant reselection
 
-**Status:** `NOT_STARTED` — current next slice.
+**Status:** `DONE` — 2026-08-18.
 
-Bounded scope:
+Completed behavior:
 
-- from reseller detail, provide the existing transaction-entry flow with the current reseller intent preselected/preserved;
-- keep standalone transaction entry unchanged;
-- preserve P1 active-reference validation so stale/inactive/missing reseller context cannot bypass normal rules;
-- preserve P2/P3 transaction financial, audit and occurrence-date semantics;
-- add focused component/page coverage and one bounded Playwright reseller-detail → transaction-entry path if navigation is part of the implementation;
-- run full `npm run qa:critical`.
+- active reseller detail exposes `Novo lançamento` and carries `resellerId` into the existing transaction page;
+- `TransactionsPage` accepts only positive integer reseller context and initializes the form with it;
+- `TransactionForm` preselects that reseller and preserves the same context across Cancel/success reset;
+- standalone transaction entry remains unselected without valid reseller context;
+- contextual initialization does not bypass P1 validation: inactive and missing IDs remain invalid and cannot create transactions;
+- inactive reseller detail keeps new contextual launch disabled;
+- command-center shortcuts, P2/P3 financial/audit/occurrence semantics, hooks, Dexie schema/persistence and backup/restore remain unchanged.
 
-Out of scope:
+Coverage added:
 
-- command-center Payment/Signal behavior already closed in P7-S2;
-- financial/correction/statement semantics;
-- item/reseller lifecycle changes;
-- backup/restore mechanics;
-- schema/persistence architecture changes;
-- P8/P9 work.
+- reseller-detail active navigation + inactive launch block;
+- transaction-page valid context + malformed standalone fallback;
+- transaction-form active context preservation + inactive/missing rejection;
+- one bounded Playwright reseller-detail → transaction-entry → Cancel/context-preserved flow.
 
-### P7 completion direction
+Validation history:
 
-After P7-S6, close P7 only if QG-015 is resolved, no new material in-scope operational gap is evidenced, and the persistent Critical QA gate remains green.
+- **`32145620210` — PASS**, job `95738535732`: 0 lint errors / 80 warnings, 43 Vitest files / 176 tests, 15/15 Playwright, build PASS.
+
+P7-S6 gate: **PASS / DONE**.
+
+### P7 closure
+
+QG-011 through QG-015 from the accepted P7-S1 inventory are all resolved. P7-S6 did not evidence an additional material in-scope P7 gap and the repository-wide critical gate remains green. **P7 is closed as `DONE`.**
 
 ---
 
 ## P8 — Real store requirements discovery
 
-**Status:** `NOT_STARTED`.
+**Status:** `NOT_STARTED` — current next phase.
 
-If discovery proves a D-016 cloud-reopen trigger, persistence architecture must be explicitly reconsidered before multi-user/cloud implementation.
+### P8-S1 — Evidence-based requirements discovery and D-016 reopen assessment
+
+**Status:** `NOT_STARTED` — current next slice.
+
+Bounded scope:
+
+- inspect repository evidence plus any real-store artifacts explicitly available to the project;
+- inventory confirmed workflows, operators/devices, sharing, recovery/SLA, security/access, reporting and operational constraints;
+- distinguish confirmed requirements from assumptions and unresolved questions;
+- evaluate the explicit D-016 cloud/auth reopen triggers against evidence;
+- update canonical specification/backlog/decision records only where evidence supports a change;
+- run full `npm run qa:critical` before integration.
+
+Out of scope:
+
+- backend/auth/cloud/synchronization implementation;
+- Dexie migration or persistence architecture changes without a separately accepted decision;
+- P9 business modules;
+- speculative feature build-out based on unconfirmed requirements.
+
+If P8-S1 proves a D-016 reopen trigger, persistence architecture must be explicitly reconsidered before any multi-user/cloud implementation.
 
 ## P9 — Prioritized new modules
 

@@ -7,8 +7,8 @@
 
 ## Current phase
 
-**P7 — Complete incomplete UX flows / operational refinement**  
-**State:** `IN_PROGRESS`
+**P8 — Real store requirements discovery**  
+**State:** `NOT_STARTED` — next phase after P7 closure.
 
 - P1 — Referential integrity and safe entity lifecycle: `DONE`.
 - P2 — Correction, reversal and audit trail: `DONE`.
@@ -16,11 +16,13 @@
 - P4 — Persistence architecture decision: `DONE`.
 - P5 — Backup, restore and migration: `DONE`.
 - P6 — Tests, CI and deployment safety: `DONE`.
+- P7 — Complete incomplete UX flows / operational refinement: `DONE`.
 - P7-S1 — Operational UX gap inventory and prioritization: `DONE`.
 - P7-S2 — Reliable transaction-entry intent and feedback: `DONE`.
 - P7-S3 — Explicit invalid reseller statement-range state: `DONE`.
 - P7-S4 — Align Backup recovery copy with implemented restore: `DONE`.
 - P7-S5 — Operator-visible item/reseller save failures: `DONE`.
+- P7-S6 — Reseller-context transaction launch without redundant reselection: `DONE`.
 
 ## Startup protocol for a new conversation
 
@@ -34,13 +36,13 @@ Read in order:
 6. `docs/V2/QA_LEDGER.md`
 7. `docs/V2/CHANGELOG.md`
 
-Then inspect only source needed for `NEXT_ACTION`.
+Then inspect only source or evidence needed for `NEXT_ACTION`.
 
 ## Reconstructed baseline
 
-Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. Dexie remains **V4** and D-016 remains authoritative: no backend, authentication, cloud database or synchronization is part of the accepted foundation.
+Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. Dexie remains **V4** and D-016 remains authoritative: no backend, authentication, cloud database or synchronization is part of the accepted foundation unless P8 produces explicit evidence for a reopen trigger.
 
-P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 provides versioned backup plus checkpointed atomic restore. P6/D-019 requires the repository-wide `npm run qa:critical` gate for V2 integration and publication. P7/D-020 addresses evidenced operator-intent/error risks before convenience or cosmetic refinement.
+P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 provides versioned backup plus checkpointed atomic restore. P6/D-019 requires the repository-wide `npm run qa:critical` gate for V2 integration and publication. P7/D-020 completed the accepted evidence-backed operator-intent/error backlog before convenience or cosmetic refinement.
 
 At the start of P7-S2, `develop` was `7269bb435d91bbde45ffa835bacf0d373dfa14e6`; `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
@@ -49,6 +51,8 @@ At the start of P7-S3, `develop` was `5cb696a4c1eadbe46e0801922b0ad78b860f367f`;
 At the start of P7-S4, `develop` was `5b3d5824f9cce6e08572fa8034d797a6c30f758d`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 At the start of P7-S5, `develop` was `42d382311be1b910bbc56cd85a948cb8a7737329`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+At the start of P7-S6, `develop` was `4928978fbcd06cdb308951301ab4f8219b642923`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 ## P7-S2 completed transaction-entry slice
 
@@ -179,26 +183,48 @@ PR #19 was squash-merged into `develop` as `c509d56b6f24d9a8e53dde68816845855b3c
 
 Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
 
-## Remaining prioritized P7 gaps
+## P7-S6 completed reseller-context transaction-launch slice
 
-1. Reseller-context transaction launch still requires redundant reseller reselection — next and final currently evidenced P7 slice.
-2. P8 real-store discovery remains outside P7 and may reopen D-016 only with evidence.
+P7-S6 resolved QG-015, the last currently evidenced P7-S1 gap, without changing command-center shortcuts, standalone transaction semantics, transaction financial/audit/occurrence rules, entity lifecycle, hooks, Dexie persistence/schema, backup/restore or P8/P9 behavior.
 
-## Active constraints entering P7-S6
+### Reseller intent now survives contextual launch
+
+- active reseller detail exposes **Novo lançamento** and routes to the existing `/transactions` page with `resellerId=<id>` context;
+- `TransactionsPage` accepts only a positive integer `resellerId` query value and passes it as form initialization context;
+- `TransactionForm` preselects that reseller and restores the same contextual reseller after Cancel or successful reset;
+- without a valid context parameter, standalone transaction entry continues to start with no reseller selected;
+- contextual initialization does not authorize activity: the existing `activeResellers` validation remains authoritative, so inactive and missing reseller IDs are rejected before mutation;
+- reseller detail disables contextual launch for an inactive reseller.
+
+### Focused regression coverage
+
+- `ResellerDetailPage.context.test.tsx`: active context navigation plus inactive launch blocking;
+- `TransactionsPage.context.test.tsx`: valid URL context preselection plus malformed-context standalone fallback;
+- `TransactionForm.test.tsx`: active contextual preservation across Cancel plus inactive/missing context rejection with zero transaction writes;
+- `tests/e2e/reseller-transaction-context.spec.ts`: reseller creation → detail → contextual transaction page → reseller preselected → Cancel → context preserved.
+
+## P7-S6 validation and P7 closure
+
+Functional persistent Critical QA run **`32145620210`**, job **`95738535732`** — **PASS** on PR merge ref `5fab7de932eb7a62ffe58b21820f11a3ba1b904d`:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **43 files / 176 tests PASS**;
+- Playwright Chromium: **15/15 PASS**;
+- production build: **PASS**.
+
+Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action-runtime deprecation notices and build chunk-size warning remain visible non-blocking debt under D-019; no gate was weakened.
+
+QG-015 is resolved. The accepted P7-S1 inventory contained QG-011 through QG-015, all are now resolved, and the bounded P7-S6 implementation/validation did not evidence an additional material in-scope P7 gap. Therefore **P7 is `DONE`**. No new architecture/product decision was required; D-016, D-019 and D-020 remain authoritative.
+
+## Active constraints entering P8
 
 - do not work directly on `main`;
-- preserve all P1–P6 contracts and D-020 prioritization;
-- do not weaken or bypass `qa:critical`;
-- keep D-016 local-first Dexie V4;
-- preserve standalone transaction-entry behavior and the P7-S2 Payment/Signal intent contract;
-- preserve P1 active-reference validation when carrying reseller context into transaction entry;
-- do not change financial, occurrence-date, correction/reversal or statement semantics;
-- do not begin P8 discovery or new modules.
+- preserve all P1–P7 contracts and the persistent D-019 gate;
+- D-016 remains authoritative unless explicit real-store evidence proves a reopen trigger;
+- distinguish confirmed store requirements from assumptions or desired polish;
+- do not implement backend, authentication, cloud database, synchronization or person-level access control merely to explore requirements;
+- do not start P9 modules before P8 has produced a prioritized, evidence-backed requirements outcome.
 
 ## NEXT_ACTION
 
-**P7-S6 — Remove redundant reseller reselection when launching a transaction from reseller detail. Create a new feature branch from the current `develop` after P7-S5 integration and change only the reseller-context launch path so an operator can start a transaction from a reseller detail view with that reseller intent preselected/preserved, while standalone transaction entry remains unchanged. Preserve P1 active-reference validation and all P2/P3 financial/audit semantics; inactive or missing reseller context must not bypass existing validation. Add focused component/page coverage and one bounded Playwright reseller-detail → transaction-entry path if navigation is part of the implemented flow; run the full `npm run qa:critical` gate. Do not change command-center shortcuts, generic transaction behavior beyond context initialization, financial/correction semantics, backup/restore mechanics, schema/persistence architecture or begin P8.**
-
-## P7 completion direction
-
-P7 can close after P7-S6 only if the remaining QG-015 evidence is resolved, no new material P7 gap is discovered in-scope, and the persistent Critical QA gate remains green.
+**P8-S1 — Conduct evidence-based real-store requirements discovery and assess D-016 reopen triggers. Create a new branch from the current `develop` after P7-S6 integration and perform discovery only: inspect repository evidence plus any real-store artifacts explicitly available to the project; inventory confirmed workflows, operators/devices, data-sharing, recovery/SLA, security/access, reporting and operational constraints; separate confirmed requirements from assumptions and unresolved questions; evaluate each D-016 reopen trigger against that evidence; update the canonical V2 specification/backlog/decision ledger only where evidence supports a change. Do not implement backend/auth/cloud/synchronization, persistence migrations or P9 business modules in P8-S1. Run the full `npm run qa:critical` gate before integration even if the slice is documentation-only.**

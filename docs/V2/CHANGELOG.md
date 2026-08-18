@@ -4,6 +4,55 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-18 — P7-S6 reseller-context transaction launch and P7 closure
+
+### Context-preserving transaction entry
+
+P7-S6 completed QG-015, the final currently evidenced P7-S1 operational gap:
+
+- active reseller detail now exposes **Novo lançamento** and carries `resellerId` into the existing transaction-entry route;
+- `TransactionsPage` accepts only positive integer reseller context and initializes `TransactionForm` with it;
+- the form preselects the contextual reseller and preserves it across Cancel/success reset;
+- standalone transaction entry remains unselected without valid reseller context;
+- inactive reseller detail blocks contextual launch;
+- inactive or missing reseller context still fails the existing P1 `activeResellers` validation and cannot create transactions.
+
+No command-center shortcut, P2/P3 financial/audit/occurrence behavior, entity lifecycle rule, hook, Dexie schema/persistence, backup/restore mechanic or P8/P9 implementation changed.
+
+### Regression coverage
+
+Added focused proof for:
+
+- active reseller detail → contextual transaction navigation;
+- inactive reseller detail → launch disabled;
+- valid URL context → reseller preselected;
+- malformed URL context → normal standalone empty selection;
+- active contextual reseller retained across Cancel;
+- inactive/missing context rejected with no transaction writes;
+- bounded Playwright reseller-detail → transaction-entry → Cancel path with reseller context preserved.
+
+### Validation
+
+Functional persistent Critical QA run **`32145620210`**, job **`95738535732`** — **PASS** on PR merge ref `5fab7de932eb7a62ffe58b21820f11a3ba1b904d`:
+
+- lint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests passing;
+- Playwright Chromium: 15/15 passing;
+- production build: PASS.
+
+### Canonical state
+
+- QG-015 reseller-context transaction launch friction: RESOLVED / P7-S6;
+- P7-S6: `DONE`;
+- QG-011 through QG-015 are all resolved and no additional material in-scope P7 gap was evidenced by the bounded P7-S6 work;
+- P7: `DONE`;
+- D-016, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
+- `NEXT_ACTION` advances only to **P8-S1 — evidence-based real-store requirements discovery and D-016 reopen assessment**.
+
+P8-S1 is not executed in this change. Backend/auth/cloud/synchronization and P9 modules remain untouched.
+
+---
+
 ## 2026-08-18 — P7-S5 item/reseller save failures made operator-visible
 
 ### Retry-safe entity save feedback
