@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useReseller } from '../hooks/useResellers';
 import { useTransactions } from '../hooks/useTransactions';
 import { Button } from '../components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { TransactionTable } from '../components/transactions/TransactionTable';
 import { generateResellerExtract } from '../services/pdfService';
@@ -90,6 +90,11 @@ export default function ResellerDetailPage() {
 
     const resellerActive = isResellerActive(reseller);
 
+    const handleNewTransaction = () => {
+        if (!resellerActive || !reseller.id) return;
+        navigate(`/transactions?resellerId=${reseller.id}`);
+    };
+
     const handleGeneratePDF = () => {
         if (isInvalidRange) {
             toast.error('A data de início não pode ser posterior à data de fim.');
@@ -119,6 +124,14 @@ export default function ResellerDetailPage() {
                         Visualizando dados de {reseller.name}
                     </p>
                 </div>
+                <Button
+                    onClick={handleNewTransaction}
+                    disabled={!resellerActive || !reseller.id}
+                    className="shrink-0 gap-2"
+                >
+                    <Plus className="h-4 w-4" />
+                    Novo lançamento
+                </Button>
             </div>
 
             {!resellerActive && (
