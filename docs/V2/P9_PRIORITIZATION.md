@@ -1,6 +1,6 @@
 # Easy V2 — P9 Evidence-backed Prioritization
 
-**Status:** P9-S1 complete pending D-019 validation/integration  
+**Status:** P9-S1 `DONE`  
 **Date:** 2026-08-18  
 **Scope:** prioritization and bounded source inventory only; no runtime/schema/backend/cloud implementation
 
@@ -106,7 +106,7 @@ There is, however, a bounded usability risk worth direct verification: the field
 
 ## 8. Accepted P9 order
 
-P9-S1 recommends and records this sequence:
+D-023 records this accepted sequence:
 
 1. **P9-S2 — Recovery durability decision gate.** Establish acceptable maximum backup age/recovery procedure and compare the smallest D-016-compatible mechanisms that reduce dependence on human memory. No implicit cloud/auth/live-sync decision.
 2. **P9-S3 — Category data/reporting contract.** Define category lifecycle, item assignment, historical transaction/report semantics, migration and backup compatibility before implementation.
@@ -117,7 +117,7 @@ The ordering may be revisited only with new direct evidence or a newly proven ar
 
 ## 9. P9-S1 closure boundary
 
-P9-S1 changes documentation only. It does not:
+P9-S1 changed documentation only. It did not:
 
 - modify runtime behavior;
 - add a Dexie version or category field;
@@ -127,4 +127,13 @@ P9-S1 changes documentation only. It does not:
 - change financial, reversal, correction, statement or aging semantics;
 - implement any category, recovery or correction feature.
 
-Full D-019 `npm run qa:critical` is required before integration.
+## 10. Accepted validation and integration
+
+Persistent Critical QA run **`32166330198`**, job **`95806665221`** — **PASS** on PR #31 merge ref `85ffa8430de4c4b8a6ffedd84cc27b8049bf63d4`:
+
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
+
+PR #31 was squash-merged into `develop` as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integrated commit share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`. P9-S1 is therefore canonically accepted as `DONE`; P9-S2 remains `NOT_STARTED`.
