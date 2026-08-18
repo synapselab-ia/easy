@@ -111,17 +111,26 @@ D-023 records the ordering and evidence boundary. Persistent Critical QA `321663
 
 ### P9-S2 — Recovery durability decision gate
 
-**Status:** `NOT_STARTED`.
+**Status:** `BLOCKED` — 2026-08-18 pending direct store recovery-target evidence.
 
-Establish a measurable current-store recovery target, at minimum acceptable maximum backup age and acceptable recovery procedure, then compare the smallest D-016-compatible mechanisms that reduce dependence on human memory.
+The first P9-S2 evidence attempt confirmed that the continuity risk is real but the required measurable target is still missing. Existing direct evidence does not specify:
 
-Constraints:
+- acceptable maximum age of the latest recoverable off-device copy;
+- acceptable recovery procedure after permanent operating-PC loss;
+- acceptable interruption window;
+- whether provider-operated remote recovery is mandatory;
+- operating constraints relevant to acceptable off-device destinations/processes.
 
-- obtain direct store evidence rather than invent formal SLA/RPO/RTO values;
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct answers required to resume.
+
+Until that evidence exists:
+
+- do not invent SLA/RPO/RTO values;
+- do not compare/select or implement a recovery mechanism;
 - do not introduce backend/auth/cloud/live synchronization implicitly;
-- if a requirement or viable option proves a D-016 reopen trigger, explicitly reopen D-016 before implementation;
+- keep D-016 authoritative;
 - preserve D-017/D-018 logical backup, checkpoint and atomic restore semantics;
-- P9-S2 is a decision/evidence slice; do not implement a recovery mechanism until the gate is accepted.
+- do not start later P9 slices while this gate is active.
 
 ### P9-S3 — Category data/reporting contract
 
