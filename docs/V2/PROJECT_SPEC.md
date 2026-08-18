@@ -133,3 +133,21 @@ Every completed phase should leave:
 - a single explicit next action.
 
 Do not consider a phase complete solely because the UI appears to work.
+
+## 10. P8-S1 repository-evidence requirements boundary
+
+P8-S1 inspected original repository prompts, historical PRDs, README/canonical material and repository issues. Detailed evidence and trigger classification are recorded in `docs/V2/P8_DISCOVERY.md`.
+
+The evidence confirms the existing core workflows, administrator use, desktop/mobile operation, PDF sharing, JSON backup/portability and the existing reporting/analytics intent. A later responsiveness requirement also describes a reseller consulting their own statement on mobile; however the repository does not define whether that means independent access to a shared live dataset, use of an administrator-controlled device, manual data transfer or another interaction model.
+
+Therefore the following remain **unconfirmed real-store requirements**, not implementation permission:
+
+- concurrent operation by multiple people on one dataset;
+- automatic live sharing across devices;
+- reseller/employee accounts, permissions or person-level authorship;
+- remote recovery SLA/RTO/RPO;
+- trusted server integrations;
+- security/privacy policy incompatible with browser-local storage;
+- production data scale, connectivity constraints and unmet P9 module/reporting needs.
+
+D-016 remains authoritative after P8-S1 because no repository artifact proves one of its reopen triggers. Direct real-store evidence is required before changing the local-first/single-user persistence decision.
