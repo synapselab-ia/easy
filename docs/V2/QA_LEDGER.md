@@ -288,6 +288,23 @@ Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit f
 
 The accepted P7-S1 evidence inventory consisted of QG-011 through QG-015. All five are now resolved, and P7-S6 validation did not evidence another material in-scope P7 gap. **P7 result: PASS / DONE.**
 
+## P8 — Real-store requirements discovery
+
+### P8-S1 — Repository evidence and D-016 trigger assessment
+
+**Status:** DISCOVERY COMPLETE / QA PENDING.
+
+Evidence result:
+
+- core administrator workflows, desktop/mobile use, PDF sharing, JSON portability and current analytics/reporting intent are repository-backed;
+- later mobile requirements mention reseller direct statement access, but do not define shared-state, account, permission or synchronization semantics;
+- no direct store interview/observation artifact, production telemetry, SLA/security policy or Duda/store issue was found in the inspected repository evidence;
+- all six D-016 reopen triggers are **NOT PROVEN** by P8-S1;
+- D-021 keeps D-016 authoritative pending direct store validation;
+- detailed classification/questions are in `docs/V2/P8_DISCOVERY.md`.
+
+No runtime code, schema, persistence or P9 feature was changed. D-019 still requires complete persistent `npm run qa:critical` before integration; the first documentation-head gate is pending.
+
 ## Known baseline QA gaps
 
 - QG-001 reseller referential integrity: RESOLVED / P1.
@@ -306,6 +323,6 @@ The accepted P7-S1 evidence inventory consisted of QG-011 through QG-015. All fi
 - QG-014 item/reseller save error feedback: RESOLVED / P7-S5.
 - QG-015 reseller-context transaction launch friction: RESOLVED / P7-S6.
 
-## QA policy entering P8-S1
+## QA policy entering P8-S2
 
-P8-S1 is discovery-only. D-019 still requires the complete persistent `npm run qa:critical` gate before integration even if only canonical documentation changes. Preserve all P1–P7 contracts, keep D-016 authoritative unless explicit real-store evidence proves a reopen trigger, distinguish confirmed requirements from assumptions, and do not begin backend/auth/cloud/synchronization implementation or P9 modules during discovery.
+P8-S2 remains validation-only. D-019 requires the complete persistent `npm run qa:critical` gate before integration even for documentation-only discovery work. Preserve all P1–P7 contracts, keep D-016 authoritative unless direct real-store evidence proves a reopen trigger, distinguish confirmed evidence from inference, and do not begin backend/auth/cloud/synchronization implementation, persistence migration or P9 modules during validation.
