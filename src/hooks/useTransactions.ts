@@ -7,6 +7,7 @@ import {
     type TransactionCorrection,
 } from '../db/database';
 import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
+import { assertRecoveryWriteAllowed } from '../services/recoveryHealth';
 
 export const ORDER_ITEM_REQUIRED_ERROR = 'Pedidos novos devem referenciar um item do catálogo.';
 export const NON_ORDER_ITEM_REFERENCE_ERROR = 'Pagamentos e sinais não podem referenciar itens do catálogo.';
@@ -133,10 +134,12 @@ export function useTransactions(resellerId?: number) {
 export function useCreateTransaction() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (transaction: NewTransactionInput) =>
-            db.transaction('rw', db.resellers, db.items, db.transactions, () =>
+        mutationFn: (transaction: NewTransactionInput) => {
+            assertRecoveryWriteAllowed();
+            return db.transaction('rw', db.resellers, db.items, db.transactions, () =>
                 addValidatedTransaction(transaction)
-            ),
+            );
+        },
         onSuccess: (_, variables) => {
             invalidateTransactionConsumers(queryClient, [variables.resellerId]);
         },
@@ -147,8 +150,9 @@ export function useReverseTransaction() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, reason }: { id: number; reason: string }) =>
-            db.transaction('rw', db.transactions, async () => {
+        mutationFn: ({ id, reason }: { id: number; reason: string }) => {
+            assertRecoveryWriteAllowed();
+            return db.transaction('rw', db.transactions, async () => {
                 if (!isValidEntityId(id)) {
                     throw new Error(TRANSACTION_NOT_FOUND_ERROR);
                 }
@@ -178,7 +182,8 @@ export function useReverseTransaction() {
                     resellerId: transaction.resellerId,
                     reversal,
                 };
-            }),
+            });
+        },
         onSuccess: ({ resellerId }) => {
             invalidateTransactionConsumers(queryClient, [resellerId]);
         },
@@ -197,88 +202,91 @@ export function useReplaceTransaction() {
             originalId: number;
             reason: string;
             replacement: CorrectionReplacementInput;
-        }) => db.transaction('rw', db.resellers, db.items, db.transactions, async () => {
-            if (!isValidEntityId(originalId)) {
-                throw new Error(TRANSACTION_NOT_FOUND_ERROR);
-            }
-
-            const normalizedReason = reason.trim();
-            if (!normalizedReason) {
-                throw new Error(REVERSAL_REASON_REQUIRED_ERROR);
-            }
-
-            const original = await db.transactions.get(originalId);
-            if (!original) {
-                throw new Error(TRANSACTION_NOT_FOUND_ERROR);
-            }
-
-            if (isTransactionReversed(original)) {
-                throw new Error(TRANSACTION_ALREADY_REVERSED_ERROR);
-            }
-
-            let normalizedReplacement: NewTransactionInput = {
-                ...replacement,
-                type: original.type,
-                occurredAt: transactionOccurredAt(original),
-            };
-
-            if (original.type === 'order') {
-                if (replacement.itemId !== original.itemId) {
-                    throw new Error(CORRECTION_ORDER_ITEM_PRESERVED_ERROR);
+        }) => {
+            assertRecoveryWriteAllowed();
+            return db.transaction('rw', db.resellers, db.items, db.transactions, async () => {
+                if (!isValidEntityId(originalId)) {
+                    throw new Error(TRANSACTION_NOT_FOUND_ERROR);
                 }
 
-                const quantity = replacement.quantity;
-                const unitPrice = replacement.unitPrice;
-                if (!Number.isInteger(quantity) || !quantity || quantity <= 0 || typeof unitPrice !== 'number' || unitPrice < 0) {
-                    throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                const normalizedReason = reason.trim();
+                if (!normalizedReason) {
+                    throw new Error(REVERSAL_REASON_REQUIRED_ERROR);
                 }
 
-                normalizedReplacement = {
-                    ...normalizedReplacement,
-                    itemId: original.itemId,
-                    itemName: original.itemName,
-                    quantity,
-                    unitPrice,
-                    totalPrice: quantity * unitPrice,
-                    observation: original.observation,
+                const original = await db.transactions.get(originalId);
+                if (!original) {
+                    throw new Error(TRANSACTION_NOT_FOUND_ERROR);
+                }
+
+                if (isTransactionReversed(original)) {
+                    throw new Error(TRANSACTION_ALREADY_REVERSED_ERROR);
+                }
+
+                let normalizedReplacement: NewTransactionInput = {
+                    ...replacement,
+                    type: original.type,
+                    occurredAt: transactionOccurredAt(original),
                 };
-            } else {
-                if (typeof replacement.totalPrice !== 'number' || !Number.isFinite(replacement.totalPrice) || replacement.totalPrice <= 0) {
-                    throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+
+                if (original.type === 'order') {
+                    if (replacement.itemId !== original.itemId) {
+                        throw new Error(CORRECTION_ORDER_ITEM_PRESERVED_ERROR);
+                    }
+
+                    const quantity = replacement.quantity;
+                    const unitPrice = replacement.unitPrice;
+                    if (!Number.isInteger(quantity) || !quantity || quantity <= 0 || typeof unitPrice !== 'number' || unitPrice < 0) {
+                        throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                    }
+
+                    normalizedReplacement = {
+                        ...normalizedReplacement,
+                        itemId: original.itemId,
+                        itemName: original.itemName,
+                        quantity,
+                        unitPrice,
+                        totalPrice: quantity * unitPrice,
+                        observation: original.observation,
+                    };
+                } else {
+                    if (typeof replacement.totalPrice !== 'number' || !Number.isFinite(replacement.totalPrice) || replacement.totalPrice <= 0) {
+                        throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                    }
+
+                    normalizedReplacement = {
+                        ...normalizedReplacement,
+                        itemId: undefined,
+                        itemName: undefined,
+                        quantity: undefined,
+                        unitPrice: undefined,
+                        totalPrice: replacement.totalPrice,
+                        observation: original.observation,
+                    };
                 }
 
-                normalizedReplacement = {
-                    ...normalizedReplacement,
-                    itemId: undefined,
-                    itemName: undefined,
-                    quantity: undefined,
-                    unitPrice: undefined,
-                    totalPrice: replacement.totalPrice,
-                    observation: original.observation,
+                const replacementTransactionId = await addValidatedTransaction(
+                    normalizedReplacement,
+                    { replacesTransactionId: originalId },
+                ) as number;
+
+                const reversal = {
+                    reason: normalizedReason,
+                    reversedAt: new Date().toISOString(),
+                    replacementTransactionId,
                 };
-            }
 
-            const replacementTransactionId = await addValidatedTransaction(
-                normalizedReplacement,
-                { replacesTransactionId: originalId },
-            ) as number;
+                await db.transactions.update(originalId, { reversal });
 
-            const reversal = {
-                reason: normalizedReason,
-                reversedAt: new Date().toISOString(),
-                replacementTransactionId,
-            };
-
-            await db.transactions.update(originalId, { reversal });
-
-            return {
-                originalResellerId: original.resellerId,
-                replacementResellerId: normalizedReplacement.resellerId,
-                originalId,
-                replacementTransactionId,
-                reversal,
-            };
-        }),
+                return {
+                    originalResellerId: original.resellerId,
+                    replacementResellerId: normalizedReplacement.resellerId,
+                    originalId,
+                    replacementTransactionId,
+                    reversal,
+                };
+            });
+        },
         onSuccess: ({ originalResellerId, replacementResellerId }) => {
             invalidateTransactionConsumers(
                 queryClient,

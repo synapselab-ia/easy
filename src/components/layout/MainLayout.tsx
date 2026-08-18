@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { CommandCenter } from '../search/CommandCenter'
+import { RecoveryHealthBanner } from '../backup/RecoveryHealthBanner'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Menu, Search } from 'lucide-react'
@@ -52,6 +53,8 @@ export function MainLayout() {
                         </div>
                     </div>
                 </header>
+
+                <RecoveryHealthBanner />
 
                 <main className="flex-1 overflow-y-auto">
                     <Outlet />

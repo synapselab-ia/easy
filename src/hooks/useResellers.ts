@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, type Reseller } from '../db/database';
+import { assertRecoveryWriteAllowed } from '../services/recoveryHealth';
 
 export const RESELLER_WITH_HISTORY_DELETE_ERROR =
     'Revendedores com histórico financeiro não podem ser excluídos. Arquive o revendedor para preservar o histórico.';
@@ -26,8 +27,10 @@ export function useReseller(id?: number) {
 export function useCreateReseller() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (reseller: Omit<Reseller, 'id'>) =>
-            db.resellers.add({ ...reseller, isActive: reseller.isActive ?? true }),
+        mutationFn: (reseller: Omit<Reseller, 'id'>) => {
+            assertRecoveryWriteAllowed();
+            return db.resellers.add({ ...reseller, isActive: reseller.isActive ?? true });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
         },
@@ -37,8 +40,10 @@ export function useCreateReseller() {
 export function useUpdateReseller() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, ...changes }: Partial<Reseller> & { id: number }) =>
-            db.resellers.update(id, changes),
+        mutationFn: ({ id, ...changes }: Partial<Reseller> & { id: number }) => {
+            assertRecoveryWriteAllowed();
+            return db.resellers.update(id, changes);
+        },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
             queryClient.invalidateQueries({ queryKey: ['resellers', variables.id] });
@@ -50,6 +55,7 @@ function useSetResellerActiveState(isActive: boolean) {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: number) => {
+            assertRecoveryWriteAllowed();
             const updated = await db.resellers.update(id, {
                 isActive,
                 updatedAt: new Date(),
@@ -76,8 +82,9 @@ export function useReactivateReseller() {
 export function useDeleteReseller() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) =>
-            db.transaction('rw', db.resellers, db.transactions, async () => {
+        mutationFn: (id: number) => {
+            assertRecoveryWriteAllowed();
+            return db.transaction('rw', db.resellers, db.transactions, async () => {
                 const transactionCount = await db.transactions
                     .where('resellerId')
                     .equals(id)
@@ -88,7 +95,8 @@ export function useDeleteReseller() {
                 }
 
                 await db.resellers.delete(id);
-            }),
+            });
+        },
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
             queryClient.invalidateQueries({ queryKey: ['resellers', id] });
