@@ -1,6 +1,6 @@
 # Easy V2 — Decision Ledger
 
-**Updated:** 2026-08-17
+**Updated:** 2026-08-18
 
 Only accepted decisions belong here. Open questions remain in `STATUS.md`/`BACKLOG.md`.
 
@@ -149,11 +149,22 @@ P7-S2 is limited to the transaction-entry cluster:
 
 This decision does **not** change P1–P6 financial, persistence, recovery or QA semantics and does not authorize bundling the lower-ranked P7 gaps into P7-S2.
 
+## D-021 — Repository evidence alone does not reopen D-016; ambiguous reseller mobile use requires direct store validation
+**Status:** ACCEPTED  
+**Date:** 2026-08-18
+
+P8-S1 reviewed the original prompts, historical PRDs, current canonical baseline, README and repository issues. The evidence confirms administrator desktop/mobile operation, local browser persistence, PDF sharing and manual JSON backup/portability. A later responsiveness requirement also describes a reseller consulting their own statement on mobile.
+
+That later role wording is material, but it does not specify concurrent operators, a shared live dataset, accounts/permissions, person-level authorship or automatic synchronization. No inspected artifact establishes a remote recovery SLA, trusted server integration or security policy incompatible with browser-local storage. No separate real-store interview/observation artifact was found in the repository.
+
+Therefore **none of the explicit D-016 reopen triggers is proven by P8-S1**. D-016 remains authoritative and no backend/auth/cloud/synchronization or persistence migration is authorized.
+
+Before any architecture reconsideration, direct real-store evidence must resolve who operates the system, which devices share a dataset, whether shared state must be live/automatic, whether permissions or verified authorship are required, acceptable recovery loss/time, required server integrations and any security/privacy constraints. Detailed P8-S1 evidence is recorded in `docs/V2/P8_DISCOVERY.md`.
+
 ---
 
 # Open decisions
 
-- implementation details for ranked P7 gaps after P7-S2;
-- new modules after real requirements discovery (P8/P9);
-- local vs cloud only if a D-016 reopen trigger is proven;
+- D-016 local vs cloud only if direct P8 real-store evidence proves a reopen trigger;
+- prioritized P9 modules only after P8 confirms unmet operational requirements;
 - controlled beta/migration/cutover policy in P10.
