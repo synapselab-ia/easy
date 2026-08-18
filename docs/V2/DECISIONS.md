@@ -131,15 +131,15 @@ P9-S1 applies a weighted evidence-first score using operational consequence (35%
 
 Accepted ranked inputs:
 
-1. **Recovery durability / off-device protection — 94/100.** Device-loss consequence is catastrophic and directly confirmed. Current backup generation remains operator-initiated; the problem is dependence on a person remembering to create/move a fresh durable copy. P9-S2 must first establish a measurable operating recovery target and compare the smallest D-016-compatible mechanisms. A remote SLA/cloud requirement must not be invented.
+1. **Recovery durability / off-device protection — 94/100.** Device-loss consequence is catastrophic and directly confirmed. P9-S2 must establish a measurable target and implement the smallest D-016-compatible mechanism without inventing a remote SLA/cloud requirement.
 2. **Item categories + classification + category-level reporting — 83/100.** Direct confirmed need. Because the current Dexie V4 `Item` model and canonical backup contract have no category dimension, P9-S3 must define lifecycle, assignment, historical/report semantics, migration and backup compatibility before implementation.
-3. **Exact transaction edit/correction microflows — 70/100.** Direct evidence confirms friction but not exact store cases. Current source proves guided correction cannot change `occurredAt`, order item, transaction type or observation and cannot guided-correct an order whose original item is inactive. Items/resellers already have edit flows; transaction reversal plus reseller/value correction already exist. Source-proven absence must not be falsely attributed to Duda as a reported case. P9-S4 must first directly map these gaps to real operator work/error risk and then preserve D-012/D-013 audit semantics.
-4. **Occurrence-date discoverability/usability — 69/100.** The creation form already exposes `Data da ocorrência` with explanatory text and persists `occurredAt`. P9-S5 may verify usability but must not rebuild P3 or invent a second date model.
+3. **Exact transaction edit/correction microflows — 70/100.** Direct evidence confirms friction but not exact store cases. P9-S4 must first directly map source-proven gaps to real operator work/error risk and preserve D-012/D-013 audit semantics.
+4. **Occurrence-date discoverability/usability — 69/100.** The creation form already exposes `Data da ocorrência` and persists `occurredAt`. P9-S5 may verify usability but must not rebuild P3 or invent a second date model.
 
-Accounts/permissions, automatic live synchronization, inventory/orders/store-management and external integrations remain later candidates unless new direct evidence makes them mandatory. P9-S1 itself authorizes no runtime/schema/backend/cloud implementation.
+Accounts/permissions, automatic live synchronization, inventory/orders/store-management and external integrations remain later candidates unless new direct evidence makes them mandatory.
 
 ## D-024 — Recovery durability uses a synchronized recovery-copy folder plus a 24-hour freshness guard; D-016 remains local-first
-**Status:** ACCEPTED  
+**Status:** ACCEPTED / IMPLEMENTED  
 **Date:** 2026-08-18
 
 The accepted direct recovery target is a newest usable off-device copy no more than **24 hours** old, with manual operator-run restoration on any computer acceptable and daily-use continuity required qualitatively without inventing a numeric RTO.
@@ -155,9 +155,31 @@ The selected smallest fit-for-purpose mechanism is **Synchronized recovery-copy 
 
 D-016 is **KEPT**. No concurrent-operation, live multi-device, person-level access, provider-operated remote recovery, trusted-server integration or incompatible-security-policy trigger was proven. Direct Google Drive API/OAuth, backend/auth/cloud database/live synchronization and a required browser-specific File System Access path are not part of the baseline mechanism. D-017/D-018 remain unchanged; no Dexie V5 or backup-format change is authorized for freshness tracking.
 
+### Decision validation
+
 Persistent Critical QA `32177687434`, job `95843265579`, passed on PR #37 merge ref `79552f7912307db88272e075b2320cade02f6f17`. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integration share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
 
-The next bounded implementation slice is P9-S2-I1 and must stay within `docs/V2/P9_RECOVERY_DECISION.md`.
+### P9-S2-I1 implementation proof
+
+The accepted implementation preserves the decision boundary:
+
+- recovery-health metadata is namespaced local control state only (`easy.recoveryHealth.v1`), not Dexie/business data;
+- states are `unknown`, `due`, `current`, `warning` and `overdue`;
+- missing/corrupt/unverified state blocks normal mutations fail-safe;
+- the implementation warning threshold is 20 hours but the accepted hard boundary remains exactly 24 hours;
+- item, reseller and transaction mutation hooks use one centralized write guard;
+- read-only use and Backup/Restore remain available while blocked;
+- the validated `easy-backup` v2 export returns exact filename/export time for local freshness tracking without changing the envelope;
+- synchronized-folder verification is an explicit operator confirmation after observing the exported file outside local-PC-only context;
+- Easy does not attest provider-side synchronization.
+
+The first PR #39 run `32179815390`, job `95849949295`, exposed only an E2E harness interaction after the rejected write correctly left its dialog open; no runtime behavior change was required. The test was corrected.
+
+Persistent Critical QA **`32180250834`**, job **`95851336506`** passed on PR #39 merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a`: 0 lint errors / 80 warnings, 44 Vitest files / 183 tests PASS, 17/17 Playwright PASS and production build PASS.
+
+PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`; validated merge ref and integration share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
+
+D-024 is now both accepted and implemented. P9-S2 is closed; no new decision number is required for its implementation.
 
 ---
 
