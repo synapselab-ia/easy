@@ -42,7 +42,7 @@ Objective failures block integration. Known warning/test-harness/dependency debt
 
 ## P4 — Persistence architecture
 
-**PASS / DONE as decision work.** D-016 accepts local-first/single-user persistence until an explicit direct requirement proves a reopen trigger.
+**PASS / DONE as decision work.** D-016 accepts local-first/single-user browser-local persistence until an explicit direct requirement proves a reopen trigger.
 
 ## P5 — Backup, restore and migration
 
@@ -87,53 +87,86 @@ D-019 remains authoritative.
 - D-024 mechanism decision `32177687434`, job `95843265579` — PASS;
 - accepted P9-S2-I1 runtime gate `32180250834`, job `95851336506` — PASS with 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and build PASS.
 
-The first P9-S2-I1 run `32179815390`, job `95849949295`, exposed only a new E2E harness interaction after a correctly rejected mutation left its dialog open; no runtime behavior change was required.
-
 PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`; validated merge ref and integrated commit share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
 
-### P9-S3 — Category data/reporting contract
+### P9-S3 contract — Category data/reporting contract
 
-**PASS / DONE as contract work. D-025 accepted; implementation not started.**
+**PASS / DONE as contract work. D-025 accepted.**
 
-Contract-only PR #44 was validated on merge ref `31a4adca45f74e6907cfce079a98c95b2c580738`, merging head `92302c1cfff7c0d0856cd2c124fc4bc5cff1c767` into base `565a5a4b3ed9d52134b276f910669968d2cb2e67`.
+An early contract-only run `32184499171`, job `95864903309`, passed before canonical closure. The authoritative final contract validation is:
 
-Persistent Critical QA run **`32184499171`**, job **`95864903309`** — **PASS**:
+- run **`32185226251`**, job **`95867186002`** — PASS;
+- PR #44 merge ref `ab910d1fbfbe2a007bc35e7bd8784e7697283312`;
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 44 files / 183 tests PASS;
+- Playwright Chromium: 17/17 PASS;
+- production build: PASS.
 
-- ESLint: **0 errors / 80 warnings**;
-- Vitest: **44 files / 183 tests PASS**;
-- Playwright Chromium: **17/17 PASS**;
-- production build: **PASS**.
+PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`. Validated merge ref and integrated squash share exact tree `676f70baa62a46cc353d756a2ff5624295d699c8`.
 
-Validated contract coverage is documentation/decision-only:
+No runtime/schema/UI/reporting change was part of the contract gate.
 
-- stable category identity/lifecycle;
-- item assignment/reassignment semantics;
-- future order category snapshot and non-inventive legacy history;
-- order-only category reporting semantics;
-- explicit exclusion of category debt/payment allocation;
-- lossless Dexie V4 -> V5 target migration;
-- `easy-backup` v2/schema5 target while preserving v1 and v2/schema4 imports;
-- D-018 future four-table checkpoint/atomic restore extension.
+### P9-S3-I1 — Category persistence + migration + backup compatibility
 
-No Dexie V5, category table/field, category UI, category report, backend/auth/cloud/live sync or recovery-guard change was introduced by the contract gate.
+**FUNCTIONAL PASS / canonical closure in progress.**
 
-The final canonical-document head of PR #44 must also pass D-019 before integration. The validated merge ref for that final head is the integration authority; a stale-base validation is not acceptable.
+Implemented targeted coverage proves:
+
+- real Dexie V4 -> V5 upgrade creates an empty category table without inventing item/order classification;
+- V4 IDs, dates, item snapshots and P1/P2/P3 fields survive migration;
+- schema5 category IDs/names/references/lifecycle constraints are validated;
+- active item -> inactive category is rejected while inactive item -> archived category remains valid;
+- order category snapshot fields must appear together;
+- payment/signal category fields are rejected;
+- linked order correction cannot rewrite the original category snapshot;
+- existing v2/schema4 backup normalizes to V5 with `categories = []` and absent category fields;
+- schema5 backup/restore round-trip preserves categories/references/snapshots;
+- D-018 checkpoint contains all four tables;
+- simulated restore write failure rolls back categories together with items/resellers/transactions;
+- normal order creation remains category-neutral in I1 while guided correction preserves already-present snapshots.
+
+#### Gate history
+
+1. Run `32190349921`, job `95883095871` — **FAIL** after lint and Vitest:
+   - lint passed;
+   - 194/195 Vitest passed;
+   - sole failure was the historical P3 migration test still asserting final `db.verno === 4`; migration behavior itself passed;
+   - only the obsolete expected current schema number was changed to 5.
+
+2. Run `32190552190`, job `95883712396` — **FAIL at build only**:
+   - ESLint: 0 errors / 81 warnings;
+   - Vitest: 47 files / 195 tests PASS;
+   - Playwright: 17/17 PASS;
+   - TypeScript build rejected insufficient static narrowing of `rawCategories: unknown`;
+   - only explicit type narrowing was added; validation/runtime semantics were unchanged.
+
+3. Functional accepted run **`32191018791`**, job **`95885134808`** — **PASS** on PR #45 merge ref `c6891b5f7e01c6d36ea71fdfb52571e805d7655d`, merging head `8bbbf145937eef37cea73a7fbb7280e2af599d55` into base `ede644b88ad00c11b566d82a21758cc82b7a8126`:
+   - ESLint: **0 errors / 81 warnings**;
+   - Vitest: **47 files / 195 tests PASS**;
+   - Playwright Chromium: **17/17 PASS**;
+   - production build: **PASS**.
+
+The extra lint warning versus the previous 80-warning baseline is a test-only `no-explicit-any` warning in the adapted `backupService.test.ts` mock. It is visible non-blocking debt under D-019; there are zero lint errors.
+
+The final head after canonical documentation updates must pass a fresh full D-019 against the current `develop` base before integration. That final merge ref, not the functional pre-documentation merge ref, is the integration authority.
 
 ## Current known non-blocking debt
 
-Existing React `act(...)` warnings, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and the Vite large-chunk warning remain visible under D-019. No accepted gate is weakened.
+Existing React `act(...)` warnings, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings, the added test-mock `any` warning and the Vite large-chunk warning remain visible under D-019. No accepted gate is weakened.
 
-## QA policy entering P9-S3-I1
+## QA policy entering P9-S3-I2
 
-P9-S3-I1 must preserve P1–P9-S3 contract semantics plus D-016/D-017/D-018/D-019/D-024/D-025.
+P9-S3-I2 must preserve P1–P9-S3-I1 plus D-016/D-017/D-018/D-019/D-024/D-025.
 
 Required targeted proof includes:
 
-- lossless V4 -> V5 migration with zero invented categories/history;
-- category identity/reference/lifecycle validation in schema5 backup preflight;
-- continued v1 and v2/schema4 import normalization;
-- schema5 export round-trip including categories and optional historical fields;
-- D-018 four-table checkpoint/atomic restore rollback and read-back equivalence;
-- no regression to recovery-health guard/control metadata separation.
+- category lifecycle identity/name/archive/reactivation/delete guards;
+- active-category-only item assignment/reassignment;
+- classification requirement for new/reactivated business-use items;
+- migrated unclassified legacy items remain readable and are blocked only from new-order participation until classified;
+- new order resolves active item/category and writes immutable `categoryId + categoryName` snapshot;
+- reassignment/rename does not rewrite old transactions;
+- correction keeps original category snapshot;
+- D-017/D-018 schema5 and D-024 recovery guard do not regress.
 
-The full `npm run qa:critical` gate remains mandatory before integration.
+Category reporting remains outside I2. Full `npm run qa:critical` remains mandatory before integration.
