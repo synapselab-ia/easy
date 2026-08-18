@@ -61,37 +61,40 @@ Wrong-value/wrong-reseller correction creates a replacement and reverses the ori
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-`occurredAt` is the business/financial date, `createdAt` is registration time, and `reversal.reversedAt` is audit time. Dexie V4 indexes `occurredAt`; missing legacy occurrence migrates as `occurredAt = createdAt`. Linked correction preserves the original financial occurrence unless a later accepted correction contract explicitly changes that rule.
+`occurredAt` is the business/financial date, `createdAt` is registration time, and `reversal.reversedAt` is audit time. Dexie indexes `occurredAt`; missing legacy occurrence migrates as `occurredAt = createdAt`. Linked correction preserves original financial occurrence unless a later accepted correction contract explicitly changes that rule.
 
 ## D-015 — Statements use opening → movements → closing; debt aging uses FIFO open-order allocation
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-Period statements use opening balance before the start, inclusive-range effective movements and closing = opening + movement. Zero-movement periods remain valid. Dashboard total debt sums only positive reseller balances. Debt aging derives from effective open order lots with payments/signals consuming oldest debt first; reversed rows have zero effect.
+Period statements use opening balance before start, inclusive-range effective movements and closing = opening + movement. Zero-movement periods remain valid. Dashboard total debt sums only positive reseller balances. Debt aging derives effective open order lots with payments/signals consuming oldest debt first; reversed rows have zero effect.
 
-## D-016 — V2 remains local-first/single-user on Dexie V4 until an explicit cloud trigger is proven
+## D-016 — V2 remains local-first/single-user on browser-local Dexie until an explicit cloud trigger is proven
 **Status:** ACCEPTED  
-**Date:** 2026-08-17
+**Date:** 2026-08-17  
+**Clarified:** 2026-08-18 by D-025 implementation
 
 No backend, authentication, cloud database or synchronization layer is introduced under currently evidenced requirements. Reconsider D-016 only if direct requirements mandate concurrent operators, automatic live multi-device sharing, person-level authorship/access control, remote recovery SLA, trusted server integrations or a security policy incompatible with browser-local storage.
 
+D-016 constrains **persistence topology**, not the internal Dexie schema number. Local additive schema migrations such as V4→V5 under D-025 do not reopen D-016.
+
 ## D-017 — Backup v2 is the canonical logical recovery contract; destructive restore requires successful preflight
-**Status:** ACCEPTED  
+**Status:** ACCEPTED / EXTENDED BY D-025  
 **Date:** 2026-08-17
 
 `easy-backup` version 2 is the logical interchange/recovery contract independent from Dexie schema version. Legacy v1 remains supported through in-memory normalization. Destructive restore is ineligible until preflight validates envelope/source/version, required fields, duplicates/IDs/dates/positive values, references, lifecycle, correction links and occurrence chronology.
 
+D-025 implementation preserves logical version 2 while current exports use `source.schemaVersion = 5`, include `data.categories[]` and optional category references/snapshots. Existing v2/schema4 inputs remain supported through lossless normalization without fabricated categories.
+
 ## D-018 — Restore requires a downloaded validated checkpoint and one verified atomic Dexie transaction
-**Status:** ACCEPTED  
+**Status:** ACCEPTED / EXTENDED BY D-025  
 **Date:** 2026-08-17
 
-Before destructive restore, Easy downloads a validated canonical v2 checkpoint of the current database. Replacement of items/resellers/transactions then occurs in one Dexie `rw` transaction with read-back validation/canonical comparison; any write/verification error throws and rolls back the complete replacement. Targeted validation `32060729538` passed.
+Before destructive restore, Easy downloads a validated canonical v2 checkpoint. The verified atomic replacement boundary now covers `categories`, `items`, `resellers` and `transactions` in one Dexie `rw` transaction with post-write revalidation/canonical comparison. Any write/verification divergence throws and rolls back the complete four-table replacement.
 
 ## D-019 — Critical QA is mandatory for V2 integration and publication from main
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
-
-Repository-wide critical validation is:
 
 ```text
 npm run qa:critical
@@ -101,108 +104,94 @@ npm run qa:critical
   -> npm run build
 ```
 
-CI runs it on PRs to `develop`/`main`, pushes to `develop` and manual dispatch. Publication from `main` requires `quality -> build -> deploy`. Objective failures block integration; recorded warning/harness debt does not weaken the gate. Functional run `32064801009` and post-merge `32065713920` passed.
+CI runs on PRs to `develop`/`main`, pushes to `develop` and manual dispatch. Publication from `main` requires `quality -> build -> deploy`. Objective failures block integration; recorded warning/harness debt does not weaken the gate. Functional run `32064801009` and post-merge `32065713920` passed.
 
 ## D-020 — P7 prioritizes operator-intent/error risks before convenience or cosmetic refinement
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-P7 ranked demonstrated operator impact/error risk ahead of visual preference. The accepted order was transaction-entry intent/feedback, invalid statement range, stale recovery copy, item/reseller save feedback and reseller-context transaction launch. QG-011 through QG-015 were resolved without broad redesign.
+P7 ranked demonstrated operator impact/error risk ahead of visual preference. QG-011 through QG-015 were resolved without broad redesign.
 
 ## D-021 — Repository evidence alone does not reopen D-016; ambiguous reseller mobile use requires direct store validation
 **Status:** ACCEPTED  
 **Date:** 2026-08-18
 
-Repository evidence confirmed administrator desktop/mobile operation, PDF sharing and manual JSON portability but did not establish shared live state, accounts/permissions, concurrency, remote recovery SLA, trusted server integration or local-storage-incompatible security policy. Therefore no D-016 reopen trigger was proven by repository evidence alone.
+Repository evidence confirmed administrator desktop/mobile operation, PDF sharing and manual JSON portability but did not establish shared live state, accounts/permissions, concurrency, remote recovery SLA, trusted server integration or local-storage-incompatible security policy.
 
 ## D-022 — Direct store validation keeps D-016 for current operation; recovery durability and category reporting become evidence-backed roadmap inputs
 **Status:** ACCEPTED  
 **Date:** 2026-08-18
 
-Direct store evidence confirms current non-concurrent PC-based operation, PDF/extract reseller sharing, manual JSON portability/backup, no mandatory trusted server integration and modest scale. No D-016 trigger is proven; security-policy incompatibility remains unresolved/not proven.
-
-The same evidence confirms a severe device-loss/manual-backup continuity risk, category/classification/category-reporting needs, and edit/correction friction whose exact cases require inventory. Delayed entry already uses editable `occurredAt` and is not a missing date model. D-016 remains accepted for the current operating mode.
+Direct store evidence confirms current non-concurrent PC-based operation, PDF/extract reseller sharing, manual JSON portability/backup, no mandatory trusted server integration and modest scale. It also confirms severe device-loss/manual-backup exposure, category/classification/category-reporting needs and edit/correction friction. No D-016 trigger is proven.
 
 ## D-023 — P9 starts with recovery durability, then category contract, bounded correction gaps and occurrence-date usability verification
 **Status:** ACCEPTED  
 **Date:** 2026-08-18
 
-P9-S1 applies a weighted evidence-first score using operational consequence (35%), evidence confidence (30%), exposure/frequency (20%) and delivery confidence under accepted contracts (15%). Detailed scoring and source inventory are canonical in `docs/V2/P9_PRIORITIZATION.md`.
+Accepted order:
 
-Accepted ranked inputs:
+1. recovery durability / off-device protection — **94/100**;
+2. item categories + classification + category-level reporting — **83/100**;
+3. exact transaction edit/correction microflows — **70/100**;
+4. occurrence-date discoverability/usability — **69/100**.
 
-1. **Recovery durability / off-device protection — 94/100.** Device-loss consequence is catastrophic and directly confirmed. P9-S2 must establish a measurable target and implement the smallest D-016-compatible mechanism without inventing a remote SLA/cloud requirement.
-2. **Item categories + classification + category-level reporting — 83/100.** Direct confirmed need. Because the current Dexie V4 `Item` model and canonical backup contract have no category dimension, P9-S3 must define lifecycle, assignment, historical/report semantics, migration and backup compatibility before implementation.
-3. **Exact transaction edit/correction microflows — 70/100.** Direct evidence confirms friction but not exact store cases. P9-S4 must first directly map source-proven gaps to real operator work/error risk and preserve D-012/D-013 audit semantics.
-4. **Occurrence-date discoverability/usability — 69/100.** The creation form already exposes `Data da ocorrência` and persists `occurredAt`. P9-S5 may verify usability but must not rebuild P3 or invent a second date model.
-
-Accounts/permissions, automatic live synchronization, inventory/orders/store-management and external integrations remain later candidates unless new direct evidence makes them mandatory.
+Detailed scoring remains in `docs/V2/P9_PRIORITIZATION.md`.
 
 ## D-024 — Recovery durability uses a synchronized recovery-copy folder plus a 24-hour freshness guard; D-016 remains local-first
 **Status:** ACCEPTED / IMPLEMENTED  
 **Date:** 2026-08-18
 
-The accepted direct recovery target is a newest usable off-device copy no more than **24 hours** old, with manual operator-run restoration on any computer acceptable and daily-use continuity required qualitatively without inventing a numeric RTO.
+The accepted target is a newest usable off-device copy no more than **24 hours** old, with manual operator-run restoration on any computer acceptable and daily-use continuity without inventing numeric RTO.
 
-The selected smallest fit-for-purpose mechanism is **Synchronized recovery-copy folder + 24-hour freshness guard**:
+Selected mechanism:
 
 - preserve canonical `easy-backup` v2 and D-018 restore semantics;
-- configure backup downloads to a local folder covered by OS/provider synchronization; Google Drive for desktop is the accepted current-store instance;
-- require one setup verification that an exported backup is visible in Drive outside the local-PC-only context;
-- track local recovery-copy export freshness and treat missing metadata fail-safe as `unknown/due`;
-- at 24 hours, require a new backup export before normal data-changing operation can continue while keeping Backup/Restore reachable;
-- Easy confirms backup generation/download initiation, not provider-side synchronization completion.
+- backup downloads use a local folder covered by OS/provider synchronization; Google Drive for desktop is the accepted current-store instance;
+- require one setup verification that an exported backup is visible off the local-PC-only context;
+- track local recovery-copy export freshness fail-safe;
+- at 24 hours, block normal data-changing work until a new export while keeping Backup/Restore reachable;
+- Easy confirms generation/download initiation, not provider-side synchronization completion.
 
-D-016 is **KEPT**. No concurrent-operation, live multi-device, person-level access, provider-operated remote recovery, trusted-server integration or incompatible-security-policy trigger was proven. Direct Google Drive API/OAuth, backend/auth/cloud database/live synchronization and a required browser-specific File System Access path are not part of the baseline mechanism. D-017/D-018 remain unchanged; no Dexie V5 or backup-format change is authorized for freshness tracking.
+D-016 is **KEPT**. No Drive API/OAuth, backend/auth/cloud database/live sync, required File System Access API or provider-side acknowledgment is introduced.
 
-### Decision validation
-
-Persistent Critical QA `32177687434`, job `95843265579`, passed on PR #37 merge ref `79552f7912307db88272e075b2320cade02f6f17`. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integration share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
-
-### P9-S2-I1 implementation proof
-
-The accepted implementation preserves the decision boundary:
-
-- recovery-health metadata is namespaced local control state only (`easy.recoveryHealth.v1`), not Dexie/business data;
-- states are `unknown`, `due`, `current`, `warning` and `overdue`;
-- missing/corrupt/unverified state blocks normal mutations fail-safe;
-- the implementation warning threshold is 20 hours but the accepted hard boundary remains exactly 24 hours;
-- item, reseller and transaction mutation hooks use one centralized write guard;
-- read-only use and Backup/Restore remain available while blocked;
-- the validated `easy-backup` v2 export returns exact filename/export time for local freshness tracking without changing the envelope;
-- synchronized-folder verification is an explicit operator confirmation after observing the exported file outside local-PC-only context;
-- Easy does not attest provider-side synchronization.
-
-The first PR #39 run `32179815390`, job `95849949295`, exposed only an E2E harness interaction after the rejected write correctly left its dialog open; no runtime behavior change was required. The test was corrected.
-
-Persistent Critical QA **`32180250834`**, job **`95851336506`** passed on PR #39 merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a`: 0 lint errors / 80 warnings, 44 Vitest files / 183 tests PASS, 17/17 Playwright PASS and production build PASS.
-
-PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`; validated merge ref and integration share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
-
-D-024 is now both accepted and implemented. P9-S2 is closed; no new decision number is required for its implementation.
+Accepted P9-S2-I1 run `32180250834`, job `95851336506` passed; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
 
 ## D-025 — Category classification is snapshot-based; legacy history is not retroactively invented
-**Status:** ACCEPTED  
+**Status:** ACCEPTED / I1 IMPLEMENTED  
 **Date:** 2026-08-18
 
-P9-S3 defines category semantics before implementation:
+Accepted semantics:
 
 - category is a stable-ID entity with reversible archive/reactivation lifecycle; rename preserves identity;
-- active items may be assigned only to active categories, and reassignment affects future orders only;
-- future orders preserve both `categoryId` and `categoryName` as transaction-time classification snapshot;
-- existing V4 items/orders migrate without fabricated category assignments or historical snapshots;
-- legacy orders without category snapshot remain valid and report under an explicit `Sem categoria — histórico legado` bucket;
-- category analysis is based only on effective orders using `occurredAt`, with order count, quantity and gross order value as the minimum measures;
-- reseller payments/signals, balances and FIFO debt are not allocated to categories because the current financial model has no persistent per-order settlement link;
-- planned persistence is Dexie V5 with a `categories` table and optional category fields during legacy compatibility;
-- D-017 remains `easy-backup` version 2: new schema-V5 exports use `source.schemaVersion = 5`, while v1 and existing v2/schema4 backups remain supported through lossless in-memory normalization;
-- D-018 will extend the checkpointed atomic restore boundary to categories/items/resellers/transactions when P9-S3-I1 is implemented.
+- active-item assignment targets active categories and reassignment affects future orders only;
+- category-aware future orders preserve both `categoryId` and `categoryName` as transaction-time snapshot;
+- legacy V4 items/orders migrate without fabricated category assignments or historical snapshots;
+- legacy orders without snapshot remain valid as `Sem categoria — histórico legado`;
+- category analysis uses only effective orders and `occurredAt`, with order count, quantity and gross value minimums;
+- reseller payments/signals, balances and FIFO debt are not allocated to categories;
+- persistence target is Dexie V5 with `categories` and optional category fields during legacy compatibility;
+- D-017 stays logical `easy-backup` v2; schema5 adds category data while v1 and v2/schema4 remain supported;
+- D-018 atomic restore includes categories/items/resellers/transactions.
 
-No category runtime/schema/UI/reporting code was introduced by the decision slice. D-016 and D-024 remain unchanged.
+### Contract proof
 
-Functional contract validation: persistent Critical QA **`32184499171`**, job **`95864903309`**, passed on PR #44 merge ref `31a4adca45f74e6907cfce079a98c95b2c580738`: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and production build PASS.
+Final PR #44 closure D-019: run `32185226251`, job `95867186002`, merge ref `ab910d1fbfbe2a007bc35e7bd8784e7697283312` — 0 errors / 80 warnings, 44/183 Vitest, 17/17 Playwright, build PASS. PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`; validated/integrated tree `676f70baa62a46cc353d756a2ff5624295d699c8`.
 
-The next bounded implementation slice is P9-S3-I1 — category persistence, lossless V4→V5 migration and D-017/D-018 backup/restore compatibility only. Category management/classification UI, order snapshot enforcement and category reports remain outside I1.
+### P9-S3-I1 implementation proof
+
+I1 implements only the persistence/recovery substrate:
+
+- Dexie V5 categories and optional item/transaction category fields;
+- additive V4→V5 migration with no category/history backfill;
+- v2/schema5 category export/preflight plus v1/v2-schema4 normalization;
+- D-018 four-table checkpoint/restore/read-back verification;
+- category/unclassified/legacy counts in backup preview;
+- correction preservation of already-existing category snapshots;
+- no category management/classification flow, no new-order category snapshot generation and no category reporting yet.
+
+Accepted functional D-019: run **`32191018791`**, job **`95885134808`**, PR #45 merge ref `c6891b5f7e01c6d36ea71fdfb52571e805d7655d` — **0 errors / 81 warnings, 47/195 Vitest, 17/17 Playwright, build PASS**. The final canonical-documents head still requires D-019 before integration.
+
+No new decision number is required for I1 because it implements the already accepted D-025 contract.
 
 ---
 
