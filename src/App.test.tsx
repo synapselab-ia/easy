@@ -5,7 +5,7 @@ import App from './App'
 
 describe('App Integration Tests', () => {
     it('navigates to the resellers page when the link is clicked', async () => {
-        window.history.pushState({}, '', '/easy/')
+        window.history.pushState({}, '', import.meta.env.BASE_URL)
         const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
         render(
