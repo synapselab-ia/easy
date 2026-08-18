@@ -105,9 +105,9 @@ D-022 keeps D-016 for current operation. Recovery durability and category report
 
 ### P9-S1 — Evidence-backed prioritization
 
-**D-019 VALIDATION PENDING / IN_REVIEW.**
+**PASS / DONE.**
 
-Scope is documentation/decision only. `docs/V2/P9_PRIORITIZATION.md` records:
+Scope was documentation/decision only. `docs/V2/P9_PRIORITIZATION.md` records:
 
 - weighted ranking: recovery durability 94, categories/reporting 83, exact correction microflows 70, occurrence-date usability 69;
 - current-source proof that items/resellers already have edit flows;
@@ -115,12 +115,21 @@ Scope is documentation/decision only. `docs/V2/P9_PRIORITIZATION.md` records:
 - current-source proof that delayed-entry creation already exposes/persists `Data da ocorrência` / `occurredAt`;
 - D-023 ordering and strict no-runtime/no-schema/no-backend/no-cloud P9-S1 boundary.
 
-The full D-019 `npm run qa:critical` gate must pass on the complete PR head before P9-S1 may integrate. Until then P9-S1 remains `IN_REVIEW` and P9-S2 must not start.
+Persistent Critical QA run **`32166330198`**, job **`95806665221`** — **PASS** on PR #31 merge ref `85ffa8430de4c4b8a6ffedd84cc27b8049bf63d4`:
+
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
+
+PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integration share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`, so the integrated content is exactly the content accepted by D-019.
+
+P9-S1 is closed. P9-S2 remains `NOT_STARTED` until its own decision/evidence slice begins.
 
 ## Current known non-blocking debt
 
 Existing React `act(...)` warnings, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and the Vite large-chunk warning remain visible under D-019. No accepted gate is weakened.
 
-## QA policy entering P9
+## QA policy entering P9-S2
 
-Every P9 slice must preserve P1–P8 contracts, keep D-016 authoritative unless later direct evidence proves a reopen trigger, and run full `npm run qa:critical` before integration. Documentation-only decision slices are not exempt.
+Every P9 slice must preserve P1–P9-S1 contracts, keep D-016 authoritative unless later direct evidence proves a reopen trigger, and run full `npm run qa:critical` before integration. Documentation-only decision slices are not exempt.
