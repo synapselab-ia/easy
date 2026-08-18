@@ -164,7 +164,7 @@ A rejected save therefore keeps the form mounted with the operator's current val
 - new `ResellerForm.test.tsx` covers rejected create and rejected edit, visible error feedback, no success callback and retained name/phone/email/notes values;
 - the tests reject the existing Dexie-backed mutation boundary directly; `useItems` and `useResellers` are not rewritten or bypassed in runtime.
 
-## P7-S5 validation
+## P7-S5 validation and integration
 
 Functional persistent Critical QA run **`32141425740`**, job **`95724735659`** — **PASS**:
 
@@ -172,6 +172,10 @@ Functional persistent Critical QA run **`32141425740`**, job **`95724735659`** �
 - Vitest: **41 files / 169 tests PASS**;
 - Playwright Chromium: **14/14 PASS**;
 - production build: **PASS**.
+
+Final canonical documentation-head run **`32141986342`**, job **`95726598751`** — **PASS** on PR merge ref `d44cc9110e7ce8c2e46b89c98f17bbb1744f831b`.
+
+PR #19 was squash-merged into `develop` as `c509d56b6f24d9a8e53dde68816845855b3c0e8b`. The validated PR merge ref and the squash integration commit both resolve to tree **`66b39f2ee76d9a3ba72422e8e93380b3e5ec073f`**, so the integrated P7-S5 runtime and canonical content are byte-for-byte the content validated by the final gate. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
 
