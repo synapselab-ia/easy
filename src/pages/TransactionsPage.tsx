@@ -4,9 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { toast } from "sonner";
 import type { TransactionType } from "../db/database";
 
+function parsePositiveInteger(value: string | null) {
+    if (!value) return undefined;
+
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
 export default function TransactionsPage() {
     const [searchParams] = useSearchParams();
     const initialType = (searchParams.get("type") as TransactionType) || "order";
+    const initialResellerId = parsePositiveInteger(searchParams.get("resellerId"));
 
     const handleSuccess = () => {
         toast.success("Lançamento salvo com sucesso!");
@@ -32,7 +40,8 @@ export default function TransactionsPage() {
                     <TransactionForm
                         onSubmitSuccess={handleSuccess}
                         initialType={initialType}
-                        key={initialType}
+                        initialResellerId={initialResellerId}
+                        key={`${initialType}:${initialResellerId ?? "standalone"}`}
                     />
                 </CardContent>
             </Card>
