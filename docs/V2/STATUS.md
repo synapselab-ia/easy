@@ -203,7 +203,7 @@ P7-S6 resolved QG-015, the last currently evidenced P7-S1 gap, without changing 
 - `TransactionForm.test.tsx`: active contextual preservation across Cancel plus inactive/missing context rejection with zero transaction writes;
 - `tests/e2e/reseller-transaction-context.spec.ts`: reseller creation → detail → contextual transaction page → reseller preselected → Cancel → context preserved.
 
-## P7-S6 validation and P7 closure
+## P7-S6 validation, integration and P7 closure
 
 Functional persistent Critical QA run **`32145620210`**, job **`95738535732`** — **PASS** on PR merge ref `5fab7de932eb7a62ffe58b21820f11a3ba1b904d`:
 
@@ -211,6 +211,10 @@ Functional persistent Critical QA run **`32145620210`**, job **`95738535732`** �
 - Vitest: **43 files / 176 tests PASS**;
 - Playwright Chromium: **15/15 PASS**;
 - production build: **PASS**.
+
+Final canonical documentation-head run **`32146311260`**, job **`95740791449`** — **PASS** on PR merge ref `011798b4b15cd7cb6e1cad8ac7458066e6d76230` with the same 0/80, 43/176, 15/15 and build PASS counts.
+
+PR #21 was squash-merged into `develop` as `0d485ed68498e8866bcc3cb5ede109fc0b712a09`. The validated final PR merge ref and the squash integration commit both resolve to tree **`600776809a56ad551bb828524bfca0ee286b2375`**, so the integrated P7-S6 runtime and canonical content are byte-for-byte the content validated by the final gate. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action-runtime deprecation notices and build chunk-size warning remain visible non-blocking debt under D-019; no gate was weakened.
 
