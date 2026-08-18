@@ -99,6 +99,11 @@ export interface BackupPreflightResult {
     preview: BackupPreview;
 }
 
+export interface BackupExportResult {
+    filename: string;
+    exportedAt: Date;
+}
+
 export class BackupValidationError extends Error {
     readonly issues: string[];
 
@@ -603,7 +608,7 @@ export async function preflightBackupFile(file: Pick<File, 'text'>): Promise<Bac
 }
 
 /** Exporta um envelope lógico v2. O próprio dataset é validado antes do download. */
-export async function exportData(): Promise<void> {
+export async function exportData(): Promise<BackupExportResult> {
     const [items, resellers, transactions] = await Promise.all([
         db.items.toArray(),
         db.resellers.toArray(),
@@ -615,7 +620,8 @@ export async function exportData(): Promise<void> {
 
     const json = JSON.stringify(backup, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const exportedAt = new Date(backup.exportedAt);
+    const timestamp = backup.exportedAt.replace(/[:.]/g, '-');
     const filename = `easy-backup-v${BACKUP_VERSION}-${timestamp}.json`;
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -623,4 +629,6 @@ export async function exportData(): Promise<void> {
     anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
+
+    return { filename, exportedAt };
 }
