@@ -1,16 +1,16 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through completed P6  
+**Status:** verified through accepted P9-S2 recovery mechanism decision  
 **Integration target:** `develop`  
-**Date:** 2026-08-17
+**Date:** 2026-08-18
 
-Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. D-016 keeps the product single-user/local-first; there is no backend, authentication, remote database or synchronization layer.
+Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. D-016 keeps the product single-user/local-first; there is no backend, authentication, remote database or live synchronization layer.
 
 ## Persistence baseline
 
 Database: `ResellerManagerDB`, Dexie **V4** with `items`, `resellers` and `transactions`.
 
-Migration path remains V1 -> V2 reseller lifecycle, V2 -> V3 item lifecycle, V3 -> V4 transaction `occurredAt`. P5/P6 add no Dexie V5.
+Migration path remains V1 -> V2 reseller lifecycle, V2 -> V3 item lifecycle, V3 -> V4 transaction `occurredAt`. P5 through the accepted P9-S2 decision add no Dexie V5.
 
 ## Persisted recovery invariants
 
@@ -37,13 +37,65 @@ data.resellers[]
 data.transactions[]
 ```
 
-New exports self-validate before download. Legacy `version: 1` JSON remains supported by in-memory normalization (`isActive -> true` when missing; `occurredAt -> createdAt` when missing) before the same deep validator runs.
+New exports self-validate before download. Legacy `version: 1` JSON remains supported by in-memory normalization before the same deep validator runs.
 
 ## Preflight and atomic recovery boundary
 
 `preflightBackupPayload()` / `preflightBackupText()` / `preflightBackupFile()` validate restore input before mutation. `restoreService.ts` then creates a validated downloadable `easy-checkpoint-v2-*` checkpoint and replaces all three tables inside one Dexie `rw` transaction. Restored rows are validated and compared to the expected canonical projection before commit. Any write/verification error throws inside the transaction and rolls the replacement back.
 
-This remains the authoritative P5 local recovery path; P6 does not change schema, persistence or financial semantics.
+D-018 remains authoritative and unchanged by P9-S2.
+
+## D-024 recovery durability architecture
+
+D-024 selects **Synchronized recovery-copy folder + 24-hour freshness guard** while explicitly keeping D-016.
+
+### Data path
+
+```text
+Dexie V4 live dataset
+  -> existing validated easy-backup v2 export
+  -> browser download
+  -> local folder configured for OS/provider synchronization
+  -> off-device provider copy when the sync client completes synchronization
+```
+
+Google Drive for desktop is the accepted current-store instance of the synchronized-folder layer. It is an operating-environment dependency, not a new Easy persistence tier.
+
+The recovery path remains:
+
+```text
+replacement computer/browser
+  -> obtain newest acceptable backup JSON from Drive
+  -> D-017 preflight
+  -> D-018 checkpoint + verified atomic Dexie restore
+```
+
+### Recovery freshness boundary
+
+The accepted store target is a newest usable off-device copy no more than **24 hours old**. P9-S2-I1 may persist local recovery-health metadata and use it to expose due/overdue status and gate normal data-changing operation at 24 hours.
+
+Recovery-health metadata is control/UI metadata only:
+
+- it must not require Dexie V5;
+- it must not change `easy-backup` v2;
+- missing/cleared metadata is fail-safe `unknown/due`, never evidence of freshness;
+- Backup/Restore remains reachable even when freshness is unknown or overdue.
+
+Easy may confirm that validated backup generation and browser download initiation occurred. Under D-024 it **cannot claim provider-side synchronization completed**, because no provider API/status integration is present.
+
+### Explicit architecture exclusions
+
+D-024 does not authorize:
+
+- Google Drive API/OAuth or token handling;
+- backend/authentication;
+- cloud database or centrally hosted working state;
+- live multi-device synchronization;
+- provider-side synchronization-status verification;
+- File System Access API as a required baseline capability;
+- Dexie schema migration or backup-envelope version change.
+
+A future direct requirement for provider-acknowledged durability, formal remote recovery SLA, concurrency, live shared state, person-level access/authorship, trusted server integration or incompatible security policy must be evaluated as a possible D-016 reopen trigger.
 
 ## Repository-wide QA architecture
 
@@ -59,26 +111,14 @@ npm run qa:critical
 
 Current tools:
 
-- ESLint 9 / typescript-eslint / React hooks / React refresh;
-- Vitest in jsdom with `vitest.setup.ts` browser API harness;
+- ESLint / typescript-eslint / React hooks / React refresh;
+- Vitest in jsdom with browser API harness;
 - Playwright Chromium against the Vite dev server at `/easy/`;
 - TypeScript build plus Vite production build.
 
-CI uses Node 22 and `npm ci` for reproducible dependency installation. Playwright Chromium is installed explicitly before the E2E gate.
+CI uses Node 22 and `npm ci`. `.github/workflows/ci.yml` runs Critical QA for pull requests targeting `develop` or `main`, pushes to `develop`, and manual dispatch.
 
-### Integration workflow
-
-`.github/workflows/ci.yml` runs Critical QA for:
-
-- pull requests targeting `develop` or `main`;
-- pushes to `develop`;
-- manual dispatch.
-
-This workflow is the persistent repository-wide quality signal for V2 integration.
-
-### Publication workflow
-
-`.github/workflows/deploy.yml` now has a strict dependency chain:
+Publication from `main` retains the strict dependency chain:
 
 ```text
 main push
@@ -87,36 +127,10 @@ main push
   -> deploy: GitHub Pages
 ```
 
-`build` has `needs: quality`; `deploy` has `needs: build`. A failing critical suite therefore prevents the application artifact from being published.
+## Current accepted QA baseline
 
-## P6 baseline reconciliation
+Known warnings/test-harness/dependency debt remains visible and non-blocking only when objective commands pass. The accepted P9-S2 mechanism decision passed D-019 as run `32177687434`, job `95843265579`: 0 lint errors / 80 warnings, 43 Vitest files / 176 tests PASS, 15/15 Playwright PASS and production build PASS.
 
-The pre-change repository-wide baseline was intentionally captured before correcting expectations:
+## Boundary entering P9-S2-I1
 
-- lint: 81 errors;
-- Vitest: 10 failed / 149 passed;
-- Playwright: 10 failed / 3 passed;
-- build: pass.
-
-Most failures were stale harness/tooling expectations rather than product regressions: missing provider/router context, incomplete child mocks, missing jsdom browser APIs, ambiguous/obsolete selectors and a PDF E2E expectation that contradicted D-015 zero-movement statement semantics.
-
-One real integration defect was discovered: `useSearch()` already produces the externally filtered command-center result set, but `cmdk` applied a second internal filter. `CommandDialog` now sets `shouldFilter={false}` so the Dexie search result set is authoritative.
-
-The reconciled persistent gate passes with:
-
-- ESLint: 0 blocking errors / 80 recorded warnings;
-- Vitest: 39 files / 159 tests passing;
-- Playwright Chromium: 13/13 passing;
-- production build passing.
-
-Functional persistent gate: **`32064801009` — PASS**.
-
-## Lint/warning policy
-
-P6 does not define “green” as “zero warning output”. Objective lint errors remain blocking. Existing debt in `no-explicit-any`, `react-hooks/set-state-in-effect` and `react-refresh/only-export-components` remains visible as warnings so later cleanup can be intentional rather than a behavior-changing refactor performed solely to satisfy tooling.
-
-Known non-blocking test stderr (for example React `act(...)` and mocked-select DOM warnings) is similarly recorded as harness debt. These warnings do not bypass any failing test or build result.
-
-## Boundary entering P7
-
-P7 may refine incomplete/high-friction operator UX only after evidence-based prioritization. It must preserve P1–P6 behavior/recovery/QA contracts, must not weaken the critical gate, and must not introduce backend/auth/cloud or new P8/P9 business modules.
+P9-S2-I1 may implement only the D-024 recovery-copy freshness guard and synchronized-folder workflow. It must preserve D-016/D-017/D-018, must not introduce provider integration or persistence migration, and must pass full D-019 before integration.

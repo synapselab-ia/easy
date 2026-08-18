@@ -138,12 +138,32 @@ Accepted ranked inputs:
 
 Accounts/permissions, automatic live synchronization, inventory/orders/store-management and external integrations remain later candidates unless new direct evidence makes them mandatory. P9-S1 itself authorizes no runtime/schema/backend/cloud implementation.
 
+## D-024 — Recovery durability uses a synchronized recovery-copy folder plus a 24-hour freshness guard; D-016 remains local-first
+**Status:** ACCEPTED  
+**Date:** 2026-08-18
+
+The accepted direct recovery target is a newest usable off-device copy no more than **24 hours** old, with manual operator-run restoration on any computer acceptable and daily-use continuity required qualitatively without inventing a numeric RTO.
+
+The selected smallest fit-for-purpose mechanism is **Synchronized recovery-copy folder + 24-hour freshness guard**:
+
+- preserve canonical `easy-backup` v2 and D-018 restore semantics;
+- configure backup downloads to a local folder covered by OS/provider synchronization; Google Drive for desktop is the accepted current-store instance;
+- require one setup verification that an exported backup is visible in Drive outside the local-PC-only context;
+- track local recovery-copy export freshness and treat missing metadata fail-safe as `unknown/due`;
+- at 24 hours, require a new backup export before normal data-changing operation can continue while keeping Backup/Restore reachable;
+- Easy confirms backup generation/download initiation, not provider-side synchronization completion.
+
+D-016 is **KEPT**. No concurrent-operation, live multi-device, person-level access, provider-operated remote recovery, trusted-server integration or incompatible-security-policy trigger was proven. Direct Google Drive API/OAuth, backend/auth/cloud database/live synchronization and a required browser-specific File System Access path are not part of the baseline mechanism. D-017/D-018 remain unchanged; no Dexie V5 or backup-format change is authorized for freshness tracking.
+
+Persistent Critical QA `32177687434`, job `95843265579`, passed on PR #37 merge ref `79552f7912307db88272e075b2320cade02f6f17`. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integration share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
+
+The next bounded implementation slice is P9-S2-I1 and must stay within `docs/V2/P9_RECOVERY_DECISION.md`.
+
 ---
 
 # Open decisions
 
 - D-016 local vs cloud only if later direct evidence proves a reopen trigger;
-- exact P9-S2 recovery durability target/mechanism after measurable store recovery expectations are established;
 - category lifecycle/history/reporting contract in P9-S3;
 - which source-proven correction gaps are real high-value store cases in P9-S4;
 - controlled beta/migration/cutover policy in P10.
