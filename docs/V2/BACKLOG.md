@@ -58,16 +58,7 @@ D-019 established `npm run qa:critical` as the persistent integration/publicatio
 
 **Status:** `DONE` — 2026-08-18.
 
-D-020 prioritized evidence-backed operator intent/error risk. Completed slices:
-
-- P7-S1 gap inventory/prioritization — `DONE`; `32066802100`.
-- P7-S2 transaction-entry intent/feedback — `DONE`; `32069261401`.
-- P7-S3 invalid statement range — `DONE`; `32133559376`, docs `32133891691`.
-- P7-S4 Backup recovery copy — `DONE`; `32136964241`.
-- P7-S5 item/reseller save feedback — `DONE`; `32141425740`.
-- P7-S6 reseller-context transaction launch — `DONE`; `32145620210`.
-
-QG-011 through QG-015 are resolved.
+D-020 prioritized evidence-backed operator intent/error risk. P7-S1 through P7-S6 are `DONE`; QG-011 through QG-015 are resolved. Final P7-S6 validation `32145620210`.
 
 ## P8 — Real-store requirements discovery
 
@@ -77,15 +68,13 @@ QG-011 through QG-015 are resolved.
 
 **Status:** `DONE`.
 
-Repository evidence did not prove concurrency, automatic live sharing, person-level access/authorship, remote recovery SLA, trusted integrations or local-storage-incompatible security policy. D-021 kept D-016 authoritative pending direct evidence. Persistent gate `32149199373`; canonical closure `32150004427`.
+D-021 kept D-016 authoritative pending direct evidence. Persistent gate `32149199373`; canonical closure `32150004427`.
 
 ### P8-S2 — Direct real-store validation
 
 **Status:** `DONE`.
 
-Direct evidence confirms current PC-based, non-concurrent operation; PDF/extract sharing to resellers; manual JSON portability/backup; no mandatory server integration; modest scale. It also confirms catastrophic device-loss exposure when the newest JSON has not been copied off-device, item category/reporting needs, and edit/correction friction whose exact store cases were not enumerated.
-
-D-022 keeps D-016 because no explicit reopen trigger was proven. Persistent Critical QA `32158395391`, job `95781056589`; PR #27 integrated as `e05d5cb1b4b4c4d143afbad3677bb9a472088cfe`; canonical P8 closure integrated as `5bf1e44fed38909c2d5a5cf49b6ef985a1a45442`.
+Direct evidence confirmed current PC-based, non-concurrent operation, PDF/extract sharing, manual JSON portability/backup, no mandatory server integration, modest scale, severe device-loss exposure, category/reporting need and edit/correction friction. D-022 kept D-016. Persistent Critical QA `32158395391`; canonical P8 closure integrated as `5bf1e44fed38909c2d5a5cf49b6ef985a1a45442`.
 
 ---
 
@@ -98,44 +87,36 @@ D-022 keeps D-016 because no explicit reopen trigger was proven. Persistent Crit
 
 **Status:** `DONE` — 2026-08-18.
 
-No runtime/schema/backend/cloud implementation was performed. Full evidence and scoring are recorded in `docs/V2/P9_PRIORITIZATION.md`.
+D-023 accepted order:
 
-Accepted ranking:
+1. recovery durability / off-device protection — **94/100**;
+2. item categories + classification + category reporting — **83/100**;
+3. exact transaction edit/correction microflows — **70/100**;
+4. occurrence-date discoverability/usability — **69/100**.
 
-1. **Recovery durability / off-device protection — 94/100.** Highest known consequence. Current backup generation remains operator-initiated and the critical failure mode is dependence on a person remembering to create/move a fresh copy.
-2. **Item categories + item classification + category-level reporting — 83/100.** Direct confirmed product need. Requires a bounded category data/reporting contract before implementation because it crosses model, migration, backup and reporting semantics.
-3. **Exact transaction edit/correction microflows — 70/100.** P8 confirms friction but not exact store cases. Source proves guided correction cannot change `occurredAt`, order item, transaction type or observation and is blocked if the original order item is inactive. Items and resellers already have edit flows.
-4. **Occurrence-date discoverability/usability — 69/100.** Existing creation UI already exposes `Data da ocorrência` and persists `occurredAt`; verify usability only and do not rebuild P3.
-
-D-023 records the ordering and evidence boundary. Persistent Critical QA `32166330198`, job `95806665221` passed on PR #31; the validated merge ref `85ffa8430de4c4b8a6ffedd84cc27b8049bf63d4` and integrated commit `3d99814c0f97dce640a91721fc68d33e79575cc3` share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`.
+Persistent Critical QA `32166330198`, job `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ### P9-S2 — Recovery durability decision gate
 
-**Status:** `IN_PROGRESS` — direct recovery-target evidence supplied on 2026-08-18; evidence-intake integration is `IN_REVIEW`; mechanism comparison is not started.
+**Status:** `IN_PROGRESS` — direct recovery-target evidence intake is `DONE`; mechanism comparison/decision is `NOT_STARTED`.
 
-The first P9-S2 attempt was correctly `BLOCKED` because the measurable recovery target was missing. That blocked-state record passed Critical QA `32168368086`, job `95813314347`, and integrated through PR #33 as `0017538b93c438f4374b1b2427222f27b9ef357d`.
+Historical blocked evidence attempt passed Critical QA `32168368086`, job `95813314347`, and integrated through PR #33 as `0017538b93c438f4374b1b2427222f27b9ef357d`.
 
-The store/operator has now supplied the missing direct evidence:
+Accepted direct target supplied on 2026-08-18:
 
-- newest usable off-device recovery copy may be at most **24 hours** old;
+- newest usable off-device recovery copy must be no more than **24 hours** old;
 - manual restore on **any computer** is acceptable;
-- Easy has **daily demand**, so multi-day recovery is unacceptable, but no numeric hour-based RTO was provided and none is invented;
+- daily demand makes multi-day recovery incompatible with operation, without inventing a numeric hour-based RTO;
 - **Google Drive** is an acceptable durable destination;
-- a **local PC file** is also acceptable for day-to-day speed/convenience;
-- provider-operated remote recovery is not mandatory because operator-run manual recovery on a replacement computer is acceptable.
+- a **local PC file** is acceptable as a convenience copy;
+- provider-operated remote recovery is not mandatory;
+- ChatGPT Google-account connectivity is not Easy authorization for Drive.
 
-The ChatGPT-connected Google account is not treated as an Easy credential. Direct Google API/OAuth integration is not implied or authorized merely because Drive is an acceptable destination.
+Evidence-intake Critical QA **`32175718073`**, job **`95837062983`** — PASS on PR #35 merge ref `68d8252c83ebab927e3953c7a6380f8b0473e9f7`: 0 lint errors / 80 warnings, 43/176 Vitest, 15/15 Playwright and build PASS. PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`; validated merge ref and integration share tree `e1c32464b8260ae3b45094f20464ff3e5745687e`.
 
-`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` now records the supplied answers and their bounded interpretation.
+The evidence blocker is closed. No mechanism was compared, selected or implemented, and D-016 remains authoritative entering the next decision slice.
 
-Current slice boundary:
-
-- evidence intake only;
-- no mechanism comparison or ranking yet;
-- no D-016 reopen decision yet;
-- no runtime/schema/backup-contract/backend/auth/cloud/live-sync change;
-- no later P9 slice starts while P9-S2 remains active;
-- full D-019 validation/integration is required before advancing to mechanism comparison.
+Next P9-S2 work is decision-only: compare the smallest candidate mechanisms against the accepted target and D-016/D-017/D-018, explicitly keep/reopen D-016, select/record a mechanism and define a bounded implementation slice if required. Do not implement in the comparison slice.
 
 ### P9-S3 — Category data/reporting contract
 
@@ -147,20 +128,13 @@ Define category lifecycle, item assignment, historical transaction/report semant
 
 **Status:** `NOT_STARTED`.
 
-Directly map the source-proven unsupported correction actions to actual operator cases and implement only the confirmed high-value subset while preserving D-012/D-013 audited reversal/replacement history.
+Directly map source-proven unsupported correction actions to actual operator cases and implement only the confirmed high-value subset while preserving audited history.
 
 ### P9-S5 — Occurrence-date usability verification
 
 **Status:** `NOT_STARTED`.
 
-Verify the existing delayed-entry workflow in real operation. Do not add a second date model; change UX only if direct evidence shows the current field/default/helper text is insufficient.
-
-Lower-confidence/later candidates unless new direct evidence makes them mandatory:
-
-- accounts/permissions;
-- automatic live synchronization;
-- broader order/inventory/store-management modules;
-- external integrations.
+Verify the existing delayed-entry workflow. Do not add a second date model.
 
 ## P10 — Controlled beta, migration and cutover
 
