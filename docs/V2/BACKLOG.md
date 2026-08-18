@@ -216,7 +216,7 @@ QG-011 through QG-015 from the accepted P7-S1 inventory are all resolved. P7-S6 
 
 ## P8 — Real store requirements discovery
 
-**Status:** `IN_PROGRESS`.
+**Status:** `IN_PROGRESS` — blocked at P8-S2 until direct real-store evidence is supplied.
 
 ### P8-S1 — Evidence-based repository discovery and D-016 reopen assessment
 
@@ -234,20 +234,34 @@ Completed discovery:
 
 No runtime, backend/auth/cloud/synchronization, Dexie migration or P9 module work was performed.
 
-P8-S1 requires the full D-019 `qa:critical` gate before final integration.
-
 ### P8-S2 — Direct real-store validation of operator/device/sharing/access/recovery requirements
 
-**Status:** `NOT_STARTED` — current next slice after P8-S1 integration.
+**Status:** `BLOCKED` — 2026-08-18; direct real-store evidence has not been supplied to the project.
 
-Bounded scope:
+Validation attempt completed:
+
+- reread the canonical P8 evidence boundary and checked the current repository for newly supplied store evidence;
+- searched repository content for interview/observation/operator/store material and RTO/RPO/SLA evidence;
+- checked repository issues, including `Duda` and `loja`; the repository currently has zero issues;
+- inspected the project root for interview notes, observation records, support/telemetry evidence, SLA/security policy or similar direct artifacts;
+- found no direct real-store artifact and received no direct operator answers in the current project conversation.
+
+Classification:
+
+- absence of evidence is **not** evidence that the store has no multi-user, synchronization, access-control, recovery, integration or security requirement;
+- all six D-016 triggers remain **UNRESOLVED from direct evidence** and none is proven;
+- D-016 therefore remains authoritative under D-021, but P8-S2 cannot be closed as `DONE`;
+- no architecture implementation or P9 prioritization is authorized from this blocked validation attempt;
+- `docs/V2/P8_EVIDENCE_REQUEST.md` defines the minimum evidence packet required to resume P8-S2.
+
+Bounded scope when evidence becomes available:
 
 - collect explicit real-store evidence from interview notes, operator answers, observation or other artifacts actually supplied to the project;
 - resolve who operates the same dataset, device/browser usage, concurrent operation, automatic sharing/synchronization need, reseller direct access, permissions/authorship, recovery RTO/RPO/SLA, trusted integrations, security/privacy constraints, realistic data scale/connectivity and materially missing workflows/reports;
 - map each confirmed fact back to the D-016 trigger matrix;
 - explicitly decide whether D-016 remains accepted or must be reopened before any architecture implementation;
 - prioritize only evidence-backed P9 candidates after the architecture outcome is known;
-- run full `npm run qa:critical` before integration.
+- run full `npm run qa:critical` before integration of any resumed P8-S2 conclusion.
 
 Out of scope:
 
