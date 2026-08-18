@@ -27,8 +27,6 @@ vi.mock('sonner', () => ({
     },
 }));
 
-import { toast } from 'sonner';
-
 describe('ResellerDetailPage Calculation and Unit rendering', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -170,20 +168,57 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         expect(screen.getByText('Gerar PDF')).not.toBeDisabled();
     });
 
-    it('exibe toast.error quando dataFim é anterior a dataInicio e não gera PDF', () => {
+    it('exibe estado inválido imediatamente, bloqueia o fallback e se recupera quando o período é corrigido', () => {
         vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
         vi.mocked(useTransactions).mockReturnValue({
-            data: [{ id: 1, resellerId: 1, type: 'order', totalPrice: 100, createdAt: new Date('2025-02-15') }],
+            data: [{
+                id: 1,
+                resellerId: 1,
+                type: 'order',
+                totalPrice: 100,
+                itemName: 'Pedido do intervalo',
+                occurredAt: new Date('2025-02-15T12:00:00'),
+                createdAt: new Date('2025-02-15T12:00:00'),
+            }],
             isLoading: false
         } as any);
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
         fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-03-01' } });
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-01-01' } });
-        fireEvent.click(screen.getByText('Gerar PDF'));
 
-        expect(toast.error).toHaveBeenCalled();
+        expect(screen.getByRole('alert')).toHaveTextContent('Período inválido');
+        expect(screen.getByText('Gerar PDF')).toBeDisabled();
+        expect(screen.getByLabelText('Data Início')).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByLabelText('Data Fim')).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.queryByText('Saldo Devedor Atual')).not.toBeInTheDocument();
+        expect(screen.queryByText('Pedido do intervalo')).not.toBeInTheDocument();
+        expect(screen.getByText(/Histórico indisponível enquanto o período estiver inválido/i)).toBeInTheDocument();
         expect(generateResellerExtract).not.toHaveBeenCalled();
+
+        fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-03-31' } });
+
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.getByText('Gerar PDF')).not.toBeDisabled();
+        expect(screen.getByText('Resumo do Período')).toBeInTheDocument();
+        expect(screen.getByText('Pedido do intervalo')).toBeInTheDocument();
+    });
+
+    it('limpar uma faixa inválida remove a orientação e restaura a visão corrente', () => {
+        vi.mocked(useReseller).mockReturnValue({ data: mockReseller, isLoading: false } as any);
+        vi.mocked(useTransactions).mockReturnValue({ data: [], isLoading: false } as any);
+
+        render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
+        fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '2025-03-01' } });
+        fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-01-01' } });
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Data Início'), { target: { value: '' } });
+        fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '' } });
+
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.getByText('Saldo Devedor Atual')).toBeInTheDocument();
+        expect(screen.getByText('Gerar PDF')).not.toBeDisabled();
     });
 
     it('gera extrato formal quando o período não tem movimentações', () => {
@@ -198,7 +233,6 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
         fireEvent.change(screen.getByLabelText('Data Fim'), { target: { value: '2025-03-31' } });
         fireEvent.click(screen.getByText('Gerar PDF'));
 
-        expect(toast.warning).not.toHaveBeenCalled();
         expect(generateResellerExtract).toHaveBeenCalledWith(
             mockReseller,
             expect.any(Array),
