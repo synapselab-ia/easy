@@ -19,6 +19,7 @@ interface TransactionFormProps {
     onSubmitSuccess: () => void;
     onCancel?: () => void;
     initialType?: TransactionType;
+    initialResellerId?: number;
 }
 
 function formatDateInput(date = new Date()) {
@@ -34,8 +35,14 @@ function occurrenceFromDateInput(value: string) {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "order" }: TransactionFormProps) {
-    const [resellerId, setResellerId] = useState<string>("");
+export function TransactionForm({
+    onSubmitSuccess,
+    onCancel,
+    initialType = "order",
+    initialResellerId,
+}: TransactionFormProps) {
+    const initialResellerValue = initialResellerId?.toString() ?? "";
+    const [resellerId, setResellerId] = useState<string>(initialResellerValue);
     const [type, setType] = useState<TransactionType>(initialType);
     const [occurrenceDate, setOccurrenceDate] = useState<string>(() => formatDateInput());
 
@@ -74,7 +81,7 @@ export function TransactionForm({ onSubmitSuccess, onCancel, initialType = "orde
         : 0;
 
     const resetForm = () => {
-        setResellerId("");
+        setResellerId(initialResellerValue);
         setType(initialType);
         setOccurrenceDate(formatDateInput());
         setItemId("");
