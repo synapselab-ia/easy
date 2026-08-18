@@ -4,15 +4,38 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-18 — P9-S2 direct recovery-target evidence supplied; evidence intake in review
+
+The store/operator supplied the missing direct recovery-target answers required by the blocked P9-S2 evidence gate.
+
+Accepted direct evidence for this intake:
+
+- loss of up to **24 hours** of work is considered a solvable/acceptable recovery case;
+- manual restoration on **any computer** is acceptable;
+- Easy has **daily demand** and a multi-day recovery procedure is incompatible with current operation, but no numeric hour-based RTO was supplied and none is invented;
+- **Google Drive** is an acceptable durable destination;
+- a **local PC file** is also acceptable for day-to-day speed/convenience;
+- because operator-run manual recovery on another computer is acceptable, provider-operated remote recovery is not mandatory.
+
+The Google account connected to ChatGPT is not treated as an Easy credential. The evidence authorizes Drive to be considered as an acceptable destination during the later mechanism comparison; it does not authorize or imply direct Google API/OAuth integration.
+
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` now preserves the direct answers and their bounded interpretation. The evidence-availability blocker is therefore resolved sufficiently for P9-S2 to resume after this evidence-only slice passes D-019 and integrates.
+
+This slice intentionally does **not** compare, rank, select or implement a recovery mechanism. D-016 remains authoritative, D-017/D-018 remain unchanged, no runtime/schema/backup-contract/backend/auth/cloud/live-sync work is performed, and later P9 slices remain unstarted.
+
+The next action remains validation/integration of this evidence-only record. Only after accepted integration may `NEXT_ACTION` advance to comparison of the smallest D-016-compatible mechanisms against the <=24-hour recovery-copy boundary, manual-any-computer restoration procedure, daily-use continuity constraint and acceptable Drive/local destinations.
+
+---
+
 ## 2026-08-18 — P9-S2 recovery decision gate blocked on missing measurable store target
 
-P9-S2 executed evidence intake only. Existing direct store evidence proves severe operating-PC-loss/manual-backup exposure, but still does not define the required acceptable maximum recoverable-copy age, recovery procedure, interruption window, provider-operated recovery requirement, or destination/process constraints. Repository-accessible searches found no newer direct evidence supplying those answers.
+P9-S2 executed evidence intake only. Existing direct store evidence proved severe operating-PC-loss/manual-backup exposure, but did not yet define the required acceptable maximum recoverable-copy age, recovery procedure, interruption window, provider-operated recovery requirement, or destination/process constraints. Repository-accessible searches found no newer direct evidence supplying those answers.
 
-`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct answers required to resume. Missing evidence is a blocker, not permission to invent SLA/RPO/RTO values or infer a cloud/server requirement. P9-S2 is `BLOCKED`; D-016 remains authoritative. No recovery mechanism comparison/selection, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed.
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` recorded the minimum direct answers required to resume. Missing evidence was treated as a blocker, not permission to invent SLA/RPO/RTO values or infer a cloud/server requirement. P9-S2 remained `BLOCKED`; D-016 remained authoritative. No recovery mechanism comparison/selection, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed.
 
 Blocked-state Critical QA **`32168368086`**, job **`95813314347`** — PASS on PR #33: 0 lint errors / 80 warnings, 43 Vitest files / 176 tests, 15/15 Playwright and production build PASS. PR #33 was squash-merged into `develop` as `0017538b93c438f4374b1b2427222f27b9ef357d`; validated merge ref `cbc96eefb315c29c266b1df978bda605c2907352` and integrated commit share tree `bf7165121ec08cd91f38db05d887a505dba3dbee`.
 
-The validated integration records the evidence blocker only. P9-S2 remains `BLOCKED` and the next action remains direct store evidence intake; no recovery decision or implementation has been accepted.
+The validated integration records the historical evidence blocker only.
 
 ---
 
@@ -55,7 +78,7 @@ Persistent Critical QA **`32166330198`**, job **`95806665221`** — PASS on PR #
 
 PR #31 was squash-merged into `develop` as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integrated commit share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`, proving content equivalence.
 
-P9-S1 is `DONE`. `NEXT_ACTION` advances to P9-S2 as a decision/evidence gate only; no P9-S2 design or implementation was executed during this closure.
+P9-S1 is `DONE`. `NEXT_ACTION` advanced to P9-S2 as a decision/evidence gate only.
 
 ---
 
