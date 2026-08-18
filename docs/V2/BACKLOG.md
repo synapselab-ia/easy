@@ -158,29 +158,54 @@ P7-S4 gate: **PASS / DONE**.
 
 ### P7-S5 — Operator-visible item/reseller save failures
 
+**Status:** `DONE` — 2026-08-18.
+
+Completed behavior:
+
+- rejected item create mutations surface their domain/persistence error through `toast.error`;
+- rejected item edit mutations surface their domain/persistence error through `toast.error`;
+- rejected reseller create mutations surface their domain/persistence error through `toast.error`;
+- rejected reseller edit mutations surface their domain/persistence error through `toast.error`;
+- failed saves do not call the success close/reset path, so current form values remain available for correction/retry;
+- P1 lifecycle/reference rules and existing `useItems` / `useResellers` persistence semantics remain unchanged.
+
+Coverage added:
+
+- `ItemForm.test.tsx`: rejected create + retained name/price; rejected edit + retained edited name/price;
+- new `ResellerForm.test.tsx`: rejected create + retained name/phone/email/notes; rejected edit + retained edited values;
+- existing page-level create/edit/lifecycle integrations remain green.
+
+Validation history:
+
+- **`32141425740` — PASS**, job `95724735659`: 0 lint errors / 80 warnings, 41 Vitest files / 169 tests, 14/14 Playwright, build PASS.
+
+P7-S5 gate: **PASS / DONE**.
+
+### P7-S6 — Reseller-context transaction launch without redundant reselection
+
 **Status:** `NOT_STARTED` — current next slice.
 
 Bounded scope:
 
-- surface rejected item create/edit mutations visibly to the operator;
-- surface rejected reseller create/edit mutations visibly to the operator;
-- preserve entered form data after failure so correction/retry does not require re-entry;
-- preserve P1 lifecycle/reference rules and existing persistence semantics;
-- add focused component/page coverage for rejected saves plus retained input;
+- from reseller detail, provide the existing transaction-entry flow with the current reseller intent preselected/preserved;
+- keep standalone transaction entry unchanged;
+- preserve P1 active-reference validation so stale/inactive/missing reseller context cannot bypass normal rules;
+- preserve P2/P3 transaction financial, audit and occurrence-date semantics;
+- add focused component/page coverage and one bounded Playwright reseller-detail → transaction-entry path if navigation is part of the implementation;
 - run full `npm run qa:critical`.
 
 Out of scope:
 
-- transaction-entry behavior already closed in P7-S2;
-- reseller-context transaction launch;
-- financial/correction semantics;
+- command-center Payment/Signal behavior already closed in P7-S2;
+- financial/correction/statement semantics;
+- item/reseller lifecycle changes;
 - backup/restore mechanics;
 - schema/persistence architecture changes;
 - P8/P9 work.
 
-### Later P7 slices
+### P7 completion direction
 
-After P7-S5, continue only through the remaining ranked P7-S1 gaps in order unless new repository evidence materially changes their operational priority.
+After P7-S6, close P7 only if QG-015 is resolved, no new material in-scope operational gap is evidenced, and the persistent Critical QA gate remains green.
 
 ---
 
