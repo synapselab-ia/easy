@@ -14,6 +14,7 @@ test('blocks normal writes when recovery health is unknown while keeping Backup/
     await page.getByRole('button', { name: 'Salvar' }).click();
 
     await expect(page.getByText(/Cópia de recuperação ausente ou vencida/)).toBeVisible();
+    await page.getByRole('button', { name: 'Cancelar' }).click();
 
     await page.locator('[data-recovery-status] a').click();
     await expect(page.getByRole('heading', { name: 'Backup & Restore' })).toBeVisible();
