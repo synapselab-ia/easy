@@ -64,17 +64,8 @@ D-020 prioritized evidence-backed operator intent/error risk. P7-S1 through P7-S
 
 **Status:** `DONE` — 2026-08-18.
 
-### P8-S1 — Repository evidence and D-016 assessment
-
-**Status:** `DONE`.
-
-D-021 kept D-016 authoritative pending direct evidence. Persistent gate `32149199373`; canonical closure `32150004427`.
-
-### P8-S2 — Direct real-store validation
-
-**Status:** `DONE`.
-
-Direct evidence confirmed current PC-based, non-concurrent operation, PDF/extract sharing, manual JSON portability/backup, no mandatory server integration, modest scale, severe device-loss exposure, category/reporting need and edit/correction friction. D-022 kept D-016. Persistent Critical QA `32158395391`; canonical P8 closure integrated as `5bf1e44fed38909c2d5a5cf49b6ef985a1a45442`.
+- P8-S1 — repository evidence/D-016 assessment: `DONE`; D-021 accepted.
+- P8-S2 — direct validation: `DONE`; D-022 kept D-016; persistent Critical QA `32158395391`.
 
 ---
 
@@ -83,7 +74,7 @@ Direct evidence confirmed current PC-based, non-concurrent operation, PDF/extrac
 **Priority:** High  
 **Status:** `IN_PROGRESS`.
 
-### P9-S1 — Evidence-backed prioritization only
+### P9-S1 — Evidence-backed prioritization
 
 **Status:** `DONE` — 2026-08-18.
 
@@ -96,27 +87,53 @@ D-023 accepted order:
 
 Persistent Critical QA `32166330198`, job `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
-### P9-S2 — Recovery durability decision gate
+### P9-S2 — Recovery durability
 
-**Status:** `IN_PROGRESS` — direct recovery-target evidence intake is `DONE`; mechanism comparison/decision is `NOT_STARTED`.
+**Status:** `IN_PROGRESS` — target evidence `DONE`; mechanism comparison/decision `DONE`; implementation P9-S2-I1 `NOT_STARTED`.
 
-Historical blocked evidence attempt passed Critical QA `32168368086`, job `95813314347`, and integrated through PR #33 as `0017538b93c438f4374b1b2427222f27b9ef357d`.
+Accepted direct target:
 
-Accepted direct target supplied on 2026-08-18:
+- newest usable off-device recovery copy **<=24 hours** old;
+- manual restore on any computer acceptable;
+- daily demand, no invented numeric RTO;
+- Google Drive acceptable durable destination;
+- local PC file acceptable convenience copy;
+- provider-operated remote recovery not mandatory.
 
-- newest usable off-device recovery copy must be no more than **24 hours** old;
-- manual restore on **any computer** is acceptable;
-- daily demand makes multi-day recovery incompatible with operation, without inventing a numeric hour-based RTO;
-- **Google Drive** is an acceptable durable destination;
-- a **local PC file** is acceptable as a convenience copy;
-- provider-operated remote recovery is not mandatory;
-- ChatGPT Google-account connectivity is not Easy authorization for Drive.
+Evidence intake passed `32175718073`, job `95837062983`, and integrated through PR #35 as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`.
 
-Evidence-intake Critical QA **`32175718073`**, job **`95837062983`** — PASS on PR #35 merge ref `68d8252c83ebab927e3953c7a6380f8b0473e9f7`: 0 lint errors / 80 warnings, 43/176 Vitest, 15/15 Playwright and build PASS. PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`; validated merge ref and integration share tree `e1c32464b8260ae3b45094f20464ff3e5745687e`.
+#### P9-S2 mechanism comparison/decision
 
-The evidence blocker is closed. No mechanism was compared, selected or implemented, and D-016 remains authoritative entering the next decision slice.
+**Status:** `DONE` — 2026-08-18.
 
-Next P9-S2 work is decision-only: compare the smallest candidate mechanisms against the accepted target and D-016/D-017/D-018, explicitly keep/reopen D-016, select/record a mechanism and define a bounded implementation slice if required. Do not implement in the comparison slice.
+D-024 selects **Synchronized recovery-copy folder + 24-hour freshness guard** and **KEEPS D-016**.
+
+Comparison result:
+
+- reminder/age visibility alone — rejected as insufficient off-device protection;
+- existing `easy-backup` v2 downloaded to an OS/provider-synchronized local folder + 24h guard — **selected**;
+- browser file-system handle — not baseline because actual store browser support is not directly evidenced and permission persistence adds failure modes;
+- direct Google Drive API/OAuth — not selected; larger than current requirement and no integration trigger proven;
+- backend/cloud DB/live synchronization — rejected; no D-016 trigger proven.
+
+Operational baseline uses Google Drive for desktop as the accepted current-store synchronized destination, with a one-time verification that an exported backup is visible outside the local-PC-only context. Easy tracks export freshness, not provider-side synchronization acknowledgment.
+
+Persistent Critical QA **`32177687434`**, job **`95843265579`** — PASS on PR #37 merge ref `79552f7912307db88272e075b2320cade02f6f17`: 0 lint errors / 80 warnings, 43/176 Vitest, 15/15 Playwright and build PASS. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; both share tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
+
+#### P9-S2-I1 — Recovery-copy freshness guard and synchronized-folder workflow
+
+**Status:** `NOT_STARTED`.
+
+Implement only the D-024 bounded runtime slice:
+
+- one-time synchronized-folder setup guidance/verification state;
+- local fail-safe recovery-health metadata, no Dexie V5;
+- global last-copy health and due/overdue visibility;
+- 24-hour gate for normal data-changing work while Backup/Restore remains reachable;
+- minimal `exportData()` refactor only to expose export metadata/update local health;
+- focused tests and full D-019.
+
+Out of scope: Google Drive API/OAuth, backend/auth/cloud/live sync, required File System Access API, Dexie/backup-format migration, provider-side sync verification and P9-S3+.
 
 ### P9-S3 — Category data/reporting contract
 
