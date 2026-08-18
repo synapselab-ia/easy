@@ -1,10 +1,23 @@
 import Dexie, { type EntityTable } from 'dexie';
 
+export interface Category {
+    id?: number;
+    name: string;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export function isCategoryActive(category: Pick<Category, 'isActive'>) {
+    return category.isActive !== false;
+}
+
 export interface Item {
     id?: number;
     name: string;
     basePrice: number;
     isActive?: boolean;
+    categoryId?: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -49,6 +62,9 @@ export interface Transaction {
     itemName?: string;
     quantity?: number;
     unitPrice?: number;
+    // Snapshot histórico opcional de categoria. Ausente em pedidos legados V4.
+    categoryId?: number;
+    categoryName?: string;
     totalPrice: number;
     observation?: string;
     // Auditoria de correção. Ausente significa lançamento efetivo.
@@ -62,6 +78,7 @@ export interface Transaction {
 }
 
 class AppDatabase extends Dexie {
+    categories!: EntityTable<Category, 'id'>;
     items!: EntityTable<Item, 'id'>;
     resellers!: EntityTable<Reseller, 'id'>;
     transactions!: EntityTable<Transaction, 'id'>;
@@ -109,6 +126,15 @@ class AppDatabase extends Dexie {
                 }
             })
         );
+
+        // P9-S3-I1: additive, lossless migration only. Existing V4 rows are left untouched;
+        // no category entity or historical classification is fabricated during upgrade.
+        this.version(5).stores({
+            categories: '++id, name, isActive',
+            items: '++id, name, categoryId',
+            resellers: '++id, name',
+            transactions: '++id, resellerId, type, createdAt, occurredAt, categoryId'
+        });
     }
 }
 
