@@ -177,8 +177,8 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
                 type: 'order',
                 totalPrice: 100,
                 itemName: 'Pedido do intervalo',
-                occurredAt: new Date('2025-02-15T12:00:00'),
-                createdAt: new Date('2025-02-15T12:00:00'),
+                occurredAt: new Date('2025-03-15T12:00:00'),
+                createdAt: new Date('2025-03-15T12:00:00'),
             }],
             isLoading: false
         } as any);
