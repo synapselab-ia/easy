@@ -216,7 +216,7 @@ QG-011 through QG-015 from the accepted P7-S1 inventory are all resolved. P7-S6 
 
 ## P8 — Real store requirements discovery
 
-**Status:** `IN_PROGRESS` — blocked at P8-S2 until direct real-store evidence is supplied.
+**Status:** `DONE` as evidence/decision work — 2026-08-18; canonical D-019/integration closure pending.
 
 ### P8-S1 — Evidence-based repository discovery and D-016 reopen assessment
 
@@ -229,50 +229,95 @@ Completed discovery:
 - confirmed project intent for administrator workflows, desktop/mobile use, PDF sharing, JSON backup/portability and current reporting/analytics;
 - identified reseller direct mobile use as a material but under-specified historical intent that conflicts with the earlier explicit single-user/no-auth model;
 - separated repository-backed product intent from direct real-store validation;
-- assessed every D-016 reopen trigger and found none proven by currently available evidence;
+- assessed every D-016 reopen trigger and found none proven by currently available repository evidence;
 - accepted D-021: D-016 remains authoritative until direct store evidence resolves operator/device/sharing/access/recovery constraints.
 
 No runtime, backend/auth/cloud/synchronization, Dexie migration or P9 module work was performed.
 
-### P8-S2 — Direct real-store validation of operator/device/sharing/access/recovery requirements
+### P8-S2 — Direct real-store validation and D-016 keep/reopen decision
 
-**Status:** `BLOCKED` — 2026-08-18; direct real-store evidence has not been supplied to the project.
+**Status:** `DONE` as evidence/decision work — 2026-08-18; integration QA/closure evidence pending.
 
-Validation attempt completed:
+The first P8-S2 attempt was correctly closed as `BLOCKED` because no direct real-store evidence had been supplied. It passed D-019 (`32152466007`) and its canonical blocked-state closure integrated as `5e1b45bef63b8e91c692d35cae9da5c66a905740`.
 
-- reread the canonical P8 evidence boundary and checked the current repository for newly supplied store evidence;
-- searched repository content for interview/observation/operator/store material and RTO/RPO/SLA evidence;
-- checked repository issues, including `Duda` and `loja`; the repository currently has zero issues;
-- inspected the project root for interview notes, observation records, support/telemetry evidence, SLA/security policy or similar direct artifacts;
-- found no direct real-store artifact and received no direct operator answers in the current project conversation.
+P8-S2 then resumed after a direct stakeholder supplied the evidence packet in the project conversation.
 
-Classification:
+#### Current operation confirmed
 
-- absence of evidence is **not** evidence that the store has no multi-user, synchronization, access-control, recovery, integration or security requirement;
-- all six D-016 triggers remain **UNRESOLVED from direct evidence** and none is proven;
-- D-016 therefore remains authoritative under D-021, but P8-S2 cannot be closed as `DONE`;
-- no architecture implementation or P9 prioritization is authorized from this blocked validation attempt;
-- `docs/V2/P8_EVIDENCE_REQUEST.md` defines the minimum evidence packet required to resume P8-S2.
+- Easy is operated by Duda and store owners;
+- concurrent operation on one dataset is not currently required;
+- current use is on a PC;
+- the same live dataset is not currently required automatically on multiple devices at the same time;
+- resellers do not need interactive access; PDF/extract sharing is sufficient;
+- JSON/manual off-device handling is the current backup/portability mechanism;
+- no trusted server integration is currently mandatory;
+- approximate scale is at most ~100 resellers, around ~50 active, with modest daily entry volume.
 
-Bounded scope when evidence becomes available:
+#### Recovery risk confirmed
 
-- collect explicit real-store evidence from interview notes, operator answers, observation or other artifacts actually supplied to the project;
-- resolve who operates the same dataset, device/browser usage, concurrent operation, automatic sharing/synchronization need, reseller direct access, permissions/authorship, recovery RTO/RPO/SLA, trusted integrations, security/privacy constraints, realistic data scale/connectivity and materially missing workflows/reports;
-- map each confirmed fact back to the D-016 trigger matrix;
-- explicitly decide whether D-016 remains accepted or must be reopened before any architecture implementation;
-- prioritize only evidence-backed P9 candidates after the architecture outcome is known;
-- run full `npm run qa:critical` before integration of any resumed P8-S2 conclusion.
+If the operating PC fails before the current JSON has been copied to Drive, the store can lose the working dataset and may have to reconstruct tens of thousands of reais in sales. Human-memory-dependent off-device backup is therefore a confirmed critical business-continuity risk.
 
-Out of scope:
+Numeric RPO/RTO, provider-operated recovery and a formal remote-recovery SLA were not supplied. Recovery durability becomes a high-priority product input, but the explicit D-016 remote-recovery-SLA trigger is not proven.
 
-- backend/auth/cloud/synchronization implementation;
-- Dexie migration or persistence architecture implementation;
-- speculative P9 module build-out;
-- treating an unanswered discovery question as a requirement.
+#### Confirmed unmet product needs
 
-## P9 — Prioritized new modules
+- create/manage item categories;
+- assign items to categories such as bronze or porcelain;
+- analyze/filter/report financial activity by category;
+- identify and resolve several small edit/correction microflow gaps after exact unsupported record/action cases are inventoried.
+
+The stakeholder also reported needing to register sales using an earlier financial date because Duda commonly records them later. Current V2 already exposes `Data da ocorrência` and persists `occurredAt`, so this is a discoverability/usability verification item, not a missing date-model capability.
+
+#### Future preferences, not mandatory current requirements
+
+- eventually reduce/eliminate dependence on manual JSON handling;
+- consider accounts/permissions later for security if Easy becomes broader/networked;
+- potentially expand into orders, inventory and broader store organization.
+
+#### D-016 direct-evidence disposition
+
+| D-016 trigger | P8-S2 result |
+| --- | --- |
+| Concurrent operators | **NOT PROVEN** — no current concurrency requirement. |
+| Automatic live multi-device sharing | **NOT PROVEN** — no current simultaneous shared-live-state requirement. |
+| Person-level authorship/access control | **NOT PROVEN** — future conditional preference only. |
+| Remote recovery SLA | **NOT PROVEN** — severe recovery risk confirmed; formal SLA/RPO/RTO unresolved. |
+| Trusted server integrations | **NOT PROVEN** — none currently required. |
+| Security policy incompatible with browser-local storage | **UNRESOLVED / NOT PROVEN** — no competent policy evidence supplied. |
+
+**Architecture outcome: KEEP D-016.** D-022 records that direct store evidence does not prove a present reopen trigger. No backend, authentication, cloud database, live synchronization or Dexie migration is authorized by P8-S2.
+
+### P8 closure outcome
+
+P8 now has sufficient direct evidence to close the current store-requirements/architecture gate. Recovery durability, category modeling/reporting and exact edit/correction friction become evidence-backed P9 prioritization inputs. Broader systemization remains future direction.
+
+No runtime/schema/persistence/backend/auth/cloud/synchronization or P9 implementation is included in P8-S2. Full D-019 `npm run qa:critical` remains mandatory before integration.
+
+---
+
+## P9 — Prioritized evidence-backed improvements
 
 **Status:** `NOT_STARTED`.
+
+### P9-S1 — Evidence-backed prioritization only
+
+**Status:** `NOT_STARTED`.
+
+Required prioritization inputs from P8, without implementation:
+
+1. **Recovery durability / off-device protection** — highest known operational consequence because manual JSON/Drive handling has a catastrophic human-dependent failure mode.
+2. **Item categories and category reporting** — category creation, item classification and category-level financial analysis/reporting.
+3. **Exact edit/correction microflows** — direct evidence confirms friction, but exact record/action pairs must be inventoried first.
+4. **Occurrence-date discoverability** — verify whether the existing `Data da ocorrência` capability is visible/usable enough; do not rebuild the already implemented P3 model.
+
+Lower-confidence/later candidates unless new evidence makes them mandatory:
+
+- accounts/permissions;
+- automatic live synchronization;
+- broader order/inventory/store-management modules;
+- external integrations.
+
+P9-S1 is prioritization only. Do not change runtime, schema, persistence architecture, backend/auth/cloud or implement a business module in that slice. Full `npm run qa:critical` remains mandatory before integration.
 
 ## P10 — Controlled beta, migration and cutover
 

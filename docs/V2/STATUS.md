@@ -8,7 +8,7 @@
 ## Current phase
 
 **P8 — Real store requirements discovery**  
-**State:** `IN_PROGRESS` — current slice P8-S2 is `BLOCKED` until direct real-store evidence is supplied.
+**State:** `DONE` as evidence/decision work; canonical D-019/integration closure pending.
 
 - P1 — Referential integrity and safe entity lifecycle: `DONE`.
 - P2 — Correction, reversal and audit trail: `DONE`.
@@ -24,7 +24,8 @@
 - P7-S5 — Operator-visible item/reseller save failures: `DONE`.
 - P7-S6 — Reseller-context transaction launch without redundant reselection: `DONE`.
 - P8-S1 — Repository-evidence requirements discovery and D-016 trigger assessment: `DONE`.
-- P8-S2 — Direct real-store validation and D-016 keep/reopen decision: `BLOCKED` — no direct store evidence supplied.
+- P8-S2 — Direct real-store validation and D-016 keep/reopen decision: `DONE` as evidence/decision work; D-016 kept under D-022.
+- P9 — Prioritized evidence-backed improvements: `NOT_STARTED`.
 
 ## Startup protocol for a new conversation
 
@@ -38,13 +39,13 @@ Read in order:
 6. `docs/V2/QA_LEDGER.md`
 7. `docs/V2/CHANGELOG.md`
 
-Then inspect only source or evidence needed for `NEXT_ACTION`. When P8 is active, read `docs/V2/P8_DISCOVERY.md` only after the canonical startup set if the active action depends on discovery evidence. When P8-S2 is blocked, use `docs/V2/P8_EVIDENCE_REQUEST.md` as the evidence-intake checklist; it does not replace `STATUS.md` as current-state authority.
+Then inspect only source or evidence needed for `NEXT_ACTION`. `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` preserve the completed P8 discovery/direct-evidence record.
 
 ## Reconstructed baseline
 
-Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. Dexie remains **V4** and D-016 remains authoritative: no backend, authentication, cloud database or synchronization is part of the accepted foundation unless P8 produces explicit evidence for a reopen trigger.
+Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. Dexie remains **V4** and D-016 remains authoritative: no backend, authentication, cloud database or live synchronization is part of the accepted foundation unless later direct evidence proves a reopen trigger.
 
-P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 provides versioned backup plus checkpointed atomic restore. P6/D-019 requires the repository-wide `npm run qa:critical` gate for V2 integration and publication. P7/D-020 completed the accepted evidence-backed operator-intent/error backlog before convenience or cosmetic refinement. P8-S1/D-021 establishes that repository evidence alone does not prove a D-016 reopen trigger. P8-S2 attempted direct evidence intake but found that no real-store evidence has been supplied; lack of evidence is not evidence against a trigger, so the slice remains blocked and D-016 stays authoritative until a trigger is actually proven.
+P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 provides versioned backup plus checkpointed atomic restore. P6/D-019 requires the repository-wide `npm run qa:critical` gate for V2 integration and publication. P7/D-020 completed the accepted evidence-backed operator-intent/error backlog before convenience or cosmetic refinement. P8-S1/D-021 established that repository evidence alone does not prove a D-016 reopen trigger. Resumed P8-S2 then received direct store evidence and D-022 keeps D-016 for the current operating mode while recording severe recovery risk and evidence-backed P9 inputs.
 
 At the start of P7-S2, `develop` was `7269bb435d91bbde45ffa835bacf0d373dfa14e6`; `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
@@ -58,7 +59,9 @@ At the start of P7-S6, `develop` was `4928978fbcd06cdb308951301ab4f8219b642923`;
 
 At the start of P8-S1, `develop` was `e8973b59b0b6df28e95d9085b5319d24d7724d61`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
-At the start of P8-S2, `develop` was `2c5f5e92dd66224499ffc55f828d3e220a2afd63`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+At the first P8-S2 evidence attempt, `develop` was `2c5f5e92dd66224499ffc55f828d3e220a2afd63`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+At resumed P8-S2 after direct evidence was supplied, `develop` was `5e1b45bef63b8e91c692d35cae9da5c66a905740`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 ## P7-S2 completed transaction-entry slice
 
@@ -244,11 +247,11 @@ Detailed classification is recorded in `docs/V2/P8_DISCOVERY.md`.
 
 Repository evidence confirms administrator workflows, desktop/mobile operation, PDF sharing, manual JSON backup/portability and the current reporting/analytics scope. A later responsiveness requirement also describes a reseller consulting their own statement on mobile, which is materially different from the earlier explicit single-user/no-auth framing.
 
-That difference is recorded as an **open real-store validation question**, not as proof of accounts, permissions, concurrent use or synchronized shared state. No inspected artifact proves automatic live multi-device sharing, person-level authorship/access control, remote recovery SLA, trusted server integrations or a security policy incompatible with browser-local storage.
+That difference was recorded as an open real-store validation question, not as proof of accounts, permissions, concurrent use or synchronized shared state.
 
 ### D-016 assessment
 
-Every D-016 reopen trigger is classified **NOT PROVEN** by P8-S1 repository evidence. D-021 is accepted: D-016 remains authoritative until direct real-store evidence resolves operator/device/sharing/access/recovery constraints. Backend/auth/cloud/synchronization and persistence migration remain unauthorized.
+Every D-016 reopen trigger was classified **NOT PROVEN** by P8-S1 repository evidence. D-021 was accepted: D-016 remains authoritative until direct real-store evidence resolves operator/device/sharing/access/recovery constraints.
 
 ### Validation and integration
 
@@ -259,56 +262,77 @@ Persistent Critical QA run **`32149199373`**, job **`95750510692`** — **PASS**
 - Playwright Chromium: **15/15 PASS**;
 - production build: **PASS**.
 
-PR #23 was squash-merged into `develop` as `65ada02848ad7ca792889b16815c74d0ac9e6da1`. The validated PR merge ref and the squash integration commit both resolve to tree **`6bef84c07f236c8df3dea4ce24b4e9028b7bb509`**, so the integrated P8-S1 canonical discovery content is byte-for-byte the content exercised by D-019. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+PR #23 was squash-merged into `develop` as `65ada02848ad7ca792889b16815c74d0ac9e6da1`. The validated PR merge ref and the squash integration commit both resolve to tree **`6bef84c07f236c8df3dea4ce24b4e9028b7bb509`**. Documentation-only closure PR #24 passed `32150004427`, job `95753223139`, and integrated as `2c5f5e92dd66224499ffc55f828d3e220a2afd63`.
 
-Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action-runtime deprecation notices and build chunk-size warning remain visible non-blocking debt under D-019; no gate was weakened.
+## First P8-S2 attempt — blocked on missing evidence
 
-## P8-S2 direct-validation attempt
+The first P8-S2 validation attempt checked repository/project-accessible material and found no direct store artifact. It correctly classified missing evidence as a blocker rather than proof that any D-016 trigger was false.
 
-P8-S2 was started on `docs/p8-s2-direct-evidence-blocker` from `develop` at `2c5f5e92dd66224499ffc55f828d3e220a2afd63`. The slice performed evidence validation only.
+Persistent Critical QA run **`32152466007`**, job **`95761457231`** — **PASS** on PR #25 merge ref `b90fdc76ced24d042cf73d1ce96cc8ece0ac8fed`. PR #25 integrated as `c8eda199b0a605306619b73f8d3b175f8c673e2f`; canonical blocked-state closure integrated as `5e1b45bef63b8e91c692d35cae9da5c66a905740`.
 
-### Evidence intake result
+## Resumed P8-S2 direct real-store validation
 
-The project-accessible evidence boundary was checked for direct store material:
+P8-S2 resumed after a project stakeholder supplied the direct evidence packet in the conversation on 2026-08-18. The slice remains evidence/decision work only.
 
-- repository content searches for interview/observation/operator/store evidence and RTO/RPO/SLA material returned no direct artifact;
-- the repository currently has zero issues; explicit issue searches for `Duda` and `loja` returned zero results;
-- the current repository root contains no interview/observation/support/telemetry/SLA-security evidence source beyond the already classified prompts, historical tasks and canonical documents;
-- the current project conversation supplied no operator answers or other direct real-store artifact.
+### Current real-store model
 
-Therefore **P8-S2 is `BLOCKED` by missing external evidence**. The absence of a direct artifact is not interpreted as evidence that the store lacks any cloud/auth trigger.
+- Duda and store owners operate Easy; concurrent use of the same dataset is not currently required.
+- Current operation is on a PC; the same live dataset is not currently required automatically on multiple devices at once.
+- Resellers receive PDF/extracts and do not need interactive Easy access today.
+- JSON/manual off-device handling is the current backup/portability mechanism.
+- No trusted server integration is currently mandatory.
+- Approximate scale is at most ~100 resellers, around ~50 active, with modest daily entry volume.
 
-### D-016 disposition while blocked
+### Recovery risk confirmed
 
-All six D-016 triggers remain unresolved from direct evidence and **none is proven**. D-016 remains authoritative under D-021 because the accepted reopen condition has not been met; this does not constitute completed store validation.
+If the operating PC fails before the current JSON is copied to Drive, the store can lose the working dataset and may have to reconstruct tens of thousands of reais in sales. Human-memory-dependent off-device backup is therefore a confirmed critical continuity risk.
 
-`docs/V2/P8_EVIDENCE_REQUEST.md` defines the minimum evidence packet required to resume P8-S2. No runtime, backend/auth/cloud/synchronization, Dexie migration, architecture implementation or P9 work was performed. No new architecture/product decision is accepted in this blocked slice; D-016 and D-021 already define the evidence threshold.
+Numeric RPO/RTO, provider-operated recovery and a formal remote-recovery SLA were not supplied. Recovery durability is a high-priority roadmap input, but the explicit D-016 remote-recovery-SLA trigger is not proven.
 
-### Validation and integration
+### Product needs confirmed
 
-Persistent Critical QA run **`32152466007`**, job **`95761457231`** — **PASS** on PR #25 merge ref `b90fdc76ced24d042cf73d1ce96cc8ece0ac8fed`:
+- create/manage item categories;
+- assign items to categories such as bronze or porcelain;
+- analyze/filter/report financial activity by category;
+- identify and resolve several small edit/correction microflow gaps after the exact unsupported record/action cases are inventoried.
 
-- ESLint: **0 errors / 80 warnings**;
-- Vitest: **43 files / 176 tests PASS**;
-- Playwright Chromium: **15/15 PASS**;
-- production build: **PASS**.
+The stakeholder also reported needing to register a sale using its true earlier occurrence date. Current V2 already exposes `Data da ocorrência` and persists `occurredAt`, so this is classified as discoverability/usability verification rather than a missing data-model capability.
 
-PR #25 was squash-merged into `develop` as `c8eda199b0a605306619b73f8d3b175f8c673e2f`. The validated PR merge ref and the squash integration commit both resolve to tree **`82a32b4a6d5c411d5a40d9eb0d587e2e7ecd8b15`**, so the integrated P8-S2 blocked-state documentation is byte-for-byte the content exercised by D-019. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+### Future preferences, not mandatory current requirements
 
-Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action-runtime deprecation notices and build chunk-size warning remain visible non-blocking debt under D-019; no gate was weakened.
+- eventually reduce/eliminate dependence on manual JSON handling;
+- consider accounts/permissions later for security if Easy becomes broader/networked;
+- potentially expand into orders, inventory and broader store organization.
 
-P8-S2 remains **`BLOCKED`**, not `DONE`: the required direct evidence still does not exist in the project-accessible evidence boundary.
+### D-016 direct-evidence disposition
 
-## Active constraints while P8-S2 is blocked
+| D-016 trigger | P8-S2 result |
+| --- | --- |
+| Concurrent operators | **NOT PROVEN** — no current concurrency requirement. |
+| Automatic live multi-device sharing | **NOT PROVEN** — no current simultaneous shared-live-state requirement. |
+| Person-level authorship/access control | **NOT PROVEN** — future conditional preference only. |
+| Remote recovery SLA | **NOT PROVEN** — severe recovery risk confirmed; formal SLA/RPO/RTO unresolved. |
+| Trusted server integrations | **NOT PROVEN** — none currently required. |
+| Security policy incompatible with browser-local storage | **UNRESOLVED / NOT PROVEN** — no competent policy evidence supplied. |
+
+**Architecture outcome: KEEP D-016.** D-022 records that direct store evidence does not prove a present reopen trigger. No backend, authentication, cloud database, live synchronization or Dexie migration is authorized by P8-S2.
+
+### P8 closure outcome
+
+P8 now has sufficient direct evidence to close the current store-requirements/architecture gate. Recovery durability, category modeling/reporting and exact edit/correction friction become evidence-backed P9 prioritization inputs. Broader systemization remains future direction.
+
+No runtime/schema/persistence/backend/auth/cloud/synchronization or P9 implementation is included in this slice. D-019 Critical QA must pass before integration; final run/integration evidence is recorded by the canonical closure follow-up.
+
+## Active constraints entering P9
 
 - do not work directly on `main`;
-- preserve all P1–P7 contracts and D-019;
-- keep D-016 authoritative unless direct real-store evidence proves a reopen trigger;
-- use `docs/V2/P8_DISCOVERY.md` as the discovery matrix and `docs/V2/P8_EVIDENCE_REQUEST.md` as the direct-evidence intake checklist;
-- do not infer a negative requirement from missing evidence;
-- do not implement backend, authentication, cloud database, synchronization, Dexie migration or P9 modules while P8-S2 is blocked;
-- do not advance to P9 until P8-S2 receives and classifies sufficient direct evidence.
+- preserve P1–P7 contracts and D-017/D-018/D-019;
+- keep D-016 authoritative unless later direct evidence proves a reopen trigger;
+- prioritize confirmed operational consequence over feature novelty;
+- do not convert future preferences into mandatory requirements;
+- do not rebuild occurrence-date support that already exists;
+- run the complete `npm run qa:critical` gate before integrating P9 work.
 
 ## NEXT_ACTION
 
-**P8-S2 — Resume direct real-store validation only when an explicit evidence packet is supplied to the project. Use `docs/V2/P8_EVIDENCE_REQUEST.md` to capture operator/concurrency, devices/shared-state, reseller access, synchronization, identity/permissions/authorship, recovery RTO/RPO, trusted integrations, security/privacy, realistic scale/connectivity and measurable missing workflows/reports. Classify each supplied fact as current reality, mandatory future requirement or preference; map confirmed facts to every D-016 reopen trigger; then explicitly keep or reopen D-016 before any architecture implementation or P9 prioritization. Until such evidence exists, keep P8-S2 `BLOCKED`, do not infer answers, and do not implement backend/auth/cloud/synchronization, persistence migration or P9 modules. Run the full `npm run qa:critical` gate before integrating the resumed P8-S2 conclusion.**
+**P9-S1 — Prioritize the P8-confirmed operational gaps without implementing them. Score and order at least: (1) recovery durability beyond human-dependent manual JSON/Drive copying; (2) item categories, item classification and category-level reporting; and (3) the exact unsupported edit/correction microflows, after identifying which records/actions Duda cannot currently correct. Treat delayed transaction entry as an already implemented `occurredAt` capability and verify only discoverability/usability rather than rebuilding it. Keep accounts/permissions, live synchronization, inventory/orders/store-management and other broad systemization as later candidates unless new direct evidence makes them mandatory. P9-S1 is prioritization only: do not implement runtime/schema/backend/cloud features in that slice. Run full `npm run qa:critical` before integration.**
