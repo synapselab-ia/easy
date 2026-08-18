@@ -1,21 +1,16 @@
 # Easy V2 — P9-S2 Recovery Durability Evidence Request
 
-**Status:** `BLOCKED` pending direct store recovery-target evidence  
+**Status:** direct store recovery-target evidence received; blocker resolved for mechanism comparison  
 **Date:** 2026-08-18  
 **Scope:** decision/evidence only; no recovery implementation authorization
 
-## 1. Why P9-S2 is blocked
+## 1. Original blocker
 
-P9-S2 must establish a measurable current-store recovery target before comparing or selecting a recovery mechanism. The canonical minimum is:
+P9-S2 requires a measurable current-store recovery target before comparing or selecting a recovery mechanism. The first P9-S2 attempt confirmed the continuity consequence but lacked the acceptable recoverable-copy age, recovery procedure, interruption expectation and destination/process constraints.
 
-1. acceptable maximum age of the latest recoverable off-device copy after loss of the operating PC; and
-2. acceptable recovery procedure for restoring operation after that loss.
+That evidence gap was correctly treated as a blocker. No SLA/RPO/RTO value, cloud requirement or recovery mechanism was invented.
 
-The direct P8 evidence confirms the consequence but explicitly leaves numeric RPO/RTO and remote-recovery obligations unresolved. Repository searches performed for P9-S2 found no newer direct operator/interview/observation/SLA material that supplies these missing parameters.
-
-Therefore P9-S2 cannot select a target, compare mechanisms as fit-for-purpose, reopen D-016, or authorize implementation without inventing requirements.
-
-## 2. Evidence already accepted
+## 2. Previously accepted evidence
 
 The following remains direct, accepted store evidence:
 
@@ -27,75 +22,69 @@ The following remains direct, accepted store evidence:
 - the operator currently copies JSON to Drive manually;
 - if the PC fails before a fresh JSON reaches Drive, the working dataset can be lost;
 - reconstructing that loss may require recalculating tens of thousands of reais in sales and creates severe business/employment risk;
-- no current trusted server integration is mandatory;
-- no formal remote-recovery SLA, numeric RPO or numeric RTO has been supplied.
+- no current trusted server integration is mandatory.
 
-This proves that human-memory-dependent off-device protection is a critical continuity problem. It does **not** prove how fresh the recoverable copy must be or what recovery procedure the store accepts.
+## 3. Direct recovery-target evidence received on 2026-08-18
 
-## 3. Minimum direct answers required to resume
-
-A store owner/operator should answer the questions below in ordinary operational language. Formal SLA terminology is not required.
+The store/operator supplied the missing answers directly.
 
 ### A. Maximum acceptable recoverable-copy age
 
-If the operating PC were permanently lost now, how old may the newest usable off-device copy be before the amount of missing work becomes unacceptable?
+**Direct answer:** loss of up to **24 hours** of work is considered a solvable/acceptable recovery case.
 
-Supply one concrete boundary, for example a number of hours, one business day, or another store-defined interval. Examples are elicitation aids only and are **not** proposed defaults.
+Canonical interpretation for P9-S2 mechanism comparison: the newest usable off-device recovery copy must be no more than 24 hours old. This records the store boundary without inventing a stricter target.
 
 ### B. Acceptable recovery procedure
 
-After permanent loss of the operating PC, describe the recovery procedure the store considers acceptable.
+**Direct answer:** manual restoration on **any computer** is acceptable.
 
-At minimum clarify:
+Canonical interpretation: an operator-run recovery on a replacement computer/browser using the newest acceptable backup is sufficient. Provider-operated remote recovery is therefore **not mandatory** under the supplied current-store requirement.
 
-- whether recovery by a store operator on a replacement PC/browser is acceptable;
-- whether manually obtaining the newest off-device backup and importing/restoring it is acceptable;
-- whether a provider/operator outside the store must be able to recover the data remotely;
-- whether the store requires recovery without manually handling a JSON backup file.
+### C. Interruption expectation
 
-### C. Acceptable interruption window
+**Direct answer:** the system has **daily demand** and there is effectively no comfortable waiting period after loss.
 
-How long may Easy remain unavailable after PC loss while the replacement environment is prepared and the latest acceptable copy is restored?
+No numeric number of hours was supplied, so P9-S2 does **not** create a formal numeric RTO. For mechanism comparison, the evidence means that a multi-day recovery procedure is incompatible with current operation and that the recovery path must be practical for daily use on a replacement computer.
 
-This answer helps distinguish a simple operator-run restore procedure from a provider-operated recovery obligation. It must come from the store; P9-S2 will not invent an RTO.
+### D. Acceptable destinations/process constraints
 
-### D. Off-device destination and operating constraints
+**Direct answer:** a **Google Drive** destination is acceptable, and a **local file on the PC** is also acceptable for day-to-day speed/convenience.
 
-Which durable destinations/processes are acceptable in current operation?
+The reference to the Google account currently connected to ChatGPT is not treated as an Easy credential or authorization path. Easy does not inherit ChatGPT account access. P9-S2 may treat Google Drive as an acceptable durable destination, but any direct Google API/OAuth integration would require its own explicit architecture/security assessment rather than being assumed from the ChatGPT connection.
 
-Clarify whether the store is willing and able to use any of the following, without treating them as selected solutions:
+A local PC file is accepted as a convenience copy; whether it can satisfy the off-device durability target by itself is intentionally left to the mechanism-comparison step.
 
-- a Drive-synchronized folder on the PC;
-- an external/removable drive;
-- an explicitly chosen local folder whose contents are synchronized by the operating system/provider;
-- periodic operator confirmation/reminders;
-- browser permission to write repeatedly to a previously chosen file/folder, where supported.
+## 4. Evidence disposition
 
-Also state any restriction that makes one of these unacceptable.
+The direct-evidence blocker is resolved sufficiently to resume the P9-S2 decision gate:
 
-## 4. Mechanism comparison intentionally deferred
+- measurable recoverable-copy-age boundary: **<= 24 hours**;
+- operator-run manual restore on a replacement computer: **acceptable**;
+- provider-operated remote recovery: **not mandatory**;
+- daily-use continuity constraint: **confirmed**, without inventing a numeric RTO;
+- Google Drive as a durable destination: **acceptable**;
+- local PC file as a convenience destination: **acceptable**.
 
-P9-S2 does **not** rank or select recovery mechanisms in this blocked attempt.
+No supplied answer proves a D-016 reopen trigger. In particular, the store did not require concurrent operators, automatic live multi-device state, person-level access/authorship, provider-operated remote recovery, a trusted server integration, or automatic centrally hosted persistence.
 
-Candidate mechanism families may include reminder/age visibility, streamlined export to a durable synchronized location, permission-based repeated writes to a chosen location, or a design that would require remote/server persistence. Their suitability depends on the direct answers above.
+## 5. Mechanism comparison remains intentionally unexecuted in this evidence-intake slice
 
-In particular:
+This evidence-intake update does **not** rank, select or implement a recovery mechanism.
 
-- a reminder can reduce forgotten backups but does not itself create an independently durable copy;
-- a local or synchronized-folder mechanism may remain compatible with D-016, depending on the accepted procedure and browser/OS constraints;
-- any requirement for provider-operated remote recovery, automatic centrally stored recovery, or another D-016 trigger must explicitly reopen D-016 before implementation.
+The next canonical action is to compare the smallest mechanisms against the accepted <=24-hour recoverable-copy target, manual-any-computer recovery procedure, daily-use constraint and acceptable Drive/local destinations while preserving D-016/D-017/D-018.
+
+Candidate families remain only candidates until that next action is executed. They may include reminder/age visibility, streamlined export to a durable synchronized location, permission-based repeated writes to a chosen location, or a design requiring remote/server persistence.
 
 No mechanism is accepted or authorized by this document.
 
-## 5. Resume rule
+## 6. Resume rule
 
-When the minimum direct evidence is supplied:
+After this evidence-intake record passes D-019 and is integrated:
 
-1. record it as current-store evidence without translating preferences into stronger requirements;
-2. establish the measurable recovery target;
-3. compare the smallest mechanisms against that target and D-016/D-017/D-018;
-4. explicitly keep or reopen D-016;
-5. record the accepted P9-S2 decision;
-6. run the full D-019 gate before integration.
+1. compare the smallest mechanisms against the accepted direct target and D-016/D-017/D-018;
+2. explicitly keep or reopen D-016 based on the comparison and any proven trigger;
+3. record the accepted P9-S2 recovery decision;
+4. only then authorize a bounded implementation slice if the selected mechanism requires runtime work;
+5. run the full D-019 gate before each integration.
 
-Until then P9-S2 remains `BLOCKED` and no recovery automation, cloud/backend/auth/live synchronization, category/schema work, correction work or other runtime feature may start under this slice.
+Until a mechanism decision is accepted, do not implement recovery automation, direct cloud/backend/auth/live synchronization, category/schema work, correction work or another runtime feature under P9-S2.

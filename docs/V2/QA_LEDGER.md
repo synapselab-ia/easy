@@ -122,23 +122,13 @@ Persistent Critical QA run **`32166330198`**, job **`95806665221`** — **PASS**
 - Playwright Chromium: 15/15 PASS;
 - production build: PASS.
 
-PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integration share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`, so the integrated content is exactly the content accepted by D-019.
+PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integration share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`.
 
 P9-S1 is closed.
 
 ### P9-S2 — Recovery durability decision gate
 
-**PASS / BLOCKED ON DIRECT EVIDENCE.**
-
-The first P9-S2 attempt executed evidence intake only. Accepted P8 evidence proves severe device-loss/manual-backup exposure but still leaves the required measurable recovery target unresolved:
-
-- acceptable maximum age of the newest recoverable off-device copy — unresolved;
-- acceptable recovery procedure after permanent operating-PC loss — unresolved;
-- acceptable interruption window — unresolved;
-- provider-operated remote recovery requirement — unresolved / not proven;
-- destination/process constraints needed to assess small D-016-compatible mechanisms — unresolved.
-
-`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct store answers required to resume. No mechanism comparison/selection, D-016 reopen, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed.
+The first P9-S2 evidence attempt is **PASS / BLOCKED ON DIRECT EVIDENCE** and remains preserved as historical accepted state.
 
 Persistent Critical QA run **`32168368086`**, job **`95813314347`** — **PASS** on PR #33 merge ref `cbc96eefb315c29c266b1df978bda605c2907352`:
 
@@ -147,12 +137,30 @@ Persistent Critical QA run **`32168368086`**, job **`95813314347`** — **PASS**
 - Playwright Chromium: 15/15 PASS;
 - production build: PASS.
 
-PR #33 integrated as `0017538b93c438f4374b1b2427222f27b9ef357d`. The validated merge ref and integration share exact tree `bf7165121ec08cd91f38db05d887a505dba3dbee`. The blocker is therefore canonically validated and integrated; P9-S2 remains `BLOCKED` until direct evidence resolves the target.
+PR #33 integrated as `0017538b93c438f4374b1b2427222f27b9ef357d`. The validated merge ref and integration share exact tree `bf7165121ec08cd91f38db05d887a505dba3dbee`.
+
+#### Direct recovery-target evidence intake — 2026-08-18
+
+**QA PENDING / IN_REVIEW.**
+
+New direct store/operator evidence now records:
+
+- maximum acceptable age of the newest usable off-device recovery copy: **24 hours**;
+- manual restore on **any computer** is acceptable;
+- daily system demand makes multi-day recovery unacceptable, but no numeric hour-based RTO was supplied and none is invented;
+- **Google Drive** is an acceptable durable destination;
+- a **local PC file** is acceptable for day-to-day convenience;
+- provider-operated remote recovery is not mandatory because operator-run manual recovery on a replacement computer is acceptable;
+- ChatGPT account connectivity is not treated as Easy authorization for Google Drive.
+
+This removes the direct-evidence availability blocker but does not complete P9-S2. The evidence-only slice changes no runtime/schema/backup contract/backend/auth/cloud/live synchronization and performs no mechanism comparison or selection.
+
+Full D-019 `npm run qa:critical` is required before this evidence intake can integrate and before `NEXT_ACTION` may advance to mechanism comparison.
 
 ## Current known non-blocking debt
 
 Existing React `act(...)` warnings, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and the Vite large-chunk warning remain visible under D-019. No accepted gate is weakened.
 
-## QA policy while P9-S2 is blocked
+## QA policy while P9-S2 is active
 
-Every P9 slice must preserve P1–P9-S1 contracts, keep D-016 authoritative unless later direct evidence proves a reopen trigger, and run full `npm run qa:critical` before integration. Documentation-only and blocked-state slices are not exempt.
+Every P9 slice must preserve P1–P9-S1 contracts, keep D-016 authoritative unless a later accepted decision proves a reopen trigger, and run full `npm run qa:critical` before integration. Documentation-only evidence and decision slices are not exempt.

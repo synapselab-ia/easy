@@ -111,28 +111,31 @@ D-023 records the ordering and evidence boundary. Persistent Critical QA `321663
 
 ### P9-S2 — Recovery durability decision gate
 
-**Status:** `BLOCKED` — 2026-08-18 pending direct store recovery-target evidence.
+**Status:** `IN_PROGRESS` — direct recovery-target evidence supplied on 2026-08-18; evidence-intake integration is `IN_REVIEW`; mechanism comparison is not started.
 
-The first P9-S2 evidence attempt confirmed that the continuity risk is real but the required measurable target is still missing. Existing direct evidence does not specify:
+The first P9-S2 attempt was correctly `BLOCKED` because the measurable recovery target was missing. That blocked-state record passed Critical QA `32168368086`, job `95813314347`, and integrated through PR #33 as `0017538b93c438f4374b1b2427222f27b9ef357d`.
 
-- acceptable maximum age of the latest recoverable off-device copy;
-- acceptable recovery procedure after permanent operating-PC loss;
-- acceptable interruption window;
-- whether provider-operated remote recovery is mandatory;
-- operating constraints relevant to acceptable off-device destinations/processes.
+The store/operator has now supplied the missing direct evidence:
 
-`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct answers required to resume.
+- newest usable off-device recovery copy may be at most **24 hours** old;
+- manual restore on **any computer** is acceptable;
+- Easy has **daily demand**, so multi-day recovery is unacceptable, but no numeric hour-based RTO was provided and none is invented;
+- **Google Drive** is an acceptable durable destination;
+- a **local PC file** is also acceptable for day-to-day speed/convenience;
+- provider-operated remote recovery is not mandatory because operator-run manual recovery on a replacement computer is acceptable.
 
-Blocked-state Critical QA **`32168368086`**, job **`95813314347`** passed on PR #33. PR #33 integrated into `develop` as `0017538b93c438f4374b1b2427222f27b9ef357d`; validated merge ref `cbc96eefb315c29c266b1df978bda605c2907352` and integrated commit share tree `bf7165121ec08cd91f38db05d887a505dba3dbee`. This integration records the blocker only; P9-S2 remains `BLOCKED`.
+The ChatGPT-connected Google account is not treated as an Easy credential. Direct Google API/OAuth integration is not implied or authorized merely because Drive is an acceptable destination.
 
-Until the missing direct evidence exists:
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` now records the supplied answers and their bounded interpretation.
 
-- do not invent SLA/RPO/RTO values;
-- do not compare/select or implement a recovery mechanism;
-- do not introduce backend/auth/cloud/live synchronization implicitly;
-- keep D-016 authoritative;
-- preserve D-017/D-018 logical backup, checkpoint and atomic restore semantics;
-- do not start later P9 slices while this gate is active.
+Current slice boundary:
+
+- evidence intake only;
+- no mechanism comparison or ranking yet;
+- no D-016 reopen decision yet;
+- no runtime/schema/backup-contract/backend/auth/cloud/live-sync change;
+- no later P9 slice starts while P9-S2 remains active;
+- full D-019 validation/integration is required before advancing to mechanism comparison.
 
 ### P9-S3 — Category data/reporting contract
 
