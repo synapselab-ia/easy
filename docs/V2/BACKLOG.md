@@ -89,9 +89,9 @@ Persistent Critical QA `32166330198`, job `95806665221`; PR #31 integrated as `3
 
 ### P9-S2 — Recovery durability
 
-**Status:** `IN_PROGRESS` — target evidence `DONE`; mechanism comparison/decision `DONE`; implementation P9-S2-I1 `NOT_STARTED`.
+**Status:** `DONE` — 2026-08-18.
 
-Accepted direct target:
+Accepted target:
 
 - newest usable off-device recovery copy **<=24 hours** old;
 - manual restore on any computer acceptable;
@@ -106,40 +106,46 @@ Evidence intake passed `32175718073`, job `95837062983`, and integrated through 
 
 **Status:** `DONE` — 2026-08-18.
 
-D-024 selects **Synchronized recovery-copy folder + 24-hour freshness guard** and **KEEPS D-016**.
+D-024 selects **Synchronized recovery-copy folder + 24-hour freshness guard** and **KEEPS D-016**. The existing `easy-backup` v2 + OS/provider-synchronized local folder was selected over reminder-only, required browser file-handle API, direct Google Drive API/OAuth and backend/cloud/live synchronization.
 
-Comparison result:
-
-- reminder/age visibility alone — rejected as insufficient off-device protection;
-- existing `easy-backup` v2 downloaded to an OS/provider-synchronized local folder + 24h guard — **selected**;
-- browser file-system handle — not baseline because actual store browser support is not directly evidenced and permission persistence adds failure modes;
-- direct Google Drive API/OAuth — not selected; larger than current requirement and no integration trigger proven;
-- backend/cloud DB/live synchronization — rejected; no D-016 trigger proven.
-
-Operational baseline uses Google Drive for desktop as the accepted current-store synchronized destination, with a one-time verification that an exported backup is visible outside the local-PC-only context. Easy tracks export freshness, not provider-side synchronization acknowledgment.
-
-Persistent Critical QA **`32177687434`**, job **`95843265579`** — PASS on PR #37 merge ref `79552f7912307db88272e075b2320cade02f6f17`: 0 lint errors / 80 warnings, 43/176 Vitest, 15/15 Playwright and build PASS. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; both share tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
+Decision Critical QA `32177687434`, job `95843265579`, passed on PR #37. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integration share tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
 
 #### P9-S2-I1 — Recovery-copy freshness guard and synchronized-folder workflow
 
-**Status:** `NOT_STARTED`.
+**Status:** `DONE` — 2026-08-18.
 
-Implement only the D-024 bounded runtime slice:
+Implemented within D-024:
 
-- one-time synchronized-folder setup guidance/verification state;
-- local fail-safe recovery-health metadata, no Dexie V5;
-- global last-copy health and due/overdue visibility;
-- 24-hour gate for normal data-changing work while Backup/Restore remains reachable;
-- minimal `exportData()` refactor only to expose export metadata/update local health;
-- focused tests and full D-019.
+- one-time synchronized-folder setup guidance and explicit operator verification;
+- namespaced local recovery-health metadata only, no Dexie V5;
+- fail-safe `unknown/due` behavior for missing/corrupt/unverified state;
+- global recovery health with last export metadata;
+- non-contractual warning at 20 hours and hard mutation gate at the accepted 24-hour boundary;
+- centralized write enforcement for item, reseller and transaction mutations;
+- Backup/Restore and read-only access preserved while blocked;
+- `exportData()` returns exact filename/export time after the existing validated v2 download initiation;
+- no provider-side sync assertion or Google Drive API/OAuth.
 
-Out of scope: Google Drive API/OAuth, backend/auth/cloud/live sync, required File System Access API, Dexie/backup-format migration, provider-side sync verification and P9-S3+.
+The first run `32179815390`, job `95849949295`, failed only a new E2E harness interaction while the correctly preserved rejected-mutation dialog remained open; no product behavior change was required. After a test-only correction, persistent Critical QA **`32180250834`**, job **`95851336506`** passed: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and production build PASS.
+
+PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`; validated merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a` and integration share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
+
+P9-S2 is closed. D-016/D-017/D-018/D-019/D-024 remain authoritative.
 
 ### P9-S3 — Category data/reporting contract
 
 **Status:** `NOT_STARTED`.
 
-Define category lifecycle, item assignment, historical transaction/report semantics, migration and backup compatibility before any category schema/runtime implementation.
+Next work is contract-only. Define before any category implementation:
+
+- category lifecycle and identity rules;
+- item assignment/reassignment semantics;
+- historical transaction/category semantics for existing and future order snapshots;
+- category-level reporting semantics;
+- Dexie migration approach;
+- D-017 backup/export/import compatibility.
+
+Do not implement category schema, UI or reporting until this contract itself passes D-019 and integrates.
 
 ### P9-S4 — Confirmed correction microflows
 

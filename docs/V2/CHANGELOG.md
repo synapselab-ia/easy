@@ -4,9 +4,38 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-18 — P9-S2-I1 recovery freshness guard implemented; P9-S2 closed
+
+The D-024 runtime slice is implemented and P9-S2 is complete.
+
+Implemented behavior:
+
+- namespaced local recovery-health metadata (`easy.recoveryHealth.v1`), with no Dexie V5 or business-data migration;
+- fail-safe `unknown/due` handling for missing, corrupt or unverified state;
+- global health states `unknown`, `due`, `current`, `warning` and `overdue`;
+- a non-contractual 20-hour warning while preserving the accepted hard **24-hour** boundary;
+- centralized recovery write guard across normal item, reseller and transaction mutations;
+- read-only operation and Backup/Restore remain available while normal writes are blocked;
+- existing validated `easy-backup` v2 export now returns its exact filename/export timestamp for local freshness tracking without changing the backup envelope;
+- one-time synchronized-folder setup guidance and explicit operator confirmation after observing the exported copy in Drive outside the local-PC-only context;
+- global application-shell visibility of recovery health and last export;
+- explicit UI language that Easy confirms generation/download initiation, not Google Drive/provider synchronization completion.
+
+No Google Drive API/OAuth, backend/auth/cloud database/live synchronization, required File System Access API, provider-side sync verification, Dexie migration or backup-format version change was introduced.
+
+The first PR #39 Critical QA run `32179815390`, job `95849949295`, failed only a newly added E2E interaction: after the recovery guard correctly rejected a reseller mutation, the form dialog remained open and covered the global banner that the test then attempted to click. Lint and all 44/183 Vitest tests had passed. The product behavior remained unchanged; only the E2E was corrected to dismiss the dialog before checking the Backup/Restore escape route.
+
+Accepted Persistent Critical QA **`32180250834`**, job **`95851336506`** — PASS on PR #39 merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a`: 0 lint errors / 80 warnings, 44 Vitest files / 183 tests, 17/17 Playwright and production build PASS.
+
+PR #39 was squash-merged into `develop` as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`. The validated merge ref and integrated commit share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
+
+P9-S2 is now `DONE`. `NEXT_ACTION` advances only to **P9-S3 category data/reporting contract**. That next slice must define lifecycle, assignment, historical/report semantics, migration and D-017 backup compatibility before any category schema/UI/reporting implementation; P9-S4/P9-S5/P10 remain unstarted.
+
+---
+
 ## 2026-08-18 — P9-S2 recovery mechanism decision accepted; D-024 keeps local-first architecture
 
-P9-S2 executed only the recovery mechanism comparison/decision gate required by the canonical `NEXT_ACTION`. No runtime implementation was performed.
+P9-S2 executed only the recovery mechanism comparison/decision gate required by the canonical `NEXT_ACTION`. No runtime implementation was performed in that decision slice.
 
 The accepted direct target remained unchanged: newest usable off-device recovery copy **<=24 hours**, manual operator restore on any computer acceptable, daily-use continuity without inventing a numeric RTO, Google Drive acceptable as a durable destination and local PC file acceptable for convenience.
 
@@ -23,28 +52,15 @@ The comparison rejected reminder-only protection because it does not create an o
 
 D-016 is **KEPT**. D-017/D-018 remain unchanged. No Google OAuth/Drive API, backend/auth/cloud DB/live sync, File System Access baseline, Dexie V5 or backup-format change is authorized.
 
-Persistent Critical QA **`32177687434`**, job **`95843265579`** — PASS on PR #37 merge ref `79552f7912307db88272e075b2320cade02f6f17`: 0 lint errors / 80 warnings, 43 Vitest files / 176 tests, 15/15 Playwright and production build PASS.
-
-PR #37 was squash-merged into `develop` as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`. The validated merge ref and integrated commit share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
-
-The decision slice is closed. `NEXT_ACTION` advances only to **P9-S2-I1 — Recovery-copy freshness guard and synchronized-folder workflow**, bounded by D-024. P9-S3/P9-S4/P9-S5 remain unstarted.
+Persistent Critical QA `32177687434`, job `95843265579` passed on PR #37. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integrated commit share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
 
 ---
 
 ## 2026-08-18 — P9-S2 direct recovery-target evidence accepted and integrated
 
-The direct recovery-target evidence intake is canonically accepted.
+The direct recovery-target evidence intake is canonically accepted. Store/operator evidence established an acceptable newest usable off-device recovery-copy age of **<=24 hours**, manual restoration on any computer, daily demand without an invented numeric RTO, Google Drive as an acceptable durable destination, local PC copy for convenience and no requirement for provider-operated remote recovery.
 
-Store/operator evidence establishes:
-
-- loss of up to **24 hours** of work is considered a solvable/acceptable recovery case;
-- manual restoration on **any computer** is acceptable;
-- Easy has **daily demand** and multi-day recovery is incompatible with current operation, but no numeric hour-based RTO was supplied and none is invented;
-- **Google Drive** is an acceptable durable destination;
-- a **local PC file** is acceptable for day-to-day speed/convenience;
-- provider-operated remote recovery is not mandatory because operator-run recovery on another computer is acceptable.
-
-The Google account connected to ChatGPT is not an Easy credential or Drive API authorization. Drive being an acceptable destination does not itself authorize direct Google API/OAuth integration. A local PC file is a convenience copy and is not automatically treated as off-device durability.
+The Google account connected to ChatGPT is not an Easy credential or Drive API authorization. Drive being an acceptable destination does not itself authorize direct Google API/OAuth integration.
 
 Persistent Critical QA `32175718073`, job `95837062983` passed on PR #35. PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`; validated merge ref and integration share tree `e1c32464b8260ae3b45094f20464ff3e5745687e`.
 
