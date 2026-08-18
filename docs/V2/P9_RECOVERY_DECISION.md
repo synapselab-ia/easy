@@ -1,12 +1,12 @@
 # Easy V2 — P9-S2 Recovery Mechanism Decision
 
-**Status:** `IN_REVIEW` — comparison complete; decision requires D-019 validation/integration  
+**Status:** `ACCEPTED / INTEGRATED` — comparison/decision complete; implementation not started  
 **Date:** 2026-08-18  
 **Scope:** mechanism comparison/decision only; no runtime implementation
 
-## 1. Accepted target entering this decision
+## 1. Accepted target
 
-This decision uses only the direct recovery target already accepted in `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md`:
+This decision uses only the direct recovery target accepted in `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md`:
 
 - newest usable off-device recovery copy: **<= 24 hours** old;
 - operator-run manual restore on **any computer**: acceptable;
@@ -15,148 +15,114 @@ This decision uses only the direct recovery target already accepted in `docs/V2/
 - local PC file: acceptable convenience copy;
 - provider-operated remote recovery: not mandatory.
 
-D-016/D-017/D-018 remain authoritative entering the comparison.
+D-016/D-017/D-018 were authoritative entering the comparison.
 
 ## 2. Current implementation and environment constraints
 
 Repository/source evidence establishes:
 
 - Easy is a static browser-only React/Vite SPA with Dexie/IndexedDB and no backend/auth/cloud database/live synchronization;
-- current backup generation already produces a deeply validated canonical `easy-backup` v2 JSON;
+- current backup generation produces a deeply validated canonical `easy-backup` v2 JSON;
 - `exportData()` ends by creating a Blob URL and programmatically clicking an `<a download>` element; Easy does not control or verify the filesystem destination after that browser download starts;
-- existing restore already accepts a user-selected JSON, performs D-017 preflight and uses D-018 checkpointed verified atomic Dexie replacement;
+- existing restore accepts a user-selected JSON, performs D-017 preflight and uses D-018 checkpointed verified atomic Dexie replacement;
 - direct store evidence identifies the operating device only as a **PC**; it does **not** identify a browser family/version or prove support for a permission-based native file-system API;
-- therefore a browser-specific file-handle API cannot be the sole baseline mechanism without adding a new unsupported environment assumption.
+- therefore a browser-specific file-handle API cannot be the sole baseline mechanism without adding an unsupported environment assumption.
 
-The web application also cannot prove that an OS/provider synchronization client has completed remote upload unless Easy introduces an external provider API/integration. The current requirement does not mandate such a provider acknowledgment/SLA.
+The web application also cannot prove that an OS/provider synchronization client has completed remote upload unless Easy introduces an external provider API/integration. The current requirement does not mandate such provider acknowledgment or a formal remote-copy SLA.
 
 ## 3. Candidate comparison
 
 ### A. Backup-age reminder / visibility only
 
-**Description:** keep the current download behavior and add age/status reminders.
+**Decision: rejected as the recovery mechanism.**
 
-**Fit:** rejected as the recovery mechanism.
-
-Why:
-
-- reduces forgetting but does not create or move an independently durable copy;
-- preserves the exact current failure mode if the operator dismisses/ignores the reminder or leaves the downloaded JSON only on the operating PC;
-- cannot by itself satisfy the accepted off-device boundary.
-
-Age visibility remains useful as part of a selected mechanism, not as the mechanism itself.
+A reminder reduces forgetting but does not create or move an independently durable copy. If the downloaded JSON stays only on the operating PC, the confirmed failure mode remains. Age visibility is useful only as part of a mechanism that also establishes an off-device path.
 
 ### B. Existing backup v2 + synchronized local download destination + <=24h freshness guard
 
-**Description:** keep the existing D-017 backup file and D-018 restore path. Configure the browser/PC once so Easy backup downloads land in a local folder automatically synchronized off-device by the operating system/provider. Google Drive for desktop is the accepted current-store instance. Add an Easy-level freshness guard so the operator cannot unknowingly continue normal data-changing work once the external-copy export age reaches 24 hours.
+**Decision: SELECTED.**
 
-**Fit:** **SELECTED.**
+Keep D-017 backup v2 and D-018 restore unchanged. Configure the browser/PC once so backup downloads land in a local folder automatically synchronized off-device by the operating system/provider. **Google Drive for desktop** is the accepted current-store instance. Add an Easy-level freshness guard so normal data-changing work cannot silently continue after the locally tracked recovery-copy export age reaches 24 hours.
 
-Why it is the smallest fit-for-purpose mechanism:
+This is the smallest fit-for-purpose mechanism because it:
 
-- uses the already validated `easy-backup` v2 artifact; no backup format/schema migration is needed;
+- reuses the already validated `easy-backup` v2 artifact;
 - keeps the working database local Dexie V4;
 - removes the recurring manual step of remembering to move/upload the JSON after export;
-- the synchronized folder is simultaneously a local file on the PC and an off-device Drive-backed destination once the provider syncs it;
-- restore on another computer remains the already accepted manual flow: obtain the newest JSON from Drive, preflight it and restore atomically;
-- relies on the existing broadly portable browser download path rather than an unproven browser-specific native file-system API;
+- supports a local convenience file and an off-device Drive-backed copy through the same synchronized folder once the provider syncs it;
+- preserves manual restore on another computer using the existing preflight/atomic restore path;
+- does not depend on an unproven browser-specific native file-system API;
 - requires no Easy account system, Google OAuth, Drive API, backend, cloud database or live synchronization.
 
 Operational prerequisite:
 
-1. configure the browser's backup/download destination to a folder covered by the PC's Google Drive synchronization (or another explicitly accepted synchronized provider folder);
-2. perform one setup verification by exporting a test/current backup and confirming that the file appears in Google Drive outside the local PC context;
-3. keep the synchronization client operational as part of store PC setup.
+1. configure the browser backup/download destination to a local folder covered by Google Drive synchronization or another explicitly accepted synchronized provider folder;
+2. perform one setup verification by exporting a backup and confirming that the file appears in Drive outside the local-PC-only context;
+3. keep the synchronization client operational as part of store-PC setup.
 
-Easy cannot independently attest remote provider upload under this mechanism. If future requirements demand provider-acknowledged durability or a formal remote-copy SLA, that would be new evidence and the mechanism/D-016 decision must be reconsidered.
+Easy cannot independently attest provider-side upload completion under this mechanism. A future requirement for provider-acknowledged durability or formal remote-copy SLA would require this decision and D-016 to be reconsidered.
 
 ### C. Permission-based repeated writes through a browser file-system handle
 
-**Description:** ask the operator to choose a synchronized file/folder and retain a browser file handle so Easy can rewrite snapshots more directly.
+**Decision: not selected as the baseline.**
 
-**Fit:** not selected as the baseline.
-
-Why:
-
-- could further reduce clicks on browsers that support the required file-system/permission model;
-- however the actual store browser family/version is not evidenced;
-- permission persistence/re-authorization becomes a new operational failure mode;
-- making this the sole path would introduce a browser-capability assumption absent from current requirements;
-- it is larger than B while still relying on the same external OS/provider sync for off-device durability.
-
-It may be reconsidered later only as progressive enhancement after direct browser/environment evidence.
+It could reduce clicks on supported browsers, but the store browser family/version is not evidenced, permission persistence/re-authorization creates an additional operational failure mode, and off-device durability would still rely on the OS/provider synchronization layer. It may be reconsidered only as progressive enhancement after direct browser/environment evidence.
 
 ### D. Direct Google Drive API/OAuth upload from Easy
 
-**Description:** authorize Easy against Google Drive and upload backup snapshots directly.
+**Decision: not selected.**
 
-**Fit:** not selected.
-
-Why:
-
-- can provide a stronger provider-side upload path and remove dependence on Drive-for-desktop configuration;
-- requires a Google Cloud/OAuth application, token/permission handling, origin/security assessment and an explicit external-provider integration contract;
-- the store said Drive is acceptable, not that direct Drive API integration is mandatory;
-- the accepted target can be met with the smaller local-first synchronized-folder mechanism;
-- introducing OAuth/provider integration voluntarily would outrun D-016's current evidence boundary.
-
-The Google account connected to ChatGPT is not an Easy credential and is irrelevant to this decision.
+It would require a Google Cloud/OAuth application, token/permission handling, origin/security assessment and an explicit external-provider integration contract. The store accepted Drive as a destination; it did not require direct Drive API integration. The accepted target can be met with the smaller local-first mechanism. The Google account connected to ChatGPT is not an Easy credential.
 
 ### E. Backend/cloud database/live synchronization
 
-**Description:** move working persistence or continuous backups to a centrally hosted service.
+**Decision: rejected for current P9-S2.**
 
-**Fit:** rejected for current P9-S2.
-
-Why:
-
-- no concurrent-operator, live multi-device, person-level access, provider-operated remote recovery or trusted-server requirement was proven;
-- far larger than the accepted recovery target requires;
-- would reopen D-016 without a proven trigger.
+No concurrent-operator, live multi-device, person-level access, provider-operated remote recovery or trusted-server requirement was proven. Introducing centrally hosted working persistence would exceed the accepted recovery need and reopen D-016 without a proven trigger.
 
 ## 4. D-016 disposition
 
 **KEEP D-016.**
 
-No new direct requirement proves a D-016 reopen trigger. The selected mechanism keeps the live dataset in Dexie V4 and uses the existing logical backup artifact copied through an operator-controlled/OS-synchronized local folder. Google Drive acts as an external backup destination through the PC synchronization layer, not as Easy's database, account system or live state synchronization service.
+No direct requirement proved a D-016 reopen trigger. The selected mechanism keeps the live dataset in Dexie V4 and uses the existing logical backup artifact through an operator-controlled/OS-synchronized local folder. Google Drive is an external backup destination through the PC synchronization layer, not Easy's database, authentication system or live-state synchronization service.
 
 D-017 and D-018 remain unchanged.
 
-## 5. Selected mechanism contract
+## 5. D-024 selected mechanism contract
 
-Canonical selected mechanism name:
+Canonical selected mechanism:
 
 **Synchronized recovery-copy folder + 24-hour freshness guard.**
 
 Required behavior for the later implementation slice:
 
-1. Preserve `easy-backup` v2 generation/preflight and D-018 restore unchanged.
+1. Preserve `easy-backup` v2 generation/preflight and D-018 restore semantics.
 2. Provide a one-time setup flow/checklist explaining that the browser backup destination must be a local folder synchronized off-device; Google Drive for desktop is the accepted current-store destination.
 3. Require one setup verification that an exported backup is visible in Drive outside the local-PC-only context before the operator marks external backup as configured.
 4. Persist only local recovery-health metadata; do **not** add a Dexie schema version or alter the backup envelope solely for freshness tracking.
 5. Treat missing/cleared recovery-health metadata fail-safe as `unknown/due`, never as fresh.
 6. Show the last recovery-copy export time and a clear global health state.
-7. Warn before expiry (implementation may use a non-contractual warning threshold such as 20 hours) without redefining the accepted 24-hour boundary.
-8. At **24 hours**, require a new backup export before allowing normal data-changing operation to continue. Restore/recovery access must remain available so a replacement PC can recover even when local freshness metadata is absent.
-9. After the operator initiates the validated backup download, show the generated filename/time and return the local freshness state to current. The UI must state that Easy confirms backup generation/download initiation, not provider-side Drive acknowledgment.
-10. Keep the existing manual export available for additional convenience copies.
+7. Warning before expiry may use a non-contractual threshold, but it must not redefine the accepted **24-hour** boundary.
+8. At **24 hours**, require a new backup export before normal data-changing operation can continue. Backup/Restore must remain reachable so recovery is never blocked by missing or stale local metadata.
+9. After Easy initiates the validated backup download, show the generated filename/time and refresh local recovery-health state. The UI must state that Easy confirms backup generation/download initiation, not provider-side Drive acknowledgment.
+10. Keep manual export available for additional convenience copies.
 11. Do not introduce Google OAuth/Drive API, backend/authentication, cloud database, live synchronization or a browser-specific file-system API in the baseline implementation.
 
-The synchronized-folder setup and the Drive client are operating-environment dependencies. A later formal remote-durability SLA would require a different decision because Easy cannot prove provider sync completion without provider integration.
+## 6. Bounded implementation slice
 
-## 6. Bounded implementation slice authorized after this decision is accepted
+Next bounded implementation slice:
 
-Proposed next slice: **P9-S2-I1 — Recovery-copy freshness guard and synchronized-folder workflow.**
+**P9-S2-I1 — Recovery-copy freshness guard and synchronized-folder workflow.**
 
-Allowed runtime scope only after this decision passes D-019 and integrates:
+Authorized runtime scope:
 
 - backup/recovery UI and copy explaining synchronized-folder setup;
-- local recovery-health metadata (for example a namespaced `localStorage` record; no Dexie V5);
-- global due/overdue visibility integrated with the current layout;
+- local recovery-health metadata, with no Dexie V5;
+- global due/overdue visibility integrated with the current application shell;
 - a 24-hour overdue gate for normal data-changing operation while keeping Backup/Restore reachable;
 - reuse/refactor of the existing validated `exportData()` path only as necessary to return/display export metadata and update local recovery-health state;
 - tests for first-run/unknown state, warning/24h boundary, export refresh, Backup/Restore escape path and preservation of D-017/D-018 behavior;
-- D-019 full validation.
+- full D-019 validation.
 
 Explicitly out of scope:
 
@@ -167,8 +133,15 @@ Explicitly out of scope:
 - provider-side sync-status verification;
 - P9-S3/P9-S4/P9-S5 work.
 
-## 7. Decision acceptance rule
+## 7. Accepted validation/integration
 
-This comparison itself changes documentation only. No selected mechanism is implemented here.
+Persistent Critical QA run **`32177687434`**, job **`95843265579`** — **PASS** on PR #37 merge ref `79552f7912307db88272e075b2320cade02f6f17`:
 
-The decision becomes canonical only after this slice passes the full D-019 `npm run qa:critical` gate and integrates into `develop`. After accepted integration, canonical documentation may record a new accepted decision and advance `NEXT_ACTION` only to P9-S2-I1.
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
+
+PR #37 was squash-merged into `develop` as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`. The validated merge ref and integrated commit share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`, proving that the integrated decision content is exactly the content accepted by D-019.
+
+No runtime was changed in the decision slice. D-024 is now the canonical recovery-mechanism decision. `NEXT_ACTION` may advance only to P9-S2-I1.
