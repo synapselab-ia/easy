@@ -8,7 +8,11 @@ This changelog records material V2 project-state changes rather than every code-
 
 P9-S2 executed evidence intake only. Existing direct store evidence proves severe operating-PC-loss/manual-backup exposure, but still does not define the required acceptable maximum recoverable-copy age, recovery procedure, interruption window, provider-operated recovery requirement, or destination/process constraints. Repository-accessible searches found no newer direct evidence supplying those answers.
 
-`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct answers required to resume. Missing evidence is a blocker, not permission to invent SLA/RPO/RTO values or infer a cloud/server requirement. P9-S2 is `BLOCKED`; D-016 remains authoritative. No recovery mechanism comparison/selection, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed. D-019 validation is required before this blocked-state documentation integrates.
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct answers required to resume. Missing evidence is a blocker, not permission to invent SLA/RPO/RTO values or infer a cloud/server requirement. P9-S2 is `BLOCKED`; D-016 remains authoritative. No recovery mechanism comparison/selection, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed.
+
+Blocked-state Critical QA **`32168368086`**, job **`95813314347`** — PASS on PR #33: 0 lint errors / 80 warnings, 43 Vitest files / 176 tests, 15/15 Playwright and production build PASS. PR #33 was squash-merged into `develop` as `0017538b93c438f4374b1b2427222f27b9ef357d`; validated merge ref `cbc96eefb315c29c266b1df978bda605c2907352` and integrated commit share tree `bf7165121ec08cd91f38db05d887a505dba3dbee`.
+
+The validated integration records the evidence blocker only. P9-S2 remains `BLOCKED` and the next action remains direct store evidence intake; no recovery decision or implementation has been accepted.
 
 ---
 
