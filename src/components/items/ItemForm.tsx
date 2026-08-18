@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import type { Item } from "../../db/database";
+import { toast } from "sonner";
 
 interface ItemFormProps {
     initialData?: Item;
@@ -64,7 +65,8 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
             setName("");
             setBasePrice("");
         } catch (error) {
-            console.error("Erro ao salvar item:", error);
+            const message = error instanceof Error ? error.message : "Falha ao salvar item.";
+            toast.error(message);
         }
     };
 

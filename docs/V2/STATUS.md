@@ -20,6 +20,7 @@
 - P7-S2 — Reliable transaction-entry intent and feedback: `DONE`.
 - P7-S3 — Explicit invalid reseller statement-range state: `DONE`.
 - P7-S4 — Align Backup recovery copy with implemented restore: `DONE`.
+- P7-S5 — Operator-visible item/reseller save failures: `DONE`.
 
 ## Startup protocol for a new conversation
 
@@ -46,6 +47,8 @@ At the start of P7-S2, `develop` was `7269bb435d91bbde45ffa835bacf0d373dfa14e6`;
 At the start of P7-S3, `develop` was `5cb696a4c1eadbe46e0801922b0ad78b860f367f`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 At the start of P7-S4, `develop` was `5b3d5824f9cce6e08572fa8034d797a6c30f758d`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+At the start of P7-S5, `develop` was `42d382311be1b910bbc56cd85a948cb8a7737329`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 ## P7-S2 completed transaction-entry slice
 
@@ -145,26 +148,53 @@ PR #17 was squash-merged into `develop` as `169704e8d4a9ac852634ac436945b870b0ee
 
 Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
 
+## P7-S5 completed item/reseller save-feedback slice
+
+P7-S5 resolved QG-014 without changing P1 entity lifecycle/reference semantics, hook mutation behavior, Dexie schema/persistence, transaction entry, financial/correction semantics, backup/restore or reseller-context launch.
+
+### Save failures are visible and retry-safe
+
+`ItemForm` and `ResellerForm` now surface rejected create/edit mutations through `toast.error` using the domain/persistence error message when available. Success behavior remains unchanged: `onSubmitSuccess` and field reset still occur only after `mutateAsync` resolves.
+
+A rejected save therefore keeps the form mounted with the operator's current values intact so the condition can be corrected and the same create/edit operation retried without re-entry.
+
+### Focused regression coverage
+
+- `ItemForm.test.tsx` covers rejected create and rejected edit, visible error feedback, no success callback and retained name/price values;
+- new `ResellerForm.test.tsx` covers rejected create and rejected edit, visible error feedback, no success callback and retained name/phone/email/notes values;
+- the tests reject the existing Dexie-backed mutation boundary directly; `useItems` and `useResellers` are not rewritten or bypassed in runtime.
+
+## P7-S5 validation
+
+Functional persistent Critical QA run **`32141425740`**, job **`95724735659`** — **PASS**:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **41 files / 169 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
+
 ## Remaining prioritized P7 gaps
 
-1. Item/reseller save failures remain console-only — next slice.
-2. Reseller-context transaction launch still requires redundant reseller reselection.
-3. P8 real-store discovery remains outside P7 and may reopen D-016 only with evidence.
+1. Reseller-context transaction launch still requires redundant reseller reselection — next and final currently evidenced P7 slice.
+2. P8 real-store discovery remains outside P7 and may reopen D-016 only with evidence.
 
-## Active constraints entering P7-S5
+## Active constraints entering P7-S6
 
 - do not work directly on `main`;
 - preserve all P1–P6 contracts and D-020 prioritization;
 - do not weaken or bypass `qa:critical`;
 - keep D-016 local-first Dexie V4;
-- do not change entity lifecycle/reference semantics while adding operator-visible save-failure feedback;
-- do not bundle reseller-context launch into P7-S5;
+- preserve standalone transaction-entry behavior and the P7-S2 Payment/Signal intent contract;
+- preserve P1 active-reference validation when carrying reseller context into transaction entry;
+- do not change financial, occurrence-date, correction/reversal or statement semantics;
 - do not begin P8 discovery or new modules.
 
 ## NEXT_ACTION
 
-**P7-S5 — Make item/reseller save failures operator-visible without losing retry context. Create a new feature branch from the current `develop` after P7-S4 integration and change only the existing item/reseller create/edit failure paths so rejected mutations produce clear operator-visible feedback while preserving the entered form data needed for correction/retry. Preserve P1 lifecycle/reference semantics and all persistence behavior; add focused component/page coverage for rejected saves and retained input; run the full `npm run qa:critical` gate. Do not change transaction-entry behavior, reseller-context launch, financial/correction semantics, backup/restore mechanics, schema/persistence architecture or begin P8.**
+**P7-S6 — Remove redundant reseller reselection when launching a transaction from reseller detail. Create a new feature branch from the current `develop` after P7-S5 integration and change only the reseller-context launch path so an operator can start a transaction from a reseller detail view with that reseller intent preselected/preserved, while standalone transaction entry remains unchanged. Preserve P1 active-reference validation and all P2/P3 financial/audit semantics; inactive or missing reseller context must not bypass existing validation. Add focused component/page coverage and one bounded Playwright reseller-detail → transaction-entry path if navigation is part of the implemented flow; run the full `npm run qa:critical` gate. Do not change command-center shortcuts, generic transaction behavior beyond context initialization, financial/correction semantics, backup/restore mechanics, schema/persistence architecture or begin P8.**
 
 ## P7 completion direction
 
-P7 closes only after the remaining evidenced gaps are completed in bounded slices with targeted coverage and the persistent Critical QA gate remains green.
+P7 can close after P7-S6 only if the remaining QG-015 evidence is resolved, no new material P7 gap is discovered in-scope, and the persistent Critical QA gate remains green.
