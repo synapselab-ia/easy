@@ -40,7 +40,45 @@ Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and l
 
 P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 provides versioned backup plus checkpointed atomic restore. P6/D-019 requires the repository-wide `npm run qa:critical` gate for V2 integration and publication. P7/D-020 addresses evidenced operator-intent/error risks before convenience or cosmetic refinement.
 
-At the start of P7-S3, `develop` was `5cb696a4c1eadbe46e0801922b0ad78b860f367f`; `main` remained outside V2 integration work.
+At the start of P7-S2, `develop` was `7269bb435d91bbde45ffa835bacf0d373dfa14e6`; `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+At the start of P7-S3, `develop` was `5cb696a4c1eadbe46e0801922b0ad78b860f367f`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+## P7-S2 completed transaction-entry slice
+
+P7-S2 resolved the highest-ranked P7-S1 operational cluster without changing transaction financial semantics, Dexie schema, persistence, reversal/correction, backup/restore or any lower-ranked P7 flow.
+
+### Cancel now has real standalone behavior
+
+`TransactionForm` owns its reset operation. **Cancelar** now clears reseller, occurrence-date editing state, order/payment fields, observation, validation/mutation state and returns the movement type to the requested `initialType`. The standalone `TransactionsPage` no longer supplies the previous inert no-op callback.
+
+This preserves shortcut intent: a form opened as `signal` returns to `signal` after Cancel rather than silently falling back to `order` or retaining edited data.
+
+### Create failures are visible and retry-safe
+
+A rejected transaction mutation now produces `toast.error` with the domain/persistence error instead of console-only logging. Failure does **not** call the reset path: reseller/item/value/date inputs remain available so the operator can correct the condition and retry without reconstructing the financial entry.
+
+Successful creation continues to use the existing P1/P3 validation path and resets the form only after the write succeeds.
+
+### Payment and signal shortcut intent is explicit
+
+The command center no longer exposes one ambiguous `Pagamento/Sinal` action that always initializes `payment`. It now has distinct actions:
+
+- `Novo Lançamento: Pagamento` → `/transactions?type=payment`;
+- `Novo Lançamento: Sinal` → `/transactions?type=signal`.
+
+The transaction page continues to consume the existing `type` query parameter; no financial rule distinguishes the signed effect introduced by this UX change.
+
+## P7-S2 validation
+
+Functional persistent Critical QA run **`32069261401`**, job `95508465043` — **PASS**:
+
+- ESLint: **0 errors / 78 warnings**; existing warning policy remains unchanged;
+- Vitest: **39 files / 163 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+Two earlier runs (`32068747287` and `32069051473`) failed only in the newly added Cancel unit assertion. Investigation showed the test harness modeled the controlled select with invalid `<span>` children inside `<select>`, causing jsdom to retain the first option when value became empty. The harness was corrected to valid controlled-select HTML; runtime behavior was not weakened to satisfy the test.
 
 ## P7-S3 completed invalid-range slice
 
@@ -62,16 +100,20 @@ Correcting the inverted range removes the invalid state and restores the formal 
 
 Valid complete ranges still use the existing `buildStatementPeriod` opening → movements → closing model. P7-S3 added only page-state validation/orchestration around the existing domain calculation.
 
-## P7-S3 validation
+## P7-S3 validation and integration
 
 Initial persistent Critical QA run **`32133265871`** — **FAIL** in one newly added component-test expectation. The corrected range covered March while the test fixture remained dated in February; the application correctly excluded that row. This was classified as a test-fixture error under D-019, and runtime behavior was not changed to satisfy it.
 
-After aligning the fixture with the corrected valid range, persistent Critical QA run **`32133559376`**, job **`95699734548`** — **PASS**:
+After aligning only the fixture with the corrected valid range, persistent Critical QA run **`32133559376`**, job **`95699734548`** — **PASS**:
 
 - ESLint: **0 errors / 80 warnings**;
 - Vitest: **39 files / 164 tests PASS**;
 - Playwright Chromium: **14/14 PASS**;
 - production build: **PASS**.
+
+Final canonical documentation-head run **`32133891691`**, job **`95700749081`** — **PASS** on PR merge ref `ee5016cfc2b9d4c2823027127f939abebc5eb705`.
+
+PR #15 was squash-merged into `develop` as `337de0b6cf18da7cf27c54648839624df46e66ef`. The validated PR merge ref and the squash integration commit both resolve to tree **`3f56eca7cfee1b99cb211a03e8070b956994f027`**, so the integrated P7-S3 content is byte-for-byte the content validated by the final gate. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
 
