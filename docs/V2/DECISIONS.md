@@ -161,10 +161,63 @@ Therefore **none of the explicit D-016 reopen triggers is proven by P8-S1**. D-0
 
 Before any architecture reconsideration, direct real-store evidence must resolve who operates the system, which devices share a dataset, whether shared state must be live/automatic, whether permissions or verified authorship are required, acceptable recovery loss/time, required server integrations and any security/privacy constraints. Detailed P8-S1 evidence is recorded in `docs/V2/P8_DISCOVERY.md`.
 
+## D-022 — Direct store validation keeps D-016 for current operation; recovery durability and category reporting become evidence-backed roadmap inputs
+**Status:** ACCEPTED  
+**Date:** 2026-08-18
+
+P8-S2 resumed after a direct stakeholder supplied the real-store evidence packet in the project conversation.
+
+### Current operating model
+
+Direct evidence confirms:
+
+- Duda and store owners use Easy, without a current need for concurrent access to the same dataset;
+- the current operating device is a PC, without a current requirement for the same live dataset on multiple devices simultaneously;
+- resellers receive PDF/extracts and do not currently need interactive application access;
+- JSON/manual off-device handling remains the current portability/recovery mechanism;
+- no trusted server integration is currently mandatory;
+- scale is modest, around 100 resellers maximum and about 50 active, with limited daily entry volume.
+
+### D-016 trigger decision
+
+No D-016 reopen trigger is proven by the direct evidence:
+
+- **concurrent operators:** not required currently;
+- **automatic live multi-device sharing:** not required currently;
+- **person-level authorship/access control:** accounts/permissions are a conditional future preference, not a present mandatory requirement;
+- **remote recovery SLA:** severe data-loss consequences are confirmed, but no numeric RPO/RTO or provider-operated recovery obligation is specified;
+- **trusted server integrations:** none are currently required;
+- **security policy incompatible with browser-local storage:** no competent policy evidence was supplied, so this remains unresolved rather than assumed false.
+
+Therefore **D-016 remains accepted for the current operating mode**. P8-S2 does not authorize backend, authentication, cloud database, live synchronization or Dexie migration.
+
+### Confirmed recovery risk
+
+The current manual backup practice has a catastrophic failure mode: if the operating PC fails before the current JSON has been copied to Drive, the store may have to reconstruct tens of thousands of reais in sales. This establishes recovery durability/off-device protection as a high-severity product requirement for prioritization.
+
+It does **not** establish a formal remote-recovery SLA. P9 may compare bounded recovery improvements, but any option that later proves a D-016 trigger must explicitly reopen the architecture decision before implementation.
+
+### Confirmed product inputs
+
+P8-S2 also confirms:
+
+- items need categories;
+- items need assignment to a category;
+- reporting/analysis needs category-level filtering or aggregation;
+- multiple edit/correction microflows are missing or difficult in real operation, but exact unsupported record/action pairs must be inventoried before implementation.
+
+The stakeholder also described delayed entry of sales. Current V2 already supports an editable financial occurrence date (`occurredAt`), so P9 must treat this as discoverability/usability verification rather than inventing a second date model.
+
+Broader accounts/permissions, automatic synchronization, inventory, order management and full store-system expansion remain future directions, not present mandatory requirements.
+
+### Phase consequence
+
+P8 can close after D-019 validation/integration of this evidence decision. The next slice is P9-S1 prioritization only; it must not implement a feature or architecture change.
+
 ---
 
 # Open decisions
 
-- D-016 local vs cloud only if direct P8 real-store evidence proves a reopen trigger;
-- prioritized P9 modules only after P8 confirms unmet operational requirements;
+- D-016 local vs cloud only if later direct evidence proves a reopen trigger;
+- P9 implementation order after P9-S1 scores the confirmed recovery/category/edit-flow inputs;
 - controlled beta/migration/cutover policy in P10.
