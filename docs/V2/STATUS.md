@@ -8,7 +8,7 @@
 ## Current phase
 
 **P8 — Real store requirements discovery**  
-**State:** `NOT_STARTED` — next phase after P7 closure.
+**State:** `IN_PROGRESS` — P8-S1 repository-evidence discovery complete; direct real-store validation remains.
 
 - P1 — Referential integrity and safe entity lifecycle: `DONE`.
 - P2 — Correction, reversal and audit trail: `DONE`.
@@ -23,6 +23,7 @@
 - P7-S4 — Align Backup recovery copy with implemented restore: `DONE`.
 - P7-S5 — Operator-visible item/reseller save failures: `DONE`.
 - P7-S6 — Reseller-context transaction launch without redundant reselection: `DONE`.
+- P8-S1 — Repository-evidence requirements discovery and D-016 trigger assessment: `DONE` pending final canonical QA/integration.
 
 ## Startup protocol for a new conversation
 
@@ -36,13 +37,13 @@ Read in order:
 6. `docs/V2/QA_LEDGER.md`
 7. `docs/V2/CHANGELOG.md`
 
-Then inspect only source or evidence needed for `NEXT_ACTION`.
+Then inspect only source or evidence needed for `NEXT_ACTION`. When P8 is active, read `docs/V2/P8_DISCOVERY.md` only after the canonical startup set if the active action depends on discovery evidence.
 
 ## Reconstructed baseline
 
 Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. Dexie remains **V4** and D-016 remains authoritative: no backend, authentication, cloud database or synchronization is part of the accepted foundation unless P8 produces explicit evidence for a reopen trigger.
 
-P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 provides versioned backup plus checkpointed atomic restore. P6/D-019 requires the repository-wide `npm run qa:critical` gate for V2 integration and publication. P7/D-020 completed the accepted evidence-backed operator-intent/error backlog before convenience or cosmetic refinement.
+P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 provides versioned backup plus checkpointed atomic restore. P6/D-019 requires the repository-wide `npm run qa:critical` gate for V2 integration and publication. P7/D-020 completed the accepted evidence-backed operator-intent/error backlog before convenience or cosmetic refinement. P8-S1/D-021 now establishes that repository evidence alone does not prove a D-016 reopen trigger; direct store evidence is required before architecture change.
 
 At the start of P7-S2, `develop` was `7269bb435d91bbde45ffa835bacf0d373dfa14e6`; `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
@@ -53,6 +54,8 @@ At the start of P7-S4, `develop` was `5b3d5824f9cce6e08572fa8034d797a6c30f758d`;
 At the start of P7-S5, `develop` was `42d382311be1b910bbc56cd85a948cb8a7737329`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 At the start of P7-S6, `develop` was `4928978fbcd06cdb308951301ab4f8219b642923`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+At the start of P8-S1, `develop` was `e8973b59b0b6df28e95d9085b5319d24d7724d61`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 ## P7-S2 completed transaction-entry slice
 
@@ -220,15 +223,44 @@ Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit f
 
 QG-015 is resolved. The accepted P7-S1 inventory contained QG-011 through QG-015, all are now resolved, and the bounded P7-S6 implementation/validation did not evidence an additional material in-scope P7 gap. Therefore **P7 is `DONE`**. No new architecture/product decision was required; D-016, D-019 and D-020 remain authoritative.
 
-## Active constraints entering P8
+## P8-S1 completed repository-evidence discovery
+
+P8-S1 performed discovery only. No runtime, schema, persistence or new business-module implementation was made.
+
+### Evidence inspected
+
+- canonical V2 startup set;
+- original `prompts/prompt1.md` through `prompt8.md`;
+- historical product PRDs relevant to reseller management and responsive/mobile operation;
+- `README.md` client-side/portability description;
+- repository issue searches for explicit `Duda`/`loja` artifacts, which returned no issues.
+
+Detailed classification is recorded in `docs/V2/P8_DISCOVERY.md`.
+
+### Confirmed project intent versus unresolved store reality
+
+Repository evidence confirms administrator workflows, desktop/mobile operation, PDF sharing, manual JSON backup/portability and the current reporting/analytics scope. A later responsiveness requirement also describes a reseller consulting their own statement on mobile, which is materially different from the earlier explicit single-user/no-auth framing.
+
+That difference is recorded as an **open real-store validation question**, not as proof of accounts, permissions, concurrent use or synchronized shared state. No inspected artifact proves automatic live multi-device sharing, person-level authorship/access control, remote recovery SLA, trusted server integrations or a security policy incompatible with browser-local storage.
+
+### D-016 assessment
+
+Every D-016 reopen trigger is classified **NOT PROVEN** by P8-S1 repository evidence. D-021 is accepted: D-016 remains authoritative until direct real-store evidence resolves operator/device/sharing/access/recovery constraints. Backend/auth/cloud/synchronization and persistence migration remain unauthorized.
+
+### Validation state
+
+P8-S1 is documentation/discovery-only but still requires the full persistent D-019 `npm run qa:critical` gate. The first complete documentation-head validation is pending before integration.
+
+## Active constraints entering P8-S2
 
 - do not work directly on `main`;
-- preserve all P1–P7 contracts and the persistent D-019 gate;
-- D-016 remains authoritative unless explicit real-store evidence proves a reopen trigger;
-- distinguish confirmed store requirements from assumptions or desired polish;
-- do not implement backend, authentication, cloud database, synchronization or person-level access control merely to explore requirements;
-- do not start P9 modules before P8 has produced a prioritized, evidence-backed requirements outcome.
+- preserve all P1–P7 contracts and D-019;
+- keep D-016 authoritative unless direct real-store evidence proves a reopen trigger;
+- use `docs/V2/P8_DISCOVERY.md` as the P8-S1 evidence matrix, but keep `STATUS.md` as the current-state authority;
+- distinguish explicit operator/store evidence from inference, generated historical PRDs and desired polish;
+- do not implement backend, authentication, cloud database, synchronization, Dexie migration or P9 modules during validation;
+- do not treat an unanswered discovery question as a requirement.
 
 ## NEXT_ACTION
 
-**P8-S1 — Conduct evidence-based real-store requirements discovery and assess D-016 reopen triggers. Create a new branch from the current `develop` after P7-S6 integration and perform discovery only: inspect repository evidence plus any real-store artifacts explicitly available to the project; inventory confirmed workflows, operators/devices, data-sharing, recovery/SLA, security/access, reporting and operational constraints; separate confirmed requirements from assumptions and unresolved questions; evaluate each D-016 reopen trigger against that evidence; update the canonical V2 specification/backlog/decision ledger only where evidence supports a change. Do not implement backend/auth/cloud/synchronization, persistence migrations or P9 business modules in P8-S1. Run the full `npm run qa:critical` gate before integration even if the slice is documentation-only.**
+**P8-S2 — Collect direct real-store evidence for the unresolved operator/device/sharing/access/recovery requirements and decide whether D-016 must be reopened. Create a new branch from the current `develop` after P8-S1 integration and perform validation only: use interview notes, operator answers, observation or other real-store artifacts explicitly supplied to the project to resolve who operates the same dataset, device/browser usage, concurrent operation, automatic sharing/synchronization need, reseller direct access, permissions/authorship, recovery RTO/RPO/SLA, trusted integrations, security/privacy constraints, realistic data scale/connectivity and materially missing workflows/reports. Map each confirmed fact to the D-016 trigger matrix and explicitly keep or reopen D-016 before any architecture implementation. Do not implement backend/auth/cloud/synchronization, persistence migrations or P9 modules in P8-S2. Run the full `npm run qa:critical` gate before integration even if the slice remains documentation-only.**
