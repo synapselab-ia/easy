@@ -292,18 +292,50 @@ The accepted P7-S1 evidence inventory consisted of QG-011 through QG-015. All fi
 
 ### P8-S1 — Repository evidence and D-016 trigger assessment
 
-**Status:** DISCOVERY COMPLETE / QA PENDING.
+**Status:** PASS / DONE.
 
 Evidence result:
 
 - core administrator workflows, desktop/mobile use, PDF sharing, JSON portability and current analytics/reporting intent are repository-backed;
 - later mobile requirements mention reseller direct statement access, but do not define shared-state, account, permission or synchronization semantics;
 - no direct store interview/observation artifact, production telemetry, SLA/security policy or Duda/store issue was found in the inspected repository evidence;
-- all six D-016 reopen triggers are **NOT PROVEN** by P8-S1;
+- all six D-016 reopen triggers were **NOT PROVEN** by P8-S1;
 - D-021 keeps D-016 authoritative pending direct store validation;
 - detailed classification/questions are in `docs/V2/P8_DISCOVERY.md`.
 
-No runtime code, schema, persistence or P9 feature was changed. D-019 still requires complete persistent `npm run qa:critical` before integration; the first documentation-head gate is pending.
+Persistent Critical QA run **`32149199373`**, job **`95750510692`** — **PASS** on PR #23 merge ref `ad6745a95c274fcedfb3cc999f5fb924099f9d53`:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **43 files / 176 tests PASS**;
+- Playwright Chromium: **15/15 PASS**;
+- production build: **PASS**.
+
+PR #23 was squash-merged as `65ada02848ad7ca792889b16815c74d0ac9e6da1`; validated merge ref and integration share tree `6bef84c07f236c8df3dea4ce24b4e9028b7bb509`. Documentation-only canonical closure PR #24 also passed run `32150004427`, job `95753223139`, and was squash-merged as `2c5f5e92dd66224499ffc55f828d3e220a2afd63`.
+
+No runtime code, schema, persistence or P9 feature was changed.
+
+### P8-S2 — Direct real-store validation
+
+**Status:** BLOCKED / QA PENDING.
+
+Evidence-intake result:
+
+- canonical P8 matrix reread;
+- repository content searched for interview/observation/operator/store evidence and RTO/RPO/SLA material;
+- repository issues checked, including `Duda` and `loja`; repository currently has zero issues;
+- repository root inspected for newly supplied interview, observation, support, telemetry, SLA/security or equivalent direct evidence;
+- current project conversation contains no operator answers or direct real-store artifact.
+
+Classification:
+
+- direct evidence required by D-021 is absent;
+- absence of evidence is not interpreted as evidence that a D-016 trigger is false;
+- all six triggers remain **UNRESOLVED from direct evidence** and none is proven;
+- D-016 remains authoritative because its reopen condition is unmet;
+- P8-S2 cannot be marked `DONE` and no backend/auth/cloud/synchronization, persistence migration or P9 implementation is authorized;
+- `docs/V2/P8_EVIDENCE_REQUEST.md` defines the minimum evidence packet required to resume validation.
+
+The current documentation-only blocked-state head still requires full persistent `npm run qa:critical` before integration.
 
 ## Known baseline QA gaps
 
@@ -323,6 +355,6 @@ No runtime code, schema, persistence or P9 feature was changed. D-019 still requ
 - QG-014 item/reseller save error feedback: RESOLVED / P7-S5.
 - QG-015 reseller-context transaction launch friction: RESOLVED / P7-S6.
 
-## QA policy entering P8-S2
+## QA policy while P8-S2 is blocked
 
-P8-S2 remains validation-only. D-019 requires the complete persistent `npm run qa:critical` gate before integration even for documentation-only discovery work. Preserve all P1–P7 contracts, keep D-016 authoritative unless direct real-store evidence proves a reopen trigger, distinguish confirmed evidence from inference, and do not begin backend/auth/cloud/synchronization implementation, persistence migration or P9 modules during validation.
+P8-S2 remains validation-only and blocked on external evidence. D-019 still requires the complete persistent `npm run qa:critical` gate for integration of the blocked-state documentation. Preserve all P1–P7 contracts, keep D-016 authoritative unless direct real-store evidence proves a reopen trigger, distinguish confirmed evidence from inference, and do not begin backend/auth/cloud/synchronization implementation, persistence migration or P9 modules while the evidence blocker remains.

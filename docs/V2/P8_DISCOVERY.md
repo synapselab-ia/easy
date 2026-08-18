@@ -1,6 +1,6 @@
 # Easy V2 — P8 Real-store Requirements Discovery
 
-**Status:** P8-S1 repository-evidence snapshot  
+**Status:** P8-S1 repository evidence complete; P8-S2 direct validation `BLOCKED` awaiting real-store evidence  
 **Date:** 2026-08-18  
 **Scope:** discovery only; no runtime or persistence implementation
 
@@ -142,3 +142,35 @@ P8 cannot be considered complete until direct evidence resolves at least these q
 P8-S1 is complete as **repository-evidence discovery**. It establishes a bounded evidence matrix and identifies one material ambiguity — reseller direct mobile use versus the accepted single-user/no-auth model — without converting that ambiguity into an architecture decision.
 
 P8 remains in progress. The next slice must collect direct real-store evidence for the unresolved operator/device/sharing/access/recovery questions and only then decide whether D-016 should be reopened.
+
+## 6. P8-S2 direct-validation attempt — 2026-08-18
+
+P8-S2 was started from `develop` at `2c5f5e92dd66224499ffc55f828d3e220a2afd63` and performed evidence intake only.
+
+Checks performed against the project-accessible evidence boundary:
+
+- reread the canonical startup set and this P8-S1 matrix;
+- searched repository content for interview/observation/operator/store evidence and for RTO/RPO/SLA material;
+- checked repository issues, including explicit `Duda` and `loja` searches;
+- inspected the current repository root for a newly supplied interview, observation, support, telemetry, SLA/security or other real-store artifact.
+
+Result: **no direct real-store evidence has been supplied to the project**. The repository currently has zero issues, the targeted evidence searches returned no direct artifact, and the current conversation supplied no operator answers, interview notes, observation record, SLA/security policy or production telemetry.
+
+This absence is an **evidence blocker**, not negative evidence about store needs. It does not justify marking any D-016 trigger false, nor does it justify inventing architecture or P9 requirements.
+
+### P8-S2 trigger disposition
+
+| D-016 trigger | P8-S2 direct-evidence status | Architecture effect |
+| --- | --- | --- |
+| Concurrent operators | **UNRESOLVED — no direct evidence supplied** | No reopen trigger proven. |
+| Automatic live multi-device sharing | **UNRESOLVED — no direct evidence supplied** | No reopen trigger proven. |
+| Person-level authorship/access control | **UNRESOLVED — no direct evidence supplied** | No reopen trigger proven. |
+| Remote recovery SLA | **UNRESOLVED — no direct evidence supplied** | No reopen trigger proven. |
+| Trusted server integrations | **UNRESOLVED — no direct evidence supplied** | No reopen trigger proven. |
+| Security policy incompatible with browser-local storage | **UNRESOLVED — no direct evidence supplied** | No reopen trigger proven. |
+
+D-016 therefore remains authoritative under D-021 because **no reopen trigger is proven**. This is not a completed real-store validation and P8-S2 must not be marked `DONE` until sufficient direct evidence is supplied and classified.
+
+`docs/V2/P8_EVIDENCE_REQUEST.md` now defines the minimum evidence packet needed to resume the slice consistently: operators/concurrency, devices/shared state, reseller access, synchronization, identity/permissions/authorship, recovery RTO/RPO, trusted integrations, security/privacy, scale/connectivity and measurable missing workflows/reports.
+
+No runtime, backend/auth/cloud/synchronization, Dexie migration or P9 implementation was performed.
