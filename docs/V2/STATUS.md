@@ -8,7 +8,7 @@
 ## Current phase
 
 **P8 — Real store requirements discovery: `DONE`.**  
-**P9 — Prioritized evidence-backed improvements: `NOT_STARTED`.**
+**P9 — Prioritized evidence-backed improvements: `IN_PROGRESS`.**
 
 Phase state:
 
@@ -21,7 +21,8 @@ Phase state:
 - P7 — Incomplete UX flows / operational refinement: `DONE`.
 - P8-S1 — Repository-evidence discovery and D-016 trigger assessment: `DONE`.
 - P8-S2 — Direct real-store validation and D-016 keep/reopen decision: `DONE`.
-- P9-S1 — Evidence-backed prioritization: `NOT_STARTED`.
+- P9-S1 — Evidence-backed prioritization: `IN_REVIEW`.
+- P9-S2 — Recovery durability decision gate: `NOT_STARTED`.
 - P10 — Controlled beta, migration and cutover: `NOT_STARTED`.
 
 ## Startup protocol for a new conversation
@@ -36,7 +37,7 @@ Read in order:
 6. `docs/V2/QA_LEDGER.md`
 7. `docs/V2/CHANGELOG.md`
 
-Then inspect only source/evidence required by `NEXT_ACTION`. `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` preserve the completed P8 evidence record.
+Then inspect only source/evidence required by `NEXT_ACTION`. `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` preserve P8 evidence. `docs/V2/P9_PRIORITIZATION.md` contains the P9-S1 scoring and bounded current-capability inventory.
 
 ## Current technical baseline
 
@@ -53,75 +54,64 @@ Authoritative contracts include:
 - D-019 repository-wide `npm run qa:critical` integration/publication gate;
 - D-020 evidence-first operational UX prioritization;
 - D-021 repository evidence alone cannot reopen D-016;
-- D-022 direct store validation keeps D-016 for the current operating mode.
+- D-022 direct store validation keeps D-016 for the current operating mode;
+- D-023 P9 prioritizes recovery durability first, category modeling/reporting second, bounded correction gaps third, and occurrence-date usability verification fourth.
 
-No backend, authentication, cloud database, live synchronization or Dexie migration has been authorized by P8.
+No backend, authentication, cloud database, live synchronization or Dexie migration is authorized by P8/P9-S1.
 
 ## P8 direct real-store conclusion
 
-Direct stakeholder evidence supplied on 2026-08-18 confirms the current operation:
+Direct stakeholder evidence supplied on 2026-08-18 confirms:
 
-- Easy is used by Duda and store owners;
-- concurrent operation on the same dataset is not currently required;
-- current use is PC-based;
-- the same live dataset is not currently required automatically on multiple devices;
+- Easy is used by Duda and store owners without a current concurrency requirement;
+- current use is PC-based and the same live dataset is not currently required automatically on multiple devices;
 - resellers receive PDF/extracts and do not need interactive Easy access;
 - JSON/manual off-device handling is the current backup/portability mechanism;
 - no trusted server integration is currently mandatory;
 - scale is modest: up to roughly 100 resellers, around 50 active, with limited daily entries.
 
-### Confirmed high-severity recovery risk
+If the operating PC fails before the current JSON has been copied to Drive, the working dataset may be lost and the store may need to reconstruct tens of thousands of reais in sales. Human-memory-dependent off-device backup is therefore a confirmed critical continuity risk. Numeric RPO/RTO and a formal remote-recovery SLA remain unresolved, so this does not itself reopen D-016.
 
-If the operating PC fails before the current JSON has been copied to Drive, the working dataset may be lost and the store may need to reconstruct tens of thousands of reais in sales. Human-memory-dependent off-device backup is therefore a confirmed critical continuity risk.
+Confirmed product needs include item categories, item classification and category-level reporting. Edit/correction friction is also confirmed, but P8 did not enumerate exact store cases. Delayed financial entry is already supported by editable `Data da ocorrência` / `occurredAt` and must not be rebuilt as a new date model.
 
-This does **not** establish a numeric RPO/RTO, provider-operated remote recovery requirement or formal remote-recovery SLA. Recovery durability is a high-priority P9 input, while the explicit D-016 remote-SLA trigger remains unproven.
+D-016 final P8 disposition: all explicit reopen triggers remain NOT PROVEN, with security-policy incompatibility UNRESOLVED / NOT PROVEN. D-022 therefore keeps D-016 for the current operating mode.
 
-### Confirmed product needs
-
-- item categories must exist;
-- items must be classifiable into categories such as bronze or porcelain;
-- reporting/analysis must support category-level views;
-- multiple edit/correction microflow gaps exist in real operation, but exact unsupported record/action cases still need bounded inventory before implementation.
-
-The reported need to enter a sale using its true earlier financial date is already supported by the editable `Data da ocorrência` / `occurredAt` model. P9 must verify discoverability/usability instead of rebuilding date semantics.
-
-### Future directions, not present requirements
-
-- improve or eventually eliminate dependence on manual JSON handling;
-- consider accounts/permissions later for security if Easy becomes broader/networked;
-- potentially expand into orders, inventory and broader store organization.
-
-These directions do not currently authorize backend/auth/cloud/live synchronization or broader modules.
-
-## D-016 final P8 trigger disposition
-
-| Reopen trigger | P8-S2 result |
-| --- | --- |
-| Concurrent operators | **NOT PROVEN** |
-| Automatic live multi-device sharing | **NOT PROVEN** |
-| Person-level authorship/access control | **NOT PROVEN** |
-| Remote recovery SLA | **NOT PROVEN** — severe recovery risk confirmed, formal SLA/RPO/RTO unresolved |
-| Trusted server integrations | **NOT PROVEN** |
-| Security policy incompatible with browser-local storage | **UNRESOLVED / NOT PROVEN** |
-
-**Decision: KEEP D-016 for the current operating mode.**
-
-## P8-S2 validation and integration
+## P8 accepted validation/integration
 
 Persistent Critical QA run **`32158395391`**, job **`95781056589`** — **PASS** on PR #27 merge ref `b07b6be57c777bbbc0678fa5b7c8d1b7afdfdb83`:
 
-- ESLint: **0 errors / 80 warnings**;
-- Vitest: **43 files / 176 tests PASS**;
-- Playwright Chromium: **15/15 PASS**;
-- production build: **PASS**.
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
 
-PR #27 was squash-merged into `develop` as **`e05d5cb1b4b4c4d143afbad3677bb9a472088cfe`**. The validated merge ref and integrated squash commit both resolve to tree **`2f14efe36e7d59c12a59cfa88066961b99416cf4`**, so the integrated P8-S2 conclusion is byte-for-byte the content validated by D-019.
+PR #27 was squash-merged into `develop` as `e05d5cb1b4b4c4d143afbad3677bb9a472088cfe`; the validated merge ref and integrated commit share tree `2f14efe36e7d59c12a59cfa88066961b99416cf4`. Canonical P8 closure then integrated into `develop` as `5bf1e44fed38909c2d5a5cf49b6ef985a1a45442`.
 
-Known React `act(...)`, legacy mocked-select DOM warnings, 17 dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and Vite large-chunk warning remain non-blocking debt under D-019; no gate was weakened.
+Known React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and Vite large-chunk warning remain non-blocking debt under D-019; no gate is weakened.
 
-`main` remains untouched at **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**.
+## P9-S1 prioritization result under review
 
-## Active constraints entering P9
+P9-S1 is documentation/decision work only. It inspected current source narrowly enough to distinguish already-supported behavior from missing/constrained behavior and recorded the full matrix in `docs/V2/P9_PRIORITIZATION.md`.
+
+Weighted ranking:
+
+1. **Recovery durability / off-device protection — 94/100.** Current export is operator-initiated; the confirmed catastrophic failure mode is human dependence on creating/moving a fresh copy. First P9 problem.
+2. **Item categories + classification + category reporting — 83/100.** Direct confirmed need; requires a bounded data/reporting contract before schema/backup/report implementation.
+3. **Exact transaction edit/correction microflows — 70/100.** Direct friction exists, while exact store cases remain unenumerated. Source proves that guided correction cannot change `occurredAt`, order item, transaction type or observation, and is blocked for an order whose original item is inactive.
+4. **Occurrence-date discoverability/usability — 69/100.** Creation already exposes `Data da ocorrência` with explanatory copy and persists `occurredAt`; verify usability only.
+
+Item and reseller records already have explicit edit flows. Transaction reversal and linked replacement already support audited correction of reseller and financial value/quantity. Source-proven unsupported transaction actions must not be misrepresented as cases Duda explicitly reported; direct mapping is required before implementation.
+
+Proposed sequence after P9-S1 integration:
+
+- P9-S2 — recovery durability decision gate;
+- P9-S3 — category data/reporting contract;
+- P9-S4 — directly confirmed correction microflows;
+- P9-S5 — occurrence-date usability verification.
+
+P9-S1 changes no runtime, schema, backup contract, financial semantics, backend/auth/cloud/live synchronization or broader module behavior.
+
+## Active constraints
 
 - do not work directly on `main`;
 - preserve all P1–P8 contracts and D-017/D-018/D-019;
@@ -129,9 +119,9 @@ Known React `act(...)`, legacy mocked-select DOM warnings, 17 dependency-audit f
 - prioritize confirmed operational consequence over feature novelty;
 - do not convert future preferences into mandatory requirements;
 - do not rebuild occurrence-date support already provided by P3;
-- do not implement a P9 feature during P9-S1 prioritization;
+- do not implement P9 feature work while P9-S1 remains in review;
 - run full `npm run qa:critical` before integrating every slice.
 
 ## NEXT_ACTION
 
-**P9-S1 — Prioritize the P8-confirmed operational gaps without implementing them. Score and order at least: (1) recovery durability beyond human-dependent manual JSON/Drive copying; (2) item categories, item classification and category-level reporting; and (3) the exact unsupported edit/correction microflows, after identifying which records/actions Duda cannot currently correct. Treat delayed transaction entry as an already implemented `occurredAt` capability and verify only discoverability/usability rather than rebuilding it. Keep accounts/permissions, live synchronization, inventory/orders/store-management and other broad systemization as later candidates unless new direct evidence makes them mandatory. P9-S1 is prioritization only: do not implement runtime/schema/backend/cloud features in that slice. Run full `npm run qa:critical` before integration.**
+**Complete only P9-S1 validation/integration. Run the full D-019 `npm run qa:critical` gate on the complete documentation head, integrate the P9-S1 prioritization into `develop` only if the gate passes, then perform the canonical documentation-only closure that records the accepted QA/integration evidence and advances `NEXT_ACTION` to P9-S2. Do not start P9-S2 recovery design/implementation, category/schema work, correction implementation, backend/auth/cloud/live synchronization or any other runtime change during this closure.**
