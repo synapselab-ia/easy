@@ -26,16 +26,17 @@ test('records export metadata and allows setup verification after the operator c
     await page.evaluate((key) => localStorage.removeItem(key), RECOVERY_KEY);
     await page.reload();
 
+    const recoverySetup = page.locator('section[aria-labelledby="recovery-setup-title"]');
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Exportar Backup v2' }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toMatch(/^easy-backup-v2-.*\.json$/);
     await expect(page.locator('[data-recovery-status="due"]')).toBeVisible();
-    await expect(page.getByText(download.suggestedFilename(), { exact: false })).toBeVisible();
+    await expect(recoverySetup.getByText(download.suggestedFilename(), { exact: false })).toBeVisible();
 
     await page.getByRole('button', { name: 'Confirmar que verifiquei a cópia no Drive' }).click();
 
     await expect(page.locator('[data-recovery-status="current"]')).toBeVisible();
-    await expect(page.getByText('Pasta sincronizada verificada')).toBeVisible();
+    await expect(recoverySetup.getByText('Pasta sincronizada verificada', { exact: true })).toBeVisible();
 });
