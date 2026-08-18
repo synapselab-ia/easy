@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, type Item } from '../db/database';
+import { assertRecoveryWriteAllowed } from '../services/recoveryHealth';
 
 export function useItems() {
     return useQuery({
@@ -23,7 +24,10 @@ export function useItem(id?: number) {
 export function useCreateItem() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (item: Omit<Item, 'id'>) => db.items.add({ ...item, isActive: item.isActive !== false }),
+        mutationFn: (item: Omit<Item, 'id'>) => {
+            assertRecoveryWriteAllowed();
+            return db.items.add({ ...item, isActive: item.isActive !== false });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
         },
@@ -33,8 +37,10 @@ export function useCreateItem() {
 export function useUpdateItem() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, ...changes }: Partial<Item> & { id: number }) =>
-            db.items.update(id, changes),
+        mutationFn: ({ id, ...changes }: Partial<Item> & { id: number }) => {
+            assertRecoveryWriteAllowed();
+            return db.items.update(id, changes);
+        },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
             queryClient.invalidateQueries({ queryKey: ['items', variables.id] });
@@ -45,7 +51,10 @@ export function useUpdateItem() {
 function useSetItemActive(isActive: boolean) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) => db.items.update(id, { isActive, updatedAt: new Date() }),
+        mutationFn: (id: number) => {
+            assertRecoveryWriteAllowed();
+            return db.items.update(id, { isActive, updatedAt: new Date() });
+        },
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
             queryClient.invalidateQueries({ queryKey: ['items', id] });
@@ -64,8 +73,9 @@ export function useReactivateItem() {
 export function useDeleteItem() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: number) =>
-            db.transaction('rw', db.items, db.transactions, async () => {
+        mutationFn: (id: number) => {
+            assertRecoveryWriteAllowed();
+            return db.transaction('rw', db.items, db.transactions, async () => {
                 const referencedTransaction = await db.transactions
                     .filter(transaction => transaction.itemId === id)
                     .first();
@@ -75,7 +85,8 @@ export function useDeleteItem() {
                 }
 
                 return db.items.delete(id);
-            }),
+            });
+        },
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
             queryClient.invalidateQueries({ queryKey: ['items', id] });
