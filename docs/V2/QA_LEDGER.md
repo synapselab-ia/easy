@@ -128,7 +128,7 @@ P9-S1 is closed.
 
 ### P9-S2 — Recovery durability decision gate
 
-**D-019 VALIDATION PENDING / BLOCKED ON DIRECT EVIDENCE.**
+**PASS / BLOCKED ON DIRECT EVIDENCE.**
 
 The first P9-S2 attempt executed evidence intake only. Accepted P8 evidence proves severe device-loss/manual-backup exposure but still leaves the required measurable recovery target unresolved:
 
@@ -140,12 +140,19 @@ The first P9-S2 attempt executed evidence intake only. Accepted P8 evidence prov
 
 `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct store answers required to resume. No mechanism comparison/selection, D-016 reopen, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed.
 
-The full D-019 gate remains mandatory on this blocked-state documentation head before integration.
+Persistent Critical QA run **`32168368086`**, job **`95813314347`** — **PASS** on PR #33 merge ref `cbc96eefb315c29c266b1df978bda605c2907352`:
+
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
+
+PR #33 integrated as `0017538b93c438f4374b1b2427222f27b9ef357d`. The validated merge ref and integration share exact tree `bf7165121ec08cd91f38db05d887a505dba3dbee`. The blocker is therefore canonically validated and integrated; P9-S2 remains `BLOCKED` until direct evidence resolves the target.
 
 ## Current known non-blocking debt
 
 Existing React `act(...)` warnings, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and the Vite large-chunk warning remain visible under D-019. No accepted gate is weakened.
 
-## QA policy entering blocked P9-S2
+## QA policy while P9-S2 is blocked
 
 Every P9 slice must preserve P1–P9-S1 contracts, keep D-016 authoritative unless later direct evidence proves a reopen trigger, and run full `npm run qa:critical` before integration. Documentation-only and blocked-state slices are not exempt.
