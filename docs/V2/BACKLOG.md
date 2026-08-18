@@ -87,6 +87,14 @@ Completed behavior:
 - standalone page no longer supplies the inert no-op cancel handler;
 - P1/P2/P3 financial/reference/audit semantics remain unchanged.
 
+Coverage added:
+
+- component reset + initial-type preservation;
+- real rejected create mutation + visible error + retry-data preservation;
+- page integration for `?type=signal`;
+- command-center payment/signal routing;
+- bounded Playwright Signal shortcut → entered value → Cancel → cleared value / preserved Signal intent.
+
 Validation history:
 
 - `32068747287` — FAIL in the new Cancel test assertion; no product regression established;
@@ -121,7 +129,9 @@ Validation history:
 
 - `32133265871` — FAIL only in a newly added assertion whose fixture was outside the corrected valid period; classified as test-fixture error under D-019;
 - fixture aligned with the intended corrected range without runtime changes;
-- **`32133559376` — PASS**, job `95699734548`: 0 lint errors / 80 warnings, 39 Vitest files / 164 tests, 14/14 Playwright, build PASS.
+- **`32133559376` — PASS**, job `95699734548`: 0 lint errors / 80 warnings, 39 Vitest files / 164 tests, 14/14 Playwright, build PASS;
+- final canonical documentation-head **`32133891691` — PASS**, job `95700749081`;
+- PR #15 squash-merged to `develop` as `337de0b6cf18da7cf27c54648839624df46e66ef`; validated PR merge ref and integration commit share tree `3f56eca7cfee1b99cb211a03e8070b956994f027`.
 
 P7-S3 gate: **PASS / DONE**.
 
