@@ -23,7 +23,7 @@
 - P7-S4 — Align Backup recovery copy with implemented restore: `DONE`.
 - P7-S5 — Operator-visible item/reseller save failures: `DONE`.
 - P7-S6 — Reseller-context transaction launch without redundant reselection: `DONE`.
-- P8-S1 — Repository-evidence requirements discovery and D-016 trigger assessment: `DONE` pending final canonical QA/integration.
+- P8-S1 — Repository-evidence requirements discovery and D-016 trigger assessment: `DONE`.
 
 ## Startup protocol for a new conversation
 
@@ -247,9 +247,18 @@ That difference is recorded as an **open real-store validation question**, not a
 
 Every D-016 reopen trigger is classified **NOT PROVEN** by P8-S1 repository evidence. D-021 is accepted: D-016 remains authoritative until direct real-store evidence resolves operator/device/sharing/access/recovery constraints. Backend/auth/cloud/synchronization and persistence migration remain unauthorized.
 
-### Validation state
+### Validation and integration
 
-P8-S1 is documentation/discovery-only but still requires the full persistent D-019 `npm run qa:critical` gate. The first complete documentation-head validation is pending before integration.
+Persistent Critical QA run **`32149199373`**, job **`95750510692`** — **PASS** on PR #23 merge ref `ad6745a95c274fcedfb3cc999f5fb924099f9d53`:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **43 files / 176 tests PASS**;
+- Playwright Chromium: **15/15 PASS**;
+- production build: **PASS**.
+
+PR #23 was squash-merged into `develop` as `65ada02848ad7ca792889b16815c74d0ac9e6da1`. The validated PR merge ref and the squash integration commit both resolve to tree **`6bef84c07f236c8df3dea4ce24b4e9028b7bb509`**, so the integrated P8-S1 canonical discovery content is byte-for-byte the content exercised by D-019. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action-runtime deprecation notices and build chunk-size warning remain visible non-blocking debt under D-019; no gate was weakened.
 
 ## Active constraints entering P8-S2
 
