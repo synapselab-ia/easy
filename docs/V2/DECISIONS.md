@@ -181,11 +181,33 @@ PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`; validated merge
 
 D-024 is now both accepted and implemented. P9-S2 is closed; no new decision number is required for its implementation.
 
+## D-025 — Category classification is snapshot-based; legacy history is not retroactively invented
+**Status:** ACCEPTED  
+**Date:** 2026-08-18
+
+P9-S3 defines category semantics before implementation:
+
+- category is a stable-ID entity with reversible archive/reactivation lifecycle; rename preserves identity;
+- active items may be assigned only to active categories, and reassignment affects future orders only;
+- future orders preserve both `categoryId` and `categoryName` as transaction-time classification snapshot;
+- existing V4 items/orders migrate without fabricated category assignments or historical snapshots;
+- legacy orders without category snapshot remain valid and report under an explicit `Sem categoria — histórico legado` bucket;
+- category analysis is based only on effective orders using `occurredAt`, with order count, quantity and gross order value as the minimum measures;
+- reseller payments/signals, balances and FIFO debt are not allocated to categories because the current financial model has no persistent per-order settlement link;
+- planned persistence is Dexie V5 with a `categories` table and optional category fields during legacy compatibility;
+- D-017 remains `easy-backup` version 2: new schema-V5 exports use `source.schemaVersion = 5`, while v1 and existing v2/schema4 backups remain supported through lossless in-memory normalization;
+- D-018 will extend the checkpointed atomic restore boundary to categories/items/resellers/transactions when P9-S3-I1 is implemented.
+
+No category runtime/schema/UI/reporting code was introduced by the decision slice. D-016 and D-024 remain unchanged.
+
+Functional contract validation: persistent Critical QA **`32184499171`**, job **`95864903309`**, passed on PR #44 merge ref `31a4adca45f74e6907cfce079a98c95b2c580738`: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and production build PASS.
+
+The next bounded implementation slice is P9-S3-I1 — category persistence, lossless V4→V5 migration and D-017/D-018 backup/restore compatibility only. Category management/classification UI, order snapshot enforcement and category reports remain outside I1.
+
 ---
 
 # Open decisions
 
 - D-016 local vs cloud only if later direct evidence proves a reopen trigger;
-- category lifecycle/history/reporting contract in P9-S3;
 - which source-proven correction gaps are real high-value store cases in P9-S4;
 - controlled beta/migration/cutover policy in P10.

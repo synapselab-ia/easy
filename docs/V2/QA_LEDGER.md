@@ -42,7 +42,7 @@ Objective failures block integration. Known warning/test-harness/dependency debt
 
 ## P4 — Persistence architecture
 
-**PASS / DONE as decision work.** D-016 accepts local-first/single-user Dexie V4 until an explicit direct requirement proves a reopen trigger.
+**PASS / DONE as decision work.** D-016 accepts local-first/single-user persistence until an explicit direct requirement proves a reopen trigger.
 
 ## P5 — Backup, restore and migration
 
@@ -69,70 +69,71 @@ D-019 remains authoritative.
 
 **PASS / DONE.**
 
-- P8-S1 persistent Critical QA `32149199373`, job `95750510692`; D-021 accepted.
-- P8-S2 persistent Critical QA `32158395391`, job `95781056589`; D-022 accepted.
+- P8-S1 Critical QA `32149199373`, job `95750510692`; D-021 accepted.
+- P8-S2 Critical QA `32158395391`, job `95781056589`; D-022 accepted.
 
 ## P9 — Prioritized evidence-backed improvements
 
 ### P9-S1 — Evidence-backed prioritization
 
-**PASS / DONE.**
-
-Persistent Critical QA run `32166330198`, job `95806665221` passed on PR #31. PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`; validated merge ref and integration share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`.
+**PASS / DONE.** Critical QA `32166330198`, job `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ### P9-S2 — Recovery durability
 
-#### Historical blocked evidence attempt
+**PASS / DONE.**
 
-**PASS / historical blocked state closed.**
+- historical blocked evidence attempt `32168368086`, job `95813314347` — PASS;
+- direct recovery-target evidence `32175718073`, job `95837062983` — PASS;
+- D-024 mechanism decision `32177687434`, job `95843265579` — PASS;
+- accepted P9-S2-I1 runtime gate `32180250834`, job `95851336506` — PASS with 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and build PASS.
 
-Run `32168368086`, job `95813314347` passed on PR #33. PR #33 integrated as `0017538b93c438f4374b1b2427222f27b9ef357d`; validated merge ref and integration share tree `bf7165121ec08cd91f38db05d887a505dba3dbee`.
+The first P9-S2-I1 run `32179815390`, job `95849949295`, exposed only a new E2E harness interaction after a correctly rejected mutation left its dialog open; no runtime behavior change was required.
 
-#### Direct recovery-target evidence intake
+PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`; validated merge ref and integrated commit share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
 
-**PASS / DONE as evidence intake.**
+### P9-S3 — Category data/reporting contract
 
-Persistent Critical QA run `32175718073`, job `95837062983` passed on PR #35: 0 lint errors / 80 warnings, 43/176 Vitest, 15/15 Playwright and production build PASS. PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`; validated merge ref and integration share tree `e1c32464b8260ae3b45094f20464ff3e5745687e`.
+**PASS / DONE as contract work. D-025 accepted; implementation not started.**
 
-#### Recovery mechanism comparison/decision
+Contract-only PR #44 was validated on merge ref `31a4adca45f74e6907cfce079a98c95b2c580738`, merging head `92302c1cfff7c0d0856cd2c124fc4bc5cff1c767` into base `565a5a4b3ed9d52134b276f910669968d2cb2e67`.
 
-**PASS / DONE as decision work. D-024 accepted.**
-
-Persistent Critical QA run `32177687434`, job `95843265579` passed on PR #37: 0 lint errors / 80 warnings, 43/176 Vitest, 15/15 Playwright and production build PASS. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integration share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
-
-#### P9-S2-I1 — Recovery-copy freshness guard and synchronized-folder workflow
-
-**PASS / DONE. P9-S2 is closed.**
-
-Implemented coverage includes:
-
-- local fail-safe recovery-health state;
-- first-run/unknown and corrupt-metadata behavior;
-- setup verification requirement;
-- non-contractual 20-hour warning and exact 24-hour hard boundary;
-- export refresh after overdue state;
-- centralized normal-write blocking;
-- Backup/Restore escape path while writes are blocked;
-- exact generated backup filename/export timestamp display;
-- preservation of D-017/D-018 behavior.
-
-The first PR #39 Critical QA run **`32179815390`**, job **`95849949295`**, failed in one newly added Playwright scenario after lint and all Vitest tests passed. The application correctly kept the rejected reseller-create dialog open after the recovery guard blocked the write; the E2E then attempted to click the global banner through that modal overlay. This was classified as a new-test harness interaction, not a runtime regression. Only the E2E was changed to dismiss the dialog before testing the Backup/Restore escape route.
-
-Accepted persistent Critical QA run **`32180250834`**, job **`95851336506`** — **PASS** on PR #39 merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a`:
+Persistent Critical QA run **`32184499171`**, job **`95864903309`** — **PASS**:
 
 - ESLint: **0 errors / 80 warnings**;
 - Vitest: **44 files / 183 tests PASS**;
 - Playwright Chromium: **17/17 PASS**;
 - production build: **PASS**.
 
-PR #39 was squash-merged into `develop` as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`. The validated merge ref and integrated commit share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`, proving exact accepted-content equivalence.
+Validated contract coverage is documentation/decision-only:
 
-No Dexie V5, backup-envelope change, Drive API/OAuth, backend/auth/cloud/live synchronization or provider-side sync verification was introduced.
+- stable category identity/lifecycle;
+- item assignment/reassignment semantics;
+- future order category snapshot and non-inventive legacy history;
+- order-only category reporting semantics;
+- explicit exclusion of category debt/payment allocation;
+- lossless Dexie V4 -> V5 target migration;
+- `easy-backup` v2/schema5 target while preserving v1 and v2/schema4 imports;
+- D-018 future four-table checkpoint/atomic restore extension.
+
+No Dexie V5, category table/field, category UI, category report, backend/auth/cloud/live sync or recovery-guard change was introduced by the contract gate.
+
+The final canonical-document head of PR #44 must also pass D-019 before integration. The validated merge ref for that final head is the integration authority; a stale-base validation is not acceptable.
 
 ## Current known non-blocking debt
 
 Existing React `act(...)` warnings, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and the Vite large-chunk warning remain visible under D-019. No accepted gate is weakened.
 
-## QA policy entering P9-S3
+## QA policy entering P9-S3-I1
 
-P9-S3 is a category contract slice and must preserve P1–P9-S2 plus D-016/D-017/D-018/D-019/D-024. It must not implement category schema/runtime behavior before the contract is accepted. The full `npm run qa:critical` gate remains mandatory even for documentation-only contract work.
+P9-S3-I1 must preserve P1–P9-S3 contract semantics plus D-016/D-017/D-018/D-019/D-024/D-025.
+
+Required targeted proof includes:
+
+- lossless V4 -> V5 migration with zero invented categories/history;
+- category identity/reference/lifecycle validation in schema5 backup preflight;
+- continued v1 and v2/schema4 import normalization;
+- schema5 export round-trip including categories and optional historical fields;
+- D-018 four-table checkpoint/atomic restore rollback and read-back equivalence;
+- no regression to recovery-health guard/control metadata separation.
+
+The full `npm run qa:critical` gate remains mandatory before integration.

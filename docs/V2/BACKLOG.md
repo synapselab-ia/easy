@@ -37,9 +37,7 @@ Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `IN_REVIEW`, `BLOCKED`, `DONE`.
 
 ## P4 — Persistence architecture decision
 
-**Status:** `DONE` — 2026-08-17.
-
-D-016 keeps V2 local-first/single-user on Dexie V4 until an explicit direct requirement proves a reopen trigger.
+**Status:** `DONE` — 2026-08-17. D-016 keeps V2 local-first/single-user until an explicit direct requirement proves a reopen trigger.
 
 ## P5 — Backup, restore and migration
 
@@ -50,22 +48,18 @@ D-016 keeps V2 local-first/single-user on Dexie V4 until an explicit direct requ
 
 ## P6 — Tests, CI and deployment safety
 
-**Status:** `DONE` — 2026-08-17.
-
-D-019 established `npm run qa:critical` as the persistent integration/publication gate. Functional validation `32064801009`; post-merge validation `32065713920`.
+**Status:** `DONE` — 2026-08-17. D-019 established `npm run qa:critical`; functional validation `32064801009`, post-merge `32065713920`.
 
 ## P7 — Operational UX refinement
 
-**Status:** `DONE` — 2026-08-18.
-
-D-020 prioritized evidence-backed operator intent/error risk. P7-S1 through P7-S6 are `DONE`; QG-011 through QG-015 are resolved. Final P7-S6 validation `32145620210`.
+**Status:** `DONE` — 2026-08-18. Final P7-S6 validation `32145620210`; QG-011 through QG-015 resolved.
 
 ## P8 — Real-store requirements discovery
 
 **Status:** `DONE` — 2026-08-18.
 
-- P8-S1 — repository evidence/D-016 assessment: `DONE`; D-021 accepted.
-- P8-S2 — direct validation: `DONE`; D-022 kept D-016; persistent Critical QA `32158395391`.
+- P8-S1 repository evidence/D-016 assessment — `DONE`; D-021 accepted.
+- P8-S2 direct validation — `DONE`; D-022 kept D-016; Critical QA `32158395391`.
 
 ---
 
@@ -85,67 +79,71 @@ D-023 accepted order:
 3. exact transaction edit/correction microflows — **70/100**;
 4. occurrence-date discoverability/usability — **69/100**.
 
-Persistent Critical QA `32166330198`, job `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
+Critical QA `32166330198`, job `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ### P9-S2 — Recovery durability
 
 **Status:** `DONE` — 2026-08-18.
 
-Accepted target:
+D-024 selected synchronized recovery-copy folder + 24-hour freshness guard and kept D-016. P9-S2-I1 implemented namespaced local recovery health, fail-safe write blocking, 20-hour warning / exact 24-hour hard boundary, synchronized-folder setup verification, global visibility and persistent Backup/Restore escape access without Drive API/OAuth, backend/cloud/live sync, Dexie migration or backup-envelope change.
 
-- newest usable off-device recovery copy **<=24 hours** old;
-- manual restore on any computer acceptable;
-- daily demand, no invented numeric RTO;
-- Google Drive acceptable durable destination;
-- local PC file acceptable convenience copy;
-- provider-operated remote recovery not mandatory.
+Accepted P9-S2-I1 Critical QA `32180250834`, job `95851336506`; 44/183 Vitest, 17/17 Playwright, build PASS. PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
 
-Evidence intake passed `32175718073`, job `95837062983`, and integrated through PR #35 as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`.
+### P9-S3 — Categories, classification and category reporting
 
-#### P9-S2 mechanism comparison/decision
+**Status:** `IN_PROGRESS`.
+
+#### P9-S3 contract gate — Category data/reporting contract
 
 **Status:** `DONE` — 2026-08-18.
 
-D-024 selects **Synchronized recovery-copy folder + 24-hour freshness guard** and **KEEPS D-016**. The existing `easy-backup` v2 + OS/provider-synchronized local folder was selected over reminder-only, required browser file-handle API, direct Google Drive API/OAuth and backend/cloud/live synchronization.
+D-025 is accepted. `docs/V2/P9_CATEGORY_CONTRACT.md` is authoritative.
 
-Decision Critical QA `32177687434`, job `95843265579`, passed on PR #37. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integration share tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
+Accepted contract:
 
-#### P9-S2-I1 — Recovery-copy freshness guard and synchronized-folder workflow
+- stable category identity with reversible archive/reactivation;
+- item assignment/reassignment to active categories, with reassignment affecting future orders only;
+- future order classification snapshot using `categoryId` + `categoryName`;
+- no fabricated category assignment/snapshot for existing V4 items/orders;
+- legacy orders without category snapshot remain valid as `Sem categoria — histórico legado`;
+- category reports aggregate only effective orders by `occurredAt`, with order count, quantity and gross order value;
+- no category allocation of reseller payments/signals/balance/FIFO debt;
+- target Dexie V5 migration is lossless and initially creates no categories;
+- D-017 stays `easy-backup` version 2, adding schemaVersion 5 category data while preserving v1 and v2/schema4 compatibility;
+- D-018 target restore boundary expands atomically to categories/items/resellers/transactions.
 
-**Status:** `DONE` — 2026-08-18.
+Contract-only Critical QA **`32184499171`**, job **`95864903309`** passed on PR #44 merge ref `31a4adca45f74e6907cfce079a98c95b2c580738`: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and build PASS.
 
-Implemented within D-024:
+No category runtime/schema/UI/reporting implementation occurred in the contract gate.
 
-- one-time synchronized-folder setup guidance and explicit operator verification;
-- namespaced local recovery-health metadata only, no Dexie V5;
-- fail-safe `unknown/due` behavior for missing/corrupt/unverified state;
-- global recovery health with last export metadata;
-- non-contractual warning at 20 hours and hard mutation gate at the accepted 24-hour boundary;
-- centralized write enforcement for item, reseller and transaction mutations;
-- Backup/Restore and read-only access preserved while blocked;
-- `exportData()` returns exact filename/export time after the existing validated v2 download initiation;
-- no provider-side sync assertion or Google Drive API/OAuth.
+#### P9-S3-I1 — Category persistence + migration + backup compatibility
 
-The first run `32179815390`, job `95849949295`, failed only a new E2E harness interaction while the correctly preserved rejected-mutation dialog remained open; no product behavior change was required. After a test-only correction, persistent Critical QA **`32180250834`**, job **`95851336506`** passed: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and production build PASS.
+**Status:** `NOT_STARTED` — canonical `NEXT_ACTION`.
 
-PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`; validated merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a` and integration share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
+Authorized scope:
 
-P9-S2 is closed. D-016/D-017/D-018/D-019/D-024 remain authoritative.
+- Dexie V5 `categories` table;
+- optional `Item.categoryId` and optional order `categoryId`/`categoryName` fields required for legacy compatibility;
+- lossless V4 -> V5 migration with empty categories and no fabricated historical classification;
+- `easy-backup` v2/schema5 categories/references/snapshots;
+- preserve supported v1 and existing v2/schema4 preflight/import through normalization;
+- extend D-018 checkpoint/verified atomic restore/read-back comparison to categories;
+- targeted migration/backup/restore tests and full D-019.
 
-### P9-S3 — Category data/reporting contract
+Explicitly excluded from I1:
+
+- category management UI;
+- item classification UI;
+- new-order category enforcement or snapshot creation;
+- category reporting UI/domain aggregation;
+- P9-S4/P9-S5/P10;
+- backend/auth/cloud/live sync or D-016 reopening without new evidence.
+
+#### Later P9-S3 implementation slices
 
 **Status:** `NOT_STARTED`.
 
-Next work is contract-only. Define before any category implementation:
-
-- category lifecycle and identity rules;
-- item assignment/reassignment semantics;
-- historical transaction/category semantics for existing and future order snapshots;
-- category-level reporting semantics;
-- Dexie migration approach;
-- D-017 backup/export/import compatibility.
-
-Do not implement category schema, UI or reporting until this contract itself passes D-019 and integrates.
+After I1 is accepted, advance canonically in bounded slices for category lifecycle/assignment/order snapshot behavior and then category reporting. Do not pre-authorize their exact implementation beyond D-025.
 
 ### P9-S4 — Confirmed correction microflows
 

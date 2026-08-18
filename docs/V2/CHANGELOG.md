@@ -4,6 +4,38 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-18 — P9-S3 category data/reporting contract accepted; D-025 established
+
+P9-S3 executed only the contract/decision slice required by the canonical `NEXT_ACTION`. No category schema, runtime, UI or reporting implementation was performed.
+
+Repository inspection confirmed:
+
+- current `Item` has no category field;
+- order transactions preserve `itemId`/`itemName` but no category snapshot;
+- dashboard/financial analysis has no category grouping;
+- D-017 exports `easy-backup` v2 with `source.schemaVersion = 4` and no category dataset;
+- D-018 currently restores only items/resellers/transactions;
+- reseller payments/signals and FIFO debt are not persistently linked to individual orders.
+
+**D-025** defines the category contract:
+
+- category is a stable-ID entity with reversible archive/reactivation; rename preserves identity;
+- active item assignment/reassignment uses active categories and affects future orders only;
+- future orders preserve `categoryId` + `categoryName` transaction-time classification snapshots;
+- V4 items/orders migrate without invented category assignment or historical snapshots;
+- legacy orders without category snapshot remain valid under `Sem categoria — histórico legado`;
+- category analysis uses effective orders by `occurredAt`, with order count, summed quantity and gross order value as minimum measures;
+- category debt/payment/balance/FIFO allocation is explicitly excluded because the current model has no persistent per-order settlement relation;
+- target persistence is lossless Dexie V5 with a `categories` table and optional legacy-compatible category fields;
+- logical backup remains `easy-backup` version 2: target schema5 adds categories/references/snapshots while preserving supported v1 and existing v2/schema4 import/preflight;
+- D-018 will extend checkpointed verified atomic restore to categories/items/resellers/transactions in the persistence slice.
+
+Contract-only Critical QA **`32184499171`**, job **`95864903309`** passed on PR #44 merge ref `31a4adca45f74e6907cfce079a98c95b2c580738`: 0 lint errors / 80 warnings, 44 Vitest files / 183 tests, 17/17 Playwright and production build PASS.
+
+P9-S3 remains `IN_PROGRESS` because implementation has not started. `NEXT_ACTION` advances only to **P9-S3-I1 — category persistence + migration + backup compatibility**. I1 is limited to Dexie V5 persistence, lossless migration, D-017 schema5 compatibility and D-018 four-table restore extension. Category management/classification UI, new-order snapshot enforcement and category reporting remain outside I1; P9-S4/P9-S5/P10 remain unstarted.
+
+---
+
 ## 2026-08-18 — P9-S2-I1 recovery freshness guard implemented; P9-S2 closed
 
 The D-024 runtime slice is implemented and P9-S2 is complete.
@@ -29,7 +61,7 @@ Accepted Persistent Critical QA **`32180250834`**, job **`95851336506`** — PAS
 
 PR #39 was squash-merged into `develop` as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`. The validated merge ref and integrated commit share exact tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
 
-P9-S2 is now `DONE`. `NEXT_ACTION` advances only to **P9-S3 category data/reporting contract**. That next slice must define lifecycle, assignment, historical/report semantics, migration and D-017 backup compatibility before any category schema/UI/reporting implementation; P9-S4/P9-S5/P10 remain unstarted.
+P9-S2 is now `DONE`. `NEXT_ACTION` advances only to P9-S3 category data/reporting contract.
 
 ---
 
@@ -39,18 +71,7 @@ P9-S2 executed only the recovery mechanism comparison/decision gate required by 
 
 The accepted direct target remained unchanged: newest usable off-device recovery copy **<=24 hours**, manual operator restore on any computer acceptable, daily-use continuity without inventing a numeric RTO, Google Drive acceptable as a durable destination and local PC file acceptable for convenience.
 
-The comparison rejected reminder-only protection because it does not create an off-device copy. It also declined to make a permission-based browser file-system handle the baseline because the actual store browser family/version is not directly evidenced. Direct Google Drive API/OAuth and backend/cloud/live synchronization were rejected as larger than the current requirement and unsupported by a D-016 reopen trigger.
-
-**D-024** selects **Synchronized recovery-copy folder + 24-hour freshness guard**:
-
-- retain canonical `easy-backup` v2 and D-018 restore;
-- configure backup downloads to a local folder synchronized off-device by the OS/provider; Google Drive for desktop is the accepted current-store instance;
-- require one setup verification that an exported backup appears in Drive outside the local-PC-only context;
-- track local recovery-copy export freshness fail-safe;
-- at 24 hours, require a new backup export before normal data-changing work continues while Backup/Restore remains reachable;
-- explicitly distinguish Easy-confirmed backup generation/download initiation from provider-side synchronization acknowledgment.
-
-D-016 is **KEPT**. D-017/D-018 remain unchanged. No Google OAuth/Drive API, backend/auth/cloud DB/live sync, File System Access baseline, Dexie V5 or backup-format change is authorized.
+**D-024** selects **Synchronized recovery-copy folder + 24-hour freshness guard** and keeps D-016. No Google OAuth/Drive API, backend/auth/cloud DB/live sync, File System Access baseline, Dexie V5 or backup-format change was authorized.
 
 Persistent Critical QA `32177687434`, job `95843265579` passed on PR #37. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`; validated merge ref and integrated commit share exact tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
 
@@ -58,19 +79,15 @@ Persistent Critical QA `32177687434`, job `95843265579` passed on PR #37. PR #37
 
 ## 2026-08-18 — P9-S2 direct recovery-target evidence accepted and integrated
 
-The direct recovery-target evidence intake is canonically accepted. Store/operator evidence established an acceptable newest usable off-device recovery-copy age of **<=24 hours**, manual restoration on any computer, daily demand without an invented numeric RTO, Google Drive as an acceptable durable destination, local PC copy for convenience and no requirement for provider-operated remote recovery.
+Direct evidence established an acceptable newest usable off-device recovery-copy age of **<=24 hours**, manual restoration on any computer, daily demand without an invented numeric RTO, Google Drive as an acceptable durable destination, local PC copy for convenience and no requirement for provider-operated remote recovery.
 
-The Google account connected to ChatGPT is not an Easy credential or Drive API authorization. Drive being an acceptable destination does not itself authorize direct Google API/OAuth integration.
-
-Persistent Critical QA `32175718073`, job `95837062983` passed on PR #35. PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`; validated merge ref and integration share tree `e1c32464b8260ae3b45094f20464ff3e5745687e`.
+Critical QA `32175718073`, job `95837062983` passed on PR #35. PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`.
 
 ---
 
 ## 2026-08-18 — P9-S2 recovery decision gate blocked on missing measurable store target
 
-The first P9-S2 attempt executed evidence intake only. Existing direct evidence proved severe operating-PC-loss/manual-backup exposure but did not yet define acceptable copy age, recovery procedure, interruption expectation or destination/process constraints.
-
-Missing evidence was treated as a blocker rather than permission to invent SLA/RPO/RTO or cloud requirements. Blocked-state Critical QA `32168368086`, job `95813314347` passed on PR #33. PR #33 integrated as `0017538b93c438f4374b1b2427222f27b9ef357d`; validated merge ref and integration share tree `bf7165121ec08cd91f38db05d887a505dba3dbee`.
+The first P9-S2 attempt executed evidence intake only. Existing direct evidence proved severe operating-PC-loss/manual-backup exposure but did not yet define acceptable copy age, recovery procedure, interruption expectation or destination/process constraints. Missing evidence was treated as a blocker rather than permission to invent SLA/RPO/RTO or cloud requirements. Blocked-state Critical QA `32168368086`, job `95813314347` passed on PR #33.
 
 ---
 
@@ -78,7 +95,7 @@ Missing evidence was treated as a blocker rather than permission to invent SLA/R
 
 P9-S1 executed documentation/decision work only. D-023 accepted ranking: recovery durability 94/100, categories/reporting 83/100, exact correction microflows 70/100 and occurrence-date usability 69/100.
 
-Persistent Critical QA `32166330198`, job `95806665221` passed on PR #31. PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`; validated merge ref and integration share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`.
+Critical QA `32166330198`, job `95806665221` passed on PR #31. PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ---
 
@@ -86,7 +103,7 @@ Persistent Critical QA `32166330198`, job `95806665221` passed on PR #31. PR #31
 
 Direct stakeholder evidence established current non-concurrent PC-based operation, PDF/extract reseller sharing, manual JSON backup/portability, no mandatory trusted server integration and modest scale. It also confirmed severe device-loss/manual-backup exposure, item categories/category reporting needs and edit/correction friction. Delayed financial entry is already supported by `occurredAt`.
 
-D-022 keeps D-016. Persistent Critical QA `32158395391`, job `95781056589` passed on PR #27. PR #27 integrated as `e05d5cb1b4b4c4d143afbad3677bb9a472088cfe`; canonical P8 closure integrated as `5bf1e44fed38909c2d5a5cf49b6ef985a1a45442`.
+D-022 keeps D-016. Critical QA `32158395391`, job `95781056589` passed on PR #27.
 
 ---
 
@@ -122,7 +139,7 @@ P5-S1 established canonical logical `easy-backup` v2 with deep preflight and v1 
 
 ## 2026-08-17 — P4 persistence architecture decision
 
-D-016 accepted: keep V2 local-first/single-user on Dexie V4 unless direct requirements later prove a reopen trigger.
+D-016 accepted: keep V2 local-first/single-user until direct requirements later prove a reopen trigger.
 
 ---
 
