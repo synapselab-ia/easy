@@ -21,8 +21,11 @@ Phase state:
 - P7 — Incomplete UX flows / operational refinement: `DONE`.
 - P8-S1 — Repository-evidence discovery and D-016 trigger assessment: `DONE`.
 - P8-S2 — Direct real-store validation and D-016 keep/reopen decision: `DONE`.
-- P9-S1 — Evidence-backed prioritization: `IN_REVIEW`.
+- P9-S1 — Evidence-backed prioritization: `DONE`.
 - P9-S2 — Recovery durability decision gate: `NOT_STARTED`.
+- P9-S3 — Category data/reporting contract: `NOT_STARTED`.
+- P9-S4 — Confirmed correction microflows: `NOT_STARTED`.
+- P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
 - P10 — Controlled beta, migration and cutover: `NOT_STARTED`.
 
 ## Startup protocol for a new conversation
@@ -37,7 +40,7 @@ Read in order:
 6. `docs/V2/QA_LEDGER.md`
 7. `docs/V2/CHANGELOG.md`
 
-Then inspect only source/evidence required by `NEXT_ACTION`. `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` preserve P8 evidence. `docs/V2/P9_PRIORITIZATION.md` contains the P9-S1 scoring and bounded current-capability inventory.
+Then inspect only source/evidence required by `NEXT_ACTION`. `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` preserve P8 evidence. `docs/V2/P9_PRIORITIZATION.md` contains the accepted P9-S1 scoring and bounded current-capability inventory.
 
 ## Current technical baseline
 
@@ -87,13 +90,11 @@ Persistent Critical QA run **`32158395391`**, job **`95781056589`** — **PASS**
 
 PR #27 was squash-merged into `develop` as `e05d5cb1b4b4c4d143afbad3677bb9a472088cfe`; the validated merge ref and integrated commit share tree `2f14efe36e7d59c12a59cfa88066961b99416cf4`. Canonical P8 closure then integrated into `develop` as `5bf1e44fed38909c2d5a5cf49b6ef985a1a45442`.
 
-Known React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and Vite large-chunk warning remain non-blocking debt under D-019; no gate is weakened.
+## P9-S1 accepted prioritization
 
-## P9-S1 prioritization result under review
+P9-S1 completed documentation/decision work only. It inspected current source narrowly enough to distinguish already-supported behavior from missing/constrained behavior and records the full evidence matrix in `docs/V2/P9_PRIORITIZATION.md`.
 
-P9-S1 is documentation/decision work only. It inspected current source narrowly enough to distinguish already-supported behavior from missing/constrained behavior and recorded the full matrix in `docs/V2/P9_PRIORITIZATION.md`.
-
-Weighted ranking:
+Accepted weighted ranking:
 
 1. **Recovery durability / off-device protection — 94/100.** Current export is operator-initiated; the confirmed catastrophic failure mode is human dependence on creating/moving a fresh copy. First P9 problem.
 2. **Item categories + classification + category reporting — 83/100.** Direct confirmed need; requires a bounded data/reporting contract before schema/backup/report implementation.
@@ -102,26 +103,34 @@ Weighted ranking:
 
 Item and reseller records already have explicit edit flows. Transaction reversal and linked replacement already support audited correction of reseller and financial value/quantity. Source-proven unsupported transaction actions must not be misrepresented as cases Duda explicitly reported; direct mapping is required before implementation.
 
-Proposed sequence after P9-S1 integration:
+D-023 accepts the P9 sequence: P9-S2 recovery durability decision gate, P9-S3 category data/reporting contract, P9-S4 directly confirmed correction microflows, then P9-S5 occurrence-date usability verification.
 
-- P9-S2 — recovery durability decision gate;
-- P9-S3 — category data/reporting contract;
-- P9-S4 — directly confirmed correction microflows;
-- P9-S5 — occurrence-date usability verification.
+P9-S1 changed no runtime, schema, backup contract, financial semantics, backend/auth/cloud/live synchronization or broader module behavior.
 
-P9-S1 changes no runtime, schema, backup contract, financial semantics, backend/auth/cloud/live synchronization or broader module behavior.
+## P9-S1 accepted validation/integration
+
+Persistent Critical QA run **`32166330198`**, job **`95806665221`** — **PASS** on PR #31 merge ref `85ffa8430de4c4b8a6ffedd84cc27b8049bf63d4`:
+
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
+
+PR #31 was squash-merged into `develop` as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integrated commit share the exact tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`, proving that the integrated content is the content accepted by D-019.
+
+Known React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and Vite large-chunk warning remain non-blocking debt under D-019; no gate is weakened.
 
 ## Active constraints
 
 - do not work directly on `main`;
-- preserve all P1–P8 contracts and D-017/D-018/D-019;
+- preserve all P1–P9-S1 contracts and D-017/D-018/D-019;
 - keep D-016 authoritative unless later direct evidence proves a reopen trigger;
 - prioritize confirmed operational consequence over feature novelty;
 - do not convert future preferences into mandatory requirements;
 - do not rebuild occurrence-date support already provided by P3;
-- do not implement P9 feature work while P9-S1 remains in review;
+- do not implement a recovery mechanism before the P9-S2 decision gate is accepted;
 - run full `npm run qa:critical` before integrating every slice.
 
 ## NEXT_ACTION
 
-**Complete only P9-S1 validation/integration. Run the full D-019 `npm run qa:critical` gate on the complete documentation head, integrate the P9-S1 prioritization into `develop` only if the gate passes, then perform the canonical documentation-only closure that records the accepted QA/integration evidence and advances `NEXT_ACTION` to P9-S2. Do not start P9-S2 recovery design/implementation, category/schema work, correction implementation, backend/auth/cloud/live synchronization or any other runtime change during this closure.**
+**Execute only P9-S2 — Recovery durability decision gate. Establish a measurable current-store recovery target, at minimum the acceptable maximum age of the latest recoverable off-device copy and the acceptable recovery procedure after operating-PC loss, using direct store evidence rather than invented SLA/RPO/RTO values. Then compare the smallest mechanisms compatible with D-016/D-017/D-018 that materially reduce dependence on human memory. If a requirement or viable option proves a D-016 reopen trigger, explicitly reopen D-016 before any implementation. P9-S2 is a decision/evidence slice: do not implement recovery automation, cloud/backend/auth/live synchronization, category/schema work, correction changes or any other runtime feature until the decision gate is canonically accepted.**
