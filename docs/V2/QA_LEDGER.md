@@ -78,9 +78,47 @@ P7-S1 established QG-011 through QG-015 and D-020 ranking. Validation `320668021
 
 **RESOLVED / P7-S2.**
 
-P7-S2 made Cancel a real reset, surfaced rejected transaction creation while preserving retry data, and split Payment/Signal launch intent. Functional run `32069261401`, job `95508465043` — PASS: 0 lint errors / 78 warnings, 39 Vitest files / 163 tests, 14/14 Playwright, build PASS.
+Original evidence:
 
-Two earlier runs (`32068747287`, `32069051473`) failed only in a new invalid native-select test harness; the harness was corrected without weakening runtime behavior or D-019.
+- standalone Cancel was wired to a no-op;
+- transaction-create failures were console-only;
+- one `Pagamento/Sinal` command shortcut always routed to `payment`.
+
+P7-S2 remediation:
+
+- `TransactionForm` owns one reset path for successful submission and explicit Cancel;
+- Cancel clears in-progress fields/errors/mutation state and restores the requested `initialType`;
+- rejected transaction creation shows `toast.error` and intentionally does not reset fields, preserving retry context;
+- command center routes Payment and Signal through distinct actions/query parameters;
+- P1/P2/P3 transaction validation, audit and financial effects were not changed.
+
+Targeted regression coverage added:
+
+- `TransactionForm.test.tsx`: reset + initial-type preservation;
+- `TransactionForm.test.tsx`: real rejected create mutation + visible error + entered data retained;
+- `TransactionsPage.test.tsx`: URL `type=signal` intent;
+- `CommandCenter.test.tsx`: payment/signal shortcut routing;
+- `tests/e2e/search.spec.ts`: Signal shortcut → form → entered value → Cancel → value cleared with Signal still selected.
+
+#### P7-S2 validation classification
+
+Two initial Critical QA runs failed only in the newly introduced Cancel unit assertion:
+
+1. `32068747287`, job `95506837405` — FAIL: 1 new Vitest assertion failed; lint passed and E2E/build were not reached.
+2. `32069051473`, job `95507799159` — FAIL: same new assertion. Investigation showed the test mock rendered invalid HTML (`<span>` inside `<select>`), so jsdom retained the first option instead of representing the controlled empty value.
+
+The harness was corrected to a valid controlled select (`<option value="" />` plus option children; trigger/value renderers removed from the native select). No runtime behavior, business rule or QA gate was weakened to obtain green status.
+
+Functional persistent run **`32069261401`**, job **`95508465043`** — **PASS**:
+
+- ESLint: **0 errors / 78 warnings**;
+- Vitest: **39 files / 163 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+The lower warning count versus the P6 closure snapshot comes from the touched test harness and does not redefine or claim global warning-debt resolution. Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain recorded non-blocking debt.
+
+**P7-S2 result: PASS / DONE.**
 
 ### QG-012 — invalid reseller period silently displays all-time/current data
 
@@ -91,6 +129,8 @@ Original evidence:
 - a complete inverted date range made `periodStatement` null;
 - reseller detail then fell back to current balance plus all transactions while invalid dates remained filled;
 - explicit invalid feedback was deferred until PDF generation.
+
+Risk before remediation: operator could interpret unfiltered data as the requested period view.
 
 P7-S3 remediation:
 
@@ -105,9 +145,9 @@ P7-S3 remediation:
 
 Targeted regression coverage added:
 
-- component/page invalid-state + no-fallback + invalid→corrected recovery;
-- component/page invalid→cleared recovery;
-- bounded Playwright invalid→corrected path;
+- `ResellerDetailPage.test.tsx`: invalid state + no fallback + invalid→corrected recovery;
+- `ResellerDetailPage.test.tsx`: invalid→cleared recovery;
+- `tests/e2e/pdf-date-filter.spec.ts`: bounded invalid→corrected path;
 - existing D-015 statement regressions remain green.
 
 #### P7-S3 validation classification
@@ -121,7 +161,11 @@ Functional persistent run **`32133559376`**, job **`95699734548`** — **PASS**:
 - Playwright Chromium: **14/14 PASS**;
 - production build: **PASS**.
 
-The warning count reflects touched-test warnings plus existing repository debt. Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain non-blocking under D-019.
+Final canonical documentation-head run **`32133891691`**, job **`95700749081`** — **PASS**. Actions checked out PR merge ref `ee5016cfc2b9d4c2823027127f939abebc5eb705`, which resolves to tree `3f56eca7cfee1b99cb211a03e8070b956994f027`.
+
+PR #15 was squash-merged to `develop` as `337de0b6cf18da7cf27c54648839624df46e66ef`; that integration commit resolves to the same tree `3f56eca7cfee1b99cb211a03e8070b956994f027`. The integrated runtime/canonical content is therefore identical to the content exercised by the final gate. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain non-blocking under D-019.
 
 **P7-S3 result: PASS / DONE.**
 
