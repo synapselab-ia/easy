@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const recoveryNow = new Date().toISOString();
+
 export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: true,
@@ -10,6 +12,25 @@ export default defineConfig({
     use: {
         baseURL: 'http://localhost:5173/easy/',
         trace: 'on-first-retry',
+        storageState: {
+            cookies: [],
+            origins: [
+                {
+                    origin: 'http://localhost:5173',
+                    localStorage: [
+                        {
+                            name: 'easy.recoveryHealth.v1',
+                            value: JSON.stringify({
+                                version: 1,
+                                setupVerifiedAt: recoveryNow,
+                                lastExportedAt: recoveryNow,
+                                lastFilename: 'easy-backup-v2-e2e-fixture.json',
+                            }),
+                        },
+                    ],
+                },
+            ],
+        },
     },
     projects: [
         {
