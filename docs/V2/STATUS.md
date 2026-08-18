@@ -130,7 +130,7 @@ P7-S4 resolved QG-013 by correcting only the stale top-level Backup guidance. Th
 
 `BackupPage.test.tsx` now proves that the page-level copy names validation/review, preview gating, the recoverable checkpoint, atomic restore and rollback-safe preservation, and that the obsolete “futura restauração” wording is absent.
 
-## P7-S4 validation
+## P7-S4 validation and integration
 
 Functional persistent Critical QA run **`32136964241`**, job **`95710456305`** — **PASS**:
 
@@ -138,6 +138,10 @@ Functional persistent Critical QA run **`32136964241`**, job **`95710456305`** �
 - Vitest: **40 files / 165 tests PASS**;
 - Playwright Chromium: **14/14 PASS**;
 - production build: **PASS**.
+
+Final canonical documentation-head run **`32137372736`**, job **`95711739520`** — **PASS** on PR merge ref `a919c9f8d6efe5c4a424a8ee8b0dba1550c39088`.
+
+PR #17 was squash-merged into `develop` as `169704e8d4a9ac852634ac436945b870b0ee41b8`. The validated PR merge ref and the squash integration commit both resolve to tree **`59d4849da20d3593cc7a8cd6e563ca16bd12787d`**, so the integrated P7-S4 runtime and canonical content are byte-for-byte the content validated by the final gate. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
 
