@@ -49,19 +49,25 @@ export default function ResellerDetailPage() {
 
     const hasFilter = dateFilter.startDate !== '' || dateFilter.endDate !== '';
     const isFilterComplete = dateFilter.startDate !== '' && dateFilter.endDate !== '';
-    const isPdfButtonDisabled = hasFilter && !isFilterComplete;
-
-    const periodStatement = useMemo(() => {
-        if (!isFilterComplete) return null;
+    const isInvalidRange = useMemo(() => {
+        if (!isFilterComplete) return false;
 
         const startDate = new Date(dateFilter.startDate + 'T00:00:00');
         const endDate = new Date(dateFilter.endDate + 'T23:59:59.999');
-        if (startDate > endDate) return null;
+        return startDate > endDate;
+    }, [isFilterComplete, dateFilter.startDate, dateFilter.endDate]);
+    const isPdfButtonDisabled = (hasFilter && !isFilterComplete) || isInvalidRange;
+
+    const periodStatement = useMemo(() => {
+        if (!isFilterComplete || isInvalidRange) return null;
+
+        const startDate = new Date(dateFilter.startDate + 'T00:00:00');
+        const endDate = new Date(dateFilter.endDate + 'T23:59:59.999');
 
         return buildStatementPeriod(transactions, { startDate, endDate });
-    }, [transactions, isFilterComplete, dateFilter.startDate, dateFilter.endDate]);
+    }, [transactions, isFilterComplete, isInvalidRange, dateFilter.startDate, dateFilter.endDate]);
 
-    const displayedTransactions = periodStatement?.movements ?? transactions;
+    const displayedTransactions = isInvalidRange ? [] : (periodStatement?.movements ?? transactions);
 
     const isLoading = isLoadingReseller || isLoadingTransactions;
 
@@ -85,15 +91,14 @@ export default function ResellerDetailPage() {
     const resellerActive = isResellerActive(reseller);
 
     const handleGeneratePDF = () => {
+        if (isInvalidRange) {
+            toast.error('A data de início não pode ser posterior à data de fim.');
+            return;
+        }
+
         if (isFilterComplete) {
             const startDate = new Date(dateFilter.startDate + 'T00:00:00');
             const endDate = new Date(dateFilter.endDate + 'T23:59:59.999');
-
-            if (startDate > endDate) {
-                toast.error('A data de início não pode ser posterior à data de fim.');
-                return;
-            }
-
             const statement = buildStatementPeriod(transactions, { startDate, endDate });
             generateResellerExtract(reseller, transactions, statement);
             return;
@@ -122,36 +127,52 @@ export default function ResellerDetailPage() {
                 </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-                <div className="flex flex-col gap-1">
-                    <Label htmlFor="startDate">Data Início</Label>
-                    <Input
-                        id="startDate"
-                        type="date"
-                        value={dateFilter.startDate}
-                        onChange={e => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
-                        className="w-full sm:w-40"
-                    />
+            <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3 items-end">
+                    <div className="flex flex-col gap-1">
+                        <Label htmlFor="startDate">Data Início</Label>
+                        <Input
+                            id="startDate"
+                            type="date"
+                            value={dateFilter.startDate}
+                            onChange={e => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))}
+                            aria-invalid={isInvalidRange}
+                            aria-describedby={isInvalidRange ? 'statement-range-error' : undefined}
+                            className="w-full sm:w-40"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <Label htmlFor="endDate">Data Fim</Label>
+                        <Input
+                            id="endDate"
+                            type="date"
+                            value={dateFilter.endDate}
+                            onChange={e => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
+                            aria-invalid={isInvalidRange}
+                            aria-describedby={isInvalidRange ? 'statement-range-error' : undefined}
+                            className="w-full sm:w-40"
+                        />
+                    </div>
+                    <Button
+                        onClick={handleGeneratePDF}
+                        variant="outline"
+                        disabled={isPdfButtonDisabled}
+                        className="flex items-center gap-2 w-full sm:w-auto"
+                    >
+                        <Download className="h-4 w-4" />
+                        Gerar PDF
+                    </Button>
                 </div>
-                <div className="flex flex-col gap-1">
-                    <Label htmlFor="endDate">Data Fim</Label>
-                    <Input
-                        id="endDate"
-                        type="date"
-                        value={dateFilter.endDate}
-                        onChange={e => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))}
-                        className="w-full sm:w-40"
-                    />
-                </div>
-                <Button
-                    onClick={handleGeneratePDF}
-                    variant="outline"
-                    disabled={isPdfButtonDisabled}
-                    className="flex items-center gap-2 w-full sm:w-auto"
-                >
-                    <Download className="h-4 w-4" />
-                    Gerar PDF
-                </Button>
+
+                {isInvalidRange && (
+                    <div
+                        id="statement-range-error"
+                        role="alert"
+                        className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                    >
+                        Período inválido: a Data Início deve ser anterior ou igual à Data Fim. Corrija uma das datas ou limpe o período para voltar a visualizar saldo e histórico.
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -185,7 +206,18 @@ export default function ResellerDetailPage() {
                     </CardContent>
                 </Card>
 
-                {periodStatement ? (
+                {isInvalidRange ? (
+                    <Card className="border-destructive/20 bg-destructive/5">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Período inválido</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground">
+                                Saldo e resumo do período ficam ocultos até que a faixa de datas seja corrigida ou removida.
+                            </p>
+                        </CardContent>
+                    </Card>
+                ) : periodStatement ? (
                     <Card className={periodStatement.closingBalance > 0 ? "border-debt/20 bg-debt/5" : "border-payment/20 bg-payment/5"}>
                         <CardHeader>
                             <CardTitle className="text-lg">Resumo do Período</CardTitle>
@@ -235,7 +267,13 @@ export default function ResellerDetailPage() {
                         </span>
                     )}
                 </h2>
-                <TransactionTable transactions={displayedTransactions} />
+                {isInvalidRange ? (
+                    <div className="rounded-md border bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
+                        Histórico indisponível enquanto o período estiver inválido. Corrija ou limpe as datas para continuar.
+                    </div>
+                ) : (
+                    <TransactionTable transactions={displayedTransactions} />
+                )}
             </div>
         </div>
     );
