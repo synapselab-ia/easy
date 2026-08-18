@@ -41,12 +41,22 @@ export default function BackupPreflightDialog({
                     <div className="rounded-lg border p-3 space-y-1">
                         {fileName && <p><strong>Arquivo:</strong> {fileName}</p>}
                         <p><strong>Formato:</strong> v{preview.sourceVersion} → v{preview.targetVersion}</p>
-                        <p><strong>Dexie:</strong> schema V{preview.schemaVersion}</p>
+                        {preview.sourceSchemaVersion !== undefined && (
+                            <p><strong>Dexie origem:</strong> schema V{preview.sourceSchemaVersion}</p>
+                        )}
+                        <p><strong>Dexie alvo:</strong> schema V{preview.schemaVersion}</p>
                         <p><strong>Exportado em:</strong> {preview.exportedAt.toLocaleString('pt-BR')}</p>
                         <p><strong>Migração em memória:</strong> {preview.migrated ? 'sim' : 'não'}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                        <div className="rounded-lg border p-3">
+                            <p className="text-muted-foreground">Categorias</p>
+                            <p className="text-lg font-semibold">{preview.counts.categories}</p>
+                            <p className="text-xs text-muted-foreground">
+                                {preview.counts.activeCategories} ativas · {preview.counts.inactiveCategories} inativas
+                            </p>
+                        </div>
                         <div className="rounded-lg border p-3">
                             <p className="text-muted-foreground">Itens</p>
                             <p className="text-lg font-semibold">{preview.counts.items}</p>
@@ -68,6 +78,13 @@ export default function BackupPreflightDialog({
                                 {preview.counts.orders} pedidos · {preview.counts.payments} pagamentos · {preview.counts.signals} sinais
                             </p>
                         </div>
+                    </div>
+
+                    <div className="rounded-lg border p-3 space-y-1">
+                        <p><strong>Compatibilidade de categorias:</strong></p>
+                        <p className="text-muted-foreground">
+                            {preview.counts.unclassifiedItems} itens sem categoria · {preview.counts.legacyOrdersWithoutCategory} pedidos sem snapshot de categoria
+                        </p>
                     </div>
 
                     <div className="rounded-lg border p-3">

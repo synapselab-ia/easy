@@ -1,14 +1,32 @@
-import { db, type Item, type Reseller, type Transaction, type TransactionType } from '../db/database';
+import {
+    db,
+    type Category,
+    type Item,
+    type Reseller,
+    type Transaction,
+    type TransactionType,
+} from '../db/database';
 
 export const BACKUP_FORMAT = 'easy-backup';
 export const BACKUP_VERSION = 2 as const;
-export const BACKUP_SCHEMA_VERSION = 4 as const;
+export const LEGACY_BACKUP_SCHEMA_VERSION = 4 as const;
+export const BACKUP_SCHEMA_VERSION = 5 as const;
+export type SupportedBackupSchemaVersion = typeof LEGACY_BACKUP_SCHEMA_VERSION | typeof BACKUP_SCHEMA_VERSION;
+
+interface BackupCategoryV2 {
+    id: number;
+    name: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
 
 interface BackupItemV2 {
     id: number;
     name: string;
     basePrice: number;
     isActive: boolean;
+    categoryId?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -32,6 +50,8 @@ interface BackupTransactionV2 {
     itemName?: string;
     quantity?: number;
     unitPrice?: number;
+    categoryId?: number;
+    categoryName?: string;
     totalPrice: number;
     observation?: string;
     reversal?: {
@@ -55,6 +75,7 @@ export interface BackupEnvelopeV2 {
         schemaVersion: typeof BACKUP_SCHEMA_VERSION;
     };
     data: {
+        categories: BackupCategoryV2[];
         items: BackupItemV2[];
         resellers: BackupResellerV2[];
         transactions: BackupTransactionV2[];
@@ -63,8 +84,10 @@ export interface BackupEnvelopeV2 {
 
 export interface NormalizedBackupData {
     sourceVersion: 1 | typeof BACKUP_VERSION;
+    sourceSchemaVersion?: SupportedBackupSchemaVersion;
     exportedAt: Date;
     data: {
+        categories: Category[];
         items: Item[];
         resellers: Reseller[];
         transactions: Transaction[];
@@ -73,11 +96,17 @@ export interface NormalizedBackupData {
 
 export interface BackupPreview {
     sourceVersion: 1 | typeof BACKUP_VERSION;
+    sourceSchemaVersion?: SupportedBackupSchemaVersion;
     targetVersion: typeof BACKUP_VERSION;
     schemaVersion: typeof BACKUP_SCHEMA_VERSION;
     migrated: boolean;
     exportedAt: Date;
     counts: {
+        categories: number;
+        activeCategories: number;
+        inactiveCategories: number;
+        unclassifiedItems: number;
+        legacyOrdersWithoutCategory: number;
         items: number;
         activeItems: number;
         inactiveItems: number;
@@ -148,6 +177,16 @@ function requiredString(value: unknown, path: string, errors: string[]): string 
     return value;
 }
 
+function requiredTrimmedString(value: unknown, path: string, errors: string[]): string | undefined {
+    const normalized = requiredString(value, path, errors);
+    if (normalized === undefined) return undefined;
+    if (normalized !== normalized.trim()) {
+        pathError(errors, path, 'não pode conter espaços nas extremidades');
+        return undefined;
+    }
+    return normalized;
+}
+
 function optionalString(value: unknown, path: string, errors: string[]): string | undefined {
     if (value === undefined) return undefined;
     if (typeof value !== 'string') {
@@ -186,10 +225,40 @@ function normalizedActive(
     return true;
 }
 
+function normalizeCategory(
+    value: unknown,
+    index: number,
+    errors: string[],
+): Category | undefined {
+    const path = `data.categories[${index}]`;
+    if (!isRecord(value)) {
+        pathError(errors, path, 'deve ser um objeto');
+        return undefined;
+    }
+
+    const id = positiveInteger(value.id, `${path}.id`, errors);
+    const name = requiredTrimmedString(value.name, `${path}.name`, errors);
+    const createdAt = validDate(value.createdAt, `${path}.createdAt`, errors);
+    const updatedAt = validDate(value.updatedAt, `${path}.updatedAt`, errors);
+    const isActive = typeof value.isActive === 'boolean' ? value.isActive : undefined;
+    if (isActive === undefined) pathError(errors, `${path}.isActive`, 'deve ser booleano');
+
+    if (id === undefined || name === undefined || isActive === undefined || !createdAt || !updatedAt) {
+        return undefined;
+    }
+
+    if (updatedAt.getTime() < createdAt.getTime()) {
+        pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
+    }
+
+    return { id, name, isActive, createdAt, updatedAt };
+}
+
 function normalizeItem(
     value: unknown,
     index: number,
     sourceVersion: 1 | 2,
+    usesCategorySchema: boolean,
     errors: string[],
     warnings: string[],
 ): Item | undefined {
@@ -205,6 +274,10 @@ function normalizeItem(
     const createdAt = validDate(value.createdAt, `${path}.createdAt`, errors);
     const updatedAt = validDate(value.updatedAt, `${path}.updatedAt`, errors);
     const isActive = normalizedActive(value, path, sourceVersion, errors, warnings);
+    let categoryId: number | undefined;
+    if (usesCategorySchema && value.categoryId !== undefined) {
+        categoryId = positiveInteger(value.categoryId, `${path}.categoryId`, errors);
+    }
 
     if (id === undefined || name === undefined || basePrice === undefined || !createdAt || !updatedAt) {
         return undefined;
@@ -214,7 +287,15 @@ function normalizeItem(
         pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
     }
 
-    return { id, name, basePrice, isActive, createdAt, updatedAt };
+    return {
+        id,
+        name,
+        basePrice,
+        isActive,
+        ...(categoryId !== undefined ? { categoryId } : {}),
+        createdAt,
+        updatedAt,
+    };
 }
 
 function normalizeReseller(
@@ -297,6 +378,7 @@ function normalizeTransaction(
     value: unknown,
     index: number,
     sourceVersion: 1 | 2,
+    usesCategorySchema: boolean,
     errors: string[],
     warnings: string[],
 ): Transaction | undefined {
@@ -334,6 +416,23 @@ function normalizeTransaction(
     let unitPrice: number | undefined;
     if (value.unitPrice !== undefined) unitPrice = finitePositiveNumber(value.unitPrice, `${path}.unitPrice`, errors);
 
+    let categoryId: number | undefined;
+    let categoryName: string | undefined;
+    const hasCategoryId = usesCategorySchema && value.categoryId !== undefined;
+    const hasCategoryName = usesCategorySchema && value.categoryName !== undefined;
+
+    if (usesCategorySchema && type === 'order') {
+        if (hasCategoryId !== hasCategoryName) {
+            pathError(errors, path, 'categoryId e categoryName devem ser informados juntos no snapshot de categoria');
+        }
+        if (hasCategoryId) categoryId = positiveInteger(value.categoryId, `${path}.categoryId`, errors);
+        if (hasCategoryName) categoryName = requiredTrimmedString(value.categoryName, `${path}.categoryName`, errors);
+    } else if (usesCategorySchema && (type === 'payment' || type === 'signal')) {
+        if (hasCategoryId || hasCategoryName) {
+            pathError(errors, path, 'pagamentos/sinais não podem conter campos de categoria');
+        }
+    }
+
     const reversal = normalizeReversal(value.reversal, `${path}.reversal`, createdAt, errors);
     const correction = normalizeCorrection(value.correction, `${path}.correction`, errors);
 
@@ -363,6 +462,8 @@ function normalizeTransaction(
         itemName,
         quantity,
         unitPrice,
+        ...(categoryId !== undefined ? { categoryId } : {}),
+        ...(categoryName !== undefined ? { categoryName } : {}),
         totalPrice,
         observation,
         reversal,
@@ -381,17 +482,51 @@ function duplicateIds<T extends { id?: number }>(rows: T[], path: string, errors
     });
 }
 
+function validateCategoryNames(categories: Category[], errors: string[]) {
+    const seen = new Map<string, number>();
+    categories.forEach((category, index) => {
+        const key = category.name.trim().toLowerCase();
+        const previousIndex = seen.get(key);
+        if (previousIndex !== undefined) {
+            pathError(
+                errors,
+                `data.categories[${index}].name`,
+                `duplica o nome lógico de data.categories[${previousIndex}].name`,
+            );
+            return;
+        }
+        seen.set(key, index);
+    });
+}
+
 function validateReferences(
+    categories: Category[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
     errors: string[],
 ) {
+    const categoryById = new Map(categories.flatMap(category =>
+        category.id === undefined ? [] : [[category.id, category] as const]
+    ));
     const itemIds = new Set(items.flatMap(item => item.id === undefined ? [] : [item.id]));
     const resellerIds = new Set(resellers.flatMap(reseller => reseller.id === undefined ? [] : [reseller.id]));
     const transactionById = new Map(transactions.flatMap(transaction =>
         transaction.id === undefined ? [] : [[transaction.id, transaction] as const]
     ));
+
+    items.forEach((item, index) => {
+        if (item.categoryId === undefined) return;
+        const category = categoryById.get(item.categoryId);
+        const path = `data.items[${index}].categoryId`;
+        if (!category) {
+            pathError(errors, path, `referencia categoria inexistente ${item.categoryId}`);
+            return;
+        }
+        if (item.isActive !== false && category.isActive === false) {
+            pathError(errors, path, 'item ativo não pode referenciar categoria inativa');
+        }
+    });
 
     transactions.forEach((transaction, index) => {
         const path = `data.transactions[${index}]`;
@@ -400,6 +535,9 @@ function validateReferences(
         }
         if (transaction.itemId !== undefined && !itemIds.has(transaction.itemId)) {
             pathError(errors, `${path}.itemId`, `referencia item inexistente ${transaction.itemId}`);
+        }
+        if (transaction.categoryId !== undefined && !categoryById.has(transaction.categoryId)) {
+            pathError(errors, `${path}.categoryId`, `referencia categoria inexistente ${transaction.categoryId}`);
         }
 
         if (transaction.id === undefined) return;
@@ -421,6 +559,12 @@ function validateReferences(
                 }
                 if (replacement.type === 'order' && replacement.itemId !== transaction.itemId) {
                     pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição de pedido deve preservar o item original');
+                }
+                if (
+                    replacement.type === 'order' &&
+                    (replacement.categoryId !== transaction.categoryId || replacement.categoryName !== transaction.categoryName)
+                ) {
+                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição de pedido deve preservar o snapshot de categoria original');
                 }
                 if (
                     replacement.occurredAt && transaction.occurredAt &&
@@ -456,18 +600,31 @@ function serializeDate(value: Date, path: string): string {
     return value.toISOString();
 }
 
-function currentEnvelope(items: Item[], resellers: Reseller[], transactions: Transaction[]): BackupEnvelopeV2 {
+function currentEnvelope(
+    categories: Category[],
+    items: Item[],
+    resellers: Reseller[],
+    transactions: Transaction[],
+): BackupEnvelopeV2 {
     return {
         format: BACKUP_FORMAT,
         version: BACKUP_VERSION,
         exportedAt: new Date().toISOString(),
         source: { database: 'ResellerManagerDB', schemaVersion: BACKUP_SCHEMA_VERSION },
         data: {
+            categories: categories.map((category, index) => ({
+                id: category.id as number,
+                name: category.name,
+                isActive: category.isActive,
+                createdAt: serializeDate(category.createdAt, `categories[${index}].createdAt`),
+                updatedAt: serializeDate(category.updatedAt, `categories[${index}].updatedAt`),
+            })),
             items: items.map((item, index) => ({
                 id: item.id as number,
                 name: item.name,
                 basePrice: item.basePrice,
                 isActive: item.isActive !== false,
+                categoryId: item.categoryId,
                 createdAt: serializeDate(item.createdAt, `items[${index}].createdAt`),
                 updatedAt: serializeDate(item.updatedAt, `items[${index}].updatedAt`),
             })),
@@ -489,6 +646,8 @@ function currentEnvelope(items: Item[], resellers: Reseller[], transactions: Tra
                 itemName: transaction.itemName,
                 quantity: transaction.quantity,
                 unitPrice: transaction.unitPrice,
+                categoryId: transaction.categoryId,
+                categoryName: transaction.categoryName,
                 totalPrice: transaction.totalPrice,
                 observation: transaction.observation,
                 reversal: transaction.reversal,
@@ -511,6 +670,7 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         throw new BackupValidationError([`version: versão não suportada ${String(sourceVersion)}`]);
     }
 
+    let sourceSchemaVersion: SupportedBackupSchemaVersion | undefined;
     if (sourceVersion === BACKUP_VERSION) {
         if (payload.format !== BACKUP_FORMAT) pathError(errors, 'format', `deve ser ${BACKUP_FORMAT}`);
         if (!isRecord(payload.source)) {
@@ -519,8 +679,17 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
             if (payload.source.database !== 'ResellerManagerDB') {
                 pathError(errors, 'source.database', 'deve identificar ResellerManagerDB');
             }
-            if (payload.source.schemaVersion !== BACKUP_SCHEMA_VERSION) {
-                pathError(errors, 'source.schemaVersion', `deve ser ${BACKUP_SCHEMA_VERSION}`);
+            if (
+                payload.source.schemaVersion !== LEGACY_BACKUP_SCHEMA_VERSION &&
+                payload.source.schemaVersion !== BACKUP_SCHEMA_VERSION
+            ) {
+                pathError(
+                    errors,
+                    'source.schemaVersion',
+                    `deve ser ${LEGACY_BACKUP_SCHEMA_VERSION} ou ${BACKUP_SCHEMA_VERSION}`,
+                );
+            } else {
+                sourceSchemaVersion = payload.source.schemaVersion;
             }
         }
     }
@@ -531,18 +700,40 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         throw new BackupValidationError(errors);
     }
 
+    const usesCategorySchema = sourceVersion === BACKUP_VERSION && sourceSchemaVersion === BACKUP_SCHEMA_VERSION;
+    const rawCategoriesValue = payload.data.categories;
     const rawItems = payload.data.items;
     const rawResellers = payload.data.resellers;
     const rawTransactions = payload.data.transactions;
+
+    if (usesCategorySchema && !Array.isArray(rawCategoriesValue)) pathError(errors, 'data.categories', 'deve ser um array');
     if (!Array.isArray(rawItems)) pathError(errors, 'data.items', 'deve ser um array');
     if (!Array.isArray(rawResellers)) pathError(errors, 'data.resellers', 'deve ser um array');
     if (!Array.isArray(rawTransactions)) pathError(errors, 'data.transactions', 'deve ser um array');
-    if (!Array.isArray(rawItems) || !Array.isArray(rawResellers) || !Array.isArray(rawTransactions) || !exportedAt) {
+    if (
+        (usesCategorySchema && !Array.isArray(rawCategoriesValue)) ||
+        !Array.isArray(rawItems) || !Array.isArray(rawResellers) || !Array.isArray(rawTransactions) || !exportedAt
+    ) {
         throw new BackupValidationError(errors);
     }
 
+    const rawCategories: unknown[] = usesCategorySchema && Array.isArray(rawCategoriesValue)
+        ? rawCategoriesValue
+        : [];
+
+    if (sourceVersion === BACKUP_VERSION && sourceSchemaVersion === LEGACY_BACKUP_SCHEMA_VERSION) {
+        warnings.push('Backup v2/schema4 normalizado para schema5 sem inventar categorias ou classificação histórica.');
+    }
+    if (sourceVersion === 1) {
+        warnings.push('Backup v1 normalizado para schema5 sem inventar categorias ou classificação histórica.');
+    }
+
+    const categories: Category[] = rawCategories.flatMap((value, index) => {
+        const category = normalizeCategory(value, index, errors);
+        return category ? [category] : [];
+    });
     const items = rawItems.flatMap((value, index) => {
-        const item = normalizeItem(value, index, sourceVersion, errors, warnings);
+        const item = normalizeItem(value, index, sourceVersion, usesCategorySchema, errors, warnings);
         return item ? [item] : [];
     });
     const resellers = rawResellers.flatMap((value, index) => {
@@ -550,30 +741,41 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         return reseller ? [reseller] : [];
     });
     const transactions = rawTransactions.flatMap((value, index) => {
-        const transaction = normalizeTransaction(value, index, sourceVersion, errors, warnings);
+        const transaction = normalizeTransaction(value, index, sourceVersion, usesCategorySchema, errors, warnings);
         return transaction ? [transaction] : [];
     });
 
+    duplicateIds(categories, 'data.categories', errors);
     duplicateIds(items, 'data.items', errors);
     duplicateIds(resellers, 'data.resellers', errors);
     duplicateIds(transactions, 'data.transactions', errors);
-    validateReferences(items, resellers, transactions, errors);
+    validateCategoryNames(categories, errors);
+    validateReferences(categories, items, resellers, transactions, errors);
 
     if (errors.length) throw new BackupValidationError(errors);
 
     const normalized: NormalizedBackupData = {
         sourceVersion,
+        ...(sourceSchemaVersion !== undefined ? { sourceSchemaVersion } : {}),
         exportedAt,
-        data: { items, resellers, transactions },
+        data: { categories, items, resellers, transactions },
     };
 
     const preview: BackupPreview = {
         sourceVersion,
+        ...(sourceSchemaVersion !== undefined ? { sourceSchemaVersion } : {}),
         targetVersion: BACKUP_VERSION,
         schemaVersion: BACKUP_SCHEMA_VERSION,
-        migrated: sourceVersion !== BACKUP_VERSION || warnings.length > 0,
+        migrated: sourceVersion !== BACKUP_VERSION || sourceSchemaVersion !== BACKUP_SCHEMA_VERSION || warnings.length > 0,
         exportedAt,
         counts: {
+            categories: categories.length,
+            activeCategories: categories.filter(category => category.isActive !== false).length,
+            inactiveCategories: categories.filter(category => category.isActive === false).length,
+            unclassifiedItems: items.filter(item => item.categoryId === undefined).length,
+            legacyOrdersWithoutCategory: transactions.filter(
+                transaction => transaction.type === 'order' && transaction.categoryId === undefined,
+            ).length,
             items: items.length,
             activeItems: items.filter(item => item.isActive !== false).length,
             inactiveItems: items.filter(item => item.isActive === false).length,
@@ -607,15 +809,16 @@ export async function preflightBackupFile(file: Pick<File, 'text'>): Promise<Bac
     return preflightBackupText(await file.text());
 }
 
-/** Exporta um envelope lógico v2. O próprio dataset é validado antes do download. */
+/** Exporta um envelope lógico v2/schema5. O próprio dataset é validado antes do download. */
 export async function exportData(): Promise<BackupExportResult> {
-    const [items, resellers, transactions] = await Promise.all([
+    const [categories, items, resellers, transactions] = await Promise.all([
+        db.categories.toArray(),
         db.items.toArray(),
         db.resellers.toArray(),
         db.transactions.toArray(),
     ]);
 
-    const backup = currentEnvelope(items, resellers, transactions);
+    const backup = currentEnvelope(categories, items, resellers, transactions);
     preflightBackupPayload(backup);
 
     const json = JSON.stringify(backup, null, 2);
