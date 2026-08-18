@@ -77,6 +77,78 @@ describe('TransactionForm', () => {
         expect(screen.queryByText('Maria Arquivada')).not.toBeInTheDocument();
     });
 
+    it('should preselect and preserve the requested active reseller context on cancel', async () => {
+        const activeReseller = (await db.resellers.toArray()).find((reseller) => reseller.name === 'Joãozinho');
+        expect(activeReseller?.id).toBeDefined();
+
+        render(
+            <TransactionForm
+                onSubmitSuccess={vi.fn()}
+                onCancel={vi.fn()}
+                initialResellerId={activeReseller!.id}
+            />,
+            { wrapper },
+        );
+
+        const selects = await screen.findAllByTestId('mock-select');
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        expect((selects[0] as HTMLSelectElement).value).toBe(String(activeReseller!.id));
+
+        fireEvent.change(selects[1], { target: { value: 'payment' } });
+        fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '25.00' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+        await waitFor(() => {
+            const resetSelects = screen.getAllByTestId('mock-select');
+            expect((resetSelects[0] as HTMLSelectElement).value).toBe(String(activeReseller!.id));
+            expect((resetSelects[1] as HTMLSelectElement).value).toBe('order');
+        });
+    });
+
+    it('should reject an inactive reseller supplied as initial context', async () => {
+        const inactiveReseller = (await db.resellers.toArray()).find((reseller) => reseller.name === 'Maria Arquivada');
+        expect(inactiveReseller?.id).toBeDefined();
+        const onSubmitSuccess = vi.fn();
+
+        render(
+            <TransactionForm
+                onSubmitSuccess={onSubmitSuccess}
+                initialResellerId={inactiveReseller!.id}
+                initialType="payment"
+            />,
+            { wrapper },
+        );
+
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '10.00' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Lançar Movimentação' }));
+
+        expect(await screen.findByText('Revendedor inativo não pode receber novos lançamentos')).toBeInTheDocument();
+        expect(onSubmitSuccess).not.toHaveBeenCalled();
+        expect(await db.transactions.count()).toBe(0);
+    });
+
+    it('should reject a missing reseller supplied as initial context', async () => {
+        const onSubmitSuccess = vi.fn();
+
+        render(
+            <TransactionForm
+                onSubmitSuccess={onSubmitSuccess}
+                initialResellerId={999999}
+                initialType="payment"
+            />,
+            { wrapper },
+        );
+
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '10.00' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Lançar Movimentação' }));
+
+        expect(await screen.findByText('Revendedor inativo não pode receber novos lançamentos')).toBeInTheDocument();
+        expect(onSubmitSuccess).not.toHaveBeenCalled();
+        expect(await db.transactions.count()).toBe(0);
+    });
+
     it('should only list active items for new orders', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
