@@ -137,29 +137,50 @@ P7-S3 gate: **PASS / DONE**.
 
 ### P7-S4 — Align Backup recovery copy with implemented restore
 
+**Status:** `DONE` — 2026-08-18.
+
+Completed behavior:
+
+- stale top-level Backup wording no longer describes restore as future/preflight-only;
+- page guidance now accurately describes validated selection/preflight, preview gating, automatic recoverable v2 checkpoint download and atomic restore;
+- the copy explicitly states rollback-safe preservation of the prior database when write/verification fails;
+- P5-S1/P5-S2 backup, validation, checkpoint, restore and migration behavior remain unchanged.
+
+Coverage added:
+
+- `BackupPage.test.tsx` proves the implemented recovery sequence is described and the obsolete “futura restauração” wording is absent.
+
+Validation history:
+
+- **`32136964241` — PASS**, job `95710456305`: 0 lint errors / 80 warnings, 40 Vitest files / 165 tests, 14/14 Playwright, build PASS.
+
+P7-S4 gate: **PASS / DONE**.
+
+### P7-S5 — Operator-visible item/reseller save failures
+
 **Status:** `NOT_STARTED` — current next slice.
 
 Bounded scope:
 
-- correct stale Backup page-level wording that still describes restore as future/preflight-only;
-- accurately describe the already implemented P5-S2 validated selection, preview, checkpoint download and atomic restore/recovery path;
-- change operator-facing copy only; do not alter backup/restore behavior or contracts;
-- add the smallest focused regression coverage for the corrected copy;
+- surface rejected item create/edit mutations visibly to the operator;
+- surface rejected reseller create/edit mutations visibly to the operator;
+- preserve entered form data after failure so correction/retry does not require re-entry;
+- preserve P1 lifecycle/reference rules and existing persistence semantics;
+- add focused component/page coverage for rejected saves plus retained input;
 - run full `npm run qa:critical`.
 
 Out of scope:
 
-- backup format/version changes;
-- validation, checkpoint, restore, migration or persistence mechanics;
-- item/reseller save error feedback;
-- reseller-context launch shortcut;
+- transaction-entry behavior already closed in P7-S2;
+- reseller-context transaction launch;
 - financial/correction semantics;
+- backup/restore mechanics;
 - schema/persistence architecture changes;
 - P8/P9 work.
 
 ### Later P7 slices
 
-After P7-S4, continue only through the remaining ranked P7-S1 gaps in order unless new repository evidence materially changes their operational priority.
+After P7-S5, continue only through the remaining ranked P7-S1 gaps in order unless new repository evidence materially changes their operational priority.
 
 ---
 
