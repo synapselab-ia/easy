@@ -701,21 +701,25 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
     }
 
     const usesCategorySchema = sourceVersion === BACKUP_VERSION && sourceSchemaVersion === BACKUP_SCHEMA_VERSION;
-    const rawCategories = usesCategorySchema ? payload.data.categories : [];
+    const rawCategoriesValue = payload.data.categories;
     const rawItems = payload.data.items;
     const rawResellers = payload.data.resellers;
     const rawTransactions = payload.data.transactions;
 
-    if (usesCategorySchema && !Array.isArray(rawCategories)) pathError(errors, 'data.categories', 'deve ser um array');
+    if (usesCategorySchema && !Array.isArray(rawCategoriesValue)) pathError(errors, 'data.categories', 'deve ser um array');
     if (!Array.isArray(rawItems)) pathError(errors, 'data.items', 'deve ser um array');
     if (!Array.isArray(rawResellers)) pathError(errors, 'data.resellers', 'deve ser um array');
     if (!Array.isArray(rawTransactions)) pathError(errors, 'data.transactions', 'deve ser um array');
     if (
-        (usesCategorySchema && !Array.isArray(rawCategories)) ||
+        (usesCategorySchema && !Array.isArray(rawCategoriesValue)) ||
         !Array.isArray(rawItems) || !Array.isArray(rawResellers) || !Array.isArray(rawTransactions) || !exportedAt
     ) {
         throw new BackupValidationError(errors);
     }
+
+    const rawCategories: unknown[] = usesCategorySchema && Array.isArray(rawCategoriesValue)
+        ? rawCategoriesValue
+        : [];
 
     if (sourceVersion === BACKUP_VERSION && sourceSchemaVersion === LEGACY_BACKUP_SCHEMA_VERSION) {
         warnings.push('Backup v2/schema4 normalizado para schema5 sem inventar categorias ou classificação histórica.');
@@ -724,12 +728,10 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         warnings.push('Backup v1 normalizado para schema5 sem inventar categorias ou classificação histórica.');
     }
 
-    const categories = usesCategorySchema
-        ? rawCategories.flatMap((value, index) => {
-            const category = normalizeCategory(value, index, errors);
-            return category ? [category] : [];
-        })
-        : [];
+    const categories: Category[] = rawCategories.flatMap((value, index) => {
+        const category = normalizeCategory(value, index, errors);
+        return category ? [category] : [];
+    });
     const items = rawItems.flatMap((value, index) => {
         const item = normalizeItem(value, index, sourceVersion, usesCategorySchema, errors, warnings);
         return item ? [item] : [];
