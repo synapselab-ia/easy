@@ -316,7 +316,7 @@ No runtime code, schema, persistence or P9 feature was changed.
 
 ### P8-S2 — Direct real-store validation
 
-**Status:** BLOCKED / QA PENDING.
+**Status:** PASS / BLOCKED.
 
 Evidence-intake result:
 
@@ -335,7 +335,16 @@ Classification:
 - P8-S2 cannot be marked `DONE` and no backend/auth/cloud/synchronization, persistence migration or P9 implementation is authorized;
 - `docs/V2/P8_EVIDENCE_REQUEST.md` defines the minimum evidence packet required to resume validation.
 
-The current documentation-only blocked-state head still requires full persistent `npm run qa:critical` before integration.
+Persistent Critical QA run **`32152466007`**, job **`95761457231`** — **PASS** on PR #25 merge ref `b90fdc76ced24d042cf73d1ce96cc8ece0ac8fed`:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **43 files / 176 tests PASS**;
+- Playwright Chromium: **15/15 PASS**;
+- production build: **PASS**.
+
+PR #25 was squash-merged as `c8eda199b0a605306619b73f8d3b175f8c673e2f`. The validated merge ref and integration resolve to the same tree `82a32b4a6d5c411d5a40d9eb0d587e2e7ecd8b15`. The QA result validates the integrated blocked-state documentation byte-for-byte.
+
+Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action/runtime deprecation notices and Vite chunk-size warning remain visible non-blocking debt under D-019; no gate was weakened.
 
 ## Known baseline QA gaps
 
@@ -357,4 +366,4 @@ The current documentation-only blocked-state head still requires full persistent
 
 ## QA policy while P8-S2 is blocked
 
-P8-S2 remains validation-only and blocked on external evidence. D-019 still requires the complete persistent `npm run qa:critical` gate for integration of the blocked-state documentation. Preserve all P1–P7 contracts, keep D-016 authoritative unless direct real-store evidence proves a reopen trigger, distinguish confirmed evidence from inference, and do not begin backend/auth/cloud/synchronization implementation, persistence migration or P9 modules while the evidence blocker remains.
+P8-S2 remains validation-only and blocked on external evidence. D-019 requires the complete persistent `npm run qa:critical` gate for integration of canonical blocked-state documentation and for any later resumed P8-S2 conclusion. Preserve all P1–P7 contracts, keep D-016 authoritative unless direct real-store evidence proves a reopen trigger, distinguish confirmed evidence from inference, and do not begin backend/auth/cloud/synchronization implementation, persistence migration or P9 modules while the evidence blocker remains.
