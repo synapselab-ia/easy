@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import type { Reseller } from "../../db/database";
+import { toast } from "sonner";
 
 interface ResellerFormProps {
     initialData?: Reseller;
@@ -64,7 +65,8 @@ export function ResellerForm({ initialData, onSubmitSuccess, onCancel }: Reselle
             setEmail("");
             setNotes("");
         } catch (error) {
-            console.error("Erro ao salvar revendedor:", error);
+            const message = error instanceof Error ? error.message : "Falha ao salvar revendedor.";
+            toast.error(message);
         }
     };
 
