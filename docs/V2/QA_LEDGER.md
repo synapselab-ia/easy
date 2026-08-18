@@ -1,6 +1,6 @@
 # Easy V2 — QA Ledger
 
-**Updated:** 2026-08-17
+**Updated:** 2026-08-18
 
 This ledger records targeted phase evidence and the current repository-wide critical QA state.
 
@@ -78,65 +78,60 @@ P7-S1 established QG-011 through QG-015 and D-020 ranking. Validation `320668021
 
 **RESOLVED / P7-S2.**
 
-Original evidence:
+P7-S2 made Cancel a real reset, surfaced rejected transaction creation while preserving retry data, and split Payment/Signal launch intent. Functional run `32069261401`, job `95508465043` — PASS: 0 lint errors / 78 warnings, 39 Vitest files / 163 tests, 14/14 Playwright, build PASS.
 
-- standalone Cancel was wired to a no-op;
-- transaction-create failures were console-only;
-- one `Pagamento/Sinal` command shortcut always routed to `payment`.
-
-P7-S2 remediation:
-
-- `TransactionForm` owns one reset path for successful submission and explicit Cancel;
-- Cancel clears in-progress fields/errors/mutation state and restores the requested `initialType`;
-- rejected transaction creation shows `toast.error` and intentionally does not reset fields, preserving retry context;
-- command center routes Payment and Signal through distinct actions/query parameters;
-- P1/P2/P3 transaction validation, audit and financial effects were not changed.
-
-Targeted regression coverage added:
-
-- `TransactionForm.test.tsx`: reset + initial-type preservation;
-- `TransactionForm.test.tsx`: real rejected create mutation + visible error + entered data retained;
-- `TransactionsPage.test.tsx`: URL `type=signal` intent;
-- `CommandCenter.test.tsx`: payment/signal shortcut routing;
-- `tests/e2e/search.spec.ts`: Signal shortcut → form → entered value → Cancel → value cleared with Signal still selected.
-
-#### P7-S2 validation classification
-
-Two initial Critical QA runs failed only in the newly introduced Cancel unit assertion:
-
-1. `32068747287`, job `95506837405` — FAIL: 1 new Vitest assertion failed; lint passed and E2E/build were not reached.
-2. `32069051473`, job `95507799159` — FAIL: same new assertion. Investigation showed the test mock rendered invalid HTML (`<span>` inside `<select>`), so jsdom retained the first option instead of representing the controlled empty value.
-
-The harness was corrected to a valid controlled select (`<option value="" />` plus option children; trigger/value renderers removed from the native select). No runtime behavior, business rule or QA gate was weakened to obtain green status.
-
-Functional persistent run **`32069261401`**, job **`95508465043`** — **PASS**:
-
-- ESLint: **0 errors / 78 warnings**;
-- Vitest: **39 files / 163 tests PASS**;
-- Playwright Chromium: **14/14 PASS**;
-- production build: **PASS**.
-
-The lower warning count versus the P6 closure snapshot comes from the touched test harness and does not redefine or claim global warning-debt resolution. Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain recorded non-blocking debt.
-
-**P7-S2 result: PASS / DONE.**
+Two earlier runs (`32068747287`, `32069051473`) failed only in a new invalid native-select test harness; the harness was corrected without weakening runtime behavior or D-019.
 
 ### QG-012 — invalid reseller period silently displays all-time/current data
 
-**OPEN / P7-S3 — current next gap.**
+**RESOLVED / P7-S3.**
 
-Evidence:
+Original evidence:
 
-- a complete inverted date range makes `periodStatement` null;
-- the page then falls back to current balance plus all transactions while invalid dates remain filled;
-- the current explicit error is deferred until PDF generation.
+- a complete inverted date range made `periodStatement` null;
+- reseller detail then fell back to current balance plus all transactions while invalid dates remained filled;
+- explicit invalid feedback was deferred until PDF generation.
 
-Risk: operator can interpret unfiltered data as the requested period view.
+P7-S3 remediation:
+
+- a complete inverted range now produces immediate visible `role="alert"` guidance;
+- both date controls expose `aria-invalid` while the range is inverted;
+- PDF generation is disabled while invalid and remains defensively guarded in the handler;
+- current/period financial cards are replaced by a non-financial invalid-period state;
+- all-time transaction history is withheld while invalid dates remain filled;
+- correcting the range restores the existing D-015 opening → movements → closing statement;
+- clearing the range restores the ordinary current-balance/all-history view;
+- no statement/PDF arithmetic, schema, persistence, correction/reversal or backup/restore behavior changed.
+
+Targeted regression coverage added:
+
+- component/page invalid-state + no-fallback + invalid→corrected recovery;
+- component/page invalid→cleared recovery;
+- bounded Playwright invalid→corrected path;
+- existing D-015 statement regressions remain green.
+
+#### P7-S3 validation classification
+
+Initial Critical QA run **`32133265871`** — **FAIL** in one newly added component-test expectation. The test corrected the range to March but expected a fixture dated in February to reappear. The application correctly excluded it. Per D-019 this was classified as a **test-fixture/expectation defect**, not a runtime regression; only the fixture date was aligned with the corrected valid range.
+
+Functional persistent run **`32133559376`**, job **`95699734548`** — **PASS**:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **39 files / 164 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+The warning count reflects touched-test warnings plus existing repository debt. Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain non-blocking under D-019.
+
+**P7-S3 result: PASS / DONE.**
 
 ### QG-013 — stale Backup page recovery description
 
-**OPEN / later P7.**
+**OPEN / P7-S4 — current next gap.**
 
-Top-level Backup copy still describes restore as future/preflight-only although P5-S2 restore is available.
+Top-level Backup copy still describes restore as future/preflight-only although P5-S2 validated selection, preview, checkpoint and atomic restore/recovery are implemented.
+
+Risk: operator-facing recovery guidance understates available restore capability and conflicts with the accepted P5 contract.
 
 ### QG-014 — item/reseller save failures are console-only
 
@@ -163,11 +158,11 @@ Reseller detail knows the identity but transaction entry requires reselecting it
 - QG-009 remaining reference validation/migration: RESOLVED / P1.
 - QG-010 persistence architecture: RESOLVED / P4.
 - QG-011 transaction-entry intent/feedback: RESOLVED / P7-S2.
-- QG-012 invalid reseller period fallback: OPEN / P7-S3.
-- QG-013 stale Backup page recovery copy: OPEN / later P7.
+- QG-012 invalid reseller period fallback: RESOLVED / P7-S3.
+- QG-013 stale Backup page recovery copy: OPEN / P7-S4.
 - QG-014 item/reseller save error feedback: OPEN / later P7.
 - QG-015 reseller-context transaction launch friction: OPEN / later P7.
 
-## QA policy entering P7-S3
+## QA policy entering P7-S4
 
-P7-S3 must preserve D-015 statement mathematics and all P1–P6 contracts, add focused coverage for invalid→corrected period state, and pass the complete persistent `npm run qa:critical` gate. Do not weaken tests/workflows or bundle unrelated P7 gaps.
+P7-S4 must be copy-only relative to P5 restore mechanics, add the smallest focused regression coverage needed for corrected operator-facing recovery wording, preserve all P1–P6 contracts, and pass the complete persistent `npm run qa:critical` gate. Do not weaken tests/workflows or bundle unrelated P7 gaps.
