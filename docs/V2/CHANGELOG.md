@@ -1,397 +1,151 @@
 # Easy V2 — Changelog
 
-This changelog records material V2 project-state changes, not every code-line edit.
+This changelog records material V2 project-state changes rather than every code-line edit. Detailed implementation history remains available in Git/PR history, `STATUS.md`, `QA_LEDGER.md`, `DECISIONS.md` and phase-specific documents.
 
 ---
 
-## 2026-08-18 — P8-S2 direct real-store validation blocked on missing evidence
+## 2026-08-18 — P8-S2 direct real-store validation completed; P8 closed
 
-### Evidence intake outcome
+### Direct evidence received
 
-P8-S2 executed validation only. The project-accessible evidence boundary was checked for operator answers, interview/observation notes, production/support telemetry, RTO/RPO/SLA or security-policy material, and repository issues/artifacts describing real-store operation.
+P8-S2 resumed after a stakeholder supplied direct real-store answers in the project conversation.
 
-No direct real-store evidence was supplied. Repository issue searches, including `Duda` and `loja`, returned no issues, and no new direct store artifact was found in repository content or the current project conversation.
+Current operating facts established:
 
-This absence is classified as an **evidence blocker**, not as proof that the store does not need multi-user operation, synchronization, access control, remote recovery, trusted integrations or a different security architecture.
+- Duda and store owners use Easy; concurrent use of the same dataset is not currently required;
+- current use is PC-based and does not require automatic same-live-dataset multi-device operation;
+- resellers receive PDF/extracts and do not require interactive Easy access;
+- JSON/manual off-device handling remains the current backup/portability mechanism;
+- no trusted server integration is currently mandatory;
+- scale is modest, at roughly 100 resellers maximum and around 50 active, with limited daily activity.
 
-### D-016 outcome
+### Recovery consequence confirmed
 
-All six D-016 reopen triggers remain **UNRESOLVED from direct evidence** and none is proven. D-016 therefore remains authoritative under D-021 because the accepted reopen condition has not been met, but P8-S2 is not complete and remains `BLOCKED`.
+Device loss before the current JSON is copied to Drive can destroy the working dataset and force reconstruction of tens of thousands of reais in sales. Human-memory-dependent off-device backup is therefore a confirmed critical continuity risk.
 
-`docs/V2/P8_EVIDENCE_REQUEST.md` now defines the minimum direct evidence packet required to resume validation consistently.
+No numeric RPO/RTO, provider-operated recovery obligation or formal remote-recovery SLA was supplied. Recovery durability becomes a high-priority P9 input without falsely proving the D-016 remote-SLA trigger.
 
-No runtime, backend/auth/cloud/synchronization, Dexie migration, architecture implementation or P9 prioritization/implementation changed.
+### Product needs confirmed
+
+- create/manage item categories;
+- assign items to categories such as bronze or porcelain;
+- analyze/filter/report financial activity by category;
+- inventory the exact edit/correction microflows that Duda cannot currently perform before implementing them.
+
+The reported need to record a sale using an earlier real occurrence date is already supported by current V2 through editable `Data da ocorrência` / `occurredAt`; it is retained as a discoverability/usability verification item rather than rebuilt as a missing data model.
+
+Accounts/permissions, automatic synchronization and broader order/inventory/store-management expansion remain future directions, not current mandatory requirements.
+
+### D-016 decision
+
+D-022 accepted. Direct P8 evidence proves no current D-016 reopen trigger:
+
+- concurrent operators: NOT PROVEN;
+- automatic live multi-device sharing: NOT PROVEN;
+- person-level authorship/access control: NOT PROVEN;
+- remote recovery SLA: NOT PROVEN, while severe recovery risk is confirmed;
+- trusted server integrations: NOT PROVEN;
+- security policy incompatible with browser-local storage: UNRESOLVED / NOT PROVEN.
+
+D-016 therefore remains authoritative for the current operating mode. P8-S2 implemented no backend/auth/cloud/live synchronization, Dexie migration, runtime/schema change or P9 feature.
 
 ### Validation and integration
 
-Persistent Critical QA run **`32152466007`**, job **`95761457231`** — **PASS** on PR #25 merge ref `b90fdc76ced24d042cf73d1ce96cc8ece0ac8fed`:
+Persistent Critical QA run **`32158395391`**, job **`95781056589`** — **PASS** on PR #27 merge ref `b07b6be57c777bbbc0678fa5b7c8d1b7afdfdb83`:
 
 - lint: 0 errors / 80 warnings;
-- Vitest: 43 files / 176 tests passing;
-- Playwright Chromium: 15/15 passing;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
 - production build: PASS.
 
-PR #25 was squash-merged into `develop` as `c8eda199b0a605306619b73f8d3b175f8c673e2f`. The validated merge ref and integration commit share tree `82a32b4a6d5c411d5a40d9eb0d587e2e7ecd8b15`.
+PR #27 was squash-merged into `develop` as `e05d5cb1b4b4c4d143afbad3677bb9a472088cfe`. The validated merge ref and integration share tree `2f14efe36e7d59c12a59cfa88066961b99416cf4`.
+
+Known React `act(...)`, legacy mocked-select DOM warnings, 17 dependency-audit findings, Actions/runtime deprecation notices and Vite large-chunk warning remain visible non-blocking debt under D-019.
 
 ### Canonical state
 
-- P8 remains `IN_PROGRESS`;
-- P8-S2 remains `BLOCKED`, not `DONE`;
-- D-016 and D-021 remain authoritative;
-- `NEXT_ACTION` remains P8-S2 and may resume only when explicit direct real-store evidence is supplied;
-- P9 remains `NOT_STARTED`.
+- P8-S2: `DONE`;
+- P8: `DONE`;
+- D-016 retained under D-022;
+- P9: `NOT_STARTED`;
+- NEXT_ACTION advances only to P9-S1 evidence-backed prioritization; P9-S1 is not executed in this closure.
 
 ---
 
-## 2026-08-18 — P8-S1 repository-evidence discovery and D-016 assessment
+## 2026-08-18 — Initial P8-S2 validation blocked on missing evidence
 
-### Evidence boundary
+The first P8-S2 attempt found no direct operator/interview/observation/SLA/security evidence. Missing evidence was correctly treated as a blocker, not as proof that D-016 triggers were false.
 
-P8-S1 executed discovery only. It inspected the canonical V2 baseline, original project prompts, relevant historical PRDs, README and repository issues, then recorded a detailed evidence matrix in `docs/V2/P8_DISCOVERY.md`.
-
-Confirmed repository-backed intent includes:
-
-- administrator item/reseller/order/payment workflows;
-- desktop and smartphone operation;
-- reseller statements/PDF sharing;
-- JSON backup and computer portability;
-- current dashboard, Pareto, debtor-ranking and debt-aging reporting.
-
-A later responsiveness requirement also describes a reseller consulting their own statement on mobile. That is recorded as a material unresolved operator/access question because the earlier product definition explicitly used local single-user storage without authentication and no artifact defines how a reseller would access the administrator's live dataset.
-
-### D-016 outcome
-
-P8-S1 found no proof of any D-016 reopen trigger:
-
-- concurrent operators: not proven;
-- automatic live multi-device sharing: not proven;
-- person-level authorship/access control: not proven;
-- remote recovery SLA: not proven;
-- trusted server integrations: not proven;
-- security policy incompatible with browser-local storage: not proven.
-
-D-021 is accepted: repository evidence alone does not reopen D-016. Direct store evidence must resolve operator/device/sharing/access/recovery constraints before architecture changes.
-
-No runtime, backend/auth/cloud/synchronization, Dexie migration or P9 implementation changed.
-
-### Canonical state
-
-- P8-S1 repository discovery: complete, awaiting final D-019 QA/integration evidence;
-- P8 remains `IN_PROGRESS`;
-- D-016 remains authoritative;
-- D-021 accepted;
-- `NEXT_ACTION` advances only to **P8-S2 — direct real-store validation of unresolved operator/device/sharing/access/recovery requirements and explicit D-016 keep/reopen decision**.
-
-P8-S2 is not executed in this change.
+`docs/V2/P8_EVIDENCE_REQUEST.md` was added as the direct-evidence packet. Persistent Critical QA `32152466007`, job `95761457231`, passed; PR #25 integrated as `c8eda199b0a605306619b73f8d3b175f8c673e2f`; canonical blocked-state closure integrated as `5e1b45bef63b8e91c692d35cae9da5c66a905740`.
 
 ---
 
-## 2026-08-18 — P7-S6 reseller-context transaction launch and P7 closure
+## 2026-08-18 — P8-S1 repository-evidence discovery
 
-### Context-preserving transaction entry
+P8-S1 inspected canonical documents, original prompts, historical PRDs, README and repository issues. Repository evidence confirmed administrator workflows, mobile/desktop intent, PDF sharing, JSON portability and existing analytics, but did not prove concurrency, live sharing, accounts/permissions, remote recovery SLA, trusted integrations or a local-storage-incompatible security policy.
 
-P7-S6 completed QG-015, the final currently evidenced P7-S1 operational gap:
-
-- active reseller detail now exposes **Novo lançamento** and carries `resellerId` into the existing transaction-entry route;
-- `TransactionsPage` accepts only positive integer reseller context and initializes `TransactionForm` with it;
-- the form preselects the contextual reseller and preserves it across Cancel/success reset;
-- standalone transaction entry remains unselected without valid reseller context;
-- inactive reseller detail blocks contextual launch;
-- inactive or missing reseller context still fails the existing P1 `activeResellers` validation and cannot create transactions.
-
-No command-center shortcut, P2/P3 financial/audit/occurrence behavior, entity lifecycle rule, hook, Dexie schema/persistence, backup/restore mechanic or P8/P9 implementation changed.
-
-### Regression coverage
-
-Added focused proof for:
-
-- active reseller detail → contextual transaction navigation;
-- inactive reseller detail → launch disabled;
-- valid URL context → reseller preselected;
-- malformed URL context → normal standalone empty selection;
-- active contextual reseller retained across Cancel;
-- inactive/missing context rejected with no transaction writes;
-- bounded Playwright reseller-detail → transaction-entry → Cancel path with reseller context preserved.
-
-### Validation
-
-Functional persistent Critical QA run **`32145620210`**, job **`95738535732`** — **PASS** on PR merge ref `5fab7de932eb7a62ffe58b21820f11a3ba1b904d`:
-
-- lint: 0 errors / 80 warnings;
-- Vitest: 43 files / 176 tests passing;
-- Playwright Chromium: 15/15 passing;
-- production build: PASS.
-
-### Canonical state
-
-- QG-015 reseller-context transaction launch friction: RESOLVED / P7-S6;
-- P7-S6: `DONE`;
-- QG-011 through QG-015 are all resolved and no additional material in-scope P7 gap was evidenced by the bounded P7-S6 work;
-- P7: `DONE`;
-- D-016, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
-- `NEXT_ACTION` advances only to **P8-S1 — evidence-based real-store requirements discovery and D-016 reopen assessment**.
-
-P8-S1 is not executed in this change. Backend/auth/cloud/synchronization and P9 modules remain untouched.
+D-021 accepted: repository evidence alone does not reopen D-016. Persistent Critical QA `32149199373`, job `95750510692`, passed; PR #23 integrated as `65ada02848ad7ca792889b16815c74d0ac9e6da1`; canonical closure integrated as `2c5f5e92dd66224499ffc55f828d3e220a2afd63`.
 
 ---
 
-## 2026-08-18 — P7-S5 item/reseller save failures made operator-visible
+## 2026-08-18 — P7 completed operational UX refinement
 
-### Retry-safe entity save feedback
+P7 resolved the evidence-backed QG-011 through QG-015 inventory under D-020:
 
-P7-S5 completed only QG-014, the fourth-ranked P7-S1 operational gap:
+- P7-S2: reliable transaction Cancel, visible retry-safe create failures, distinct Payment/Signal intent; `32069261401` PASS;
+- P7-S3: explicit invalid reseller statement range rather than silent all-time fallback; `32133559376` PASS;
+- P7-S4: Backup page guidance aligned with implemented checkpointed atomic restore; `32136964241` PASS;
+- P7-S5: item/reseller save failures made operator-visible without losing retry input; `32141425740` PASS;
+- P7-S6: reseller context preserved when launching transaction entry; `32145620210` PASS, 43/176 Vitest and 15/15 Playwright.
 
-- rejected item create/edit mutations now surface their domain/persistence error through `toast.error`;
-- rejected reseller create/edit mutations now surface their domain/persistence error through `toast.error`;
-- failure does not call the success callback or reset fields, so entered values remain available for correction/retry;
-- successful saves retain the existing success-only close/reset behavior.
-
-No `useItems` / `useResellers` mutation semantics, P1 lifecycle/reference rules, Dexie schema/persistence, transaction-entry behavior, financial/correction semantics, backup/restore mechanics or reseller-context launch behavior changed.
-
-### Regression coverage
-
-Added focused proof for:
-
-- item rejected create with visible error and retained name/price;
-- item rejected edit with visible error and retained edited name/price;
-- reseller rejected create with visible error and retained name/phone/email/notes;
-- reseller rejected edit with visible error and retained edited values.
-
-Existing item/reseller page integration and lifecycle tests remain green.
-
-### Validation
-
-Functional persistent Critical QA run **`32141425740`**, job **`95724735659`** — **PASS**:
-
-- lint: 0 errors / 80 warnings;
-- Vitest: 41 files / 169 tests passing;
-- Playwright Chromium: 14/14 passing;
-- production build: PASS.
-
-### Canonical state
-
-- QG-014 item/reseller save feedback: RESOLVED / P7-S5;
-- P7-S5: `DONE`;
-- P7 remains `IN_PROGRESS`;
-- D-016, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
-- `NEXT_ACTION` advances only to **P7-S6 — Remove redundant reseller reselection when launching a transaction from reseller detail**.
-
-P7-S6, P8 and P9 remain untouched.
+P7 closed as `DONE` without changing D-016 persistence architecture.
 
 ---
 
-## 2026-08-18 — P7-S4 Backup recovery copy aligned with implemented restore
+## 2026-08-17 — P6 repository-wide QA/deployment gate
 
-### Operator-facing recovery guidance
+P6 reconciled stale global QA expectations, fixed the command-center double-filter defect, established `npm run qa:critical`, added persistent CI and required `quality -> build -> deploy` before GitHub Pages publication from `main`.
 
-P7-S4 completed only QG-013, the third-ranked P7-S1 operational gap:
-
-- `BackupPage` no longer describes restore as future or preflight-only;
-- page-level guidance now describes selecting and validating a backup, reviewing the successful preflight preview and only then receiving the restore action;
-- the guidance states that Easy downloads a recoverable Backup v2 checkpoint of the current database before replacement;
-- it states that restore is atomic and preserves the previous database if write/verification fails.
-
-No `ImportExport`, backup format/version, preflight validator, checkpoint generation/download, restore, migration, Dexie transaction, schema/persistence, financial or correction behavior changed.
-
-### Regression coverage
-
-Added `BackupPage.test.tsx` to prove the page describes validation/review, preview gating, recoverable checkpoint, atomic restore and rollback-safe preservation, while rejecting the obsolete “futura restauração” wording.
-
-### Validation
-
-Functional persistent Critical QA run **`32136964241`**, job **`95710456305`** — **PASS**:
-
-- lint: 0 errors / 80 warnings;
-- Vitest: 40 files / 165 tests passing;
-- Playwright Chromium: 14/14 passing;
-- production build: PASS.
-
-### Canonical state
-
-- QG-013 stale Backup recovery copy: RESOLVED / P7-S4;
-- P7-S4: `DONE`;
-- P7 remains `IN_PROGRESS`;
-- D-017, D-018, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
-- `NEXT_ACTION` advances only to **P7-S5 — Make item/reseller save failures operator-visible without losing retry context**.
-
-Reseller-context transaction launch and P8/P9 remain untouched.
+D-019 accepted. Functional validation `32064801009`, final docs `32065331102` and post-merge `32065713920` passed.
 
 ---
 
-## 2026-08-18 — P7-S3 explicit invalid reseller statement-range state
+## 2026-08-17 — P5 backup/recovery foundation completed
 
-### Runtime refinement
+P5-S1 established canonical logical `easy-backup` v2 with deep preflight and legacy v1 normalization; validation `32058028793` passed and D-017 was accepted.
 
-P7-S3 completed only QG-012, the second-ranked P7-S1 operational gap:
-
-- a complete inverted reseller statement range is now visibly invalid immediately;
-- both period controls expose invalid accessibility state and operator-visible correction guidance;
-- PDF generation is disabled while the range is invalid and retains a defensive handler guard;
-- invalid filled dates no longer make the page silently show current balance or all-time transaction history;
-- financial content is replaced by a non-financial invalid-period state until the dates are corrected or cleared;
-- correcting the range restores the existing formal D-015 statement;
-- clearing the range restores the normal current-balance/all-history view.
-
-No D-015 statement/PDF arithmetic, Dexie schema/persistence, lifecycle/reference rules, correction/reversal semantics, backup/restore mechanics or lower-ranked P7 flows changed.
-
-### Regression coverage
-
-Added focused proof for:
-
-- immediate invalid state and suppression of current/all-time fallback;
-- invalid→corrected recovery with valid statement data returning;
-- invalid→cleared recovery to the ordinary unfiltered view;
-- bounded Playwright invalid→corrected flow.
-
-Existing formal statement coverage continues to prove opening → movements → closing semantics.
-
-### Validation classification
-
-Initial Critical QA run **`32133265871`** failed in one newly added component-test expectation. The corrected valid range was March while the expected transaction fixture was dated in February, so the application correctly omitted it. The failure was classified under D-019 as a test-fixture/expectation defect; only the fixture date was aligned, with no runtime behavior weakened.
-
-Functional persistent run **`32133559376`**, job **`95699734548`** — **PASS**:
-
-- lint: 0 errors / 80 warnings;
-- Vitest: 39 files / 164 tests passing;
-- Playwright Chromium: 14/14 passing;
-- production build: PASS.
-
-### Canonical state
-
-- QG-012 invalid reseller period fallback: RESOLVED / P7-S3;
-- P7-S3: `DONE`;
-- P7 remains `IN_PROGRESS`;
-- D-015, D-016, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
-- `NEXT_ACTION` advances only to **P7-S4 — Align Backup recovery copy with the implemented P5-S2 restore flow**.
-
-Item/reseller save feedback, reseller-context transaction launch and P8/P9 remain untouched.
+P5-S2 added validated checkpoint download plus verified atomic Dexie restore with rollback on failure and migration/financial round-trip proof; validation `32060729538` passed and D-018 was accepted.
 
 ---
 
-## 2026-08-17 — P7-S2 reliable transaction-entry intent and feedback
+## 2026-08-17 — P4 persistence architecture decision
 
-### Runtime refinement
+D-016 accepted: keep V2 local-first/single-user on Dexie V4 unless direct requirements later prove concurrency, automatic live multi-device sharing, person-level access/authorship, remote recovery SLA, trusted server integration or incompatible security policy.
 
-P7-S2 completed only the highest-ranked P7-S1 transaction-entry cluster:
-
-- standalone **Cancelar** now clears the in-progress transaction form instead of invoking a no-op;
-- reset restores the requested `initialType`, so a Signal shortcut remains Signal after Cancel;
-- transaction-create failures now surface through `toast.error` and preserve entered data for correction/retry;
-- successful creation still resets only after the existing validated mutation succeeds;
-- command center now has separate **Pagamento** and **Sinal** actions routing to `?type=payment` and `?type=signal` respectively;
-- the standalone transaction page no longer provides the inert cancel callback.
-
-No financial calculations, occurrence-date rules, lifecycle/reference validation, correction/reversal semantics, Dexie schema, persistence, backup/restore or lower-ranked P7 flows changed.
-
-### Regression coverage
-
-Added focused proof for:
-
-- Cancel reset and requested initial-type preservation;
-- visible rejected-mutation feedback with retry input retained;
-- transaction page Signal intent from URL;
-- distinct payment/signal command routing;
-- bounded Playwright Signal shortcut → entered value → Cancel → cleared value with Signal intent preserved.
-
-### Validation classification
-
-The first two Critical QA attempts exposed a defect in the **new test harness**, not a product regression:
-
-- `32068747287` — FAIL in the new Cancel unit assertion;
-- `32069051473` — FAIL in the same assertion.
-
-The mocked Select rendered invalid native HTML with `<span>` elements inside `<select>`, so jsdom did not represent an empty controlled value correctly. The harness was corrected to valid option-only Select HTML. Runtime behavior and D-019 were not weakened.
-
-Functional persistent run **`32069261401`**, job `95508465043` — **PASS**:
-
-- lint: 0 errors / 78 warnings;
-- Vitest: 39 files / 163 tests passing;
-- Playwright Chromium: 14/14 passing;
-- production build: PASS.
-
-### Canonical state
-
-- QG-011 transaction-entry intent/feedback: RESOLVED / P7-S2;
-- P7-S2: `DONE`;
-- P7 remains `IN_PROGRESS`;
-- D-020 remains the accepted prioritization decision; no new architecture/product decision was required;
-- `NEXT_ACTION` advances only to **P7-S3 — Explicit invalid reseller statement-range state**.
-
-Remaining Backup copy, item/reseller error-feedback and reseller-context launch gaps remain out of this slice. P8/P9 remain untouched.
+No backend/auth/cloud/synchronization implementation was introduced.
 
 ---
 
-## 2026-08-17 — P7-S1 operational UX gap inventory and prioritization
+## 2026-08-17 — P3 financial dates/statements/aging completed
 
-P7-S1 executed only evidence/prioritization work. It ranked five operator-facing gaps, accepted D-020, left runtime unchanged and advanced only to transaction-entry intent/feedback. Validation `32066802100` passed; PR/final/post-merge heads remained protected by D-019.
+P3-S1 separated financial occurrence (`occurredAt`) from registration/audit time (`createdAt`) and migrated Dexie to V4; validation `32052076684` passed and D-014 was accepted.
 
----
-
-## 2026-08-17 — P6 repository-wide QA reconciliation, gated deployment and P6 closure
-
-P6 reconciled the repository-wide baseline, fixed the command-center double-filter regression, established `npm run qa:critical`, added persistent CI, made Pages deployment require `quality -> build -> deploy`, accepted D-019 and closed P6. Functional validation `32064801009`; final docs `32065331102`; post-merge `32065713920`.
+P3-S2 formalized opening → movements → closing statements, positive-reseller total debt and FIFO allocation for outstanding debt aging; validation `32053837309` passed and D-015 was accepted.
 
 ---
 
-## 2026-08-17 — P5-S2 checkpointed atomic restore and P5 closure
+## 2026-08-17 — P2 audited correction/reversal completed
 
-- validated `easy-checkpoint-v2-*` is downloaded before destructive replacement;
-- all restore writes and verification occur inside one Dexie transaction with rollback on failure;
-- v2 and v1 migration/financial round-trips proven;
-- D-018 accepted;
-- validation `32060729538` passed;
-- P5 closed.
+P2 preserved original financial history through audited reversal and atomic linked replacement correction. D-012/D-013 define the accepted semantics. Validations `32041280504` and `32042373332` passed.
 
-## 2026-08-17 — P5-S1 versioned backup contract and restore preflight
+---
 
-- `easy-backup` version 2 introduced as logical recovery/interchange contract;
-- current v1 JSON migrated in memory before deep validation;
-- backup selection changed to validation/preview without mutation;
-- D-017 accepted;
-- validation `32058028793` passed.
+## 2026-08-17 — P1 referential integrity and safe lifecycle completed
 
-## 2026-08-17 — P4 local-first persistence decision
+P1 introduced reversible reseller/item archival, strict active references for new activity and guarded destructive deletion while preserving historical rows. Validations `32037965651`, `32038951903` and `32039763539` passed.
 
-- D-016 accepted local-first/single-user Dexie V4 under evidenced requirements;
-- no backend/auth/cloud implementation;
-- P4 closed.
+---
 
-## 2026-08-17 — P3-S2 formal statements, FIFO debt aging and P3 closure
+## 2026-08-17 — P0 canonical V2 governance established
 
-- shared opening → movements → closing statement model;
-- per-reseller total debt semantics and FIFO-derived open-debt aging;
-- validation `32053837309`; D-015 accepted.
-
-## 2026-08-17 — P3-S1 occurrence-date model
-
-- `occurredAt` separated from audit `createdAt`, Dexie V4 added and date consumers aligned;
-- validation `32052076684`.
-
-## 2026-08-17 — P2-S2 linked/guided correction and P2 closure
-
-- atomic linked replacement and correction;
-- validation `32042373332`.
-
-## 2026-08-17 — P2-S1 audited transaction reversal
-
-- mandatory reversal reason/timestamp and reversal-aware financial rules;
-- validation `32041280504`.
-
-## 2026-08-17 — P1-S3 referential validation and P1 closure
-
-- strict reference matrix and migration preservation coverage;
-- validation `32039763539`; P1 closed.
-
-## 2026-08-17 — P1-S2 safe item lifecycle
-
-- item lifecycle, Dexie V3 migration and snapshot preservation;
-- validation `32038951903`.
-
-## 2026-08-17 — P1-S1 safe reseller lifecycle
-
-- reseller lifecycle, Dexie V2 migration and active-only new activity;
-- validation `32037965651`.
-
-## 2026-08-17 — P0 governance and state reconstruction
-
-- canonical V2 documents/branch roles established; no runtime impact.
+The V2 laboratory repository, branch roles, canonical document precedence and incremental/no-default-rewrite discipline were established. `main` is the stable reference; `develop` is the V2 integration branch.
