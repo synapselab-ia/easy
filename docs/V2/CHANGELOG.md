@@ -4,6 +4,14 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-18 — P9-S2 recovery decision gate blocked on missing measurable store target
+
+P9-S2 executed evidence intake only. Existing direct store evidence proves severe operating-PC-loss/manual-backup exposure, but still does not define the required acceptable maximum recoverable-copy age, recovery procedure, interruption window, provider-operated recovery requirement, or destination/process constraints. Repository-accessible searches found no newer direct evidence supplying those answers.
+
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct answers required to resume. Missing evidence is a blocker, not permission to invent SLA/RPO/RTO values or infer a cloud/server requirement. P9-S2 is `BLOCKED`; D-016 remains authoritative. No recovery mechanism comparison/selection, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed. D-019 validation is required before this blocked-state documentation integrates.
+
+---
+
 ## 2026-08-18 — P9-S1 evidence-backed prioritization completed
 
 P9-S1 executed only the canonical prioritization requested after P8. No runtime, schema, backup-contract, backend/auth/cloud/live-sync or business-module implementation was performed.

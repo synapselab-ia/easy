@@ -22,7 +22,7 @@ Phase state:
 - P8-S1 — Repository-evidence discovery and D-016 trigger assessment: `DONE`.
 - P8-S2 — Direct real-store validation and D-016 keep/reopen decision: `DONE`.
 - P9-S1 — Evidence-backed prioritization: `DONE`.
-- P9-S2 — Recovery durability decision gate: `NOT_STARTED`.
+- P9-S2 — Recovery durability decision gate: `BLOCKED` pending direct recovery-target evidence.
 - P9-S3 — Category data/reporting contract: `NOT_STARTED`.
 - P9-S4 — Confirmed correction microflows: `NOT_STARTED`.
 - P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
@@ -40,7 +40,7 @@ Read in order:
 6. `docs/V2/QA_LEDGER.md`
 7. `docs/V2/CHANGELOG.md`
 
-Then inspect only source/evidence required by `NEXT_ACTION`. `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` preserve P8 evidence. `docs/V2/P9_PRIORITIZATION.md` contains the accepted P9-S1 scoring and bounded current-capability inventory.
+Then inspect only source/evidence required by `NEXT_ACTION`. `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` preserve P8 evidence. `docs/V2/P9_PRIORITIZATION.md` contains the accepted P9-S1 scoring and bounded current-capability inventory. `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` contains the minimum direct evidence required to resume blocked P9-S2.
 
 ## Current technical baseline
 
@@ -60,7 +60,7 @@ Authoritative contracts include:
 - D-022 direct store validation keeps D-016 for the current operating mode;
 - D-023 P9 prioritizes recovery durability first, category modeling/reporting second, bounded correction gaps third, and occurrence-date usability verification fourth.
 
-No backend, authentication, cloud database, live synchronization or Dexie migration is authorized by P8/P9-S1.
+No backend, authentication, cloud database, live synchronization or Dexie migration is authorized by P8/P9-S1 or by the blocked P9-S2 attempt.
 
 ## P8 direct real-store conclusion
 
@@ -118,7 +118,21 @@ Persistent Critical QA run **`32166330198`**, job **`95806665221`** — **PASS**
 
 PR #31 was squash-merged into `develop` as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integrated commit share the exact tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`, proving that the integrated content is the content accepted by D-019.
 
-Known React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and Vite large-chunk warning remain non-blocking debt under D-019; no gate is weakened.
+## P9-S2 blocked evidence attempt
+
+P9-S2 attempted only the required recovery-target evidence gate. It reread the accepted P8 direct-store evidence and P9-S1 prioritization and searched repository-accessible material for a newer recovery target.
+
+Confirmed evidence remains sufficient to prove the continuity problem but insufficient to establish the required measurable target:
+
+- catastrophic operating-PC loss before a fresh JSON reaches Drive is directly confirmed;
+- manual human memory is directly confirmed as the weak link;
+- acceptable maximum age of the newest recoverable off-device copy remains **UNRESOLVED**;
+- acceptable recovery procedure and interruption window after PC loss remain **UNRESOLVED**;
+- provider-operated remote recovery remains **UNRESOLVED / NOT PROVEN**.
+
+Because P9-S2 explicitly forbids invented SLA/RPO/RTO values, no recovery target can be accepted and no mechanism can be compared as fit-for-purpose yet. D-016 remains authoritative; absence of a target is a blocker, not evidence for or against cloud/server persistence.
+
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct store answers required to resume. No recovery automation, runtime/schema change, backend/auth/cloud/live synchronization or other P9 feature work was performed.
 
 ## Active constraints
 
@@ -128,9 +142,10 @@ Known React `act(...)`, legacy mocked-select DOM warnings, dependency-audit find
 - prioritize confirmed operational consequence over feature novelty;
 - do not convert future preferences into mandatory requirements;
 - do not rebuild occurrence-date support already provided by P3;
-- do not implement a recovery mechanism before the P9-S2 decision gate is accepted;
-- run full `npm run qa:critical` before integrating every slice.
+- do not compare/select or implement a recovery mechanism while the P9-S2 measurable target is unresolved;
+- do not start P9-S3/P9-S4/P9-S5 while P9-S2 is the active blocked gate;
+- run full `npm run qa:critical` before integrating every slice, including blocked-state documentation.
 
 ## NEXT_ACTION
 
-**Execute only P9-S2 — Recovery durability decision gate. Establish a measurable current-store recovery target, at minimum the acceptable maximum age of the latest recoverable off-device copy and the acceptable recovery procedure after operating-PC loss, using direct store evidence rather than invented SLA/RPO/RTO values. Then compare the smallest mechanisms compatible with D-016/D-017/D-018 that materially reduce dependence on human memory. If a requirement or viable option proves a D-016 reopen trigger, explicitly reopen D-016 before any implementation. P9-S2 is a decision/evidence slice: do not implement recovery automation, cloud/backend/auth/live synchronization, category/schema work, correction changes or any other runtime feature until the decision gate is canonically accepted.**
+**Obtain only the missing direct store evidence listed in `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md`: the maximum acceptable age of the latest recoverable off-device copy, the acceptable recovery procedure after permanent operating-PC loss, the acceptable interruption window, and relevant off-device destination/operating constraints. Record the answers as direct evidence without inventing SLA/RPO/RTO values. Until those answers exist, keep P9-S2 `BLOCKED`, keep D-016 authoritative, and do not compare/select/implement a recovery mechanism or start category/schema, correction, occurrence-date, backend/auth/cloud/live-synchronization or other runtime work.**

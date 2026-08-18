@@ -124,12 +124,28 @@ Persistent Critical QA run **`32166330198`**, job **`95806665221`** — **PASS**
 
 PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`. The validated merge ref and integration share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`, so the integrated content is exactly the content accepted by D-019.
 
-P9-S1 is closed. P9-S2 remains `NOT_STARTED` until its own decision/evidence slice begins.
+P9-S1 is closed.
+
+### P9-S2 — Recovery durability decision gate
+
+**D-019 VALIDATION PENDING / BLOCKED ON DIRECT EVIDENCE.**
+
+The first P9-S2 attempt executed evidence intake only. Accepted P8 evidence proves severe device-loss/manual-backup exposure but still leaves the required measurable recovery target unresolved:
+
+- acceptable maximum age of the newest recoverable off-device copy — unresolved;
+- acceptable recovery procedure after permanent operating-PC loss — unresolved;
+- acceptable interruption window — unresolved;
+- provider-operated remote recovery requirement — unresolved / not proven;
+- destination/process constraints needed to assess small D-016-compatible mechanisms — unresolved.
+
+`docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct store answers required to resume. No mechanism comparison/selection, D-016 reopen, runtime/schema/backup-contract/backend/auth/cloud/live-sync or later P9 work was performed.
+
+The full D-019 gate remains mandatory on this blocked-state documentation head before integration.
 
 ## Current known non-blocking debt
 
 Existing React `act(...)` warnings, legacy mocked-select DOM warnings, dependency-audit findings, Actions/runtime deprecation notices, existing lint warnings and the Vite large-chunk warning remain visible under D-019. No accepted gate is weakened.
 
-## QA policy entering P9-S2
+## QA policy entering blocked P9-S2
 
-Every P9 slice must preserve P1–P9-S1 contracts, keep D-016 authoritative unless later direct evidence proves a reopen trigger, and run full `npm run qa:critical` before integration. Documentation-only decision slices are not exempt.
+Every P9 slice must preserve P1–P9-S1 contracts, keep D-016 authoritative unless later direct evidence proves a reopen trigger, and run full `npm run qa:critical` before integration. Documentation-only and blocked-state slices are not exempt.
