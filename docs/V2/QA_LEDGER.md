@@ -207,15 +207,48 @@ Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit fi
 
 ### QG-014 — item/reseller save failures are console-only
 
-**OPEN / P7-S5 — current next gap.**
+**RESOLVED / P7-S5.**
 
-Creation/edit forms currently catch rejected item/reseller mutations without operator-visible failure feedback. P7-S5 must surface the failure while keeping entered values available for correction/retry and preserving P1 lifecycle/reference semantics.
+Original evidence:
+
+- `ItemForm` caught rejected create/edit mutations and only logged `Erro ao salvar item` to the console;
+- `ResellerForm` caught rejected create/edit mutations and only logged `Erro ao salvar revendedor` to the console;
+- the forms already reset/closed only on successful mutation, so rejected saves retained local field state but gave the operator no visible explanation.
+
+Risk before remediation: an operator could click Save, see the dialog remain open, and receive no visible indication that persistence failed or why retry/correction was needed.
+
+P7-S5 remediation:
+
+- item create/edit rejection now calls `toast.error` with the available domain/persistence error message;
+- reseller create/edit rejection now calls `toast.error` with the available domain/persistence error message;
+- rejected saves still do not call `onSubmitSuccess` or field reset, preserving the exact entered values for correction/retry;
+- successful saves retain the existing success-only close/reset behavior;
+- `useItems`, `useResellers`, P1 lifecycle/reference rules, Dexie schema/persistence and entity mutation semantics were not changed.
+
+Targeted regression coverage added:
+
+- `ItemForm.test.tsx`: rejected create → visible error + retained name/price + no success callback;
+- `ItemForm.test.tsx`: rejected edit → visible error + retained edited name/price + no success callback;
+- `ResellerForm.test.tsx`: rejected create → visible error + retained name/phone/email/notes + no success callback;
+- `ResellerForm.test.tsx`: rejected edit → visible error + retained edited values + no success callback;
+- existing Items/Resellers page integration/lifecycle tests remain green.
+
+Functional persistent run **`32141425740`**, job **`95724735659`** — **PASS**:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **41 files / 169 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+Existing React `act(...)`, mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain non-blocking under D-019.
+
+**P7-S5 result: PASS / DONE.**
 
 ### QG-015 — reseller-context transaction launch friction
 
-**OPEN / later P7.**
+**OPEN / P7-S6 — current next gap.**
 
-Reseller detail knows the identity but transaction entry requires reselecting it on a separate page.
+Reseller detail already knows the current reseller identity, but launching transaction entry from that context still requires the operator to reselect the reseller on the transaction page. P7-S6 must preserve that context into the existing transaction-entry flow without bypassing P1 active-reference validation or changing standalone transaction behavior/financial semantics.
 
 ## Known baseline QA gaps
 
@@ -232,9 +265,9 @@ Reseller detail knows the identity but transaction entry requires reselecting it
 - QG-011 transaction-entry intent/feedback: RESOLVED / P7-S2.
 - QG-012 invalid reseller period fallback: RESOLVED / P7-S3.
 - QG-013 stale Backup page recovery copy: RESOLVED / P7-S4.
-- QG-014 item/reseller save error feedback: OPEN / P7-S5.
-- QG-015 reseller-context transaction launch friction: OPEN / later P7.
+- QG-014 item/reseller save error feedback: RESOLVED / P7-S5.
+- QG-015 reseller-context transaction launch friction: OPEN / P7-S6.
 
-## QA policy entering P7-S5
+## QA policy entering P7-S6
 
-P7-S5 must preserve P1 lifecycle/reference semantics and all P1–P6 contracts, add focused coverage proving rejected item/reseller saves are operator-visible without erasing retry input, and pass the complete persistent `npm run qa:critical` gate. Do not weaken tests/workflows or bundle reseller-context launch or P8 work.
+P7-S6 must preserve standalone transaction behavior, P1 active-reference semantics and all P1–P6 contracts, add focused coverage proving reseller context is carried into transaction entry without bypassing validation, and pass the complete persistent `npm run qa:critical` gate. If the implementation uses navigation, include one bounded Playwright reseller-detail → transaction-entry proof. Do not weaken tests/workflows or begin P8 work.
