@@ -1,4 +1,4 @@
-import { db, type Item, type Reseller, type Transaction } from '../db/database';
+import { db, type Category, type Item, type Reseller, type Transaction } from '../db/database';
 import {
     BACKUP_FORMAT,
     BACKUP_SCHEMA_VERSION,
@@ -38,6 +38,7 @@ function serializeDate(value: Date, path: string): string {
 }
 
 function buildEnvelope(
+    categories: Category[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
@@ -52,11 +53,19 @@ function buildEnvelope(
             schemaVersion: BACKUP_SCHEMA_VERSION,
         },
         data: {
+            categories: categories.map((category, index) => ({
+                id: category.id as number,
+                name: category.name,
+                isActive: category.isActive,
+                createdAt: serializeDate(category.createdAt, `categories[${index}].createdAt`),
+                updatedAt: serializeDate(category.updatedAt, `categories[${index}].updatedAt`),
+            })),
             items: items.map((item, index) => ({
                 id: item.id as number,
                 name: item.name,
                 basePrice: item.basePrice,
                 isActive: item.isActive !== false,
+                categoryId: item.categoryId,
                 createdAt: serializeDate(item.createdAt, `items[${index}].createdAt`),
                 updatedAt: serializeDate(item.updatedAt, `items[${index}].updatedAt`),
             })),
@@ -78,6 +87,8 @@ function buildEnvelope(
                 itemName: transaction.itemName,
                 quantity: transaction.quantity,
                 unitPrice: transaction.unitPrice,
+                categoryId: transaction.categoryId,
+                categoryName: transaction.categoryName,
                 totalPrice: transaction.totalPrice,
                 observation: transaction.observation,
                 reversal: transaction.reversal,
@@ -96,8 +107,14 @@ function sortById<T extends { id?: number }>(rows: T[]) {
     return [...rows].sort((left, right) => (left.id ?? 0) - (right.id ?? 0));
 }
 
-function logicalSnapshot(items: Item[], resellers: Reseller[], transactions: Transaction[]) {
+function logicalSnapshot(
+    categories: Category[],
+    items: Item[],
+    resellers: Reseller[],
+    transactions: Transaction[],
+) {
     return JSON.stringify(buildEnvelope(
+        sortById(categories),
         sortById(items),
         sortById(resellers),
         sortById(transactions),
@@ -120,21 +137,27 @@ function downloadEnvelope(envelope: BackupEnvelopeV2, filename: string) {
 }
 
 async function readCurrentDatabase() {
-    const [items, resellers, transactions] = await Promise.all([
+    const [categories, items, resellers, transactions] = await Promise.all([
+        db.categories.toArray(),
         db.items.toArray(),
         db.resellers.toArray(),
         db.transactions.toArray(),
     ]);
-    return { items, resellers, transactions };
+    return { categories, items, resellers, transactions };
 }
 
 /**
- * Creates a validated v2 checkpoint of the live database and downloads it before
+ * Creates a validated v2/schema5 checkpoint of the live database and downloads it before
  * any destructive restore transaction can begin.
  */
 export async function createRestoreCheckpoint(): Promise<RestoreCheckpoint> {
     const current = await readCurrentDatabase();
-    const envelope = buildEnvelope(current.items, current.resellers, current.transactions);
+    const envelope = buildEnvelope(
+        current.categories,
+        current.items,
+        current.resellers,
+        current.transactions,
+    );
     preflightBackupPayload(envelope);
 
     const filename = checkpointFilename(envelope.exportedAt);
@@ -147,7 +170,7 @@ function errorMessage(error: unknown) {
 }
 
 /**
- * Consumes only a P5-S1 preflight result. The normalized target is revalidated
+ * Consumes only a validated preflight result. The normalized target is revalidated
  * before checkpoint creation so a mutated/stale in-memory object cannot bypass the contract.
  * All destructive writes and post-restore verification run inside one Dexie transaction.
  */
@@ -159,24 +182,32 @@ export async function restorePreflightedBackup(
     try {
         const target = preflight.normalized.data;
         const targetEnvelope = buildEnvelope(
+            target.categories,
             target.items,
             target.resellers,
             target.transactions,
             preflight.normalized.exportedAt,
         );
         const targetRevalidation = preflightBackupPayload(targetEnvelope);
-        const expectedSnapshot = logicalSnapshot(target.items, target.resellers, target.transactions);
+        const expectedSnapshot = logicalSnapshot(
+            target.categories,
+            target.items,
+            target.resellers,
+            target.transactions,
+        );
 
         checkpoint = await createRestoreCheckpoint();
 
-        await db.transaction('rw', [db.items, db.resellers, db.transactions], async () => {
+        await db.transaction('rw', [db.categories, db.items, db.resellers, db.transactions], async () => {
             await Promise.all([
+                db.categories.clear(),
                 db.items.clear(),
                 db.resellers.clear(),
                 db.transactions.clear(),
             ]);
 
             await Promise.all([
+                db.categories.bulkAdd(target.categories),
                 db.items.bulkAdd(target.items),
                 db.resellers.bulkAdd(target.resellers),
                 db.transactions.bulkAdd(target.transactions),
@@ -184,16 +215,24 @@ export async function restorePreflightedBackup(
 
             const restored = await readCurrentDatabase();
             const restoredEnvelope = buildEnvelope(
+                restored.categories,
                 restored.items,
                 restored.resellers,
                 restored.transactions,
                 preflight.normalized.exportedAt,
             );
 
-            // Re-run every P5-S1 structural/reference/P1/P2/P3 invariant before commit.
+            // Re-run every structural/reference/P1/P2/P3/D-025 invariant before commit.
             preflightBackupPayload(restoredEnvelope);
 
-            if (logicalSnapshot(restored.items, restored.resellers, restored.transactions) !== expectedSnapshot) {
+            if (
+                logicalSnapshot(
+                    restored.categories,
+                    restored.items,
+                    restored.resellers,
+                    restored.transactions,
+                ) !== expectedSnapshot
+            ) {
                 throw new Error('A verificação pós-restauração detectou divergência no dataset restaurado.');
             }
         });
