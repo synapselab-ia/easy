@@ -123,7 +123,9 @@ The first P9-S2 evidence attempt confirmed that the continuity risk is real but 
 
 `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct answers required to resume.
 
-Until that evidence exists:
+Blocked-state Critical QA **`32168368086`**, job **`95813314347`** passed on PR #33. PR #33 integrated into `develop` as `0017538b93c438f4374b1b2427222f27b9ef357d`; validated merge ref `cbc96eefb315c29c266b1df978bda605c2907352` and integrated commit share tree `bf7165121ec08cd91f38db05d887a505dba3dbee`. This integration records the blocker only; P9-S2 remains `BLOCKED`.
+
+Until the missing direct evidence exists:
 
 - do not invent SLA/RPO/RTO values;
 - do not compare/select or implement a recovery mechanism;
