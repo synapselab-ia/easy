@@ -4,9 +4,12 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+// GitHub Pages publishes under /easy/; Vercel publishes at the project root.
+const base = process.env.VERCEL ? '/' : '/easy/'
+
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/easy/',
+  base,
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
