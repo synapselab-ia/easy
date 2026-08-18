@@ -1,6 +1,6 @@
 # Easy V2 — P9-S3 Category Data/Reporting Contract
 
-**Status:** `PROPOSED / IN_REVIEW`  
+**Status:** `ACCEPTED / CONTRACT COMPLETE`  
 **Date:** 2026-08-18  
 **Scope:** category lifecycle, assignment, historical semantics, reporting, migration and D-017 compatibility only; no runtime/schema/UI/reporting implementation in this slice
 
@@ -20,7 +20,7 @@ The current implementation has no category dimension:
 - current dashboard reporting is reseller/debt/order oriented and has no category aggregation;
 - canonical `easy-backup` v2 currently declares `source.schemaVersion = 4` and serializes no category data.
 
-This contract must therefore define category semantics before persistence or UI changes. It does not reopen D-016 and does not authorize P9-S4/P9-S5/P10 work.
+This contract defines category semantics before persistence or UI changes. It does not reopen D-016 and does not authorize P9-S4/P9-S5/P10 work.
 
 ## 2. Category identity and lifecycle
 
@@ -215,6 +215,17 @@ This contract introduces no authorization for:
 - P9-S5 occurrence-date redesign;
 - P10 beta/cutover work.
 
-## 11. Acceptance gate
+## 11. Acceptance and validation
 
-This contract becomes canonical only after full D-019 validation and integration into `develop`. Until then, current runtime remains Dexie V4 and canonical `easy-backup` v2/schemaVersion 4.
+The contract-only head passed the full D-019 gate on PR #44 merge ref `31a4adca45f74e6907cfce079a98c95b2c580738`, combining head `92302c1cfff7c0d0856cd2c124fc4bc5cff1c767` with `develop` base `565a5a4b3ed9d52134b276f910669968d2cb2e67`.
+
+Persistent Critical QA run **`32184499171`**, job **`95864903309`** — **PASS**:
+
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 44 files / 183 tests PASS;
+- Playwright Chromium: 17/17 PASS;
+- production build: PASS.
+
+No runtime, schema, category UI or category reporting code changed in the contract gate. The current runtime remains Dexie V4 and current exports remain `easy-backup` v2/schemaVersion 4 until P9-S3-I1 is separately implemented and accepted.
+
+Canonical closure documents are updated in the same PR. Their final head must pass D-019 before integration; the validated PR merge ref remains the integration authority.
