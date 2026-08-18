@@ -18,8 +18,13 @@ export const CORRECTION_ORDER_ITEM_PRESERVED_ERROR = 'A correção guiada deve p
 export const CORRECTION_VALUE_REQUIRED_ERROR = 'Informe um valor válido para a correção.';
 export const OCCURRENCE_DATE_REQUIRED_ERROR = 'Informe uma data de ocorrência válida.';
 
-export type NewTransactionInput = Omit<Transaction, 'id' | 'reversal' | 'correction' | 'createdAt'>;
+export type NewTransactionInput = Omit<
+    Transaction,
+    'id' | 'reversal' | 'correction' | 'createdAt' | 'categoryId' | 'categoryName'
+>;
 export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'occurredAt'>;
+
+type PreservedOrderSnapshot = Pick<Transaction, 'itemName' | 'categoryId' | 'categoryName'>;
 
 function isValidEntityId(value: unknown): value is number {
     return typeof value === 'number' && Number.isInteger(value) && value > 0;
@@ -46,6 +51,7 @@ function sanitizeNewTransaction(transaction: NewTransactionInput): NewTransactio
 async function addValidatedTransaction(
     transaction: NewTransactionInput,
     correction?: TransactionCorrection,
+    preservedOrderSnapshot?: PreservedOrderSnapshot,
 ) {
     const cleanTransaction = sanitizeNewTransaction(transaction);
     const registrationTimestamp = new Date();
@@ -102,7 +108,13 @@ async function addValidatedTransaction(
     return db.transactions.add({
         ...cleanTransaction,
         occurredAt: occurrenceTimestamp,
-        itemName: item.name,
+        itemName: preservedOrderSnapshot?.itemName ?? item.name,
+        ...(preservedOrderSnapshot?.categoryId !== undefined
+            ? { categoryId: preservedOrderSnapshot.categoryId }
+            : {}),
+        ...(preservedOrderSnapshot?.categoryName !== undefined
+            ? { categoryName: preservedOrderSnapshot.categoryName }
+            : {}),
         ...correctionMetadata,
         createdAt: registrationTimestamp,
     });
@@ -268,6 +280,13 @@ export function useReplaceTransaction() {
                 const replacementTransactionId = await addValidatedTransaction(
                     normalizedReplacement,
                     { replacesTransactionId: originalId },
+                    original.type === 'order'
+                        ? {
+                            itemName: original.itemName,
+                            categoryId: original.categoryId,
+                            categoryName: original.categoryName,
+                        }
+                        : undefined,
                 ) as number;
 
                 const reversal = {
