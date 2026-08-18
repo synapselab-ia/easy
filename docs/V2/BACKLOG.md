@@ -96,31 +96,32 @@ D-022 keeps D-016 because no explicit reopen trigger was proven. Persistent Crit
 
 ### P9-S1 — Evidence-backed prioritization only
 
-**Status:** `IN_REVIEW`.
+**Status:** `DONE` — 2026-08-18.
 
-No runtime/schema/backend/cloud implementation is allowed in this slice. Full evidence and scoring are recorded in `docs/V2/P9_PRIORITIZATION.md`.
+No runtime/schema/backend/cloud implementation was performed. Full evidence and scoring are recorded in `docs/V2/P9_PRIORITIZATION.md`.
 
-Accepted ranking under review:
+Accepted ranking:
 
 1. **Recovery durability / off-device protection — 94/100.** Highest known consequence. Current backup generation remains operator-initiated and the critical failure mode is dependence on a person remembering to create/move a fresh copy.
 2. **Item categories + item classification + category-level reporting — 83/100.** Direct confirmed product need. Requires a bounded category data/reporting contract before implementation because it crosses model, migration, backup and reporting semantics.
 3. **Exact transaction edit/correction microflows — 70/100.** P8 confirms friction but not exact store cases. Source proves guided correction cannot change `occurredAt`, order item, transaction type or observation and is blocked if the original order item is inactive. Items and resellers already have edit flows.
 4. **Occurrence-date discoverability/usability — 69/100.** Existing creation UI already exposes `Data da ocorrência` and persists `occurredAt`; verify usability only and do not rebuild P3.
 
-D-023 records the ordering and evidence boundary. P9-S1 awaits the full D-019 gate and integration before becoming `DONE`.
+D-023 records the ordering and evidence boundary. Persistent Critical QA `32166330198`, job `95806665221` passed on PR #31; the validated merge ref `85ffa8430de4c4b8a6ffedd84cc27b8049bf63d4` and integrated commit `3d99814c0f97dce640a91721fc68d33e79575cc3` share tree `15854ffa8b19395db3b255e056af6df4ce66f6ed`.
 
 ### P9-S2 — Recovery durability decision gate
 
 **Status:** `NOT_STARTED`.
 
-After P9-S1 closes, establish a measurable operating recovery target, at minimum acceptable maximum backup age and acceptable recovery procedure, then compare the smallest D-016-compatible mechanisms that reduce dependence on human memory.
+Establish a measurable current-store recovery target, at minimum acceptable maximum backup age and acceptable recovery procedure, then compare the smallest D-016-compatible mechanisms that reduce dependence on human memory.
 
 Constraints:
 
-- do not infer a formal remote SLA/RPO/RTO not supplied by the store;
+- obtain direct store evidence rather than invent formal SLA/RPO/RTO values;
 - do not introduce backend/auth/cloud/live synchronization implicitly;
-- if a viable requirement/option proves a D-016 reopen trigger, explicitly reopen D-016 before implementation;
-- preserve D-017/D-018 logical backup, checkpoint and atomic restore semantics.
+- if a requirement or viable option proves a D-016 reopen trigger, explicitly reopen D-016 before implementation;
+- preserve D-017/D-018 logical backup, checkpoint and atomic restore semantics;
+- P9-S2 is a decision/evidence slice; do not implement a recovery mechanism until the gate is accepted.
 
 ### P9-S3 — Category data/reporting contract
 
