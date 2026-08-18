@@ -1,7 +1,7 @@
 # Easy V2 — Canonical Backlog
 
 **Status:** canonical ordered backlog  
-**Updated:** 2026-08-17
+**Updated:** 2026-08-18
 
 `STATUS.md` determines active work. Legacy `tasks/` checkboxes are historical only.
 
@@ -87,14 +87,6 @@ Completed behavior:
 - standalone page no longer supplies the inert no-op cancel handler;
 - P1/P2/P3 financial/reference/audit semantics remain unchanged.
 
-Coverage added:
-
-- component reset + initial-type preservation;
-- real rejected create mutation + visible error + retry-data preservation;
-- page integration for `?type=signal`;
-- command-center payment/signal routing;
-- bounded Playwright Signal shortcut → entered value → Cancel → cleared value / preserved Signal intent.
-
 Validation history:
 
 - `32068747287` — FAIL in the new Cancel test assertion; no product regression established;
@@ -106,30 +98,58 @@ P7-S2 gate: **PASS / DONE**.
 
 ### P7-S3 — Explicit invalid reseller statement-range state
 
+**Status:** `DONE` — 2026-08-18.
+
+Completed behavior:
+
+- a complete inverted period becomes visibly invalid immediately;
+- invalid dates no longer fall back to current balance or all-time transaction history;
+- both date fields expose invalid accessibility state and visible operator guidance;
+- PDF generation is disabled while invalid and retains a defensive handler guard;
+- correcting the range restores the formal D-015 period statement;
+- clearing the range restores the normal current-balance/all-history view;
+- valid statement/PDF financial calculations remain unchanged.
+
+Coverage added:
+
+- focused page test for invalid state, suppressed fallback and invalid→corrected recovery;
+- focused page test for invalid→cleared recovery;
+- bounded Playwright invalid→corrected proof;
+- existing D-015 statement tests remain green.
+
+Validation history:
+
+- `32133265871` — FAIL only in a newly added assertion whose fixture was outside the corrected valid period; classified as test-fixture error under D-019;
+- fixture aligned with the intended corrected range without runtime changes;
+- **`32133559376` — PASS**, job `95699734548`: 0 lint errors / 80 warnings, 39 Vitest files / 164 tests, 14/14 Playwright, build PASS.
+
+P7-S3 gate: **PASS / DONE**.
+
+### P7-S4 — Align Backup recovery copy with implemented restore
+
 **Status:** `NOT_STARTED` — current next slice.
 
 Bounded scope:
 
-- complete inverted range must be visibly invalid immediately;
-- invalid dates must not silently show current/all-time balance/history as if filtered;
-- PDF action must be guarded while invalid;
-- correcting/clearing the range removes the invalid state;
-- valid ranges continue using D-015 opening → movements → closing semantics;
-- add focused component/integration tests and one bounded Playwright invalid→corrected path;
+- correct stale Backup page-level wording that still describes restore as future/preflight-only;
+- accurately describe the already implemented P5-S2 validated selection, preview, checkpoint download and atomic restore/recovery path;
+- change operator-facing copy only; do not alter backup/restore behavior or contracts;
+- add the smallest focused regression coverage for the corrected copy;
 - run full `npm run qa:critical`.
 
 Out of scope:
 
-- statement/PDF financial calculation changes;
-- Backup copy cleanup;
+- backup format/version changes;
+- validation, checkpoint, restore, migration or persistence mechanics;
 - item/reseller save error feedback;
 - reseller-context launch shortcut;
-- schema/persistence changes;
+- financial/correction semantics;
+- schema/persistence architecture changes;
 - P8/P9 work.
 
 ### Later P7 slices
 
-After P7-S3, continue only through the remaining ranked P7-S1 gaps in order unless new repository evidence materially changes their operational priority.
+After P7-S4, continue only through the remaining ranked P7-S1 gaps in order unless new repository evidence materially changes their operational priority.
 
 ---
 
