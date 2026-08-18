@@ -4,6 +4,49 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-18 — P8-S1 repository-evidence discovery and D-016 assessment
+
+### Evidence boundary
+
+P8-S1 executed discovery only. It inspected the canonical V2 baseline, original project prompts, relevant historical PRDs, README and repository issues, then recorded a detailed evidence matrix in `docs/V2/P8_DISCOVERY.md`.
+
+Confirmed repository-backed intent includes:
+
+- administrator item/reseller/order/payment workflows;
+- desktop and smartphone operation;
+- reseller statements/PDF sharing;
+- JSON backup and computer portability;
+- current dashboard, Pareto, debtor-ranking and debt-aging reporting.
+
+A later responsiveness requirement also describes a reseller consulting their own statement on mobile. That is recorded as a material unresolved operator/access question because the earlier product definition explicitly used local single-user storage without authentication and no artifact defines how a reseller would access the administrator's live dataset.
+
+### D-016 outcome
+
+P8-S1 found no proof of any D-016 reopen trigger:
+
+- concurrent operators: not proven;
+- automatic live multi-device sharing: not proven;
+- person-level authorship/access control: not proven;
+- remote recovery SLA: not proven;
+- trusted server integrations: not proven;
+- security policy incompatible with browser-local storage: not proven.
+
+D-021 is accepted: repository evidence alone does not reopen D-016. Direct store evidence must resolve operator/device/sharing/access/recovery constraints before architecture changes.
+
+No runtime, backend/auth/cloud/synchronization, Dexie migration or P9 implementation changed.
+
+### Canonical state
+
+- P8-S1 repository discovery: complete, awaiting final D-019 QA/integration evidence;
+- P8 remains `IN_PROGRESS`;
+- D-016 remains authoritative;
+- D-021 accepted;
+- `NEXT_ACTION` advances only to **P8-S2 — direct real-store validation of unresolved operator/device/sharing/access/recovery requirements and explicit D-016 keep/reopen decision**.
+
+P8-S2 is not executed in this change.
+
+---
+
 ## 2026-08-18 — P7-S6 reseller-context transaction launch and P7 closure
 
 ### Context-preserving transaction entry

@@ -216,29 +216,45 @@ QG-011 through QG-015 from the accepted P7-S1 inventory are all resolved. P7-S6 
 
 ## P8 — Real store requirements discovery
 
-**Status:** `NOT_STARTED` — current next phase.
+**Status:** `IN_PROGRESS`.
 
-### P8-S1 — Evidence-based requirements discovery and D-016 reopen assessment
+### P8-S1 — Evidence-based repository discovery and D-016 reopen assessment
 
-**Status:** `NOT_STARTED` — current next slice.
+**Status:** `DONE` — 2026-08-18.
+
+Completed discovery:
+
+- inspected canonical V2 documents, original repository prompts, historical PRDs, README and repository issues;
+- recorded the evidence matrix in `docs/V2/P8_DISCOVERY.md`;
+- confirmed project intent for administrator workflows, desktop/mobile use, PDF sharing, JSON backup/portability and current reporting/analytics;
+- identified reseller direct mobile use as a material but under-specified historical intent that conflicts with the earlier explicit single-user/no-auth model;
+- separated repository-backed product intent from direct real-store validation;
+- assessed every D-016 reopen trigger and found none proven by currently available evidence;
+- accepted D-021: D-016 remains authoritative until direct store evidence resolves operator/device/sharing/access/recovery constraints.
+
+No runtime, backend/auth/cloud/synchronization, Dexie migration or P9 module work was performed.
+
+P8-S1 requires the full D-019 `qa:critical` gate before final integration.
+
+### P8-S2 — Direct real-store validation of operator/device/sharing/access/recovery requirements
+
+**Status:** `NOT_STARTED` — current next slice after P8-S1 integration.
 
 Bounded scope:
 
-- inspect repository evidence plus any real-store artifacts explicitly available to the project;
-- inventory confirmed workflows, operators/devices, sharing, recovery/SLA, security/access, reporting and operational constraints;
-- distinguish confirmed requirements from assumptions and unresolved questions;
-- evaluate the explicit D-016 cloud/auth reopen triggers against evidence;
-- update canonical specification/backlog/decision records only where evidence supports a change;
+- collect explicit real-store evidence from interview notes, operator answers, observation or other artifacts actually supplied to the project;
+- resolve who operates the same dataset, device/browser usage, concurrent operation, automatic sharing/synchronization need, reseller direct access, permissions/authorship, recovery RTO/RPO/SLA, trusted integrations, security/privacy constraints, realistic data scale/connectivity and materially missing workflows/reports;
+- map each confirmed fact back to the D-016 trigger matrix;
+- explicitly decide whether D-016 remains accepted or must be reopened before any architecture implementation;
+- prioritize only evidence-backed P9 candidates after the architecture outcome is known;
 - run full `npm run qa:critical` before integration.
 
 Out of scope:
 
 - backend/auth/cloud/synchronization implementation;
-- Dexie migration or persistence architecture changes without a separately accepted decision;
-- P9 business modules;
-- speculative feature build-out based on unconfirmed requirements.
-
-If P8-S1 proves a D-016 reopen trigger, persistence architecture must be explicitly reconsidered before any multi-user/cloud implementation.
+- Dexie migration or persistence architecture implementation;
+- speculative P9 module build-out;
+- treating an unanswered discovery question as a requirement.
 
 ## P9 — Prioritized new modules
 
