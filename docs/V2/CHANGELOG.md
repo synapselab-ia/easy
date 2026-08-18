@@ -4,6 +4,44 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-18 — P7-S4 Backup recovery copy aligned with implemented restore
+
+### Operator-facing recovery guidance
+
+P7-S4 completed only QG-013, the third-ranked P7-S1 operational gap:
+
+- `BackupPage` no longer describes restore as future or preflight-only;
+- page-level guidance now describes selecting and validating a backup, reviewing the successful preflight preview and only then receiving the restore action;
+- the guidance states that Easy downloads a recoverable Backup v2 checkpoint of the current database before replacement;
+- it states that restore is atomic and preserves the previous database if write/verification fails.
+
+No `ImportExport`, backup format/version, preflight validator, checkpoint generation/download, restore, migration, Dexie transaction, schema/persistence, financial or correction behavior changed.
+
+### Regression coverage
+
+Added `BackupPage.test.tsx` to prove the page describes validation/review, preview gating, recoverable checkpoint, atomic restore and rollback-safe preservation, while rejecting the obsolete “futura restauração” wording.
+
+### Validation
+
+Functional persistent Critical QA run **`32136964241`**, job **`95710456305`** — **PASS**:
+
+- lint: 0 errors / 80 warnings;
+- Vitest: 40 files / 165 tests passing;
+- Playwright Chromium: 14/14 passing;
+- production build: PASS.
+
+### Canonical state
+
+- QG-013 stale Backup recovery copy: RESOLVED / P7-S4;
+- P7-S4: `DONE`;
+- P7 remains `IN_PROGRESS`;
+- D-017, D-018, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
+- `NEXT_ACTION` advances only to **P7-S5 — Make item/reseller save failures operator-visible without losing retry context**.
+
+Reseller-context transaction launch and P8/P9 remain untouched.
+
+---
+
 ## 2026-08-18 — P7-S3 explicit invalid reseller statement-range state
 
 ### Runtime refinement

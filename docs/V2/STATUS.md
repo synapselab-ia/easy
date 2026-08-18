@@ -19,6 +19,7 @@
 - P7-S1 — Operational UX gap inventory and prioritization: `DONE`.
 - P7-S2 — Reliable transaction-entry intent and feedback: `DONE`.
 - P7-S3 — Explicit invalid reseller statement-range state: `DONE`.
+- P7-S4 — Align Backup recovery copy with implemented restore: `DONE`.
 
 ## Startup protocol for a new conversation
 
@@ -43,6 +44,8 @@ P1–P3 define entity lifecycle, audit/correction and financial semantics. P5 pr
 At the start of P7-S2, `develop` was `7269bb435d91bbde45ffa835bacf0d373dfa14e6`; `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 At the start of P7-S3, `develop` was `5cb696a4c1eadbe46e0801922b0ad78b860f367f`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+At the start of P7-S4, `develop` was `5b3d5824f9cce6e08572fa8034d797a6c30f758d`; `main` still remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
 
 ## P7-S2 completed transaction-entry slice
 
@@ -117,26 +120,46 @@ PR #15 was squash-merged into `develop` as `337de0b6cf18da7cf27c54648839624df46e
 
 Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
 
+## P7-S4 completed Backup recovery-copy slice
+
+P7-S4 resolved QG-013 by correcting only the stale top-level Backup guidance. The page no longer describes restore as future/preflight-only and now accurately states the existing P5-S2 sequence: select a backup → validate/preflight → review the preview → restore becomes available → a recoverable v2 checkpoint of the current database is downloaded → replacement is executed atomically, with the prior database preserved if write/verification fails.
+
+`ImportExport`, `backupService`, `restoreService`, the backup format, validation rules, checkpoint mechanics, Dexie transaction boundary and migration behavior were not changed.
+
+### Focused regression coverage
+
+`BackupPage.test.tsx` now proves that the page-level copy names validation/review, preview gating, the recoverable checkpoint, atomic restore and rollback-safe preservation, and that the obsolete “futura restauração” wording is absent.
+
+## P7-S4 validation
+
+Functional persistent Critical QA run **`32136964241`**, job **`95710456305`** — **PASS**:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **40 files / 165 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+Existing warning/dependency/test-harness debt remains non-blocking under D-019 and was not reclassified or hidden.
+
 ## Remaining prioritized P7 gaps
 
-1. Backup page-level recovery copy is stale relative to implemented P5-S2 restore — next slice.
-2. Item/reseller save failures remain console-only.
-3. Reseller-context transaction launch still requires redundant reseller reselection.
-4. P8 real-store discovery remains outside P7 and may reopen D-016 only with evidence.
+1. Item/reseller save failures remain console-only — next slice.
+2. Reseller-context transaction launch still requires redundant reseller reselection.
+3. P8 real-store discovery remains outside P7 and may reopen D-016 only with evidence.
 
-## Active constraints entering P7-S4
+## Active constraints entering P7-S5
 
 - do not work directly on `main`;
 - preserve all P1–P6 contracts and D-020 prioritization;
 - do not weaken or bypass `qa:critical`;
 - keep D-016 local-first Dexie V4;
-- do not change P5 backup/restore mechanics while correcting operator-facing recovery copy;
-- do not bundle item/reseller save feedback or reseller-context launch into P7-S4;
+- do not change entity lifecycle/reference semantics while adding operator-visible save-failure feedback;
+- do not bundle reseller-context launch into P7-S5;
 - do not begin P8 discovery or new modules.
 
 ## NEXT_ACTION
 
-**P7-S4 — Align Backup recovery copy with the implemented P5-S2 restore flow. Create a new feature branch from the current `develop` after P7-S3 integration and change only stale operator-facing Backup/recovery wording that still describes restore as future or preflight-only. Make the page accurately describe the existing validated-select → preview → checkpoint download → atomic restore/recovery behavior without changing backup format, validation, checkpoint, restore, migration or persistence mechanics; add the smallest focused regression coverage needed for the corrected copy; and run the full `npm run qa:critical` gate. Do not change item/reseller save feedback, reseller-context launch, financial/correction semantics, schema/persistence architecture or begin P8.**
+**P7-S5 — Make item/reseller save failures operator-visible without losing retry context. Create a new feature branch from the current `develop` after P7-S4 integration and change only the existing item/reseller create/edit failure paths so rejected mutations produce clear operator-visible feedback while preserving the entered form data needed for correction/retry. Preserve P1 lifecycle/reference semantics and all persistence behavior; add focused component/page coverage for rejected saves and retained input; run the full `npm run qa:critical` gate. Do not change transaction-entry behavior, reseller-context launch, financial/correction semantics, backup/restore mechanics, schema/persistence architecture or begin P8.**
 
 ## P7 completion direction
 

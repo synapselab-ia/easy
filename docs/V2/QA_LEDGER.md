@@ -171,17 +171,45 @@ Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit fi
 
 ### QG-013 — stale Backup page recovery description
 
-**OPEN / P7-S4 — current next gap.**
+**RESOLVED / P7-S4.**
 
-Top-level Backup copy still describes restore as future/preflight-only although P5-S2 validated selection, preview, checkpoint and atomic restore/recovery are implemented.
+Original evidence:
 
-Risk: operator-facing recovery guidance understates available restore capability and conflicts with the accepted P5 contract.
+- top-level `BackupPage` copy said the operator could validate a backup “antes da futura restauração”;
+- the same copy described the current stage as preflight-only even though P5-S2 restore was already live;
+- `ImportExport` already exposed validated preview, restore, automatic checkpoint and rollback-safe failure feedback.
+
+Risk before remediation: operator-facing recovery guidance understated the available restore capability and contradicted the accepted P5 contract.
+
+P7-S4 remediation:
+
+- page-level copy now accurately describes selecting and validating a backup before restore;
+- it states that successful preflight produces a preview and gates release of the restore action;
+- it states that a recoverable Backup v2 checkpoint of the current database is downloaded before replacement;
+- it states that restore is atomic and the previous database is preserved if write/verification fails;
+- `ImportExport`, `backupService`, `restoreService`, backup format/version, validation, checkpoint, migration, persistence and Dexie transaction mechanics were not changed.
+
+Targeted regression coverage added:
+
+- `BackupPage.test.tsx`: proves validation/review, preview gating, recoverable checkpoint, atomic restore and rollback-safe preservation are present in operator-facing copy;
+- the same test proves obsolete “futura restauração” wording is absent.
+
+Functional persistent run **`32136964241`**, job **`95710456305`** — **PASS**:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **40 files / 165 tests PASS**;
+- Playwright Chromium: **14/14 PASS**;
+- production build: **PASS**.
+
+Existing React `act(...)`, older mocked-select DOM warnings, dependency-audit findings and build chunk-size warning remain non-blocking under D-019.
+
+**P7-S4 result: PASS / DONE.**
 
 ### QG-014 — item/reseller save failures are console-only
 
-**OPEN / later P7.**
+**OPEN / P7-S5 — current next gap.**
 
-Creation/edit forms do not yet surface mutation failures visibly.
+Creation/edit forms currently catch rejected item/reseller mutations without operator-visible failure feedback. P7-S5 must surface the failure while keeping entered values available for correction/retry and preserving P1 lifecycle/reference semantics.
 
 ### QG-015 — reseller-context transaction launch friction
 
@@ -203,10 +231,10 @@ Reseller detail knows the identity but transaction entry requires reselecting it
 - QG-010 persistence architecture: RESOLVED / P4.
 - QG-011 transaction-entry intent/feedback: RESOLVED / P7-S2.
 - QG-012 invalid reseller period fallback: RESOLVED / P7-S3.
-- QG-013 stale Backup page recovery copy: OPEN / P7-S4.
-- QG-014 item/reseller save error feedback: OPEN / later P7.
+- QG-013 stale Backup page recovery copy: RESOLVED / P7-S4.
+- QG-014 item/reseller save error feedback: OPEN / P7-S5.
 - QG-015 reseller-context transaction launch friction: OPEN / later P7.
 
-## QA policy entering P7-S4
+## QA policy entering P7-S5
 
-P7-S4 must be copy-only relative to P5 restore mechanics, add the smallest focused regression coverage needed for corrected operator-facing recovery wording, preserve all P1–P6 contracts, and pass the complete persistent `npm run qa:critical` gate. Do not weaken tests/workflows or bundle unrelated P7 gaps.
+P7-S5 must preserve P1 lifecycle/reference semantics and all P1–P6 contracts, add focused coverage proving rejected item/reseller saves are operator-visible without erasing retry input, and pass the complete persistent `npm run qa:critical` gate. Do not weaken tests/workflows or bundle reseller-context launch or P8 work.
