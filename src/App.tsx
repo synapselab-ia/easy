@@ -12,7 +12,7 @@ import { Toaster } from './components/ui/sonner'
 function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <BrowserRouter basename="/easy/">
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<DashboardPage />} />
