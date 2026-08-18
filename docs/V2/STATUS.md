@@ -134,6 +134,17 @@ Because P9-S2 explicitly forbids invented SLA/RPO/RTO values, no recovery target
 
 `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` records the minimum direct store answers required to resume. No recovery automation, runtime/schema change, backend/auth/cloud/live synchronization or other P9 feature work was performed.
 
+### Accepted blocked-state validation/integration
+
+Persistent Critical QA run **`32168368086`**, job **`95813314347`** — **PASS** on PR #33 merge ref `cbc96eefb315c29c266b1df978bda605c2907352`:
+
+- ESLint: 0 errors / 80 warnings;
+- Vitest: 43 files / 176 tests PASS;
+- Playwright Chromium: 15/15 PASS;
+- production build: PASS.
+
+PR #33 was squash-merged into `develop` as `0017538b93c438f4374b1b2427222f27b9ef357d`. The validated merge ref and integrated commit share the exact tree `bf7165121ec08cd91f38db05d887a505dba3dbee`, proving content equivalence. P9-S2 remains `BLOCKED`; this integration records the blocker and evidence request, not a recovery decision.
+
 ## Active constraints
 
 - do not work directly on `main`;
