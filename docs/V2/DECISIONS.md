@@ -12,7 +12,7 @@ Use `synapselab-ia/easy` for V2 work; do not develop V2 in `viniciuscasarin/easy
 
 ## D-002 — Branch roles
 **Status:** ACCEPTED  
-`main` is stable reference, `develop` is V2 integration, and `feature/*` contains isolated work derived from `develop`.
+`main` is stable reference, `develop` is V2 integration, and isolated work branches derive from `develop`.
 
 ## D-003 — P0 is governance-only
 **Status:** ACCEPTED  
@@ -55,59 +55,43 @@ Preserve original row, require reversal reason/timestamp, keep reversed rows vis
 
 ## D-013 — Replacement correction is atomic, linked and actor-neutral until P4
 **Status:** ACCEPTED  
-Wrong-value/wrong-reseller correction performs replacement creation and original reversal atomically with bidirectional linkage. Under D-016, any future local `actorRef` identifies an installation rather than a verified person.
+Wrong-value/wrong-reseller correction creates a replacement and reverses the original atomically with bidirectional linkage. Under D-016, any future local `actorRef` identifies an installation rather than a verified person.
 
 ## D-014 — Financial occurrence is distinct from registration/audit time
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-- `occurredAt` = financial/business occurrence;
-- `createdAt` = registration/audit timestamp;
-- `reversal.reversedAt` = reversal/correction audit timestamp;
-- Dexie V4 indexes `occurredAt` and migrates missing legacy occurrence as `occurredAt = createdAt`;
-- linked correction preserves original financial occurrence while creating new registration/reversal audit timestamps.
+`occurredAt` is the business/financial date, `createdAt` is registration time, and `reversal.reversedAt` is audit time. Dexie V4 indexes `occurredAt`; missing legacy occurrence migrates as `occurredAt = createdAt`. Linked correction preserves the original financial occurrence unless a later accepted correction contract explicitly changes that rule.
 
 ## D-015 — Statements use opening → movements → closing; debt aging uses FIFO open-order allocation
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-P3-S2 defines one shared period statement: opening is effective signed balance before the start, movements are audit-visible rows inside the inclusive occurrence range, period movement uses shared financial effect, and closing = opening + movement. Zero-movement periods are valid.
-
-Dashboard total debt is the sum of positive per-reseller balances. Debt aging is derived from effective open order lots; payments/signals consume oldest debt first (FIFO), excess credit carries forward, reversed rows have zero effect, and no persistent payment↔order link is invented.
+Period statements use opening balance before the start, inclusive-range effective movements and closing = opening + movement. Zero-movement periods remain valid. Dashboard total debt sums only positive reseller balances. Debt aging derives from effective open order lots with payments/signals consuming oldest debt first; reversed rows have zero effect.
 
 ## D-016 — V2 remains local-first/single-user on Dexie V4 until an explicit cloud trigger is proven
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-Easy V2 keeps local-first, single-user persistence on Dexie V4 under the requirements currently evidenced. No backend, authentication, cloud database or synchronization layer is introduced. A future local `actorRef`, if materialized, is an opaque installation identity and must not be presented as verified human authorship.
-
-D-016 must be explicitly reconsidered if real requirements mandate concurrent operators, automatic live multi-device sharing, person-level authorship/access control, remote recovery SLA, trusted server integrations, or a security policy incompatible with browser-local storage.
+No backend, authentication, cloud database or synchronization layer is introduced under currently evidenced requirements. Reconsider D-016 only if direct requirements mandate concurrent operators, automatic live multi-device sharing, person-level authorship/access control, remote recovery SLA, trusted server integrations or a security policy incompatible with browser-local storage.
 
 ## D-017 — Backup v2 is the canonical logical recovery contract; destructive restore requires successful preflight
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-P5-S1 defines `easy-backup` version 2 as a logical interchange/recovery format independent from physical IndexedDB layout. Backup version and Dexie schema version remain separate; the live database remains Dexie V4.
-
-The historical `version: 1` JSON remains supported through in-memory normalization before validation: missing lifecycle state becomes active and missing `occurredAt` becomes `createdAt`. Unsupported versions are rejected.
-
-A backup is not eligible for destructive restore until preflight validates envelope/source/version, required fields, IDs/duplicates, dates, positive values, table references, P1 lifecycle state, P2 reversal/correction linkage and P3 occurrence/correction chronology. Successful preflight returns normalized `Date`-backed rows and a preview without mutation.
+`easy-backup` version 2 is the logical interchange/recovery contract independent from Dexie schema version. Legacy v1 remains supported through in-memory normalization. Destructive restore is ineligible until preflight validates envelope/source/version, required fields, duplicates/IDs/dates/positive values, references, lifecycle, correction links and occurrence chronology.
 
 ## D-018 — Restore requires a downloaded validated checkpoint and one verified atomic Dexie transaction
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-Before any destructive restore write, Easy creates a recoverable logical checkpoint of all live Dexie V4 tables, serializes it as the canonical `easy-backup` v2 envelope, validates it with the P5-S1 contract and downloads it as `easy-checkpoint-v2-<timestamp>.json`.
-
-Restore consumes only the successful P5-S1 normalized result, revalidates it immediately before recovery, and replaces all three tables inside one Dexie `rw` transaction. Restored rows are read back, revalidated and compared against the expected canonical projection before commit. Any write/verification error throws inside the transaction and Dexie rollback preserves the complete prior database.
-
-Targeted run `32060729538` satisfies the P5-S2 recovery gate.
+Before destructive restore, Easy downloads a validated canonical v2 checkpoint of the current database. Replacement of items/resellers/transactions then occurs in one Dexie `rw` transaction with read-back validation/canonical comparison; any write/verification error throws and rolls back the complete replacement. Targeted validation `32060729538` passed.
 
 ## D-019 — Critical QA is mandatory for V2 integration and publication from main
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-Repository-wide critical validation is one reproducible command:
+Repository-wide critical validation is:
 
 ```text
 npm run qa:critical
@@ -117,107 +101,49 @@ npm run qa:critical
   -> npm run build
 ```
 
-CI/deploy uses Node 22, `npm ci` and explicit Playwright Chromium installation. `.github/workflows/ci.yml` runs Critical QA on pull requests targeting `develop` or `main`, on pushes to `develop`, and by manual dispatch. A push to `main` may publish GitHub Pages only through `quality -> build -> deploy`.
-
-P6 also established that failing QA output must be classified before product behavior is changed. Stale expectations may be reconciled to already accepted behavior; real regressions must be fixed without violating P1–P5 semantics. Objective ESLint errors remain blocking; explicitly recorded legacy warning debt does not redefine a passing gate.
-
-Persistent functional run `32064801009` and post-merge `develop` run `32065713920` pass the accepted gate.
+CI runs it on PRs to `develop`/`main`, pushes to `develop` and manual dispatch. Publication from `main` requires `quality -> build -> deploy`. Objective failures block integration; recorded warning/harness debt does not weaken the gate. Functional run `32064801009` and post-merge `32065713920` passed.
 
 ## D-020 — P7 prioritizes operator-intent/error risks before convenience or cosmetic refinement
 **Status:** ACCEPTED  
 **Date:** 2026-08-17
 
-P7-S1 inspected current operator-facing flows, tests and the Project Spec usability objective. P7 work is prioritized by demonstrated operational impact, error risk and routine frequency, not by visual preference.
-
-Accepted ranking:
-
-1. **Transaction-entry intent and feedback** — highest priority. The standalone Cancel action is inert; transaction mutation failures are console-only; and the command-center `Pagamento/Sinal` shortcut always initializes `payment`, risking loss of the operator’s intended audit classification.
-2. **Invalid reseller statement range UX** — a complete inverted period silently falls back to all-time/current view until PDF generation surfaces the error.
-3. **Stale recovery page copy** — top-level Backup page text still describes restore as future/preflight-only even though P5-S2 restore exists.
-4. **Item/reseller save error feedback** — mutation failures are console-only.
-5. **Reseller-context launch friction** — transaction creation requires redundant reseller reselection from a reseller detail context.
-
-Broad redesign, dashboard rearrangement, theme/branding changes, table-density preferences and convenience features without demonstrated operational impact are not P7 priorities merely because they could improve polish.
-
-### First implementation slice
-
-P7-S2 is limited to the transaction-entry cluster:
-
-- Cancel must actually reset/clear the in-progress standalone transaction form while preserving the requested initial type;
-- transaction mutation failure must be visible to the operator and must not erase entered data needed for correction/retry;
-- payment and signal command-center shortcuts must be separate and preserve the intended transaction type.
-
-This decision does **not** change P1–P6 financial, persistence, recovery or QA semantics and does not authorize bundling the lower-ranked P7 gaps into P7-S2.
+P7 ranked demonstrated operator impact/error risk ahead of visual preference. The accepted order was transaction-entry intent/feedback, invalid statement range, stale recovery copy, item/reseller save feedback and reseller-context transaction launch. QG-011 through QG-015 were resolved without broad redesign.
 
 ## D-021 — Repository evidence alone does not reopen D-016; ambiguous reseller mobile use requires direct store validation
 **Status:** ACCEPTED  
 **Date:** 2026-08-18
 
-P8-S1 reviewed the original prompts, historical PRDs, current canonical baseline, README and repository issues. The evidence confirms administrator desktop/mobile operation, local browser persistence, PDF sharing and manual JSON backup/portability. A later responsiveness requirement also describes a reseller consulting their own statement on mobile.
-
-That later role wording is material, but it does not specify concurrent operators, a shared live dataset, accounts/permissions, person-level authorship or automatic synchronization. No inspected artifact establishes a remote recovery SLA, trusted server integration or security policy incompatible with browser-local storage. No separate real-store interview/observation artifact was found in the repository.
-
-Therefore **none of the explicit D-016 reopen triggers is proven by P8-S1**. D-016 remains authoritative and no backend/auth/cloud/synchronization or persistence migration is authorized.
-
-Before any architecture reconsideration, direct real-store evidence must resolve who operates the system, which devices share a dataset, whether shared state must be live/automatic, whether permissions or verified authorship are required, acceptable recovery loss/time, required server integrations and any security/privacy constraints. Detailed P8-S1 evidence is recorded in `docs/V2/P8_DISCOVERY.md`.
+Repository evidence confirmed administrator desktop/mobile operation, PDF sharing and manual JSON portability but did not establish shared live state, accounts/permissions, concurrency, remote recovery SLA, trusted server integration or local-storage-incompatible security policy. Therefore no D-016 reopen trigger was proven by repository evidence alone.
 
 ## D-022 — Direct store validation keeps D-016 for current operation; recovery durability and category reporting become evidence-backed roadmap inputs
 **Status:** ACCEPTED  
 **Date:** 2026-08-18
 
-P8-S2 resumed after a direct stakeholder supplied the real-store evidence packet in the project conversation.
+Direct store evidence confirms current non-concurrent PC-based operation, PDF/extract reseller sharing, manual JSON portability/backup, no mandatory trusted server integration and modest scale. No D-016 trigger is proven; security-policy incompatibility remains unresolved/not proven.
 
-### Current operating model
+The same evidence confirms a severe device-loss/manual-backup continuity risk, category/classification/category-reporting needs, and edit/correction friction whose exact cases require inventory. Delayed entry already uses editable `occurredAt` and is not a missing date model. D-016 remains accepted for the current operating mode.
 
-Direct evidence confirms:
+## D-023 — P9 starts with recovery durability, then category contract, bounded correction gaps and occurrence-date usability verification
+**Status:** ACCEPTED  
+**Date:** 2026-08-18
 
-- Duda and store owners use Easy, without a current need for concurrent access to the same dataset;
-- the current operating device is a PC, without a current requirement for the same live dataset on multiple devices simultaneously;
-- resellers receive PDF/extracts and do not currently need interactive application access;
-- JSON/manual off-device handling remains the current portability/recovery mechanism;
-- no trusted server integration is currently mandatory;
-- scale is modest, around 100 resellers maximum and about 50 active, with limited daily entry volume.
+P9-S1 applies a weighted evidence-first score using operational consequence (35%), evidence confidence (30%), exposure/frequency (20%) and delivery confidence under accepted contracts (15%). Detailed scoring and source inventory are canonical in `docs/V2/P9_PRIORITIZATION.md`.
 
-### D-016 trigger decision
+Accepted ranked inputs:
 
-No D-016 reopen trigger is proven by the direct evidence:
+1. **Recovery durability / off-device protection — 94/100.** Device-loss consequence is catastrophic and directly confirmed. Current backup generation remains operator-initiated; the problem is dependence on a person remembering to create/move a fresh durable copy. P9-S2 must first establish a measurable operating recovery target and compare the smallest D-016-compatible mechanisms. A remote SLA/cloud requirement must not be invented.
+2. **Item categories + classification + category-level reporting — 83/100.** Direct confirmed need. Because the current Dexie V4 `Item` model and canonical backup contract have no category dimension, P9-S3 must define lifecycle, assignment, historical/report semantics, migration and backup compatibility before implementation.
+3. **Exact transaction edit/correction microflows — 70/100.** Direct evidence confirms friction but not exact store cases. Current source proves guided correction cannot change `occurredAt`, order item, transaction type or observation and cannot guided-correct an order whose original item is inactive. Items/resellers already have edit flows; transaction reversal plus reseller/value correction already exist. Source-proven absence must not be falsely attributed to Duda as a reported case. P9-S4 must first directly map these gaps to real operator work/error risk and then preserve D-012/D-013 audit semantics.
+4. **Occurrence-date discoverability/usability — 69/100.** The creation form already exposes `Data da ocorrência` with explanatory text and persists `occurredAt`. P9-S5 may verify usability but must not rebuild P3 or invent a second date model.
 
-- **concurrent operators:** not required currently;
-- **automatic live multi-device sharing:** not required currently;
-- **person-level authorship/access control:** accounts/permissions are a conditional future preference, not a present mandatory requirement;
-- **remote recovery SLA:** severe data-loss consequences are confirmed, but no numeric RPO/RTO or provider-operated recovery obligation is specified;
-- **trusted server integrations:** none are currently required;
-- **security policy incompatible with browser-local storage:** no competent policy evidence was supplied, so this remains unresolved rather than assumed false.
-
-Therefore **D-016 remains accepted for the current operating mode**. P8-S2 does not authorize backend, authentication, cloud database, live synchronization or Dexie migration.
-
-### Confirmed recovery risk
-
-The current manual backup practice has a catastrophic failure mode: if the operating PC fails before the current JSON has been copied to Drive, the store may have to reconstruct tens of thousands of reais in sales. This establishes recovery durability/off-device protection as a high-severity product requirement for prioritization.
-
-It does **not** establish a formal remote-recovery SLA. P9 may compare bounded recovery improvements, but any option that later proves a D-016 trigger must explicitly reopen the architecture decision before implementation.
-
-### Confirmed product inputs
-
-P8-S2 also confirms:
-
-- items need categories;
-- items need assignment to a category;
-- reporting/analysis needs category-level filtering or aggregation;
-- multiple edit/correction microflows are missing or difficult in real operation, but exact unsupported record/action pairs must be inventoried before implementation.
-
-The stakeholder also described delayed entry of sales. Current V2 already supports an editable financial occurrence date (`occurredAt`), so P9 must treat this as discoverability/usability verification rather than inventing a second date model.
-
-Broader accounts/permissions, automatic synchronization, inventory, order management and full store-system expansion remain future directions, not present mandatory requirements.
-
-### Phase consequence
-
-P8 can close after D-019 validation/integration of this evidence decision. The next slice is P9-S1 prioritization only; it must not implement a feature or architecture change.
+Accounts/permissions, automatic live synchronization, inventory/orders/store-management and external integrations remain later candidates unless new direct evidence makes them mandatory. P9-S1 itself authorizes no runtime/schema/backend/cloud implementation.
 
 ---
 
 # Open decisions
 
 - D-016 local vs cloud only if later direct evidence proves a reopen trigger;
-- P9 implementation order after P9-S1 scores the confirmed recovery/category/edit-flow inputs;
+- exact P9-S2 recovery durability target/mechanism after measurable store recovery expectations are established;
+- category lifecycle/history/reporting contract in P9-S3;
+- which source-proven correction gaps are real high-value store cases in P9-S4;
 - controlled beta/migration/cutover policy in P10.
