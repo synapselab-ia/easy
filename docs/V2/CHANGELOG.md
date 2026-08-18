@@ -4,6 +4,56 @@ This changelog records material V2 project-state changes, not every code-line ed
 
 ---
 
+## 2026-08-18 — P7-S3 explicit invalid reseller statement-range state
+
+### Runtime refinement
+
+P7-S3 completed only QG-012, the second-ranked P7-S1 operational gap:
+
+- a complete inverted reseller statement range is now visibly invalid immediately;
+- both period controls expose invalid accessibility state and operator-visible correction guidance;
+- PDF generation is disabled while the range is invalid and retains a defensive handler guard;
+- invalid filled dates no longer make the page silently show current balance or all-time transaction history;
+- financial content is replaced by a non-financial invalid-period state until the dates are corrected or cleared;
+- correcting the range restores the existing formal D-015 statement;
+- clearing the range restores the normal current-balance/all-history view.
+
+No D-015 statement/PDF arithmetic, Dexie schema/persistence, lifecycle/reference rules, correction/reversal semantics, backup/restore mechanics or lower-ranked P7 flows changed.
+
+### Regression coverage
+
+Added focused proof for:
+
+- immediate invalid state and suppression of current/all-time fallback;
+- invalid→corrected recovery with valid statement data returning;
+- invalid→cleared recovery to the ordinary unfiltered view;
+- bounded Playwright invalid→corrected flow.
+
+Existing formal statement coverage continues to prove opening → movements → closing semantics.
+
+### Validation classification
+
+Initial Critical QA run **`32133265871`** failed in one newly added component-test expectation. The corrected valid range was March while the expected transaction fixture was dated in February, so the application correctly omitted it. The failure was classified under D-019 as a test-fixture/expectation defect; only the fixture date was aligned, with no runtime behavior weakened.
+
+Functional persistent run **`32133559376`**, job **`95699734548`** — **PASS**:
+
+- lint: 0 errors / 80 warnings;
+- Vitest: 39 files / 164 tests passing;
+- Playwright Chromium: 14/14 passing;
+- production build: PASS.
+
+### Canonical state
+
+- QG-012 invalid reseller period fallback: RESOLVED / P7-S3;
+- P7-S3: `DONE`;
+- P7 remains `IN_PROGRESS`;
+- D-015, D-016, D-019 and D-020 remain authoritative; no new architecture/product decision was required;
+- `NEXT_ACTION` advances only to **P7-S4 — Align Backup recovery copy with the implemented P5-S2 restore flow**.
+
+Item/reseller save feedback, reseller-context transaction launch and P8/P9 remain untouched.
+
+---
+
 ## 2026-08-17 — P7-S2 reliable transaction-entry intent and feedback
 
 ### Runtime refinement

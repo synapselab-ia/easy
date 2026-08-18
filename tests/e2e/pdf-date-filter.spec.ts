@@ -34,15 +34,21 @@ test.describe('Filtro de Datas no Extrato PDF do Revendedor', () => {
         await expect(page.getByRole('button', { name: 'Gerar PDF' })).toBeEnabled();
     });
 
-    test('deve exibir toast de erro quando Data Fim é anterior a Data Início', async ({ page }) => {
+    test('faixa invertida é explícita e volta ao extrato formal quando corrigida', async ({ page }) => {
         await page.goto(resellerUrl);
         await page.getByLabel('Data Início').fill('2025-06-01');
         await page.getByLabel('Data Fim').fill('2025-01-01');
 
-        await page.getByRole('button', { name: 'Gerar PDF' }).click();
+        await expect(page.getByRole('alert')).toContainText('Período inválido');
+        await expect(page.getByRole('button', { name: 'Gerar PDF' })).toBeDisabled();
+        await expect(page.getByText('Saldo Devedor Atual')).toHaveCount(0);
+        await expect(page.getByText(/Histórico indisponível enquanto o período estiver inválido/i)).toBeVisible();
 
-        await expect(page.locator('[data-sonner-toast]')).toBeVisible();
-        await expect(page.locator('[data-sonner-toast]')).toContainText('data de início não pode ser posterior');
+        await page.getByLabel('Data Fim').fill('2025-12-31');
+
+        await expect(page.getByRole('alert')).toHaveCount(0);
+        await expect(page.getByText('Resumo do Período')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Gerar PDF' })).toBeEnabled();
     });
 
     test('período sem movimentos continua sendo um extrato válido', async ({ page }) => {
