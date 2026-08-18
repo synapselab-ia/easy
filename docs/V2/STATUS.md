@@ -284,9 +284,20 @@ All six D-016 triggers remain unresolved from direct evidence and **none is prov
 
 `docs/V2/P8_EVIDENCE_REQUEST.md` defines the minimum evidence packet required to resume P8-S2. No runtime, backend/auth/cloud/synchronization, Dexie migration, architecture implementation or P9 work was performed. No new architecture/product decision is accepted in this blocked slice; D-016 and D-021 already define the evidence threshold.
 
-### Validation state
+### Validation and integration
 
-This documentation-only blocked-state change still requires the full persistent D-019 `npm run qa:critical` gate before integration.
+Persistent Critical QA run **`32152466007`**, job **`95761457231`** — **PASS** on PR #25 merge ref `b90fdc76ced24d042cf73d1ce96cc8ece0ac8fed`:
+
+- ESLint: **0 errors / 80 warnings**;
+- Vitest: **43 files / 176 tests PASS**;
+- Playwright Chromium: **15/15 PASS**;
+- production build: **PASS**.
+
+PR #25 was squash-merged into `develop` as `c8eda199b0a605306619b73f8d3b175f8c673e2f`. The validated PR merge ref and the squash integration commit both resolve to tree **`82a32b4a6d5c411d5a40d9eb0d587e2e7ecd8b15`**, so the integrated P8-S2 blocked-state documentation is byte-for-byte the content exercised by D-019. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+Existing React `act(...)`, legacy mocked-select DOM warnings, dependency-audit findings, action-runtime deprecation notices and build chunk-size warning remain visible non-blocking debt under D-019; no gate was weakened.
+
+P8-S2 remains **`BLOCKED`**, not `DONE`: the required direct evidence still does not exist in the project-accessible evidence boundary.
 
 ## Active constraints while P8-S2 is blocked
 
