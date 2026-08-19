@@ -33,70 +33,61 @@ Objective failures block integration. Existing warning/harness/dependency debt r
 - I2 lifecycle/classification/order snapshots: final `32202876262` / `95920142630`; PR #46; closure #47.
 - I3 category reporting: authoritative final `32262877105` / `96100129962`; 51 files / 210 Vitest, 17/17 Playwright, build PASS; PR #48.
 
-## P9-S4 initial evidence/source gate — ACCEPTED / INTEGRATED
+## P9-S4 accepted validation
 
-PR #50 mapped current correction support and five source-proven constraints, but correctly kept runtime blocked because direct store evidence had not identified exact post-save correction cases.
+Initial evidence/source gate: D-019 `32265612927` / `96109244644`; PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`.
 
-D-019 `32265612927` / `96109244644`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**. PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`.
+D-026 decision gate: D-019 `32277770945` / `96149101495`; PR #52 integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`.
 
-Canonical closure #51 was validated on retry `32269262365` / `96121383857` and integrated as `1221f71de460c266c165b92de0536f443c71fa08`; merge-ref/integrated tree `7a7551f2815f9338d8b906a2bb6bf1e1d66c8ff2`.
-
-## P9-S4 direct evidence + D-026 decision gate — PASS / DONE / INTEGRATED
-
-Direct operator clarification received 2026-08-19 resolved the blocker:
-
-- the operator could not quantify individual wrong-item/type/observation/archive frequencies from memory;
-- the operator specifically recalled today's-date default behavior as the practical date concern;
-- the operator then confirmed the actual product requirement: business information entered into the system needs to remain editable after entry, without requiring prior history to be overwritten.
-
-Decision result:
-
-- D-026 accepted: effective transaction business fields are correctable through audited linked replacement, never destructive historical overwrite;
-- the smallest coherent implementation is one full-field replacement editor rather than independent partial field slices;
-- D-025 snapshot semantics and D-024 write guard remain mandatory;
-- current active-reference lifecycle rules remain intact; archive-specific exception is not authorized by this gate;
-- today's-date default/discoverability signal is deferred to P9-S5.
-
-### Accepted decision validation/integration proof
-
-- D-019 run `32277770945`, job `96149101495`, merge ref `6a57fbe6b8674aca8723538f756b04f4a5af3f13`.
-- Result: 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-- PR #52 squash-integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`.
-- Validated merge ref and integrated squash tree: `c37ea55f83b15415678f5b2be2747fb5f06c6a27`.
-
-## P9-S4-I1 full-field audited replacement — PASS / DONE / INTEGRATED
-
-Implementation under D-026 was intentionally bounded to the transaction replacement domain/UI and tests. No schema, migration, backup, P9-S5/P10, backend/auth/cloud/live-sync or destructive-history change was introduced.
-
-Focused proof added for:
-
-- changing target type, `occurredAt`, observation and reseller/value state;
-- changing order item with current active/classified validation;
-- preserving historical D-025 item/category snapshot when the same item is kept;
-- recapturing current D-025 item/category snapshot when the item changes;
-- stripping/rejecting order-shape fields for payment/signal targets;
-- original business-row immutability and reversal/replacement linkage;
-- atomic rollback on invalid targets;
-- inactive newly selected item rejection;
-- D-024 freshness guard blocking replacement writes.
-
-### Authoritative implementation validation/integration proof
+P9-S4-I1 full-field audited replacement:
 
 - PR #54 D-019 run **`32285620846`**, job **`96174326588`**.
-- Validated PR merge ref **`4b51a5f35c2104d636903ce89eecbc995a0f3ce3`**, combining head `a4f0b026e14fc85bd02eee56db262b5271507b3c` with base `0f3ec562717c75981802f330d64410ee612a034d`.
+- Validated merge ref `4b51a5f35c2104d636903ce89eecbc995a0f3ce3`.
 - ESLint: **0 errors / 82 warnings**.
 - Vitest: **52 files / 216 tests PASS**.
 - Playwright: **17/17 PASS**.
 - Production build: **PASS**.
-- PR #54 squash-integrated into `develop` as **`f1cfd126c18691da1256a1d3f918158d7aa9495a`**.
-- Validated merge ref and integrated squash share exact tree **`5679693b5f588f58404050cfca8ffd17a9a49fb3`**.
+- PR #54 squash-integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`.
+- Validated/integrated tree: `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
 
-The warning delta includes the new correction editor's same non-blocking `set-state-in-effect` lint class plus existing test/harness/dependency/runtime warnings; there were no lint errors and the complete gate passed.
+## P9-S5 occurrence-date usability verification — PASS / DONE / INTEGRATED
 
-## Current known non-blocking debt
+Direct evidence reconstructed from the canonical P9 correction evidence record: the operator recalled today's-date default behavior in routine entry and was unsure whether it still existed.
 
-React `act(...)` warnings, `set-state-in-effect` warnings, mocked-select DOM/hydration warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible. No accepted gate is weakened.
+Source verification established that the normal `TransactionForm` already:
 
-## QA boundary entering P9-S5
+- defaults `Data da ocorrência` to today's browser-local date;
+- displays the field in the primary transaction-entry block;
+- permits direct pre-save editing;
+- shows helper text distinguishing financial occurrence from automatic registration time;
+- persists selected `occurredAt` independently from generated `createdAt` under D-014/P3.
 
-P9-S5 must verify the current `Data da ocorrência` today-default/discoverability/editability workflow and preserve D-014/P3 separation between financial occurrence and registration/audit time. If no evidence-backed usability gap exists, no runtime change is required. Any runtime change still requires full D-019 before integration.
+No evidence-backed runtime gap was found and no production source file was changed.
+
+Focused proof added in `TransactionForm.occurrence.test.tsx` for:
+
+- current-local-date default;
+- discoverable financial-vs-registration helper;
+- pre-save date editability;
+- existing selected-date persistence independence.
+
+### Authoritative P9-S5 validation/integration proof
+
+- PR #56 D-019 run **`32287018048`**, job **`96178850066`**.
+- Validated PR merge ref **`9459285920cfbd784a652e9db97cf40741977edf`**, combining head `fef66eb8da6602f0804d0c78eb3d6c30feaf2cac` with base `716fc3b9ec77bada5ca44d992a6760a276e38cfa`.
+- ESLint: **0 errors / 82 warnings**.
+- Vitest: **52 files / 217 tests PASS**.
+- Playwright: **17/17 PASS**.
+- Production build: **PASS**.
+- PR #56 squash-integrated into `develop` as **`88c70a20071bd97ef3a08285128756e2ce484a74`**.
+- Validated merge ref and integrated squash share exact tree **`97a78d3e4d78a54ad117440c160920343513ba9f`**.
+
+The new focused test itself passed. Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking under the accepted D-019 policy.
+
+## P9 QA result
+
+P9-S1 through P9-S5 have accepted validation/integration evidence. P9 is complete.
+
+## QA boundary entering P10
+
+P10 remains `NOT_STARTED`. Any controlled-beta, migration, cutover or publication change must preserve D-019 as an objective integration/publication gate and may not treat completion of P9 as implicit authorization for production data movement or `main` publication.
