@@ -157,9 +157,40 @@ P9-S4-I1 implemented the complete replacement-state editor and expanded replacem
 - PR #54 squash-integrated as **`f1cfd126c18691da1256a1d3f918158d7aa9495a`**.
 - Validated merge ref and integrated squash share exact tree **`5679693b5f588f58404050cfca8ffd17a9a49fb3`**.
 
-The separate observation that transaction entry defaults `Data da ocorrência` to today remains evidence for P9-S5 usability verification, not permission to change D-014/P3 date semantics.
-
 Detailed record: `docs/V2/P9_CORRECTION_DECISION.md`.
+
+## D-027 — P10 uses a fail-closed non-production pre-cutover compatibility/rehearsal gate
+**Status:** ACCEPTED  
+**Date:** 2026-08-19
+
+P10 must not move live-store data or publish V2 as the stable system merely because P9 is complete or because a candidate deploy is READY.
+
+Reconstructed evidence:
+
+- `main` remains the stable V1 application at `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
+- completed-P9 `develop` is at `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a` and is 55 commits ahead of `main`;
+- current Vercel `easy-v2` deployment is manual and stale at `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9;
+- `vercel.json` disables Git-triggered Vercel deployment;
+- stable `main` exports backup version 1, and V2 preflight supports that envelope without inventing category history;
+- IndexedDB is origin-local, so publishing another origin is not data migration;
+- D-024 requires recovery readiness on a fresh V2 origin before normal writes;
+- source inspection found a pre-cutover blocker: backup validation still applies pre-D-026 equality rules to replacement type, item/category snapshot and `occurredAt`, even though D-026 permits those replacement business fields to change.
+
+Accepted P10 gate:
+
+1. `main` stays untouched during P10-S1.
+2. P10-S1 does not export/import the live store dataset.
+3. Vercel `easy-v2` is candidate/beta hosting only; its `target: production` label is not store-cutover approval.
+4. Any later candidate deployment must be manually pinned to an exact D-019-passing `develop` SHA.
+5. The stable→V2 transfer route is explicit backup/preflight/restore, not implicit IndexedDB continuity across origins.
+6. P10-S1-I1 must first align backup validation with D-026 while preserving bidirectional correction/reversal linkage, referenced-ID existence, chronology and per-target shape/reference validity.
+7. Backup-v1 and v2/schema4 compatibility must remain intact.
+8. Only after I1 is integrated may a non-production migration/recovery rehearsal use synthetic v1-format data.
+9. The rehearsal must establish D-024 recovery readiness before normal writes and must exercise legacy unclassified-item gating without fabricating categories.
+10. Copied-live-data beta, real-data reconciliation, final write freeze, `main` publication, canonical URL switch and production cutover require a later explicit go/no-go gate.
+11. D-016 remains unchanged; P10 does not introduce backend/auth/cloud database/live synchronization.
+
+Detailed plan: `docs/V2/P10_CUTOVER_PLAN.md`.
 
 ---
 
@@ -167,4 +198,5 @@ Detailed record: `docs/V2/P9_CORRECTION_DECISION.md`.
 
 - D-016 local vs cloud only if later direct evidence proves a reopen trigger;
 - whether any future directly observed inactive-entity correction case justifies a bounded lifecycle exception beyond D-026;
-- controlled beta/migration/cutover policy in P10.
+- copied-live-data beta acceptance criteria after P10-S1 completes;
+- final write-freeze, rollback and stable-publication policy for the eventual production cutover.
