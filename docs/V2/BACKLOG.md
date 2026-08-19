@@ -48,15 +48,15 @@ PR #50 proved current support and source constraints. The prior blocker required
 
 #### Direct evidence + D-026 decision
 
-**Status:** `DONE / IN_REVIEW`.
+**Status:** `DONE / INTEGRATED`.
 
 Direct operator evidence received 2026-08-19 confirms the actual requirement: operator-entered transaction business data must remain correctable after entry, while prior history does not need to be overwritten.
 
 Frequency/workaround/consequence for individual fields were not known and are not inferred. The date-default concern is retained for P9-S5.
 
-D-026 therefore selects one coherent implementation instead of partial field slices:
+D-026 selects one coherent implementation instead of partial field slices. Decision proof: D-019 `32277770945` / `96149101495`, merge ref `6a57fbe6b8674aca8723538f756b04f4a5af3f13`, PR #52 integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`; validated/integrated tree `c37ea55f83b15415678f5b2be2747fb5f06c6a27`.
 
-**P9-S4-I1 — Full-field audited transaction replacement editor**
+#### P9-S4-I1 — Full-field audited transaction replacement editor
 
 **Status:** `NOT_STARTED`.
 
