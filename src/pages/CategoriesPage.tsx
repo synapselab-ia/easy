@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Archive, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { isCategoryActive, type Category } from '../db/database';
@@ -61,7 +61,7 @@ export default function CategoriesPage() {
         setName('');
     };
 
-    const submitCategory = async (event: React.FormEvent) => {
+    const submitCategory = async (event: FormEvent) => {
         event.preventDefault();
 
         try {
