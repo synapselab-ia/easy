@@ -42,36 +42,37 @@ Objective failures block integration. Existing warning/harness/dependency debt r
 
 ### I3 — category order-performance reporting
 
-**PASS / DONE / INTEGRATED.**
+**PASS / DONE / INTEGRATED.** Functional `32261923163` / `96096954271`; authoritative final documentation-complete `32262877105` / `96100129962`: 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS. PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`; validated/integrated tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
 
-Targeted proof covers:
+## P9-S4 evidence/contract gate — current slice
 
-- effective non-reversed orders only;
-- `occurredAt` financial time basis;
-- grouping by stored historical `transaction.categoryId`, not current item category;
-- immutable transaction snapshots across rename/reassignment;
-- explicit `Sem categoria — histórico legado` bucket;
-- order count, summed quantity and gross value;
-- reversed original zero/effective linked replacement once;
-- payments/signals excluded;
-- archived categories reportable;
-- read-only all-time/inclusive-period UI.
+**Runtime:** unchanged.  
+**Purpose:** prove what current correction already supports, map source-proven gaps to concrete operator cases, and determine whether direct evidence is sufficient to select an implementation subset.
 
-Functional gate `32261923163` / `96096954271` — PASS.
+Source/evidence inspected:
 
-**Authoritative final documentation-complete gate:** run **`32262877105`**, job **`96100129962`**, merge ref `e9cb929b0eb8a109a44eba3408e1675249b11fd7`, head `b7e76e56c8049a002243fc693891880ba6bf0a50` over base `4191df77db83258f1125bffd445a6ec1f5b46bf9`:
+- accepted direct store evidence in `P8_EVIDENCE_REQUEST.md`;
+- accepted P9-S1 correction capability/gap matrix in `P9_PRIORITIZATION.md`;
+- current `TransactionCorrectionDialog.tsx`;
+- current `useTransactions.ts`;
+- current `TransactionTable.tsx`.
 
-- ESLint: **0 errors / 81 warnings**;
-- Vitest: **51 files / 210 tests PASS**;
-- Playwright Chromium: **17/17 PASS**;
-- production build: **PASS**.
+Result:
 
-PR #48 integrated into `develop` as **`08ad2973f387035301901f9f46b0c78039796c2d`**. Validated merge ref and integrated squash share exact tree **`af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`**.
+- wrong reseller, order quantity/unit price, payment/signal amount and pure reversal are already supported under D-012/D-013;
+- post-save occurrence date, order item, transaction type and observation changes remain unsupported by guided replacement;
+- guided replacement of an order is blocked when its original item is inactive;
+- accepted direct store evidence confirms generic correction friction but does **not** confirm any of those exact five cases;
+- therefore selecting runtime work now would invent evidence.
+
+`docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` defines the direct confirmation needed. P9-S4 is blocked on that evidence, not on a failing code gate.
+
+This documentation-only evidence slice must itself pass D-019 before integration. No objective QA failure may be waived merely because runtime is unchanged.
 
 ## Current known non-blocking debt
 
 React `act(...)` warnings, mocked-select DOM/hydration warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible. No accepted gate is weakened.
 
-## QA boundary entering P9-S4
+## QA boundary while P9-S4 is blocked
 
-Before runtime correction expansion, the first P9-S4 slice must map direct-evidence correction friction to concrete missing operator cases, prove what current reversal/replacement already covers, preserve D-012/D-013 audited history and pass D-019 before integration. P9-S5/P10 and backend/auth/cloud/live-sync remain out of scope.
+Do not implement a correction candidate until direct evidence establishes the exact operator case and a bounded D-012/D-013-compatible subset is selected. P9-S5/P10 and backend/auth/cloud/live-sync remain out of scope.
