@@ -72,7 +72,7 @@ Accepted D-027 boundary:
 
 - keep `main` untouched during this slice;
 - treat Vercel `easy-v2` as candidate/beta hosting only;
-- pin any future candidate deploy to an exact D-019-passing `develop` SHA;
+- pin any candidate deploy to an exact D-019-passing `develop` SHA;
 - use explicit backup/restore as the stable→V2 transfer route; do not assume IndexedDB moves across origins;
 - no live-store backup export/import in P10-S1;
 - preserve D-016 local-first/single-user architecture;
@@ -83,7 +83,7 @@ Reconstructed baseline:
 - `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
 - P9-closed `develop`: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`;
 - `develop` was 55 commits ahead of `main` when the contract was established;
-- current `easy-v2` Vercel deployment is stale at `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9;
+- latest observed `easy-v2` candidate remains the historical READY deployment at `1221f71de460c266c165b92de0536f443c71fa08` until an explicit I2 refresh;
 - Vercel Git deployment is disabled by `vercel.json`, so candidate deployment remains manual;
 - stable `main` exports backup v1; V2 preflight accepts that envelope and normalizes lifecycle/occurrence fields without inventing categories/history;
 - D-024 recovery readiness must be re-established on a fresh candidate origin before normal writes.
@@ -97,37 +97,50 @@ Contract validation/integration proof:
 
 #### P10-S1-I1 — Backup/correction compatibility hardening
 
-**Status:** `NOT_STARTED` — **CURRENT**.
+**Status:** `DONE / INTEGRATED` — 2026-08-19.
 
-Problem proven by source reconstruction: current backup `validateReferences()` still requires correction replacements to preserve type, item/category snapshot and `occurredAt`, while D-026 permits those effective business fields to change. This can make a valid D-026-corrected V2 dataset conflict with backup self-preflight/export.
+Result:
 
-Authorized scope:
+- backup correction validation now accepts D-026 type changes and `occurredAt` changes;
+- an order correction may change to another item and carry that replacement item's valid category snapshot;
+- an order correction that keeps the same `itemId` must still preserve the original D-025 category snapshot;
+- bidirectional correction/reversal linkage, referenced-ID existence, replacement registration chronology and each transaction's own target shape/reference validity remain enforced;
+- backup-v1 and v2/schema4 compatibility remain passing;
+- no schema or backup-envelope version changed.
 
-- align backup validation with D-026;
-- retain bidirectional correction/reversal linkage checks, referenced-ID existence, chronology and target-shape/reference validity;
-- retain D-025 snapshot semantics for same-item vs changed/new-item replacements;
-- retain backup-v1 and v2/schema4 compatibility;
-- add focused positive/negative regression coverage;
-- run full D-019;
-- no schema/envelope/Vercel/live-data/`main`/D-016 change.
+Focused P10-S1-I1 regression coverage proves valid type/date/item-changing linked corrections preflight/export successfully and broken linkage/invalid target shape remain rejected. Existing D-025 and legacy migration suites remain green.
 
-Exit criteria:
+Validation history:
 
-1. valid D-026 type/date/item replacement datasets export/self-preflight;
-2. broken linkage and invalid target shapes/references remain rejected;
-3. legacy backup migration tests remain passing;
-4. full D-019 passes on the exact integration candidate.
+- initial D-019 `32292405631` / `96196002726` blocked integration because the first implementation over-relaxed same-item category-snapshot preservation; five new P10 tests passed, but one existing P9-S3 regression correctly failed;
+- the runtime change was narrowed to preserve same-item D-025 history;
+- authoritative D-019 `32292888925` / `96197514379` passed on merge ref `d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`: 0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; production build PASS;
+- PR #60 integrated as `71b939b4c938288efb0f3c51e300e5c5541ee8c3`;
+- validated/integrated tree `06d1f8c4582b5dcabd02b633c8597852b1cedfa4`.
+
+Exit criteria are satisfied. No Vercel, live-data, `main`, schema/envelope or D-016 change occurred.
 
 #### P10-S1-I2 — Non-production migration/recovery rehearsal
 
-**Status:** `BLOCKED BY P10-S1-I1`.
+**Status:** `NOT_STARTED` — **CURRENT**.
 
-Defined for sequencing only; not the current action. After I1 is integrated it may use an exact validated `develop` SHA and synthetic/non-production backup-v1 fixture data to rehearse Vercel candidate deployment, v1→V2 preflight/restore, D-024 setup, legacy classification gating, supported transaction/correction flows, backup export and disposable restore round-trip.
+Authorized next scope under D-027:
 
-It may not use the live store dataset, modify `main`, publish stable V2 or perform final cutover.
+- manually deploy an exact D-019-passing `develop` SHA to `easy-v2`;
+- verify the deployed SHA rather than relying on an alias;
+- use only synthetic/non-production backup-v1 fixture data;
+- preflight and restore that fixture into the candidate;
+- verify entity/transaction counts and expected legacy normalization;
+- establish D-024 recovery health on the candidate origin before normal writes;
+- classify representative migrated items and verify new-order gating;
+- exercise supported transaction/correction flows;
+- export a V2 backup and prove disposable restore round-trip;
+- record a go/no-go result for a later copied-live-data beta.
+
+It may not use the live store dataset, modify or publish `main`, publish stable V2, perform final cutover or change D-016.
 
 ### Later P10 work
 
 **Status:** `NOT_AUTHORIZED`.
 
-Copied-live-data beta, real-data reconciliation, final write freeze, `main` publication, canonical URL switch, rollback after production V2 writes and decommissioning of the original stable app remain outside P10-S1 and require later canonical acceptance.
+Copied-live-data beta, real-data reconciliation, final write freeze, `main` publication, canonical URL switch, rollback after production V2 writes and decommissioning of the original stable app remain outside the current slice and require later canonical acceptance.
