@@ -104,35 +104,52 @@ Keeps D-016, canonical backup/restore and operator-run recovery; no Drive API/OA
 **Date:** 2026-08-18  
 **Implementation completed:** 2026-08-19
 
-Accepted and implemented semantics:
+Accepted semantics:
 
 - stable category identity with reversible lifecycle;
 - active-category item classification and future-only reassignment effect;
 - new-order `categoryId + categoryName` transaction-time snapshots;
 - lossless legacy migration with no fabricated category history;
-- legacy no-snapshot orders remain valid as `Sem categoria — histórico legado` in reports;
+- legacy no-snapshot orders remain `Sem categoria — histórico legado` in reports;
 - order-only category analysis uses `occurredAt`, historical `transaction.categoryId`, order count, quantity and gross value;
 - effective linked correction contributes only through the non-reversed replacement;
 - archived categories remain reportable;
 - payments/signals/balances/FIFO debt are not allocated to categories;
 - Dexie V5 + logical backup v2/schema5 + four-table D-018 restore remain authoritative.
 
-### Implementation proof
+Implementation completed through P9-S3 I1/I2/I3; final I3 D-019 `32262877105` / `96100129962`; PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`.
 
-- Contract: D-019 `32185226251` / `95867186002`; PR #44 `ede644b88ad00c11b566d82a21758cc82b7a8126`.
-- I1: final D-019 `32191707306` / `95887236403`; PR #45 `d55b13bf5efedb12da937e70afe1e9501d83446b`.
-- I2: final D-019 `32202876262` / `95920142630`; PR #46 `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; closure #47 `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
-- I3 functional: `32261923163` / `96096954271` — PASS.
-- I3 final documentation-complete: **`32262877105` / `96100129962`**, merge ref `e9cb929b0eb8a109a44eba3408e1675249b11fd7`, head `b7e76e56c8049a002243fc693891880ba6bf0a50` over base `4191df77db83258f1125bffd445a6ec1f5b46bf9` — **0 errors / 81 warnings; 51 files / 210 Vitest; 17/17 Playwright; build PASS**.
-- PR #48 integrated as **`08ad2973f387035301901f9f46b0c78039796c2d`**.
-- Validated merge ref and integrated squash share exact tree **`af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`**.
+## D-026 — Effective transaction business fields are correctable through audited linked replacement
+**Status:** ACCEPTED / IMPLEMENTATION NOT_STARTED  
+**Date:** 2026-08-19
 
-No new decision number was required for I3 because it implemented D-025 without changing its contract.
+Direct operator evidence resolved the P9-S4 blocker: information entered into the system must remain editable after entry, but the correction does not need to overwrite prior history.
+
+D-026 extends the guided replacement contract without weakening D-012/D-013:
+
+- the original transaction row and its original business values remain immutable;
+- a correction requires an explicit reason and atomically creates a linked replacement plus audited reversal of the original;
+- replacement business fields may change reseller, transaction type, financial occurrence date and observation;
+- target orders may change item, quantity and unit price/derived total;
+- target payments/signals may change movement value;
+- target-shape validation follows the replacement type;
+- transaction IDs, `createdAt`, correction links, reversal timestamps and reversal linkage are system/audit metadata and are not operator-editable;
+- keeping the same order item preserves the original D-025 item/category snapshot;
+- changing/newly introducing an order item requires a current active/classified target and captures its current item/category snapshot;
+- changing an order to a non-order removes order/item/category fields from the replacement only;
+- the reversed original is never recategorized or rewritten;
+- the archive-specific edge was not confirmed as a recurring store case, so D-026 does not weaken P1/D-011 active-reference rules for inactive entities;
+- D-024 write enforcement remains mandatory;
+- no schema/backup/backend/cloud change is implied.
+
+The smallest coherent implementation is P9-S4-I1: one full-field audited transaction replacement editor. The separate observation that transaction entry defaults `Data da ocorrência` to today remains evidence for P9-S5 usability verification, not permission to change P3 date semantics in P9-S4.
+
+Detailed contract: `docs/V2/P9_CORRECTION_DECISION.md`.
 
 ---
 
 # Open decisions
 
 - D-016 local vs cloud only if later direct evidence proves a reopen trigger;
-- which source-proven correction gaps are genuinely missing high-value store cases in P9-S4;
+- whether any future directly observed inactive-entity correction case justifies a bounded lifecycle exception beyond D-026;
 - controlled beta/migration/cutover policy in P10.
