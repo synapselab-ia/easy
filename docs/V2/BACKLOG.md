@@ -47,7 +47,7 @@ Final I3 D-019 `32262877105` / `96100129962` passed; validated/integrated tree `
 
 ### P9-S4 — Confirmed correction microflows
 
-**Status:** `BLOCKED — direct operator confirmation required`.
+**Status:** `BLOCKED — evidence gate accepted/integrated; direct operator confirmation required`.
 
 The evidence/contract gate is complete as far as existing evidence allows:
 
@@ -71,7 +71,9 @@ P8 confirmed generic real-store edit/correction friction but did not enumerate a
 
 The direct intake required to resolve this blocker is in `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md`. For each candidate, record whether it actually occurs, approximate frequency, current workaround and business consequence, plus any exact missing case outside the matrix.
 
-No correction runtime, destructive historical editing or new D-number is authorized until that evidence is received and the bounded mapping/decision gate is rerun.
+Evidence gate proof: D-019 `32265612927` / `96109244644` passed with 0 errors / 81 warnings, 51 files / 210 Vitest, 17/17 Playwright and build PASS. PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`.
+
+No correction runtime, destructive historical editing or new D-number is authorized until direct evidence is received and the bounded mapping/decision gate is rerun.
 
 ### P9-S5 — Occurrence-date usability verification
 
