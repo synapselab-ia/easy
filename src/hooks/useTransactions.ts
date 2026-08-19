@@ -5,6 +5,7 @@ import {
     isResellerActive,
     type Transaction,
     type TransactionCorrection,
+    type TransactionType,
 } from '../db/database';
 import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
 import { requireActiveCategory } from '../services/categoryService';
@@ -17,13 +18,20 @@ export const TRANSACTION_NOT_FOUND_ERROR = 'Lançamento não encontrado.';
 export const TRANSACTION_ALREADY_REVERSED_ERROR = 'Este lançamento já foi estornado.';
 export const CORRECTION_ORDER_ITEM_PRESERVED_ERROR = 'A correção guiada deve preservar o item original do pedido.';
 export const CORRECTION_VALUE_REQUIRED_ERROR = 'Informe um valor válido para a correção.';
+export const CORRECTION_TARGET_TYPE_ERROR = 'Selecione um tipo de movimentação válido para a correção.';
+export const CORRECTION_NON_ORDER_SHAPE_ERROR = 'Pagamentos e sinais corrigidos não podem carregar campos de pedido.';
 export const OCCURRENCE_DATE_REQUIRED_ERROR = 'Informe uma data de ocorrência válida.';
 
 export type NewTransactionInput = Omit<
     Transaction,
     'id' | 'reversal' | 'correction' | 'createdAt' | 'categoryId' | 'categoryName'
 >;
-export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'occurredAt'>;
+
+// D-026 expands the replacement payload while keeping the legacy hook call shape valid.
+// The full-field editor always sends type + occurredAt explicitly; omitted values preserve
+// the prior P2 behavior for older callers/tests that still use the bounded correction API.
+export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'occurredAt'>
+    & Partial<Pick<NewTransactionInput, 'type' | 'occurredAt'>>;
 
 type PreservedOrderSnapshot = Pick<Transaction, 'itemName' | 'categoryId' | 'categoryName'>;
 
@@ -33,6 +41,17 @@ function isValidEntityId(value: unknown): value is number {
 
 function isValidOccurrenceDate(value: unknown): value is Date {
     return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
+function isValidTransactionType(value: unknown): value is TransactionType {
+    return value === 'order' || value === 'payment' || value === 'signal';
+}
+
+function hasOrderShapeFields(transaction: Partial<NewTransactionInput>) {
+    return transaction.itemId !== undefined
+        || transaction.itemName !== undefined
+        || transaction.quantity !== undefined
+        || transaction.unitPrice !== undefined;
 }
 
 function sanitizeNewTransaction(transaction: NewTransactionInput): NewTransactionInput {
@@ -241,58 +260,82 @@ export function useReplaceTransaction() {
                     throw new Error(TRANSACTION_ALREADY_REVERSED_ERROR);
                 }
 
-                let normalizedReplacement: NewTransactionInput = {
-                    ...replacement,
-                    type: original.type,
-                    occurredAt: transactionOccurredAt(original),
-                };
+                const usesExpandedCorrection = replacement.type !== undefined || replacement.occurredAt !== undefined;
+                const targetType = replacement.type === undefined ? original.type : replacement.type;
+                if (!isValidTransactionType(targetType)) {
+                    throw new Error(CORRECTION_TARGET_TYPE_ERROR);
+                }
 
-                if (original.type === 'order') {
-                    if (replacement.itemId !== original.itemId) {
+                const targetOccurredAt = replacement.occurredAt === undefined
+                    ? transactionOccurredAt(original)
+                    : replacement.occurredAt;
+                if (!isValidOccurrenceDate(targetOccurredAt)) {
+                    throw new Error(OCCURRENCE_DATE_REQUIRED_ERROR);
+                }
+
+                let normalizedReplacement: NewTransactionInput;
+                let preservedOrderSnapshot: PreservedOrderSnapshot | undefined;
+
+                if (targetType === 'order') {
+                    const targetItemId = !usesExpandedCorrection && original.type === 'order'
+                        ? (replacement.itemId ?? original.itemId)
+                        : replacement.itemId;
+
+                    if (!usesExpandedCorrection && original.type === 'order' && targetItemId !== original.itemId) {
                         throw new Error(CORRECTION_ORDER_ITEM_PRESERVED_ERROR);
                     }
 
                     const quantity = replacement.quantity;
                     const unitPrice = replacement.unitPrice;
-                    if (!Number.isInteger(quantity) || !quantity || quantity <= 0 || typeof unitPrice !== 'number' || unitPrice < 0) {
+                    if (!Number.isInteger(quantity) || !quantity || quantity <= 0 || typeof unitPrice !== 'number' || !Number.isFinite(unitPrice) || unitPrice < 0) {
                         throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
                     }
 
                     normalizedReplacement = {
-                        ...normalizedReplacement,
-                        itemId: original.itemId,
-                        itemName: original.itemName,
+                        resellerId: replacement.resellerId,
+                        type: targetType,
+                        occurredAt: targetOccurredAt,
+                        itemId: targetItemId,
+                        itemName: replacement.itemName,
                         quantity,
                         unitPrice,
                         totalPrice: quantity * unitPrice,
-                        observation: original.observation,
+                        observation: usesExpandedCorrection ? replacement.observation : original.observation,
                     };
+
+                    if (original.type === 'order' && targetItemId === original.itemId) {
+                        preservedOrderSnapshot = {
+                            itemName: original.itemName,
+                            categoryId: original.categoryId,
+                            categoryName: original.categoryName,
+                        };
+                    }
                 } else {
+                    if (usesExpandedCorrection && hasOrderShapeFields(replacement)) {
+                        throw new Error(CORRECTION_NON_ORDER_SHAPE_ERROR);
+                    }
+
                     if (typeof replacement.totalPrice !== 'number' || !Number.isFinite(replacement.totalPrice) || replacement.totalPrice <= 0) {
                         throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
                     }
 
                     normalizedReplacement = {
-                        ...normalizedReplacement,
+                        resellerId: replacement.resellerId,
+                        type: targetType,
+                        occurredAt: targetOccurredAt,
                         itemId: undefined,
                         itemName: undefined,
                         quantity: undefined,
                         unitPrice: undefined,
                         totalPrice: replacement.totalPrice,
-                        observation: original.observation,
+                        observation: usesExpandedCorrection ? replacement.observation : original.observation,
                     };
                 }
 
                 const replacementTransactionId = await addValidatedTransaction(
                     normalizedReplacement,
                     { replacesTransactionId: originalId },
-                    original.type === 'order'
-                        ? {
-                            itemName: original.itemName,
-                            categoryId: original.categoryId,
-                            categoryName: original.categoryName,
-                        }
-                        : undefined,
+                    preservedOrderSnapshot,
                 ) as number;
 
                 const reversal = {
