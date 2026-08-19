@@ -27,7 +27,7 @@ Phase state:
 - **P9-S3-I1 — Persistence/migration/backup: `DONE / INTEGRATED`.**
 - **P9-S3-I2 — Lifecycle/classification/order snapshots: `DONE / INTEGRATED`.**
 - **P9-S3-I3 — Category order-performance reporting: `DONE / INTEGRATED`.**
-- P9-S4 — Confirmed correction microflows: `NOT_STARTED`.
+- **P9-S4 — Confirmed correction microflows: `BLOCKED — direct operator confirmation required`.**
 - P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
 - P10 — Controlled beta, migration and cutover: `NOT_STARTED`.
 
@@ -48,10 +48,11 @@ Then inspect only source/evidence required by `NEXT_ACTION`.
 Phase-specific canonical evidence:
 
 - `docs/V2/P8_DISCOVERY.md` and `docs/V2/P8_EVIDENCE_REQUEST.md` — P8 evidence;
-- `docs/V2/P9_PRIORITIZATION.md` — P9-S1 scoring;
+- `docs/V2/P9_PRIORITIZATION.md` — P9-S1 scoring and source-proven correction gap matrix;
 - `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` — accepted P9-S2 recovery target;
 - `docs/V2/P9_RECOVERY_DECISION.md` — D-024 mechanism and implementation closure;
-- `docs/V2/P9_CATEGORY_CONTRACT.md` — completed authoritative P9-S3 contract/implementation record (D-025).
+- `docs/V2/P9_CATEGORY_CONTRACT.md` — completed authoritative P9-S3 contract/implementation record (D-025);
+- `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` — exact direct confirmations required before any P9-S4 correction runtime.
 
 ## Current technical baseline
 
@@ -59,58 +60,55 @@ Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and l
 
 Runtime is Dexie **V5** with four business tables: `categories`, `items`, `resellers`, `transactions`.
 
-Category behavior now includes:
+Category behavior includes stable category lifecycle, active-category item classification with lossless legacy compatibility, immutable transaction-time category snapshots for new orders and read-only order-performance reporting at `/category-report`.
 
-- stable category lifecycle and guarded deletion;
-- active-category item assignment with lossless legacy compatibility;
-- immutable transaction-time category snapshots for new orders;
-- read-only order-performance reporting at `/category-report`.
-
-Reporting uses effective non-reversed orders, `occurredAt`, historical `transaction.categoryId`, explicit `Sem categoria — histórico legado`, and minimum order-count / quantity / gross-value measures. Archived categories remain reportable. Payments, signals, balances and FIFO debt are not allocated to categories.
-
-The V4→V5 migration remains additive/non-inventive. Canonical interchange remains `easy-backup` version 2 / schema5. D-018 checkpoints/restores all four tables atomically. D-024 recovery-health state remains separate local metadata and normal writes remain subject to its 24-hour freshness guard.
+Canonical interchange remains `easy-backup` version 2 / schema5. D-018 checkpoints/restores all four tables atomically. D-024 recovery-health state remains separate local metadata and normal writes remain subject to its 24-hour freshness guard.
 
 ## Authoritative decisions
 
-D-016 through D-025 remain authoritative:
+D-016 through D-025 remain authoritative. In particular:
 
+- D-012 requires audited reversal instead of destructive financial history editing;
+- D-013 requires atomic linked replacement correction;
 - D-016 keeps local-first/single-user topology;
 - D-017 keeps logical `easy-backup` v2;
 - D-018 keeps checkpointed verified atomic restore;
-- D-019 keeps `npm run qa:critical` as the mandatory integration/publication gate;
+- D-019 keeps `npm run qa:critical` mandatory before integration/publication;
 - D-024 keeps synchronized recovery-copy folder + exact 24-hour freshness guard;
-- D-025 is now fully implemented across I1/I2/I3 without changing its semantics.
+- D-025 remains fully implemented across P9-S3 I1/I2/I3.
 
-No new decision number was required for I3.
+No new decision is accepted by the P9-S4 evidence gate.
 
-## P9-S3-I3 closure
+## P9-S4 evidence/contract gate result
 
-PR #48 implemented only the D-025 reporting slice:
+The accepted direct store evidence proves that Duda encounters several edit/correction friction points, but it explicitly states that the exact record/action pairs were **not enumerated**. P9-S1 separately proved a set of unsupported/constrained correction actions in source and explicitly prohibited treating those source findings as claims that Duda reported each case.
 
-1. effective non-reversed `order` rows only;
-2. `transactionOccurredAt()` / `occurredAt` reporting time basis;
-3. grouping by historical stored `transaction.categoryId`, never current item classification;
-4. explicit `Sem categoria — histórico legado` bucket for missing snapshots;
-5. order count, summed quantity and gross order value;
-6. linked corrections counted only through the effective replacement;
-7. archived categories remain reportable;
-8. current category name may label a still-existing stable identity while immutable `transaction.categoryName` remains audit history;
-9. bounded read-only `/category-report` UI with all-time or inclusive occurrence-period filtering;
-10. no payment/signal/balance/debt allocation, backfill/recategorization, profitability inference, schema/backup or later-slice work.
+Current source inspection confirms the existing audited flow already supports:
 
-### D-019 and integration proof
+1. wrong reseller on an effective transaction;
+2. wrong order quantity;
+3. wrong order unit price / resulting total;
+4. wrong payment or signal amount;
+5. pure reversal/cancellation with mandatory reason.
 
-- Functional gate: run `32261923163`, job `96096954271`, merge ref `02d656ea771e334622a6248139b508e20a98caf1` — 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; build PASS.
-- **Final documentation-complete gate:** run `32262877105`, job `96100129962`, merge ref `e9cb929b0eb8a109a44eba3408e1675249b11fd7`, head `b7e76e56c8049a002243fc693891880ba6bf0a50` over base `4191df77db83258f1125bffd445a6ec1f5b46bf9` — **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-- PR #48 squash-integrated into `develop` as **`08ad2973f387035301901f9f46b0c78039796c2d`**.
-- Validated merge ref and integrated squash share exact tree **`af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`**.
+The current source also confirms these five concrete gaps/constraints:
 
-## Boundary entering P9-S4
+1. **financial occurrence date after save** — guided replacement preserves the original `occurredAt`;
+2. **order item after save** — guided replacement must preserve the original `itemId`;
+3. **transaction type after save** — guided replacement preserves `order` / `payment` / `signal` type;
+4. **observation after save** — guided replacement preserves the original `observation`;
+5. **guided correction after the original order item is archived** — reversal remains possible, but replacement is blocked while the original item is inactive.
 
-P9-S4 remains evidence-bounded. Do not treat generic “edit transaction” friction as authorization for arbitrary destructive editing.
+These are source-proven gaps, not yet directly confirmed store cases. The directly confirmed delayed-entry workflow makes wrong `occurredAt` a relevant candidate, but the accepted evidence does not prove that post-save date correction itself occurs or is a high-value need.
 
-Before any new correction runtime is implemented, map the source-proven unsupported correction actions to concrete store operator cases and identify the confirmed high-value subset while preserving P2 audited reversal/replacement history. Do not weaken D-012/D-013, do not introduce destructive mutation of historical financial rows, and do not start P9-S5/P10 or backend/auth/cloud/live-sync work.
+Therefore **no smallest confirmed implementation subset can yet be selected without inventing evidence**. P9-S4 runtime remains `NOT_STARTED`, no D-012/D-013 semantics are changed, and no D-026 is created.
+
+`docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` records the minimum direct questions needed to resolve the blocker.
+
+## Integration state of this evidence gate
+
+This documentation-only evidence/contract slice must pass D-019 and integrate into `develop` before its blocked state is canonically closed. No runtime file is part of the slice.
 
 ## NEXT_ACTION
 
-**Execute only the P9-S4 evidence/contract gate for confirmed correction microflows: inspect the already-accepted direct store evidence and the current correction UI/domain only as needed to map the source-proven unsupported correction actions to concrete operator cases, distinguish what is already supported from what is genuinely missing, and define the smallest confirmed high-value correction subset that may be implemented while preserving audited reversal/replacement history. Do not implement speculative correction actions before that mapping is established; do not alter historical rows destructively; do not start P9-S5/P10 or backend/auth/cloud/live-sync work. Preserve D-012/D-013/D-016/D-017/D-018/D-019/D-024/D-025 and run D-019 before integrating the evidence/contract slice.**
+**Collect only the direct P9-S4 operator evidence requested in `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md`: for each source-proven gap (wrong occurrence date after save, wrong order item, wrong transaction type, wrong/missing observation, and correcting an order after its item was archived), record whether the case actually occurs in store operation, approximate frequency, current workaround and business consequence, plus any other exact missing record/action pair. Do not implement correction runtime yet. After direct evidence is received, rerun only the bounded P9-S4 mapping/decision gate to select the smallest confirmed high-value subset — or close P9-S4 with no runtime if no missing case is confirmed — while preserving D-012/D-013/D-016/D-017/D-018/D-019/D-024/D-025. Do not start P9-S5/P10 or backend/auth/cloud/live-sync work.**

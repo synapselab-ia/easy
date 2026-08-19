@@ -4,6 +4,30 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-19 — P9-S4 correction evidence gate mapped; runtime blocked pending direct confirmation
+
+The P9-S4 evidence/contract gate inspected only the accepted direct-store evidence, the accepted P9-S1 correction inventory and the current correction UI/domain needed to distinguish existing support from genuine source constraints.
+
+Current V2 already supports audited correction of reseller, order quantity/unit price, payment/signal value and pure reversal/cancellation under D-012/D-013.
+
+Current source still constrains:
+
+- post-save `occurredAt` correction;
+- changing the order item after save;
+- changing transaction type after save;
+- changing/adding observation after save;
+- guided replacement of an order whose original item is inactive.
+
+P8 directly confirmed that correction friction exists, but it did not identify which exact record/action pairs cause that friction. P9-S1 explicitly classified the rows above as source-proven gaps rather than direct claims about Duda's operation. Therefore no high-value implementation subset can be selected without inventing evidence.
+
+`docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` now records the minimum direct intake required: whether each case actually occurs, approximate frequency, current workaround, business consequence and any other exact missing record/action pair.
+
+No runtime, schema, backup, historical financial row, D-012/D-013 semantic, P9-S5/P10 work or backend/auth/cloud/live synchronization was changed. No new D-number was accepted.
+
+This documentation-only slice remains subject to D-019 before integration.
+
+---
+
 ## 2026-08-19 — P9-S3-I3 category reporting completed and integrated; P9-S3 closed
 
 PR #48 completed the final D-025 category order-performance reporting slice.
@@ -63,7 +87,7 @@ D-024 selected synchronized recovery-copy folder plus exact 24-hour freshness gu
 
 ## 2026-08-18 — P9-S1 evidence-backed prioritization completed
 
-D-023 ranking: recovery durability 94/100, categories/reporting 83/100, exact correction microflows 70/100, occurrence-date usability 69/100. Critical QA `32166330198` / `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
+D-023 ranking: recovery durability 94/100, categories/reporting 83/100, correction microflows 70/100, occurrence-date usability 69/100. Critical QA `32166330198` / `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ---
 
