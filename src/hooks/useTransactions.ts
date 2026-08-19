@@ -7,6 +7,7 @@ import {
     type TransactionCorrection,
 } from '../db/database';
 import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
+import { requireActiveCategory } from '../services/categoryService';
 import { assertRecoveryWriteAllowed } from '../services/recoveryHealth';
 
 export const ORDER_ITEM_REQUIRED_ERROR = 'Pedidos novos devem referenciar um item do catálogo.';
@@ -105,15 +106,25 @@ async function addValidatedTransaction(
         throw new Error('Itens inativos não podem ser usados em novos pedidos.');
     }
 
+    const categorySnapshot = preservedOrderSnapshot
+        ? {
+            categoryId: preservedOrderSnapshot.categoryId,
+            categoryName: preservedOrderSnapshot.categoryName,
+        }
+        : await requireActiveCategory(item.categoryId).then(category => ({
+            categoryId: category.id,
+            categoryName: category.name,
+        }));
+
     return db.transactions.add({
         ...cleanTransaction,
         occurredAt: occurrenceTimestamp,
         itemName: preservedOrderSnapshot?.itemName ?? item.name,
-        ...(preservedOrderSnapshot?.categoryId !== undefined
-            ? { categoryId: preservedOrderSnapshot.categoryId }
+        ...(categorySnapshot.categoryId !== undefined
+            ? { categoryId: categorySnapshot.categoryId }
             : {}),
-        ...(preservedOrderSnapshot?.categoryName !== undefined
-            ? { categoryName: preservedOrderSnapshot.categoryName }
+        ...(categorySnapshot.categoryName !== undefined
+            ? { categoryName: categorySnapshot.categoryName }
             : {}),
         ...correctionMetadata,
         createdAt: registrationTimestamp,
@@ -148,7 +159,7 @@ export function useCreateTransaction() {
     return useMutation({
         mutationFn: (transaction: NewTransactionInput) => {
             assertRecoveryWriteAllowed();
-            return db.transaction('rw', db.resellers, db.items, db.transactions, () =>
+            return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, () =>
                 addValidatedTransaction(transaction)
             );
         },
@@ -216,7 +227,7 @@ export function useReplaceTransaction() {
             replacement: CorrectionReplacementInput;
         }) => {
             assertRecoveryWriteAllowed();
-            return db.transaction('rw', db.resellers, db.items, db.transactions, async () => {
+            return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, async () => {
                 if (!isValidEntityId(originalId)) {
                     throw new Error(TRANSACTION_NOT_FOUND_ERROR);
                 }
