@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through accepted P10-S1 pre-cutover contract  
+**Status:** verified through integrated P10-S1 pre-cutover contract  
 **Integration target:** `develop`  
 **Date:** 2026-08-19
 
@@ -164,8 +164,16 @@ Both `main` and `develop` are currently unprotected GitHub branches. Therefore D
 ## Accepted P9 validation baseline
 
 - P9-S4-I1: D-019 `32285620846` / `96174326588`; PR #54 integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`; tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
-- P9-S5: D-019 `32287018048` / `96178850066`; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`; tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
+- P9-S5: D-019 `32287018048` / `96174326588`; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`; tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
 - Canonical P9 closure: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
+
+## P10-S1 contract integration proof
+
+- D-019 run `32290159119`, job `96188851730`, validated PR #58 merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75` — 0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+- Validated head `f29de41c6fa668bebfd7a839c2b693eb9d971c55` over base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
+- PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`.
+- Validated merge ref and integrated squash share exact tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
+- The contract integration changed documentation only; no runtime, persistence, Vercel candidate, live data or stable branch was changed.
 
 ## D-027 / P10-S1 boundary
 
