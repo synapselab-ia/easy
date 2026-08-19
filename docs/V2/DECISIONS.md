@@ -120,8 +120,9 @@ Accepted semantics:
 Implementation completed through P9-S3 I1/I2/I3; final I3 D-019 `32262877105` / `96100129962`; PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`.
 
 ## D-026 — Effective transaction business fields are correctable through audited linked replacement
-**Status:** ACCEPTED / INTEGRATED / IMPLEMENTATION NOT_STARTED  
-**Date:** 2026-08-19
+**Status:** ACCEPTED / FULLY IMPLEMENTED AND INTEGRATED  
+**Date:** 2026-08-19  
+**Implementation completed:** 2026-08-19
 
 Direct operator evidence resolved the P9-S4 blocker: information entered into the system must remain editable after entry, but the correction does not need to overwrite prior history.
 
@@ -138,20 +139,27 @@ D-026 extends the guided replacement contract without weakening D-012/D-013:
 - changing/newly introducing an order item requires a current active/classified target and captures its current item/category snapshot;
 - changing an order to a non-order removes order/item/category fields from the replacement only;
 - the reversed original is never recategorized or rewritten;
-- the archive-specific edge was not confirmed as a recurring store case, so D-026 does not weaken P1/D-011 active-reference rules for inactive entities;
+- inactive/missing historical order items are not silently reused as new references; the editor requires another valid item or another target type rather than weakening P1/D-011;
 - D-024 write enforcement remains mandatory;
 - no schema/backup/backend/cloud change is implied.
 
-The smallest coherent implementation is P9-S4-I1: one full-field audited transaction replacement editor. The separate observation that transaction entry defaults `Data da ocorrência` to today remains evidence for P9-S5 usability verification, not permission to change P3 date semantics in P9-S4.
+P9-S4-I1 implemented the complete replacement-state editor and expanded replacement validation while retaining compatibility with the earlier bounded correction call shape.
 
-### Acceptance/integration proof
+### Decision acceptance proof
 
 - D-019 run `32277770945`, job `96149101495`, merge ref `6a57fbe6b8674aca8723538f756b04f4a5af3f13` — 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-- Validated head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` over base `1221f71de460c266c165b92de0536f443c71fa08`.
-- PR #52 squash-integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`.
-- Validated merge ref and integrated squash share exact tree `c37ea55f83b15415678f5b2be2747fb5f06c6a27`.
+- PR #52 squash-integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`; decision tree `c37ea55f83b15415678f5b2be2747fb5f06c6a27`.
 
-Detailed contract: `docs/V2/P9_CORRECTION_DECISION.md`.
+### Runtime implementation proof
+
+- D-019 run **`32285620846`**, job **`96174326588`**, merge ref **`4b51a5f35c2104d636903ce89eecbc995a0f3ce3`** — **0 lint errors / 82 warnings; 52 files / 216 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- Validated head `a4f0b026e14fc85bd02eee56db262b5271507b3c` over base `0f3ec562717c75981802f330d64410ee612a034d`.
+- PR #54 squash-integrated as **`f1cfd126c18691da1256a1d3f918158d7aa9495a`**.
+- Validated merge ref and integrated squash share exact tree **`5679693b5f588f58404050cfca8ffd17a9a49fb3`**.
+
+The separate observation that transaction entry defaults `Data da ocorrência` to today remains evidence for P9-S5 usability verification, not permission to change D-014/P3 date semantics.
+
+Detailed record: `docs/V2/P9_CORRECTION_DECISION.md`.
 
 ---
 
