@@ -44,7 +44,7 @@ Objective failures block integration. Existing warning/harness/dependency debt r
 
 **PASS / DONE / INTEGRATED.** Functional `32261923163` / `96096954271`; authoritative final documentation-complete `32262877105` / `96100129962`: 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS. PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`; validated/integrated tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
 
-## P9-S4 evidence/contract gate — current slice
+## P9-S4 evidence/contract gate — ACCEPTED / INTEGRATED / BLOCKED ON DIRECT EVIDENCE
 
 **Runtime:** unchanged.  
 **Purpose:** prove what current correction already supports, map source-proven gaps to concrete operator cases, and determine whether direct evidence is sufficient to select an implementation subset.
@@ -67,7 +67,13 @@ Result:
 
 `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` defines the direct confirmation needed. P9-S4 is blocked on that evidence, not on a failing code gate.
 
-This documentation-only evidence slice must itself pass D-019 before integration. No objective QA failure may be waived merely because runtime is unchanged.
+### Accepted integration proof
+
+- PR #50 base `825aca83d1f317119f8f0e4f3d203722c1e6cf85`, validated head `211923d7900818d189b22ce8773be76591505d31`.
+- D-019 run `32265612927`, job `96109244644`, merge ref `5efb3bd2d0fd20909802a02e00d170150689a7d7` — **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- PR #50 squash-integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`.
+- Validated merge ref and integrated squash share tree `5789c7863c0a62904b9d18692543f2b288290867`.
+- The unusually slow Playwright preparation was an external Ubuntu package download before `qa:critical`; it did not weaken or bypass any gate.
 
 ## Current known non-blocking debt
 

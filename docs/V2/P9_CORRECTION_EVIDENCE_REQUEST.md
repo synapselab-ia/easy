@@ -1,6 +1,6 @@
 # Easy V2 — P9-S4 Correction Microflow Evidence Request
 
-**Status:** `DIRECT CONFIRMATION REQUIRED`  
+**Status:** `GATE ACCEPTED / WAITING FOR DIRECT ANSWERS`  
 **Date:** 2026-08-19  
 **Scope:** confirm exact store correction cases before authorizing runtime work
 
@@ -9,6 +9,8 @@
 P8 directly confirmed that Duda encounters edit/correction friction in real operation, but the accepted evidence explicitly did **not** identify the exact record/action pairs. P9-S1 then proved several correction constraints in source, but also recorded that those constraints must not be rewritten as claims that Duda reported each one.
 
 The P9-S4 evidence/contract gate therefore cannot select an implementation subset until the store confirms which exact cases actually occur and matter operationally.
+
+The evidence-gate mapping was validated by D-019 `32265612927` / `96109244644` and integrated through PR #50 as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`. This request is now the canonical blocker-resolution intake.
 
 This request does not authorize destructive editing, a new schema, backend/auth/cloud/live synchronization or any P9-S5/P10 work.
 
