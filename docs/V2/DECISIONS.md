@@ -76,21 +76,19 @@ Period statements use opening balance before start, inclusive-range effective mo
 
 No backend, authentication, cloud database or synchronization layer is introduced under currently evidenced requirements. Reconsider D-016 only if direct requirements mandate concurrent operators, automatic live multi-device sharing, person-level authorship/access control, remote recovery SLA, trusted server integrations or a security policy incompatible with browser-local storage.
 
-D-016 constrains **persistence topology**, not the internal Dexie schema number. Local additive schema migrations such as V4→V5 under D-025 do not reopen D-016.
+D-016 constrains persistence topology, not the internal Dexie schema number. Local additive schema migrations such as V4→V5 under D-025 do not reopen D-016.
 
 ## D-017 — Backup v2 is the canonical logical recovery contract; destructive restore requires successful preflight
 **Status:** ACCEPTED / EXTENDED BY D-025  
 **Date:** 2026-08-17
 
-`easy-backup` version 2 is the logical interchange/recovery contract independent from Dexie schema version. Legacy v1 remains supported through in-memory normalization. Destructive restore is ineligible until preflight validates envelope/source/version, required fields, duplicates/IDs/dates/positive values, references, lifecycle, correction links and occurrence chronology.
-
-D-025 implementation preserves logical version 2 while current exports use `source.schemaVersion = 5`, include `data.categories[]` and optional category references/snapshots. Existing v2/schema4 inputs remain supported through lossless normalization without fabricated categories.
+`easy-backup` version 2 is the logical interchange/recovery contract independent from Dexie schema version. Legacy v1 remains supported through in-memory normalization. D-025 preserves logical version 2 while current exports use `source.schemaVersion = 5`, include `data.categories[]` and optional category references/snapshots. Existing v2/schema4 inputs remain supported without fabricated categories.
 
 ## D-018 — Restore requires a downloaded validated checkpoint and one verified atomic Dexie transaction
 **Status:** ACCEPTED / EXTENDED BY D-025  
 **Date:** 2026-08-17
 
-Before destructive restore, Easy downloads a validated canonical v2 checkpoint. The verified atomic replacement boundary now covers `categories`, `items`, `resellers` and `transactions` in one Dexie `rw` transaction with post-write revalidation/canonical comparison. Any write/verification divergence throws and rolls back the complete four-table replacement.
+Before destructive restore, Easy downloads a validated canonical v2 checkpoint. The verified atomic replacement boundary covers `categories`, `items`, `resellers` and `transactions` in one Dexie `rw` transaction with post-write revalidation/canonical comparison. Any write/verification divergence rolls back the complete replacement.
 
 ## D-019 — Critical QA is mandatory for V2 integration and publication from main
 **Status:** ACCEPTED  
@@ -104,7 +102,7 @@ npm run qa:critical
   -> npm run build
 ```
 
-CI runs on PRs to `develop`/`main`, pushes to `develop` and manual dispatch. Publication from `main` requires `quality -> build -> deploy`. Objective failures block integration; recorded warning/harness debt does not weaken the gate. Functional run `32064801009` and post-merge `32065713920` passed.
+Objective failures block integration; warning/harness debt does not redefine a passing gate.
 
 ## D-020 — P7 prioritizes operator-intent/error risks before convenience or cosmetic refinement
 **Status:** ACCEPTED  
@@ -143,21 +141,12 @@ Detailed scoring remains in `docs/V2/P9_PRIORITIZATION.md`.
 
 The accepted target is a newest usable off-device copy no more than **24 hours** old, with manual operator-run restoration on any computer acceptable and daily-use continuity without inventing numeric RTO.
 
-Selected mechanism:
-
-- preserve canonical `easy-backup` v2 and D-018 restore semantics;
-- backup downloads use a local folder covered by OS/provider synchronization; Google Drive for desktop is the accepted current-store instance;
-- require one setup verification that an exported backup is visible off the local-PC-only context;
-- track local recovery-copy export freshness fail-safe;
-- at 24 hours, block normal data-changing work until a new export while keeping Backup/Restore reachable;
-- Easy confirms generation/download initiation, not provider-side synchronization completion.
-
-D-016 is **KEPT**. No Drive API/OAuth, backend/auth/cloud database/live sync, required File System Access API or provider-side acknowledgment is introduced.
+Selected mechanism preserves canonical `easy-backup` v2/D-018, uses a local folder covered by OS/provider synchronization, keeps Backup/Restore reachable at the 24-hour write boundary and does not introduce Drive API/OAuth, backend/auth/cloud DB/live sync or provider-side synchronization attestation.
 
 Accepted P9-S2-I1 run `32180250834`, job `95851336506` passed; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
 
 ## D-025 — Category classification is snapshot-based; legacy history is not retroactively invented
-**Status:** ACCEPTED / I1 IMPLEMENTED  
+**Status:** ACCEPTED / I1 + I2 IMPLEMENTED  
 **Date:** 2026-08-18
 
 Accepted semantics:
@@ -169,29 +158,36 @@ Accepted semantics:
 - legacy orders without snapshot remain valid as `Sem categoria — histórico legado`;
 - category analysis uses only effective orders and `occurredAt`, with order count, quantity and gross value minimums;
 - reseller payments/signals, balances and FIFO debt are not allocated to categories;
-- persistence target is Dexie V5 with `categories` and optional category fields during legacy compatibility;
-- D-017 stays logical `easy-backup` v2; schema5 adds category data while v1 and v2/schema4 remain supported;
+- persistence is Dexie V5 with `categories` and optional category fields for legacy compatibility;
+- D-017 remains logical `easy-backup` v2 with schema5 category data and v1/v2-schema4 compatibility;
 - D-018 atomic restore includes categories/items/resellers/transactions.
 
-### Contract proof
+### Contract and I1 proof
 
-Final PR #44 closure D-019: run `32185226251`, job `95867186002`, merge ref `ab910d1fbfbe2a007bc35e7bd8784e7697283312` — 0 errors / 80 warnings, 44/183 Vitest, 17/17 Playwright, build PASS. PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`; validated/integrated tree `676f70baa62a46cc353d756a2ff5624295d699c8`.
+Contract closure: D-019 `32185226251`, job `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
 
-### P9-S3-I1 implementation proof
+I1 final D-019: `32191707306`, job `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`, validated/integrated tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
 
-I1 implements only the persistence/recovery substrate:
+### P9-S3-I2 implementation proof
 
-- Dexie V5 categories and optional item/transaction category fields;
-- additive V4→V5 migration with no category/history backfill;
-- v2/schema5 category export/preflight plus v1/v2-schema4 normalization;
-- D-018 four-table checkpoint/restore/read-back verification;
-- category/unclassified/legacy counts in backup preview;
-- correction preservation of already-existing category snapshots;
-- no category management/classification flow, no new-order category snapshot generation and no category reporting yet.
+I2 operationalizes the already-accepted lifecycle/classification/snapshot rules:
 
-Accepted functional D-019: run **`32191018791`**, job **`95885134808`**, PR #45 merge ref `c6891b5f7e01c6d36ea71fdfb52571e805d7655d` — **0 errors / 81 warnings, 47/195 Vitest, 17/17 Playwright, build PASS**. The final canonical-documents head still requires D-019 before integration.
+- category create/rename/archive/reactivate and guarded hard deletion;
+- category names unique case-insensitively across active/archived identities;
+- archive blocked by active-item references; hard deletion blocked by any item or historical snapshot reference;
+- bounded `/categories` operator management flow;
+- item assignment/reassignment only to active categories;
+- active category required for new active items and reactivation;
+- migrated active legacy unclassified items remain editable but are blocked from new orders until classified;
+- new order resolves item/category inside the transactional write boundary and stores immutable `categoryId + categoryName` snapshot;
+- guided replacement correction preserves the original snapshot, including no-category legacy history;
+- D-024 write guard remains authoritative across the new category mutations.
 
-No new decision number is required for I1 because it implements the already accepted D-025 contract.
+First functional gate `32202062045`, job `95917767742`, correctly failed with 199/205 Vitest due to stale unclassified success fixtures, ItemForm test setup and a Dexie transaction-zone lookup issue. The decision contract was not weakened.
+
+Accepted functional D-019 **`32202440100`**, job **`95918871077`**, PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`: **0 lint errors / 81 warnings, 49/205 Vitest, 17/17 Playwright and production build PASS**.
+
+No new decision number is required for I2 because it implements D-025 rather than changing its semantics. Category order-performance reporting remains the only unimplemented D-025 slice and is P9-S3-I3.
 
 ---
 
