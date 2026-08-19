@@ -27,7 +27,7 @@ Phase state:
 - **P9-S3-I1 — Persistence/migration/backup: `DONE / INTEGRATED`.**
 - **P9-S3-I2 — Lifecycle/classification/order snapshots: `DONE / INTEGRATED`.**
 - **P9-S3-I3 — Category order-performance reporting: `DONE / INTEGRATED`.**
-- **P9-S4 — Confirmed correction microflows: `BLOCKED — direct operator confirmation required`.**
+- **P9-S4 — Confirmed correction microflows: `BLOCKED — evidence gate accepted/integrated; direct operator confirmation required`.**
 - P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
 - P10 — Controlled beta, migration and cutover: `NOT_STARTED`.
 
@@ -105,9 +105,15 @@ Therefore **no smallest confirmed implementation subset can yet be selected with
 
 `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` records the minimum direct questions needed to resolve the blocker.
 
-## Integration state of this evidence gate
+## Accepted evidence-gate integration
 
-This documentation-only evidence/contract slice must pass D-019 and integrate into `develop` before its blocked state is canonically closed. No runtime file is part of the slice.
+- D-019 run `32265612927`, job `96109244644`, validated PR #50 merge ref `5efb3bd2d0fd20909802a02e00d170150689a7d7` — **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- Validated head: `211923d7900818d189b22ce8773be76591505d31` over base `825aca83d1f317119f8f0e4f3d203722c1e6cf85`.
+- PR #50 squash-integrated into `develop` as `35a2e0d7495791dfda7f02e045067a85bad4aed9`.
+- Validated merge ref and integrated squash share exact tree `5789c7863c0a62904b9d18692543f2b288290867`.
+- Slice was documentation-only; no runtime file changed.
+
+The evidence/contract mapping is therefore accepted and integrated. The **blocker itself intentionally remains** until direct operator answers are supplied.
 
 ## NEXT_ACTION
 
