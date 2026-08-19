@@ -24,12 +24,12 @@ Phase state:
 - P9-S1 — Evidence-backed prioritization: `DONE`.
 - P9-S2 — Recovery durability: `DONE`.
 - **P9-S3 — Categories/classification/reporting: `DONE / INTEGRATED`.**
-- **P9-S4 — Confirmed correction microflows: `IN_PROGRESS`.**
+- **P9-S4 — Confirmed correction microflows: `DONE / INTEGRATED`.**
   - evidence/source mapping gate: `DONE / INTEGRATED`;
   - direct operator evidence: `DONE`;
-  - **D-026 correction contract/decision: `DONE / INTEGRATED`;**
-  - P9-S4-I1 full-field audited replacement editor: `NOT_STARTED`.
-- P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
+  - D-026 correction contract/decision: `DONE / INTEGRATED`;
+  - **P9-S4-I1 full-field audited replacement editor: `DONE / INTEGRATED`.**
+- **P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.**
 - P10 — Controlled beta, migration and cutover: `NOT_STARTED`.
 
 ## Startup protocol for a new conversation
@@ -53,7 +53,7 @@ Phase-specific canonical evidence:
 - `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` and `P9_RECOVERY_DECISION.md` — P9-S2;
 - `docs/V2/P9_CATEGORY_CONTRACT.md` — completed D-025 / P9-S3 record;
 - `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` — direct P9-S4 evidence record;
-- `docs/V2/P9_CORRECTION_DECISION.md` — accepted/integrated D-026 and bounded P9-S4-I1 contract.
+- `docs/V2/P9_CORRECTION_DECISION.md` — accepted and implemented D-026 / P9-S4 record.
 
 ## Current technical baseline
 
@@ -61,7 +61,11 @@ Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and l
 
 Runtime is Dexie **V5** with `categories`, `items`, `resellers`, `transactions`. Canonical interchange remains `easy-backup` version 2 / schema5. D-018 restores all four business tables atomically. D-024 recovery-health metadata remains separate and normal writes remain subject to its exact 24-hour guard.
 
-Current transaction correction runtime still reflects P2: it can change reseller, order quantity/unit price, payment/signal value and perform pure reversal, but it still preserves original type, occurrence date, order item and observation during guided replacement. **D-026 is accepted/integrated as the next implementation contract but is not implemented yet.**
+**D-026 is now implemented.** The correction flow keeps the original transaction immutable and creates an audited linked replacement whose business state can define reseller, target type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value. Mandatory correction reason, atomic reversal+replacement linkage and D-024 enforcement remain intact.
+
+For orders, keeping the same item preserves the original D-025 `itemName/categoryId/categoryName` snapshot. Changing/newly introducing an item requires a current active/classified target and captures the target's current snapshot. Order → non-order replacement removes order/category fields only from the replacement. The original row is never recategorized or destructively rewritten.
+
+The UI surfaces inactive/missing historical-item constraints rather than weakening P1/D-011: an unavailable original item cannot be reused as a new target, but correction may select another valid item or another transaction type.
 
 ## Authoritative decisions
 
@@ -75,36 +79,41 @@ D-016 through D-026 are authoritative. In particular:
 - D-019 keeps `npm run qa:critical` mandatory;
 - D-024 keeps synchronized recovery-copy folder + exact 24-hour freshness guard;
 - D-025 keeps stable category identity and immutable historical category snapshots;
-- **D-026 requires operator-entered business fields of an effective transaction to be correctable by audited linked replacement, never destructive in-place history mutation.**
+- **D-026 requires and now implements correction of effective transaction business fields through audited linked replacement, never destructive in-place history mutation.**
 
-## P9-S4 direct evidence and decision result
+## P9-S4 implementation result
 
-Direct operator evidence received 2026-08-19 resolved the prior blocker.
+P9-S4-I1 completed the bounded D-026 runtime without schema, backup, backend, auth, cloud/live-sync, P9-S5 or P10 changes.
 
-The operator first described the practical date concern as the system presenting today's date by default in routine transaction/report contexts and did not know the individual frequency of wrong item/type/observation/archive cases. The operator then clarified the actual product requirement: **information entered into the system must remain editable afterward, while prior history does not need to be overwritten by that correction.**
+Implemented behavior:
 
-Canonical consequences:
+1. full replacement-state editor exposes reseller, type, financial occurrence date and observation;
+2. order replacements expose item, quantity and unit price/derived total;
+3. payment/signal replacements expose movement value and carry no order-shape fields;
+4. same-item order correction preserves the historical D-025 snapshot;
+5. changed/new order item requires active/classified current references and captures a current snapshot;
+6. original business values remain immutable; only reversal audit metadata is added to the original;
+7. replacement and reversal linkage remain atomic with mandatory reason;
+8. D-024 freshness guard remains in front of the write;
+9. legacy bounded replacement callers remain compatible while the full editor uses the expanded D-026 payload explicitly.
 
-1. post-save transaction correction is a confirmed product need;
-2. field-by-field frequency/workaround/consequence remain unknown and are not invented;
-3. the smallest coherent implementation is one complete audited replacement editor rather than several deliberately incomplete partial editors;
-4. the original transaction and audit metadata remain immutable;
-5. replacement may change reseller, type, `occurredAt`, observation, and the applicable order/payment fields under normal domain validity;
-6. D-025 category snapshots must be preserved when keeping the same order item and freshly captured when changing to another active/classified item;
-7. the archive-specific edge was not confirmed as a recurring store incident, so P1/D-011 lifecycle rules are not weakened by this decision;
-8. today's-date default/discoverability is retained as separate evidence for P9-S5, not changed in P9-S4.
+Focused tests cover type/date/observation changes, order item changes, target-shape rejection, D-025 snapshot preservation/recapture, original immutability, reversal linkage, inactive target rejection and D-024 blocking.
 
-No correction runtime, schema or backup change was implemented by the D-026 decision slice.
+## P9-S4-I1 validation and integration
 
-## Accepted D-026 decision validation and integration
+- PR #54 validated on D-019 run **`32285620846`**, job **`96174326588`**, merge ref **`4b51a5f35c2104d636903ce89eecbc995a0f3ce3`**.
+- Validated merge ref combined head `a4f0b026e14fc85bd02eee56db262b5271507b3c` with base `0f3ec562717c75981802f330d64410ee612a034d`.
+- Gate result: **0 lint errors / 82 warnings; 52 files / 216 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- PR #54 squash-integrated into `develop` as **`f1cfd126c18691da1256a1d3f918158d7aa9495a`**.
+- Validated merge ref and integrated squash share exact tree **`5679693b5f588f58404050cfca8ffd17a9a49fb3`**.
+- Existing React/test-harness/lint/dependency/Actions/chunk warnings remain non-blocking because the complete D-019 gate passed objectively.
 
-- PR #52 validated on D-019 run **`32277770945`**, job **`96149101495`**, merge ref **`6a57fbe6b8674aca8723538f756b04f4a5af3f13`**.
-- Validated merge ref combined head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` with base `1221f71de460c266c165b92de0536f443c71fa08`.
-- Gate result: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-- PR #52 squash-integrated into `develop` as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**.
-- Validated merge ref and integrated squash share exact tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**.
-- The prior slow runners were infrastructure delay in Playwright dependency installation before `qa:critical`; no gate was bypassed.
+## Boundary entering P9-S5
+
+Direct operator evidence retained one separate date-usability signal: routine transaction entry presents today's date by default. Current P3 semantics already distinguish `occurredAt` from registration/audit time, and P9-S4 intentionally did not redesign that model.
+
+P9-S5 is therefore a bounded usability verification, not permission to add another date model or modify unrelated correction/runtime behavior.
 
 ## NEXT_ACTION
 
-**Execute only P9-S4-I1 — Full-field audited transaction replacement editor — under D-026. Extend the existing linked replacement flow so the replacement may define target reseller, transaction type, `occurredAt`, observation, and the applicable order item/quantity/unit price or payment/signal value while preserving mandatory correction reason, atomic replacement+reversal, original-row immutability, D-024 write guard and D-025 category snapshot semantics. Target newly selected reseller/item references must continue to satisfy current active/reference rules; do not weaken P1/D-011 to solve inactive-entity edge cases. Add focused tests for date, item, type, observation, target-shape validation, category snapshot preservation/change, original immutability and reversal linkage. Do not modify schema/backup, do not perform destructive in-place transaction edits, do not start P9-S5/P10, and do not add backend/auth/cloud/live synchronization. Run the full D-019 gate before integration.**
+**Execute only P9-S5 — Occurrence-date usability verification. Reconstruct the direct date-usability evidence and inspect the current transaction-entry workflow to verify that `Data da ocorrência` defaults to today's local date, remains clearly discoverable/editable before save, and continues to persist as financial occurrence independently from registration time. If an evidence-backed usability gap is actually present, make only the smallest bounded UI/test change needed without changing D-014/P3 date semantics. Do not reopen D-016, do not modify schema/backup, do not start P10, and do not perform unrelated correction/runtime work. Run the full D-019 gate before integration of any runtime change.**
