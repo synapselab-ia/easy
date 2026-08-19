@@ -35,6 +35,6 @@ jobs:
       - name: P10-S1-I2 remote rehearsal
         if: github.event_name == 'pull_request' && github.head_ref == 'agent/p10-s1-i2-rehearsal'
         env:
-          P10_CANDIDATE_URL: https://easy-v2-lvbggu5ji-synapselabia-8285s-projects.vercel.app/
+          P10_CANDIDATE_URL: https://easy-v2-tau.vercel.app/
           P10_CANDIDATE_SHA: 2b6c1e5f4e58790c9c805fed8cadda3484acfa0e
         run: npx playwright test --config=playwright.p10.config.ts
