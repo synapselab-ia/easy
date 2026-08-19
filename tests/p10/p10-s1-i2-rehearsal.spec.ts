@@ -166,8 +166,11 @@ async function exportBackup(page: Page) {
 }
 
 async function restoreCurrentPreview(page: Page) {
+    const restoreButton = page.getByRole('button', { name: 'Restaurar Backup' });
+    await expect(restoreButton).toBeVisible();
+    await expect(restoreButton).toBeEnabled();
     const checkpointPromise = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Restaurar Backup' }).click();
+    await restoreButton.evaluate((button: HTMLButtonElement) => button.click());
     const checkpoint = await checkpointPromise;
     expect(checkpoint.suggestedFilename()).toMatch(/\.json$/);
     await expect(page.getByText(/Backup restaurado com sucesso/)).toBeVisible();
