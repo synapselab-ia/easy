@@ -23,8 +23,8 @@ Phase state:
 - P8-S2 — Direct real-store validation and D-016 keep/reopen decision: `DONE`.
 - P9-S1 — Evidence-backed prioritization: `DONE`.
 - P9-S2 — Recovery durability: `DONE`.
-- **P9-S3 — Categories/classification/reporting: `IN_PROGRESS`; contract and P9-S3-I1 persistence/migration/backup slice are `DONE`.**
-- **P9-S3-I2 — Category lifecycle + item assignment + new-order snapshot enforcement: `NOT_STARTED`.**
+- **P9-S3 — Categories/classification/reporting: `IN_PROGRESS`; contract, I1 persistence/recovery substrate and I2 lifecycle/classification/order-snapshot enforcement are `DONE`.**
+- **P9-S3-I3 — Category order-performance reporting: `NOT_STARTED`.**
 - P9-S4 — Confirmed correction microflows: `NOT_STARTED`.
 - P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
 - P10 — Controlled beta, migration and cutover: `NOT_STARTED`.
@@ -55,180 +55,105 @@ Phase-specific canonical evidence:
 
 Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB.
 
-**Runtime is now Dexie V5.** P9-S3-I1 introduced only the persistence/recovery substrate required by D-025; operational category management/classification and category reporting are not implemented yet.
-
-Current persisted business tables:
+Runtime is Dexie **V5** with these business tables:
 
 - `categories`;
 - `items`;
 - `resellers`;
 - `transactions`.
 
-Current category-capable persistence fields:
+Category persistence remains:
 
-- `Category`: `id`, `name`, `isActive`, `createdAt`, `updatedAt`;
-- `Item.categoryId?` — optional so legacy V4 items remain valid/unclassified after migration;
-- `Transaction.categoryId?` + `categoryName?` — optional historical snapshot fields; I1 does not create them for normal new orders yet.
+- `Category`: stable `id`, `name`, `isActive`, `createdAt`, `updatedAt`;
+- `Item.categoryId?` — optional only for lossless legacy compatibility;
+- `Transaction.categoryId?` + `categoryName?` — optional because pre-I2 legacy orders remain valid without classification.
 
-The V4→V5 migration is additive and non-inventive: it creates an empty `categories` table and preserves existing item/order rows without fabricating category IDs, labels or historical classification.
+The V4→V5 migration remains additive/non-inventive. No migrated item/order receives fabricated category data.
 
-Current canonical export remains logical `easy-backup` **version 2**, now with `source.schemaVersion = 5` and `data.categories[]`. Supported legacy v1 and existing v2/schema4 backups remain accepted through in-memory normalization to the V5 target with `categories = []` and absent category fields.
+Canonical interchange remains logical `easy-backup` **version 2 / source.schemaVersion 5** with `data.categories[]`; supported v1 and v2/schema4 inputs still normalize losslessly. D-018 still checkpoints/restores `categories + items + resellers + transactions` atomically.
 
-D-018 restore now checkpoints, clears, writes and read-back verifies `categories + items + resellers + transactions` inside one Dexie `rw` transaction. Any write/validation/read-back divergence rolls back all four tables.
+D-024 recovery-health metadata remains separate local control state and every normal category/item/transaction mutation remains subject to the centralized freshness write guard. Backup/Restore remain reachable independently of that guard.
 
-Authoritative contracts include:
+## Authoritative decisions
 
-- P1 entity lifecycle and reference integrity;
-- P2 audited reversal/correction history;
-- P3 `occurredAt` financial occurrence, formal statement and FIFO debt semantics;
-- D-016 local-first/single-user persistence until an explicit reopen trigger is proven;
-- D-017 canonical `easy-backup` v2 logical backup contract;
-- D-018 checkpointed verified atomic restore;
-- D-019 repository-wide `npm run qa:critical` integration/publication gate;
-- D-020 evidence-first operational UX prioritization;
-- D-021/D-022 real-store architecture evidence;
-- D-023 P9 prioritization;
-- D-024 synchronized recovery-copy folder + exact 24-hour freshness guard;
-- **D-025 snapshot-based category classification with non-inventive legacy migration and order-only category analytics.**
+D-016 through D-025 remain authoritative. In particular:
 
-## Completed P9-S2 recovery guard
+- D-016 keeps local-first/single-user topology; no backend/auth/cloud/live sync is introduced;
+- D-017 keeps `easy-backup` v2 as logical backup contract;
+- D-018 keeps checkpointed verified atomic restore;
+- D-019 keeps repository-wide `npm run qa:critical` as integration/publication gate;
+- D-024 keeps synchronized recovery-copy folder + exact 24-hour freshness guard;
+- D-025 keeps stable category identity, non-inventive legacy history, transaction-time category snapshots and order-only category analytics.
 
-P9-S2 remains closed and must not regress while category work proceeds.
+No new decision number is required for P9-S3-I2: it implements already-accepted D-025 semantics.
 
-Implemented recovery behavior includes:
+## P9-S3-I1 persistence/recovery closure
 
-- namespaced local recovery-health control metadata (`easy.recoveryHealth.v1`) outside Dexie/business backup data;
-- fail-safe `unknown`, `due`, `current`, `warning`, `overdue` states;
-- non-contractual warning at 20 hours and exact hard mutation boundary at 24 hours;
-- centralized guard on normal item/reseller/transaction mutations;
-- all reads and Backup/Restore remain reachable while writes are blocked;
-- synchronized-folder operating procedure and explicit operator verification;
-- Easy records validated backup download initiation/metadata but does not claim provider-side Drive synchronization completion.
+P9-S3-I1 is `DONE` and must not regress:
 
-Accepted P9-S2-I1 Critical QA: `32180250834`, job `95851336506`; 44/183 Vitest, 17/17 Playwright and build PASS. PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
+1. Dexie V5 category persistence and optional category fields.
+2. Lossless/non-inventive V4→V5 migration.
+3. `easy-backup` v2/schema5 with legacy v1/v2-schema4 compatibility.
+4. Schema5 category graph validation.
+5. Four-table D-018 checkpoint/atomic restore/read-back verification.
+6. Backup preview for category/unclassified/legacy-order counts.
 
-## P9-S3 accepted category contract — D-025
+Final P9-S3-I1 D-019 passed in run `32191707306`, job `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b` with validated/integrated tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
 
-Direct store evidence requires category management/classification and analysis by category. D-025 resolves persistence/history/reporting semantics before operational implementation.
+## P9-S3-I2 lifecycle/classification/order-snapshot closure
 
-### Category lifecycle/identity
-
-Accepted target entity:
-
-```text
-Category
-- id
-- name
-- isActive
-- createdAt
-- updatedAt
-```
-
-Accepted rules:
-
-- `id` is stable identity; rename preserves identity;
-- names are trimmed/non-empty and unique case-insensitively across active and inactive categories;
-- normal lifecycle is archive/reactivate;
-- archive is blocked while an active item references the category;
-- inactive items may retain archived-category references;
-- hard deletion is allowed only with no item reference and no historical order snapshot reference.
-
-### Item assignment and historical classification
-
-- migrated V4 items remain valid without invented classification;
-- assignment/reassignment targets an active category;
-- reassignment affects future orders only;
-- migrated active items may remain temporarily unclassified, but must be classified before participating in a new order once I2 enforcement is implemented.
-
-Future category-aware orders preserve transaction-time classification:
-
-```text
-categoryId?: number
-categoryName?: string
-```
-
-Historical rules remain:
-
-- future category-aware order stores stable category ID plus category-name snapshot;
-- category rename or item reassignment never rewrites old order snapshots;
-- V4 orders receive no fabricated historical category;
-- orders with no snapshot remain valid under `Sem categoria — histórico legado`;
-- payments/signals never receive category fields;
-- guided order correction preserves original item/category snapshots and `occurredAt`.
-
-### Category reporting contract
-
-Category analysis remains **order-performance reporting only**:
-
-- effective, non-reversed `order` transactions;
-- time basis `occurredAt`;
-- group by historical `categoryId` snapshot;
-- minimum measures: order count, summed quantity and gross order value;
-- linked correction counts only the effective replacement;
-- archived categories remain reportable.
-
-P9-S3 does **not** allocate payments, signals, reseller balances or FIFO debt to categories.
-
-## P9-S3 contract validation/integration
-
-The final P9-S3 contract closure passed D-019 in run **`32185226251`**, job **`95867186002`**, on PR #44 merge ref `ab910d1fbfbe2a007bc35e7bd8784e7697283312`: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and production build PASS.
-
-PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`. The validated merge ref and integrated squash share exact tree `676f70baa62a46cc353d756a2ff5624295d699c8`.
-
-## P9-S3-I1 implementation closure
-
-P9-S3-I1 implements the D-025 persistence/recovery substrate and nothing beyond it.
+P9-S3-I2 implements the operational D-025 rules and nothing from reporting.
 
 Implemented:
 
-1. Dexie V5 `categories` table plus optional item/transaction category fields.
-2. Lossless/non-inventive V4→V5 migration; no category or historical backfill.
-3. `easy-backup` remains logical version 2, now schemaVersion 5 with `data.categories[]` and optional references/snapshots.
-4. v1 and v2/schema4 preflight/import remain supported and normalize without fabricated categories.
-5. Schema5 preflight validates category IDs, normalized-name uniqueness, category references, active-item/inactive-category incompatibility and order snapshot pairing.
-6. Payment/signal category fields are invalid.
-7. Linked order correction validation requires preservation of the original category snapshot.
-8. D-018 checkpoint/atomic restore/read-back verification now covers all four business tables.
-9. Backup preview exposes category count, unclassified-item count and legacy-order-without-category count.
-10. Guided corrections preserve already-persisted/imported category snapshots; normal order creation still does **not** create category snapshots in I1.
+1. Category create/rename/archive/reactivate plus guarded hard deletion.
+2. Category names are trimmed/non-empty and unique case-insensitively across active and archived categories; rename preserves stable identity.
+3. Archive is blocked while an active item references the category; inactive items may retain archived references.
+4. Hard deletion is blocked by any item reference or any historical order category snapshot.
+5. Category management is exposed as a bounded operator flow at `/categories`.
+6. New active items require an active category; assignment/reassignment may target only active categories.
+7. Reactivation requires an active category.
+8. Migrated active legacy items may remain unclassified and editable without backfill, but cannot participate in a new order until classified.
+9. New orders resolve the active item's active category inside the validated write boundary and persist the transaction-time `categoryId + categoryName` snapshot.
+10. Later category rename or item reassignment does not rewrite prior snapshots.
+11. Guided replacement correction preserves the original item/category snapshot; legacy no-category corrections remain no-category rather than being recategorized.
+12. Payments/signals remain category-free.
+13. Category/item/transaction writes continue through D-024 freshness enforcement.
 
-Targeted proof includes real Dexie V4→V5 migration, v2/schema4 compatibility, schema5 category graph validation, four-table backup/restore round-trip and rollback on simulated restore failure.
+### P9-S3-I2 D-019 history
 
-### D-019 execution history
+PR #46 remained draft through functional validation.
 
-PR #45 intentionally remained draft through functional validation.
+- Run `32202062045`, job `95917767742` — **FAIL** at Vitest with 199/205 tests passing. The gate exposed pre-I2 success fixtures that lacked required classification, two ItemForm fixture/setup mismatches after category enforcement, and a Dexie transaction-zone issue caused by a native async category lookup. No contract was weakened: fixtures were classified explicitly and the category lookup was kept inside the Dexie transaction zone.
+- Functional accepted run **`32202440100`**, job **`95918871077`** — **PASS** on merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`, combining head `554e68d64ff9c67c455ff97116736472c5807ec1` with base `d55b13bf5efedb12da937e70afe1e9501d83446b`: **0 lint errors / 81 warnings; 49 files / 205 Vitest PASS; 17/17 Playwright PASS; production build PASS.**
 
-- Run `32190349921`, job `95883095871` — **FAIL**: lint passed; 194/195 Vitest passed. The only failure was an obsolete historical assertion expecting final `db.verno === 4` after the new V5 migration. The occurrence migration behavior itself passed; only the version expectation was corrected.
-- Run `32190552190`, job `95883712396` — **FAIL**: 0 lint errors / 81 warnings, 47/195 Vitest PASS and 17/17 Playwright PASS; build exposed TypeScript narrowing only for the newly validated `rawCategories` array. No runtime/contract behavior changed; the type narrowing was made explicit.
-- Functional accepted run **`32191018791`**, job **`95885134808`** — **PASS** on PR #45 merge ref `c6891b5f7e01c6d36ea71fdfb52571e805d7655d`: **0 lint errors / 81 warnings; 47 files / 195 Vitest PASS; 17/17 Playwright PASS; production build PASS.**
+The documentation-complete PR head must pass a fresh D-019 before integration. The validated final merge ref, not a stale functional ref, is integration authority.
 
-The final canonical-documents head must pass a fresh D-019 before integration.
+## Boundary entering P9-S3-I3
 
-## Boundary entering P9-S3-I2
+P9-S3-I3 is the final currently defined P9-S3 implementation slice and is **reporting-only**.
 
-P9-S3-I2 is the next bounded slice. It may operationalize D-025 category lifecycle, item classification and new-order snapshot capture using the now-integrated V5 substrate.
+Authorized scope:
 
-Authorized scope for I2:
+- category order-performance aggregation from effective non-reversed `order` transactions only;
+- use `occurredAt` as the reporting time basis;
+- group historical classified orders by stored `transaction.categoryId`, never by the item's current category;
+- represent missing historical category snapshots under the explicit **`Sem categoria — histórico legado`** bucket;
+- minimum measures: order count, summed item quantity and gross order value;
+- linked correction semantics: reversed original contributes zero; effective replacement contributes once;
+- archived categories remain reportable;
+- use current category name as the group label when the stable category entity still exists while retaining transaction `categoryName` for audit/detail semantics;
+- bounded operator reporting UI/domain aggregation plus targeted tests and full D-019.
 
-- category lifecycle operations needed by D-025: create, rename, archive/reactivate and guarded hard deletion;
-- operator UI/hooks/services for category management only as needed for those lifecycle operations;
-- item category assignment/reassignment using active categories;
-- require an active category when creating a new active item or reactivating an item for new business use;
-- preserve migrated legacy active items as readable/editable even if initially unclassified, but require classification before they participate in a new order;
-- on a new order, resolve the active item's active category and persist `categoryId + categoryName` as the transaction-time snapshot;
-- ensure guided replacement correction continues preserving the original snapshot;
-- targeted lifecycle/assignment/order-write tests plus full D-019.
+Explicitly outside I3:
 
-Explicitly outside I2:
-
-- category reporting UI/domain aggregation; that remains a later P9-S3 slice;
-- historical recategorization/backfill;
-- category-level payment/debt allocation;
+- allocation of payments, signals, reseller balances, open debt or FIFO debt to categories;
+- historical category backfill/recategorization;
+- profitability/margin without cost data;
+- category schema/backup migration changes unless a proven defect requires them;
 - P9-S4/P9-S5/P10;
 - backend/auth/cloud/live synchronization or D-016 reopening without new direct evidence.
 
-D-017/D-018 schema5 compatibility and the completed D-024 recovery guard must not regress.
-
 ## NEXT_ACTION
 
-**Execute only P9-S3-I2 — Category lifecycle + item assignment + new-order snapshot enforcement. Implement the D-025 category lifecycle operations and bounded operator management flow; implement active-category item assignment/reassignment and require a valid active category for new/reactivated business-use items; require a classified active item/category before a new order and persist that category's `categoryId + categoryName` snapshot at transaction time; preserve existing historical/legacy no-category rows and correction snapshots without backfill. Do not implement category reporting in I2; do not allocate payments/debt to categories; do not start P9-S4/P9-S5/P10; preserve D-016/D-017/D-018/D-019/D-024/D-025. Add targeted lifecycle/assignment/order-write tests and run the full D-019 gate before integration.**
+**Execute only P9-S3-I3 — Category order-performance reporting. Implement the D-025 category analysis over effective non-reversed order transactions using `occurredAt`; group by historical transaction `categoryId`, preserve missing snapshots in `Sem categoria — histórico legado`, and expose at minimum order count, summed quantity and gross order value while counting linked corrections only through the effective replacement and keeping archived categories reportable. Do not group historical orders by the item's current category; do not backfill/recategorize legacy history; do not allocate payments/signals/balances/FIFO debt to categories; do not start P9-S4/P9-S5/P10 or backend/auth/cloud/live-sync work. Preserve D-016/D-017/D-018/D-019/D-024/D-025, add targeted reporting tests and run the full D-019 gate before integration.**

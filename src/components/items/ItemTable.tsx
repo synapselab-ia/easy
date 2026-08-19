@@ -14,6 +14,7 @@ import { ResponsiveDialog } from "../ui/ResponsiveDialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Card, CardContent } from "../ui/card";
 import { Tag, CircleDollarSign } from "lucide-react";
+import { toast } from "sonner";
 
 interface ItemTableProps {
     items: Item[];
@@ -41,8 +42,12 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
     };
 
     const handleReactivate = async (item: Item) => {
-        if (item.id) {
+        if (!item.id) return;
+
+        try {
             await reactivateMutation.mutateAsync(item.id);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Não foi possível reativar o item.");
         }
     };
 

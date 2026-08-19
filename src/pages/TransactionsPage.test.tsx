@@ -38,12 +38,14 @@ function renderPage(initialEntry = '/transactions') {
 
 describe('TransactionsPage Integration', () => {
     beforeEach(async () => {
-        await db.items.clear();
-        await db.resellers.clear();
         await db.transactions.clear();
+        await db.items.clear();
+        await db.categories.clear();
+        await db.resellers.clear();
         queryClient.clear();
 
-        await db.items.add({ id: 1, name: 'Creme', basePrice: 50, createdAt: new Date(), updatedAt: new Date() });
+        await db.categories.add({ id: 1, name: 'Cuidados', isActive: true, createdAt: new Date(), updatedAt: new Date() });
+        await db.items.add({ id: 1, name: 'Creme', basePrice: 50, categoryId: 1, createdAt: new Date(), updatedAt: new Date() });
         await db.resellers.add({ id: 1, name: 'Mariazinha', createdAt: new Date(), updatedAt: new Date() });
     });
 
@@ -75,6 +77,8 @@ describe('TransactionsPage Integration', () => {
             expect(transactions.length).toBe(1);
             expect(transactions[0].type).toBe('order');
             expect(transactions[0].totalPrice).toBe(100);
+            expect(transactions[0].categoryId).toBe(1);
+            expect(transactions[0].categoryName).toBe('Cuidados');
         });
     });
 
@@ -102,6 +106,8 @@ describe('TransactionsPage Integration', () => {
             expect(transactions.length).toBe(1);
             expect(transactions[0].type).toBe('payment');
             expect(transactions[0].totalPrice).toBe(250.5);
+            expect(transactions[0].categoryId).toBeUndefined();
+            expect(transactions[0].categoryName).toBeUndefined();
         });
     });
 
