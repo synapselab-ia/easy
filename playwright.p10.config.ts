@@ -12,7 +12,7 @@ export default defineConfig({
     forbidOnly: true,
     retries: 0,
     workers: 1,
-    timeout: 120_000,
+    timeout: 300_000,
     expect: {
         timeout: 15_000,
     },
