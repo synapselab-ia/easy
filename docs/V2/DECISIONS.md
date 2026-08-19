@@ -146,7 +146,7 @@ Selected mechanism preserves canonical `easy-backup` v2/D-018, uses a local fold
 Accepted P9-S2-I1 run `32180250834`, job `95851336506` passed; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
 
 ## D-025 — Category classification is snapshot-based; legacy history is not retroactively invented
-**Status:** ACCEPTED / I1 + I2 IMPLEMENTED  
+**Status:** ACCEPTED / I1 + I2 IMPLEMENTED AND INTEGRATED  
 **Date:** 2026-08-18
 
 Accepted semantics:
@@ -185,7 +185,11 @@ I2 operationalizes the already-accepted lifecycle/classification/snapshot rules:
 
 First functional gate `32202062045`, job `95917767742`, correctly failed with 199/205 Vitest due to stale unclassified success fixtures, ItemForm test setup and a Dexie transaction-zone lookup issue. The decision contract was not weakened.
 
-Accepted functional D-019 **`32202440100`**, job **`95918871077`**, PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`: **0 lint errors / 81 warnings, 49/205 Vitest, 17/17 Playwright and production build PASS**.
+Functional D-019 `32202440100`, job `95918871077`, passed on PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`: 0 lint errors / 81 warnings, 49/205 Vitest, 17/17 Playwright and production build PASS.
+
+Final documentation-complete D-019 **`32202876262`**, job **`95920142630`**, passed on merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, head `4591e103fb713f70ba34467a0beae1cb349deb5f` over base `d55b13bf5efedb12da937e70afe1e9501d83446b`: **0 lint errors / 81 warnings, 49/205 Vitest, 17/17 Playwright and production build PASS**.
+
+PR #46 integrated as **`aafb3e4821e345d320cf3b8f5cc10028e82ad66b`**. Validated merge ref and integrated squash share exact tree **`ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`**.
 
 No new decision number is required for I2 because it implements D-025 rather than changing its semantics. Category order-performance reporting remains the only unimplemented D-025 slice and is P9-S3-I3.
 

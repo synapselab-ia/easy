@@ -112,13 +112,13 @@ Gate history:
 - `32190349921` / `95883095871` — FAIL: obsolete historical assertion still expected current Dexie V4;
 - `32190552190` / `95883712396` — FAIL at build only: explicit TypeScript narrowing required;
 - functional `32191018791` / `95885134808` — PASS;
-- **final documentation-complete gate `32191707306` / `95887236403` — PASS** on merge ref `a2696dfac0d0dc2d5bc4fb2e89e0f0c0c9677c69`: 0 errors / 81 warnings, 47/195 Vitest, 17/17 Playwright, build PASS.
+- final documentation-complete gate `32191707306` / `95887236403` — PASS on merge ref `a2696dfac0d0dc2d5bc4fb2e89e0f0c0c9677c69`: 0 errors / 81 warnings, 47/195 Vitest, 17/17 Playwright, build PASS.
 
 PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`; validated merge ref and integrated squash share tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
 
 ### P9-S3-I2 — Category lifecycle + item assignment + new-order snapshot enforcement
 
-**FUNCTIONAL PASS / canonical closure in progress.**
+**PASS / DONE / INTEGRATED.**
 
 Targeted proof covers:
 
@@ -135,7 +135,7 @@ Targeted proof covers:
 - payment/signal rows remain category-free;
 - D-024 recovery guard remains applied to category/item/transaction writes.
 
-#### Gate history
+#### Gate and integration history
 
 1. Run `32202062045`, job `95917767742` — **FAIL at Vitest**:
    - 199/205 tests passed;
@@ -143,13 +143,19 @@ Targeted proof covers:
    - the category requirement was not weakened;
    - success fixtures were classified explicitly and the active-category lookup was kept in the Dexie promise/transaction zone.
 
-2. Functional accepted run **`32202440100`**, job **`95918871077`** — **PASS** on PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`, combining head `554e68d64ff9c67c455ff97116736472c5807ec1` with base `d55b13bf5efedb12da937e70afe1e9501d83446b`:
+2. Functional accepted run `32202440100`, job `95918871077` — **PASS** on PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`:
+   - ESLint: 0 errors / 81 warnings;
+   - Vitest: 49 files / 205 tests PASS;
+   - Playwright Chromium: 17/17 PASS;
+   - production build: PASS.
+
+3. Final canonical-documentation run **`32202876262`**, job **`95920142630`** — **PASS** on merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, combining head `4591e103fb713f70ba34467a0beae1cb349deb5f` with base `d55b13bf5efedb12da937e70afe1e9501d83446b`:
    - ESLint: **0 errors / 81 warnings**;
    - Vitest: **49 files / 205 tests PASS**;
    - Playwright Chromium: **17/17 PASS**;
    - production build: **PASS**.
 
-The final canonical-documentation head must pass a fresh D-019 against the current `develop` base before integration. That final merge ref is the integration authority.
+PR #46 was squash-integrated into `develop` as **`aafb3e4821e345d320cf3b8f5cc10028e82ad66b`**. Validated merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f` and integrated squash share exact tree **`ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`**.
 
 ## Current known non-blocking debt
 

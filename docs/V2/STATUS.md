@@ -23,7 +23,7 @@ Phase state:
 - P8-S2 — Direct real-store validation and D-016 keep/reopen decision: `DONE`.
 - P9-S1 — Evidence-backed prioritization: `DONE`.
 - P9-S2 — Recovery durability: `DONE`.
-- **P9-S3 — Categories/classification/reporting: `IN_PROGRESS`; contract, I1 persistence/recovery substrate and I2 lifecycle/classification/order-snapshot enforcement are `DONE`.**
+- **P9-S3 — Categories/classification/reporting: `IN_PROGRESS`; contract, I1 persistence/recovery substrate and I2 lifecycle/classification/order-snapshot enforcement are `DONE / INTEGRATED`.**
 - **P9-S3-I3 — Category order-performance reporting: `NOT_STARTED`.**
 - P9-S4 — Confirmed correction microflows: `NOT_STARTED`.
 - P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
@@ -85,7 +85,7 @@ D-016 through D-025 remain authoritative. In particular:
 - D-024 keeps synchronized recovery-copy folder + exact 24-hour freshness guard;
 - D-025 keeps stable category identity, non-inventive legacy history, transaction-time category snapshots and order-only category analytics.
 
-No new decision number is required for P9-S3-I2: it implements already-accepted D-025 semantics.
+No new decision number was required for P9-S3-I2: it implements already-accepted D-025 semantics.
 
 ## P9-S3-I1 persistence/recovery closure
 
@@ -102,7 +102,7 @@ Final P9-S3-I1 D-019 passed in run `32191707306`, job `95887236403`; PR #45 inte
 
 ## P9-S3-I2 lifecycle/classification/order-snapshot closure
 
-P9-S3-I2 implements the operational D-025 rules and nothing from reporting.
+P9-S3-I2 is **DONE / INTEGRATED** and implements the operational D-025 rules without category reporting.
 
 Implemented:
 
@@ -120,14 +120,15 @@ Implemented:
 12. Payments/signals remain category-free.
 13. Category/item/transaction writes continue through D-024 freshness enforcement.
 
-### P9-S3-I2 D-019 history
+### P9-S3-I2 D-019 and integration proof
 
 PR #46 remained draft through functional validation.
 
 - Run `32202062045`, job `95917767742` — **FAIL** at Vitest with 199/205 tests passing. The gate exposed pre-I2 success fixtures that lacked required classification, two ItemForm fixture/setup mismatches after category enforcement, and a Dexie transaction-zone issue caused by a native async category lookup. No contract was weakened: fixtures were classified explicitly and the category lookup was kept inside the Dexie transaction zone.
-- Functional accepted run **`32202440100`**, job **`95918871077`** — **PASS** on merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`, combining head `554e68d64ff9c67c455ff97116736472c5807ec1` with base `d55b13bf5efedb12da937e70afe1e9501d83446b`: **0 lint errors / 81 warnings; 49 files / 205 Vitest PASS; 17/17 Playwright PASS; production build PASS.**
-
-The documentation-complete PR head must pass a fresh D-019 before integration. The validated final merge ref, not a stale functional ref, is integration authority.
+- Functional accepted run `32202440100`, job `95918871077` — **PASS** on merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`: 0 lint errors / 81 warnings; 49 files / 205 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+- **Final documentation-complete D-019:** run `32202876262`, job `95920142630` — **PASS** on merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, combining head `4591e103fb713f70ba34467a0beae1cb349deb5f` with base `d55b13bf5efedb12da937e70afe1e9501d83446b`: 0 lint errors / 81 warnings; 49 files / 205 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+- PR #46 squash-integrated into `develop` as **`aafb3e4821e345d320cf3b8f5cc10028e82ad66b`**.
+- Validated merge ref and integrated squash share exact tree **`ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`**.
 
 ## Boundary entering P9-S3-I3
 

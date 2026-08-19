@@ -1,6 +1,6 @@
 # Easy V2 — P9-S3 Category Data/Reporting Contract
 
-**Status:** `ACCEPTED / I1 + I2 IMPLEMENTED / P9-S3 IN_PROGRESS`  
+**Status:** `ACCEPTED / I1 + I2 IMPLEMENTED AND INTEGRATED / P9-S3 IN_PROGRESS`  
 **Date:** 2026-08-18  
 **Decision:** D-025  
 **Scope:** category lifecycle, assignment, historical semantics, reporting, migration and D-017/D-018 compatibility
@@ -15,7 +15,7 @@ Direct store evidence accepted in P8-S2 establishes these category requirements:
 
 D-025 translates only those needs into persistence/history/reporting semantics. It does not reopen D-016 and does not authorize P9-S4/P9-S5/P10, inventory, category debt allocation, backend/auth/cloud/live synchronization or historical classification inference.
 
-P9-S3 is implemented in bounded slices. I1 implemented persistence/recovery compatibility. I2 now implements lifecycle, assignment and new-order snapshot enforcement. Reporting remains the final currently defined slice, I3.
+P9-S3 is implemented in bounded slices. I1 implemented persistence/recovery compatibility. I2 implemented lifecycle, assignment and new-order snapshot enforcement. Reporting remains the final currently defined slice, I3.
 
 ## 2. Category identity and lifecycle — IMPLEMENTED IN I2
 
@@ -129,7 +129,7 @@ Logical backup remains `easy-backup` version 2. Current schema5 exports include 
 
 Schema5 preflight enforces category IDs, normalized-name uniqueness, references/lifecycle, paired order snapshots, payment/signal category exclusion and linked-correction snapshot preservation. Backup preview surfaces category count, unclassified-item count and legacy-order count.
 
-I2 changes no backup format/schema contract.
+I2 changed no backup format/schema contract.
 
 ## 8. D-018 restore extension — IMPLEMENTED IN I1
 
@@ -141,7 +141,7 @@ categories + items + resellers + transactions
 
 Validated checkpoint, destructive clear/write, post-write validation and canonical read-back comparison all occur under the accepted four-table atomic boundary. Divergence rolls back the full replacement. D-024 recovery-health metadata remains outside D-017/D-018.
 
-I2 changes no restore contract.
+I2 changed no restore contract.
 
 ## 9. Implementation sequencing
 
@@ -149,24 +149,24 @@ I2 changes no restore contract.
 
 Authoritative final contract D-019: `32185226251`, job `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
 
-### P9-S3-I1 — Category persistence + migration + backup compatibility — DONE
+### P9-S3-I1 — Category persistence + migration + backup compatibility — DONE / INTEGRATED
 
 Final documentation-complete D-019: `32191707306`, job `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`, validated/integrated tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
 
-### P9-S3-I2 — Category lifecycle + item assignment + new-order snapshot enforcement — DONE pending final documentation-head gate/integration
+### P9-S3-I2 — Category lifecycle + item assignment + new-order snapshot enforcement — DONE / INTEGRATED
 
 Implemented lifecycle, bounded operator management, active-category item classification/reclassification, new/reactivated-item enforcement, legacy unclassified compatibility, new-order transaction-time category snapshots and correction snapshot preservation.
 
-Gate history:
+Gate/integration history:
 
 - `32202062045` / `95917767742` — FAIL with 199/205 Vitest passing; stale unclassified success fixtures, ItemForm fixture setup and Dexie transaction-zone lookup were corrected without relaxing D-025.
-- Functional accepted **`32202440100` / `95918871077`**, PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`, head `554e68d64ff9c67c455ff97116736472c5807ec1` over base `d55b13bf5efedb12da937e70afe1e9501d83446b` — **0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS**.
-
-The documentation-complete head requires a fresh D-019 before integration.
+- Functional accepted `32202440100` / `95918871077`, PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3` — 0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS.
+- Final documentation-complete **`32202876262` / `95920142630`**, merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, head `4591e103fb713f70ba34467a0beae1cb349deb5f` over base `d55b13bf5efedb12da937e70afe1e9501d83446b` — **0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS**.
+- PR #46 squash-integrated as **`aafb3e4821e345d320cf3b8f5cc10028e82ad66b`**; validated merge ref and integrated squash share exact tree **`ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`**.
 
 ### P9-S3-I3 — Category order-performance reporting — NEXT
 
-Authorized only after I2 integration:
+Authorized scope:
 
 - effective non-reversed order rows only;
 - `occurredAt` time basis;
@@ -194,6 +194,6 @@ This contract/implementation sequence introduces no authorization for:
 
 ## 11. Current acceptance state
 
-D-025 remains accepted. I1 is integrated. I2 is functionally validated and canonically documented on PR #46; integration eligibility depends on a final full D-019 run of this documentation-complete head against the current `develop` base.
+D-025 remains accepted. I1 and I2 are implemented and integrated. P9-S3 remains `IN_PROGRESS` because category order-performance reporting is not implemented yet.
 
-P9-S3 as a whole remains `IN_PROGRESS`; after successful I2 integration the only canonical next slice is P9-S3-I3 category order-performance reporting.
+The only canonical next slice is **P9-S3-I3 — category order-performance reporting**.

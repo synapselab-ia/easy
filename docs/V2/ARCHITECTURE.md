@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through P9-S3-I2 category lifecycle/classification/order-snapshot implementation  
+**Status:** verified through integrated P9-S3-I2 category lifecycle/classification/order-snapshot implementation  
 **Integration target:** `develop`  
 **Date:** 2026-08-18
 
@@ -64,7 +64,7 @@ createdAt
 updatedAt
 ```
 
-`categoryId` remains optional for lossless legacy compatibility, but runtime rules now distinguish legacy readability from new business activity:
+`categoryId` remains optional for lossless legacy compatibility, but runtime rules distinguish legacy readability from new business activity:
 
 - new active item creation requires an existing active category;
 - assignment/reassignment may target only an active category;
@@ -82,7 +82,7 @@ categoryId?
 categoryName?
 ```
 
-For a new post-I2 order, the validated write boundary now resolves:
+For a new post-I2 order, the validated write boundary resolves:
 
 ```text
 active reseller
@@ -123,7 +123,7 @@ Schema5 preflight validates category identity/name uniqueness, references, activ
 
 Supported v1 and existing v2/schema4 backups remain accepted through in-memory normalization to `categories = []` with absent category fields. No history is fabricated. Backup preview continues to expose category, unclassified-item and legacy-order counts.
 
-I2 changes no backup envelope, schema or restore mechanism.
+I2 changed no backup envelope, schema or restore mechanism.
 
 ## D-018 atomic recovery boundary under V5
 
@@ -188,9 +188,11 @@ P9-S3-I1 final gate: run `32191707306`, job `95887236403`; PR #45 integrated as 
 
 P9-S3-I2 first functional run `32202062045`, job `95917767742`, correctly failed at Vitest with 199/205 passing due to pre-I2 unclassified success fixtures, ItemForm fixture setup mismatches and a Dexie transaction-zone lookup issue. The contract was not weakened.
 
-P9-S3-I2 functional accepted run **`32202440100`**, job **`95918871077`**, merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3` — **0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, production build PASS**.
+P9-S3-I2 functional run `32202440100`, job `95918871077`, passed on merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3` with 0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright and production build PASS.
 
-The final documentation-complete head requires a fresh D-019 before integration.
+Final documentation-complete P9-S3-I2 D-019 **`32202876262`**, job **`95920142630`**, passed on merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, combining head `4591e103fb713f70ba34467a0beae1cb349deb5f` with base `d55b13bf5efedb12da937e70afe1e9501d83446b`: **0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, production build PASS**.
+
+PR #46 integrated as **`aafb3e4821e345d320cf3b8f5cc10028e82ad66b`**. The validated merge ref and integrated squash share exact tree **`ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`**.
 
 ## Boundary entering P9-S3-I3
 
