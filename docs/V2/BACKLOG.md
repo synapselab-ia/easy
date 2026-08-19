@@ -13,7 +13,7 @@ Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `IN_REVIEW`, `BLOCKED`, `DONE`.
 
 **Status:** `DONE`.
 
-P0 governance, P1 referential lifecycle, P2 audited correction/reversal, P3 financial dates/statements/aging, P4 D-016 architecture decision, P5 backup/restore, P6 D-019 QA/deployment, P7 operational UX and P8 direct-store discovery are complete. Detailed validation remains in `QA_LEDGER.md` and `CHANGELOG.md`.
+P0 governance, P1 referential lifecycle, P2 audited correction/reversal, P3 financial dates/statements/aging, P4 D-016 architecture decision, P5 backup/restore, P6 D-019 QA/deployment, P7 operational UX and P8 direct-store discovery are complete.
 
 ---
 
@@ -24,62 +24,71 @@ P0 governance, P1 referential lifecycle, P2 audited correction/reversal, P3 fina
 
 ### P9-S1 — Evidence-backed prioritization
 
-**Status:** `DONE` — 2026-08-18.
-
-D-023 order: recovery durability 94/100; categories/reporting 83/100; correction microflows 70/100; occurrence-date usability 69/100. PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
+**Status:** `DONE` — 2026-08-18. D-023 order: recovery durability 94/100; categories/reporting 83/100; correction microflows 70/100; occurrence-date usability 69/100.
 
 ### P9-S2 — Recovery durability
 
-**Status:** `DONE` — 2026-08-18.
-
-D-024 selected synchronized recovery-copy folder + exact 24-hour freshness guard while keeping D-016. PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
+**Status:** `DONE` — 2026-08-18. D-024 implemented synchronized recovery-copy folder + exact 24-hour freshness guard while keeping D-016.
 
 ### P9-S3 — Categories, classification and category reporting
 
 **Status:** `DONE / INTEGRATED` — 2026-08-19.
 
-- Contract / D-025 — `DONE`; PR #44 `ede644b88ad00c11b566d82a21758cc82b7a8126`.
-- I1 persistence/migration/backup — `DONE`; PR #45 `d55b13bf5efedb12da937e70afe1e9501d83446b`.
-- I2 lifecycle/classification/order snapshots — `DONE`; PR #46 `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; closure #47 `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
-- I3 category order-performance reporting — `DONE`; PR #48 `08ad2973f387035301901f9f46b0c78039796c2d`.
-
-Final I3 D-019 `32262877105` / `96100129962` passed; validated/integrated tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
+D-025 is fully implemented through I1 persistence/migration/backup, I2 lifecycle/classification/order snapshots and I3 read-only category order-performance reporting.
 
 ### P9-S4 — Confirmed correction microflows
 
-**Status:** `BLOCKED — evidence gate accepted/integrated; direct operator confirmation required`.
+**Status:** `IN_PROGRESS`.
 
-The evidence/contract gate is complete as far as existing evidence allows:
+#### Evidence/source mapping gate
 
-#### Already supported by current audited correction/reversal
+**Status:** `DONE / INTEGRATED`.
 
-- change reseller on an effective transaction;
-- change order quantity;
-- change order unit price / total;
-- change payment/signal amount;
-- pure reversal/cancellation with mandatory reason.
+PR #50 proved current support and source constraints. The prior blocker required direct operator evidence.
 
-#### Source-proven gaps/constraints requiring direct confirmation
+#### Direct evidence + D-026 decision
 
-- change `occurredAt` after save;
-- change order item after save;
-- change transaction type after save;
-- change/add observation after save;
-- guided-correct an older order after its original item was archived.
+**Status:** `DONE / IN_REVIEW`.
 
-P8 confirmed generic real-store edit/correction friction but did not enumerate any of those exact record/action pairs. P9-S1 explicitly recorded that source gaps must not be represented as direct store reports. Therefore there is **no confirmed implementation subset yet**.
+Direct operator evidence received 2026-08-19 confirms the actual requirement: operator-entered transaction business data must remain correctable after entry, while prior history does not need to be overwritten.
 
-The direct intake required to resolve this blocker is in `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md`. For each candidate, record whether it actually occurs, approximate frequency, current workaround and business consequence, plus any exact missing case outside the matrix.
+Frequency/workaround/consequence for individual fields were not known and are not inferred. The date-default concern is retained for P9-S5.
 
-Evidence gate proof: D-019 `32265612927` / `96109244644` passed with 0 errors / 81 warnings, 51 files / 210 Vitest, 17/17 Playwright and build PASS. PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`.
+D-026 therefore selects one coherent implementation instead of partial field slices:
 
-No correction runtime, destructive historical editing or new D-number is authorized until direct evidence is received and the bounded mapping/decision gate is rerun.
+**P9-S4-I1 — Full-field audited transaction replacement editor**
+
+**Status:** `NOT_STARTED`.
+
+Authorized scope:
+
+- replacement may define reseller, target type, `occurredAt`, observation;
+- target order may define item, quantity and unit price/derived total;
+- target payment/signal may define movement value;
+- original row remains immutable and is auditedly reversed with mandatory reason;
+- replacement remains linked and atomic under D-012/D-013;
+- D-024 write guard remains mandatory;
+- unchanged order item preserves original D-025 item/category snapshot;
+- changed/new order item must be active/classified and captures the target current snapshot;
+- type changes enforce target-shape validity;
+- targeted tests + full D-019 required.
+
+Out of scope:
+
+- destructive in-place history mutation;
+- editing IDs/`createdAt`/reversal or correction metadata;
+- weakening P1/D-011 lifecycle rules for inactive entities;
+- schema or backup changes;
+- P9-S5/P10;
+- backend/auth/cloud/live synchronization.
+
+The archive-specific correction case was not confirmed as a recurring store incident; it remains an explicit lifecycle edge rather than a reason to weaken active-reference rules in I1.
 
 ### P9-S5 — Occurrence-date usability verification
 
 **Status:** `NOT_STARTED`.
 
-Verify the existing delayed-entry workflow. Do not add a second date model.
+Direct operator evidence specifically recalls the system presenting today's date by default in routine contexts. Current transaction creation still initializes `Data da ocorrência` to today. Verify that workflow after P9-S4; do not add another date model.
 
 ## P10 — Controlled beta, migration and cutover
 

@@ -1,99 +1,82 @@
-# Easy V2 — P9-S4 Correction Microflow Evidence Request
+# Easy V2 — P9-S4 Correction Microflow Evidence Record
 
-**Status:** `GATE ACCEPTED / WAITING FOR DIRECT ANSWERS`  
+**Status:** `DIRECT ANSWERS RECEIVED / BLOCKER RESOLVED`  
 **Date:** 2026-08-19  
-**Scope:** confirm exact store correction cases before authorizing runtime work
+**Scope:** direct store evidence used by the bounded P9-S4 decision gate
 
-## 1. Why this evidence is required
+## 1. Prior blocker
 
-P8 directly confirmed that Duda encounters edit/correction friction in real operation, but the accepted evidence explicitly did **not** identify the exact record/action pairs. P9-S1 then proved several correction constraints in source, but also recorded that those constraints must not be rewritten as claims that Duda reported each one.
+P8 directly confirmed edit/correction friction but did not enumerate exact record/action pairs. P9-S1 then proved source constraints in guided correction and explicitly prohibited representing those source findings as direct store reports.
 
-The P9-S4 evidence/contract gate therefore cannot select an implementation subset until the store confirms which exact cases actually occur and matter operationally.
+The initial P9-S4 evidence gate was validated by D-019 `32265612927` / `96109244644` and integrated through PR #50 as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`.
 
-The evidence-gate mapping was validated by D-019 `32265612927` / `96109244644` and integrated through PR #50 as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`. This request is now the canonical blocker-resolution intake.
+## 2. Current V2 support entering direct intake
 
-This request does not authorize destructive editing, a new schema, backend/auth/cloud/live synchronization or any P9-S5/P10 work.
+Already supported under D-012/D-013:
 
-## 2. What current V2 already supports
-
-The current audited correction flow already covers:
-
-- wrong reseller on an effective transaction;
-- wrong order quantity;
-- wrong order unit price / resulting total;
-- wrong payment or signal amount;
+- reseller correction on an effective transaction;
+- order quantity and unit-price/total correction;
+- payment/signal value correction;
 - pure reversal/cancellation with mandatory reason.
 
-These use D-012/D-013 history-preserving reversal/replacement semantics. The original transaction is not silently overwritten.
+Source-proven constraints entering intake:
 
-## 3. Source-proven gaps that require direct store confirmation
+- guided correction preserves `occurredAt`;
+- guided correction preserves order `itemId`;
+- guided correction preserves transaction type;
+- guided correction preserves observation;
+- guided replacement of an order is blocked when the original item is inactive.
 
-### A — Wrong financial occurrence date after saving
+## 3. Direct operator answers received
 
-**Current constraint:** guided correction always preserves the original `occurredAt`.
+The first operator response did not identify a known recurring wrong-item, wrong-type, wrong-observation or archived-item incident from memory. For dates, the operator clarified that the practical concern was that the system presented today's date by default across routine entry/reporting contexts and was unsure whether that behavior still existed.
 
-Concrete operator case to confirm: a sale/payment/signal was saved with the wrong financial date — for example, a delayed sale was entered but the operator left today's date selected — and the operator later needs to correct that date.
+The operator then clarified the intended requirement directly:
 
-Please confirm:
+> information entered into the system needs to remain editable after it enters the system, while the prior history does not necessarily need to be changed by that correction.
 
-1. Does this actually happen in store operation? `SIM / NÃO`.
-2. If yes, roughly how often: `raramente / mensalmente / semanalmente / quase diariamente`?
-3. What is the current workaround when it happens?
-4. What is the consequence if it is not corrected quickly?
+Canonical interpretation:
 
-### B — Wrong item selected on an order
+- post-save correction is directly confirmed as a product requirement;
+- the requirement is broader than one isolated field and applies to operator-entered transaction business data;
+- destructive in-place history rewriting is **not** required and is inconsistent with the expressed preference to preserve prior history;
+- approximate frequency, current workaround and business consequence for each individual field remain unknown and must not be invented;
+- the separate concern that the date field defaults to today is retained as evidence for P9-S5 occurrence-date usability verification, not as permission to change P3 date semantics during P9-S4.
 
-**Current constraint:** guided correction must preserve the original `itemId`; there is no item selector in the correction dialog.
+## 4. Evidence disposition for the five source-proven constraints
 
-Concrete operator case to confirm: an order was saved against the wrong catalog item and needs to be replaced by the correct item while preserving audit history.
+### A — financial occurrence date after saving
 
-Please confirm the same four points: whether it happens, approximate frequency, current workaround and consequence.
+**Confirmed requirement:** post-save business fields must be correctable. `occurredAt` therefore belongs in the audited replacement editor.
 
-### C — Wrong transaction type
+**Additional usability signal:** current source still defaults the creation field to today's date. Whether that default/helper is sufficiently discoverable belongs to P9-S5.
 
-**Current constraint:** guided replacement preserves the original type (`order`, `payment` or `signal`).
+### B — order item after saving
 
-Concrete operator case to confirm: a movement was saved as the wrong type and needs to become another type.
+**Confirmed requirement:** item is operator-entered order business data and must be correctable through audited replacement.
 
-Please confirm the same four points: whether it happens, approximate frequency, current workaround and consequence.
+Individual incident frequency remains unknown.
 
-### D — Wrong or missing observation
+### C — transaction type after saving
 
-**Current constraint:** guided correction preserves the original `observation`; the correction dialog does not offer an observation field.
+**Confirmed requirement:** transaction type is operator-entered business data and must be correctable through audited replacement with target-shape validation.
 
-Concrete operator case to confirm: the value/reseller/etc. is correct, but an observation was omitted or typed incorrectly and later needs correction.
+Individual incident frequency remains unknown.
 
-Please confirm the same four points: whether it happens, approximate frequency, current workaround and consequence.
+### D — observation after saving
 
-### E — Correcting an older order after its item was archived
+**Confirmed requirement:** observation is operator-entered business data and must be correctable through audited replacement.
 
-**Current constraint:** an order whose original item is inactive may be reversed, but the guided replacement cannot recreate that order while the item remains inactive.
+Individual incident frequency remains unknown.
 
-Concrete operator case to confirm: an older order needs a value/reseller correction after the catalog item was archived.
+### E — correction when the original item later became inactive
 
-Please confirm the same four points: whether it happens, approximate frequency, current workaround and consequence.
+The operator did not confirm a recurring archive-specific incident and was unsure whether item archival was currently part of normal operation. This therefore remains an edge/lifecycle constraint rather than a frequency-ranked store pain.
 
-## 4. Any exact correction case missing from the matrix
+The implementation must not silently bypass P1/D-011 active-reference rules. It must test and surface this edge explicitly, and any lifecycle exception beyond the bounded D-026 contract requires its own evidence/decision.
 
-If the real store friction is something else, provide the exact pair in this form:
+## 5. Result
 
-- **record:** order / payment / signal / item / reseller / other;
-- **what was entered incorrectly:** ...;
-- **what the operator needs to change afterward:** ...;
-- **how often it happens:** ...;
-- **current workaround:** ...;
-- **business consequence:** ... .
+The blocker is resolved because the store directly confirmed the actual product-level need: **post-save transaction business data must be correctable without requiring destructive overwrite of prior history.**
 
-Do not answer with only “editar lançamento” or “ter mais opções de edição”; P9-S4 needs the concrete incorrect field/action to preserve financial audit semantics safely.
-
-## 5. Decision rule after evidence arrives
-
-After direct answers are received:
-
-1. keep already-supported cases out of new runtime work;
-2. rank only directly confirmed missing cases by operational consequence/frequency;
-3. select the smallest high-value subset that can remain an audited linked replacement/reversal under D-012/D-013;
-4. explicitly reject any proposal that destructively rewrites historical financial rows;
-5. define a bounded implementation slice, or close P9-S4 with no runtime if no missing case is confirmed.
-
-Until those answers exist, **no P9-S4 correction implementation is authorized**.
+`docs/V2/P9_CORRECTION_DECISION.md` records the bounded mapping/decision result and D-026. P9-S4 runtime remains `NOT_STARTED` until the authorized implementation slice is executed and passes D-019.

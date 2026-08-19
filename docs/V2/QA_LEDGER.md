@@ -28,57 +28,49 @@ Objective failures block integration. Existing warning/harness/dependency debt r
 
 ## P9-S3 accepted validation
 
-### Contract / D-025
+- Contract / D-025: `32185226251` / `95867186002`; PR #44.
+- I1 persistence/migration/backup: final `32191707306` / `95887236403`; PR #45.
+- I2 lifecycle/classification/order snapshots: final `32202876262` / `95920142630`; PR #46; closure #47.
+- I3 category reporting: authoritative final `32262877105` / `96100129962`; 51 files / 210 Vitest, 17/17 Playwright, build PASS; PR #48.
 
-**PASS / DONE.** `32185226251` / `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
+## P9-S4 initial evidence/source gate — ACCEPTED / INTEGRATED
 
-### I1 — persistence/migration/backup
+PR #50 mapped current correction support and five source-proven constraints, but correctly kept runtime blocked because direct store evidence had not identified exact post-save correction cases.
 
-**PASS / DONE / INTEGRATED.** Final `32191707306` / `95887236403`; 47 files / 195 Vitest, 17/17 Playwright, build PASS. PR #45 `d55b13bf5efedb12da937e70afe1e9501d83446b`.
+D-019 `32265612927` / `96109244644`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**. PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`.
 
-### I2 — lifecycle/classification/order snapshots
+Canonical closure #51 was validated on retry `32269262365` / `96121383857` and integrated as `1221f71de460c266c165b92de0536f443c71fa08`; merge-ref/integrated tree `7a7551f2815f9338d8b906a2bb6bf1e1d66c8ff2`.
 
-**PASS / DONE / INTEGRATED.** Final `32202876262` / `95920142630`; 49 files / 205 Vitest, 17/17 Playwright, build PASS. PR #46 `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; closure #47 `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
+## P9-S4 direct evidence + D-026 decision gate — IN_REVIEW
 
-### I3 — category order-performance reporting
+Direct operator clarification received 2026-08-19 resolves the blocker:
 
-**PASS / DONE / INTEGRATED.** Functional `32261923163` / `96096954271`; authoritative final documentation-complete `32262877105` / `96100129962`: 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS. PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`; validated/integrated tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
+- the operator could not quantify individual wrong-item/type/observation/archive frequencies from memory;
+- the operator specifically recalled today's-date default behavior as the practical date concern;
+- the operator then confirmed the actual product requirement: business information entered into the system needs to remain editable after entry, without requiring prior history to be overwritten.
 
-## P9-S4 evidence/contract gate — ACCEPTED / INTEGRATED / BLOCKED ON DIRECT EVIDENCE
+Source reinspection for this gate:
 
-**Runtime:** unchanged.  
-**Purpose:** prove what current correction already supports, map source-proven gaps to concrete operator cases, and determine whether direct evidence is sufficient to select an implementation subset.
+- `TransactionForm.tsx`: current `Data da ocorrência` defaults to today's local date and remains an explicit editable creation field;
+- `TransactionCorrectionDialog.tsx`: current guided editor exposes reason, reseller and value/quantity fields only;
+- `useTransactions.ts`: current replacement forcibly preserves original type/`occurredAt`, enforces original order item, preserves observation and original order category snapshot;
+- `pdfService.ts`: statements use transaction occurrence dates rather than a single print date for movement rows.
 
-Source/evidence inspected:
+Decision result:
 
-- accepted direct store evidence in `P8_EVIDENCE_REQUEST.md`;
-- accepted P9-S1 correction capability/gap matrix in `P9_PRIORITIZATION.md`;
-- current `TransactionCorrectionDialog.tsx`;
-- current `useTransactions.ts`;
-- current `TransactionTable.tsx`.
+- D-026 accepted: effective transaction business fields are correctable through audited linked replacement, never destructive historical overwrite;
+- the smallest coherent implementation is one full-field replacement editor rather than independent partial field slices;
+- D-025 snapshot semantics and D-024 write guard remain mandatory;
+- current active-reference lifecycle rules remain intact; archive-specific exception is not authorized by this gate;
+- today's-date default/discoverability signal is deferred to P9-S5.
 
-Result:
-
-- wrong reseller, order quantity/unit price, payment/signal amount and pure reversal are already supported under D-012/D-013;
-- post-save occurrence date, order item, transaction type and observation changes remain unsupported by guided replacement;
-- guided replacement of an order is blocked when its original item is inactive;
-- accepted direct store evidence confirms generic correction friction but does **not** confirm any of those exact five cases;
-- therefore selecting runtime work now would invent evidence.
-
-`docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` defines the direct confirmation needed. P9-S4 is blocked on that evidence, not on a failing code gate.
-
-### Accepted integration proof
-
-- PR #50 base `825aca83d1f317119f8f0e4f3d203722c1e6cf85`, validated head `211923d7900818d189b22ce8773be76591505d31`.
-- D-019 run `32265612927`, job `96109244644`, merge ref `5efb3bd2d0fd20909802a02e00d170150689a7d7` — **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-- PR #50 squash-integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`.
-- Validated merge ref and integrated squash share tree `5789c7863c0a62904b9d18692543f2b288290867`.
-- The unusually slow Playwright preparation was an external Ubuntu package download before `qa:critical`; it did not weaken or bypass any gate.
+**Runtime:** unchanged in this decision slice.  
+**D-019:** pending on the documentation-complete decision PR before integration.
 
 ## Current known non-blocking debt
 
 React `act(...)` warnings, mocked-select DOM/hydration warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible. No accepted gate is weakened.
 
-## QA boundary while P9-S4 is blocked
+## QA boundary entering P9-S4-I1
 
-Do not implement a correction candidate until direct evidence establishes the exact operator case and a bounded D-012/D-013-compatible subset is selected. P9-S5/P10 and backend/auth/cloud/live-sync remain out of scope.
+Do not implement destructive transaction editing. I1 must prove original-row immutability, mandatory reason/reversal linkage, target-shape validation, occurrence-date/item/type/observation correction, D-025 category snapshot behavior, D-024 enforcement and rejection of invalid/inactive newly selected references. Full D-019 is mandatory before integration.
