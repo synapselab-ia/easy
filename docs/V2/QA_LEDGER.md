@@ -41,53 +41,80 @@ D-026 decision gate: D-019 `32277770945` / `96149101495`; PR #52 integrated as `
 
 P9-S4-I1 full-field audited replacement:
 
-- PR #54 D-019 run **`32285620846`**, job **`96174326588`**.
+- PR #54 D-019 run `32285620846`, job `96174326588`.
 - Validated merge ref `4b51a5f35c2104d636903ce89eecbc995a0f3ce3`.
-- ESLint: **0 errors / 82 warnings**.
-- Vitest: **52 files / 216 tests PASS**.
-- Playwright: **17/17 PASS**.
-- Production build: **PASS**.
+- ESLint: 0 errors / 82 warnings.
+- Vitest: 52 files / 216 tests PASS.
+- Playwright: 17/17 PASS.
+- Production build: PASS.
 - PR #54 squash-integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`.
 - Validated/integrated tree: `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
 
 ## P9-S5 occurrence-date usability verification — PASS / DONE / INTEGRATED
 
-Direct evidence reconstructed from the canonical P9 correction evidence record: the operator recalled today's-date default behavior in routine entry and was unsure whether it still existed.
-
-Source verification established that the normal `TransactionForm` already:
-
-- defaults `Data da ocorrência` to today's browser-local date;
-- displays the field in the primary transaction-entry block;
-- permits direct pre-save editing;
-- shows helper text distinguishing financial occurrence from automatic registration time;
-- persists selected `occurredAt` independently from generated `createdAt` under D-014/P3.
+Source verification established that the normal `TransactionForm` already defaults `Data da ocorrência` to today's browser-local date, displays it in the primary transaction-entry block, permits direct pre-save editing, distinguishes financial occurrence from automatic registration time, and persists selected `occurredAt` independently from generated `createdAt` under D-014/P3.
 
 No evidence-backed runtime gap was found and no production source file was changed.
 
-Focused proof added in `TransactionForm.occurrence.test.tsx` for:
+Authoritative proof:
 
-- current-local-date default;
-- discoverable financial-vs-registration helper;
-- pre-save date editability;
-- existing selected-date persistence independence.
+- PR #56 D-019 run `32287018048`, job `96178850066`.
+- Validated PR merge ref `9459285920cfbd784a652e9db97cf40741977edf`.
+- ESLint: 0 errors / 82 warnings.
+- Vitest: 52 files / 217 tests PASS.
+- Playwright: 17/17 PASS.
+- Production build: PASS.
+- PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`.
+- Validated/integrated tree: `97a78d3e4d78a54ad117440c160920343513ba9f`.
 
-### Authoritative P9-S5 validation/integration proof
+P9 canonical closure integrated as `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
 
-- PR #56 D-019 run **`32287018048`**, job **`96178850066`**.
-- Validated PR merge ref **`9459285920cfbd784a652e9db97cf40741977edf`**, combining head `fef66eb8da6602f0804d0c78eb3d6c30feaf2cac` with base `716fc3b9ec77bada5ca44d992a6760a276e38cfa`.
-- ESLint: **0 errors / 82 warnings**.
-- Vitest: **52 files / 217 tests PASS**.
-- Playwright: **17/17 PASS**.
-- Production build: **PASS**.
-- PR #56 squash-integrated into `develop` as **`88c70a20071bd97ef3a08285128756e2ce484a74`**.
-- Validated merge ref and integrated squash share exact tree **`97a78d3e4d78a54ad117440c160920343513ba9f`**.
+## P10-S1 pre-cutover contract — evidence reconstruction
 
-The new focused test itself passed. Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking under the accepted D-019 policy.
+P10-S1 reconstructed the actual stable/integration/deployment/recovery boundary before authorizing any data movement:
 
-## P9 QA result
+- stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
+- completed-P9 `develop`: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`;
+- `develop` is 55 commits ahead of `main`;
+- both branches are currently unprotected;
+- current `main` GitHub Pages workflow builds/deploys on push without the V2 D-019 quality stage;
+- V2 `develop` deploy workflow contains `quality -> build -> deploy` for eventual stable publication;
+- Vercel `easy-v2` Git deployment is disabled and the latest observed READY candidate points to `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9;
+- stable `main` emits backup v1; V2 preflight explicitly accepts v1 and normalizes lifecycle/occurrence data without inventing category history;
+- D-024 permits restore on a fresh origin but blocks normal writes until recovery readiness is established.
 
-P9-S1 through P9-S5 have accepted validation/integration evidence. P9 is complete.
+## P10-S1 source-proven blocker
 
-## QA boundary entering P10
+Inspection of current `backupService.validateReferences()` found pre-D-026 equality checks across correction pairs:
 
-P10 remains `NOT_STARTED`. Any controlled-beta, migration, cutover or publication change must preserve D-019 as an objective integration/publication gate and may not treat completion of P9 as implicit authorization for production data movement or `main` publication.
+- replacement type must equal original type;
+- replacement order item must equal original item;
+- replacement category snapshot must equal original snapshot;
+- replacement `occurredAt` must equal original `occurredAt`.
+
+Current D-026 intentionally permits those effective replacement business fields to change. Existing backup tests cover a P2 correction pair that preserves those fields, but there is no positive regression proving a D-026 type/date/item-changing correction can export/self-preflight.
+
+This mismatch is classified as a pre-cutover recovery blocker, not accepted warning debt.
+
+## P10-S1-I1 required QA
+
+The current authorized implementation must add focused coverage proving:
+
+1. valid D-026 type-changing linked correction passes backup preflight/export;
+2. valid D-026 occurrence-date change passes;
+3. valid changed-order-item/category snapshot passes when each row is internally valid;
+4. broken bidirectional linkage remains rejected;
+5. invalid target references/shapes remain rejected;
+6. backup-v1 migration behavior remains passing;
+7. v2/schema4 compatibility remains passing;
+8. full D-019 passes on the exact integration candidate.
+
+No schema/backup-envelope/Vercel/live-data/`main`/D-016 change is authorized by that QA scope.
+
+## P10 contract validation state
+
+The D-027 / P10-S1 contract is documentation-only and must itself pass the full D-019 gate before integration. Final run/job/merge-ref/integration proof will be recorded canonically during closure.
+
+## Known non-blocking debt
+
+Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking only when the accepted D-019 objective commands pass.
