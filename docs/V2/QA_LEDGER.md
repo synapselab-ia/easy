@@ -49,13 +49,6 @@ Direct operator clarification received 2026-08-19 resolved the blocker:
 - the operator specifically recalled today's-date default behavior as the practical date concern;
 - the operator then confirmed the actual product requirement: business information entered into the system needs to remain editable after entry, without requiring prior history to be overwritten.
 
-Source reinspection for this gate:
-
-- `TransactionForm.tsx`: current `Data da ocorrência` defaults to today's local date and remains an explicit editable creation field;
-- `TransactionCorrectionDialog.tsx`: current guided editor exposes reason, reseller and value/quantity fields only;
-- `useTransactions.ts`: current replacement forcibly preserves original type/`occurredAt`, enforces original order item, preserves observation and original order category snapshot;
-- `pdfService.ts`: statements use transaction occurrence dates rather than a single print date for movement rows.
-
 Decision result:
 
 - D-026 accepted: effective transaction business fields are correctable through audited linked replacement, never destructive historical overwrite;
@@ -64,21 +57,46 @@ Decision result:
 - current active-reference lifecycle rules remain intact; archive-specific exception is not authorized by this gate;
 - today's-date default/discoverability signal is deferred to P9-S5.
 
-**Runtime:** unchanged in this decision slice.
+### Accepted decision validation/integration proof
 
-### Accepted validation/integration proof
+- D-019 run `32277770945`, job `96149101495`, merge ref `6a57fbe6b8674aca8723538f756b04f4a5af3f13`.
+- Result: 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+- PR #52 squash-integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`.
+- Validated merge ref and integrated squash tree: `c37ea55f83b15415678f5b2be2747fb5f06c6a27`.
 
-- D-019 run **`32277770945`**, job **`96149101495`**, merge ref **`6a57fbe6b8674aca8723538f756b04f4a5af3f13`**.
-- Validated head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` over base `1221f71de460c266c165b92de0536f443c71fa08`.
-- Result: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-- PR #52 squash-integrated as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**.
-- Validated merge ref and integrated squash share exact tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**.
-- Earlier runners were delayed in Playwright system-dependency installation before `qa:critical`; the successful run executed the full D-019 and no gate was bypassed.
+## P9-S4-I1 full-field audited replacement — PASS / DONE / INTEGRATED
+
+Implementation under D-026 was intentionally bounded to the transaction replacement domain/UI and tests. No schema, migration, backup, P9-S5/P10, backend/auth/cloud/live-sync or destructive-history change was introduced.
+
+Focused proof added for:
+
+- changing target type, `occurredAt`, observation and reseller/value state;
+- changing order item with current active/classified validation;
+- preserving historical D-025 item/category snapshot when the same item is kept;
+- recapturing current D-025 item/category snapshot when the item changes;
+- stripping/rejecting order-shape fields for payment/signal targets;
+- original business-row immutability and reversal/replacement linkage;
+- atomic rollback on invalid targets;
+- inactive newly selected item rejection;
+- D-024 freshness guard blocking replacement writes.
+
+### Authoritative implementation validation/integration proof
+
+- PR #54 D-019 run **`32285620846`**, job **`96174326588`**.
+- Validated PR merge ref **`4b51a5f35c2104d636903ce89eecbc995a0f3ce3`**, combining head `a4f0b026e14fc85bd02eee56db262b5271507b3c` with base `0f3ec562717c75981802f330d64410ee612a034d`.
+- ESLint: **0 errors / 82 warnings**.
+- Vitest: **52 files / 216 tests PASS**.
+- Playwright: **17/17 PASS**.
+- Production build: **PASS**.
+- PR #54 squash-integrated into `develop` as **`f1cfd126c18691da1256a1d3f918158d7aa9495a`**.
+- Validated merge ref and integrated squash share exact tree **`5679693b5f588f58404050cfca8ffd17a9a49fb3`**.
+
+The warning delta includes the new correction editor's same non-blocking `set-state-in-effect` lint class plus existing test/harness/dependency/runtime warnings; there were no lint errors and the complete gate passed.
 
 ## Current known non-blocking debt
 
-React `act(...)` warnings, mocked-select DOM/hydration warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible. No accepted gate is weakened.
+React `act(...)` warnings, `set-state-in-effect` warnings, mocked-select DOM/hydration warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible. No accepted gate is weakened.
 
-## QA boundary entering P9-S4-I1
+## QA boundary entering P9-S5
 
-Do not implement destructive transaction editing. I1 must prove original-row immutability, mandatory reason/reversal linkage, target-shape validation, occurrence-date/item/type/observation correction, D-025 category snapshot behavior, D-024 enforcement and rejection of invalid/inactive newly selected references. Full D-019 is mandatory before integration.
+P9-S5 must verify the current `Data da ocorrência` today-default/discoverability/editability workflow and preserve D-014/P3 separation between financial occurrence and registration/audit time. If no evidence-backed usability gap exists, no runtime change is required. Any runtime change still requires full D-019 before integration.
