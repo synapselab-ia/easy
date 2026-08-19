@@ -75,7 +75,7 @@ P10-S1 reconstructed the actual stable/integration/deployment/recovery boundary 
 
 - stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
 - completed-P9 `develop`: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`;
-- `develop` is 55 commits ahead of `main`;
+- `develop` was 55 commits ahead of `main` when the contract was established;
 - both branches are currently unprotected;
 - current `main` GitHub Pages workflow builds/deploys on push without the V2 D-019 quality stage;
 - V2 `develop` deploy workflow contains `quality -> build -> deploy` for eventual stable publication;
@@ -96,6 +96,20 @@ Current D-026 intentionally permits those effective replacement business fields 
 
 This mismatch is classified as a pre-cutover recovery blocker, not accepted warning debt.
 
+## P10-S1 contract validation — PASS / INTEGRATED
+
+Authoritative contract proof:
+
+- PR #58 D-019 run **`32290159119`**, job **`96188851730`**.
+- Validated PR merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**, combining head `f29de41c6fa668bebfd7a839c2b693eb9d971c55` with base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
+- ESLint: **0 errors / 82 warnings**.
+- Vitest: **52 files / 217 tests PASS**.
+- Playwright: **17/17 PASS**.
+- Production build: **PASS**.
+- PR #58 squash-integrated as **`5c7a5dc23af435711059deff75cf7862972662a1`**.
+- Validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
+- Contract integration was documentation-only; no Vercel candidate, runtime, live data or `main` change occurred.
+
 ## P10-S1-I1 required QA
 
 The current authorized implementation must add focused coverage proving:
@@ -110,10 +124,6 @@ The current authorized implementation must add focused coverage proving:
 8. full D-019 passes on the exact integration candidate.
 
 No schema/backup-envelope/Vercel/live-data/`main`/D-016 change is authorized by that QA scope.
-
-## P10 contract validation state
-
-The D-027 / P10-S1 contract is documentation-only and must itself pass the full D-019 gate before integration. Final run/job/merge-ref/integration proof will be recorded canonically during closure.
 
 ## Known non-blocking debt
 

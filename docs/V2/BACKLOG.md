@@ -66,7 +66,7 @@ Canonical plan: `docs/V2/P10_CUTOVER_PLAN.md`.
 
 ### P10-S1 — Pre-cutover compatibility and rehearsal gate
 
-**Status:** `CONTRACT ACCEPTED / IMPLEMENTATION NOT_STARTED`.
+**Status:** `CONTRACT ACCEPTED / INTEGRATED` — 2026-08-19.
 
 Accepted D-027 boundary:
 
@@ -82,11 +82,18 @@ Reconstructed baseline:
 
 - `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
 - P9-closed `develop`: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`;
-- `develop` is 55 commits ahead of `main`;
+- `develop` was 55 commits ahead of `main` when the contract was established;
 - current `easy-v2` Vercel deployment is stale at `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9;
 - Vercel Git deployment is disabled by `vercel.json`, so candidate deployment remains manual;
 - stable `main` exports backup v1; V2 preflight accepts that envelope and normalizes lifecycle/occurrence fields without inventing categories/history;
 - D-024 recovery readiness must be re-established on a fresh candidate origin before normal writes.
+
+Contract validation/integration proof:
+
+- D-019 `32290159119` / `96188851730` on merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75`;
+- 0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS;
+- PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`;
+- validated/integrated tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
 
 #### P10-S1-I1 — Backup/correction compatibility hardening
 

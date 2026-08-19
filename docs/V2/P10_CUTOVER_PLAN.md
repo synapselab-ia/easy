@@ -1,6 +1,6 @@
 # Easy V2 — P10 Controlled Beta / Migration / Cutover Plan
 
-**Status:** `P10-S1 CONTRACT ACCEPTED / IMPLEMENTATION NOT_STARTED`  
+**Status:** `P10-S1 CONTRACT ACCEPTED / INTEGRATED; IMPLEMENTATION NOT_STARTED`  
 **Date:** 2026-08-19  
 **Scope:** first bounded P10 acceptance/cutover slice only; no live-store data movement and no stable publication
 
@@ -15,8 +15,8 @@ This document defines only the first bounded gate. It does **not** authorize pro
 ### Stable repository state
 
 - `main` remains the stable/original application at commit `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
-- `develop` is the V2 integration branch at the P9 closure commit `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a` when this plan was established.
-- `develop` is 55 commits ahead of `main`; `main` is not partially migrated.
+- `develop` was the V2 integration branch at the P9 closure commit `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a` when this plan was established.
+- `develop` was 55 commits ahead of `main`; `main` was not partially migrated.
 - Both branches are currently unprotected in GitHub, so branch protection cannot be assumed to enforce the cutover gate automatically.
 
 ### Stable publication path
@@ -156,7 +156,19 @@ The following remain outside P10-S1 and require later canonical authorization:
 - decommissioning the original stable application;
 - changing D-016 topology.
 
-## 7. Immediate next action after this contract
+## 7. Contract validation and integration
+
+The P10-S1 contract itself was validated before integration:
+
+- PR #58 D-019 run **`32290159119`**, job **`96188851730`**;
+- validated merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**, head `f29de41c6fa668bebfd7a839c2b693eb9d971c55`, base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`;
+- result: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS**;
+- PR #58 squash-integrated into `develop` as **`5c7a5dc23af435711059deff75cf7862972662a1`**;
+- validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
+
+The integration was documentation-only. No runtime, schema, backup envelope, Vercel deployment, live-store data or `main` change occurred.
+
+## 8. Immediate next action after this contract
 
 Execute only **P10-S1-I1 — Backup/correction compatibility hardening**.
 
