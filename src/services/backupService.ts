@@ -554,24 +554,6 @@ function validateReferences(
                 if (replacement.correction?.replacesTransactionId !== transaction.id) {
                     pathError(errors, `${path}.reversal.replacementTransactionId`, 'não possui vínculo de correção bidirecional correspondente');
                 }
-                if (replacement.type !== transaction.type) {
-                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição deve preservar o tipo do lançamento original');
-                }
-                if (replacement.type === 'order' && replacement.itemId !== transaction.itemId) {
-                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição de pedido deve preservar o item original');
-                }
-                if (
-                    replacement.type === 'order' &&
-                    (replacement.categoryId !== transaction.categoryId || replacement.categoryName !== transaction.categoryName)
-                ) {
-                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição de pedido deve preservar o snapshot de categoria original');
-                }
-                if (
-                    replacement.occurredAt && transaction.occurredAt &&
-                    replacement.occurredAt.getTime() !== transaction.occurredAt.getTime()
-                ) {
-                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição deve preservar occurredAt do lançamento original');
-                }
                 if (replacement.createdAt.getTime() < transaction.createdAt.getTime()) {
                     pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição não pode ser registrada antes do lançamento original');
                 }
