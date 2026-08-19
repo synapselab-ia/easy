@@ -28,8 +28,8 @@ Phase state:
 - P9-S4 — Confirmed correction microflows: `DONE / INTEGRATED`.
 - P9-S5 — Occurrence-date usability verification: `DONE / INTEGRATED`.
 - **P10-S1 — Pre-cutover compatibility and rehearsal gate: `CONTRACT ACCEPTED / INTEGRATED`.**
-- **P10-S1-I1 — Backup/correction compatibility hardening: `NOT_STARTED`.**
-- P10-S1-I2 — Non-production migration/recovery rehearsal: `BLOCKED BY I1`.
+- **P10-S1-I1 — Backup/correction compatibility hardening: `DONE / INTEGRATED`.**
+- **P10-S1-I2 — Non-production migration/recovery rehearsal: `NOT_STARTED`.**
 
 ## Startup protocol for a new conversation
 
@@ -53,7 +53,7 @@ Phase-specific canonical evidence:
 - `docs/V2/P9_CATEGORY_CONTRACT.md` — completed D-025 / P9-S3 record;
 - `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` and `P9_CORRECTION_DECISION.md` — completed D-026 / P9-S4 record;
 - `docs/V2/P9_DATE_USABILITY.md` — completed P9-S5 verification record;
-- **`docs/V2/P10_CUTOVER_PLAN.md` — integrated first P10 pre-cutover contract and evidence baseline.**
+- **`docs/V2/P10_CUTOVER_PLAN.md` — integrated P10 pre-cutover contract, I1 result and I2 rehearsal boundary.**
 
 ## Current technical baseline
 
@@ -62,6 +62,10 @@ Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and l
 Runtime V2 is Dexie **V5** with `categories`, `items`, `resellers`, `transactions`. Canonical interchange remains `easy-backup` version 2 / schema5. D-018 restores all four business tables atomically. D-024 recovery-health metadata remains separate and normal writes remain subject to its exact 24-hour guard.
 
 D-025 category snapshot/reporting behavior and D-026 full-field audited transaction correction are implemented/integrated. D-014/P3 occurrence-date semantics remain unchanged.
+
+P10-S1-I1 now aligns backup self-preflight/export with D-026 while retaining D-025 history semantics: type and financial occurrence date may change; a corrected order may change item and capture that target item's valid replacement-time snapshot; an order correction that keeps the same item must preserve the original category snapshot. Bidirectional audit linkage, referenced-ID existence, registration chronology and each transaction's own target shape/reference validity remain enforced.
+
+No schema, Dexie migration or backup-envelope version changed in P10-S1-I1. Backup-v1 and v2/schema4 compatibility remain covered by the existing passing suite.
 
 ## Repository / deployment baseline entering P10
 
@@ -75,33 +79,39 @@ Reconstruction on 2026-08-19 established:
 - V2's `deploy.yml` upgrades eventual stable publication to D-019 `quality -> build -> deploy`;
 - Vercel project `easy-v2` is the candidate/beta host, not the store's stable production system;
 - repository `vercel.json` disables Git-triggered Vercel deployments, preserving manual candidate deployment;
-- latest observed READY `easy-v2` deployment points to `develop` commit `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind the completed-P9 baseline.
+- latest observed READY `easy-v2` deployment still points to `develop` commit `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind the completed-P9 baseline.
 
-No candidate refresh, `main` publication or live-store migration was performed while defining or closing P10-S1.
+No candidate refresh, `main` publication or live-store migration was performed while defining, implementing or closing P10-S1-I1.
 
 ## Stable → V2 migration boundary
 
 The stable `main` application uses Dexie V1 and exports backup version 1 with `items`, `resellers`, `transactions`.
 
-V2 preflight already supports that v1 envelope and normalizes it toward V2 without inventing history:
+V2 preflight supports that v1 envelope and normalizes it toward V2 without inventing history:
 
 - missing lifecycle state normalizes legacy items/resellers to active;
-- missing transaction `occurredAt` normalizes to the legacy `createdAt`;
+- missing transaction `occurredAt` normalizes to legacy `createdAt`;
 - categories/category history are not fabricated;
 - legacy items remain unclassified until operator classification;
 - new orders remain blocked for unclassified active items under D-025/P1 rules.
 
 Because IndexedDB is origin-local, Vercel/GitHub Pages publication does not itself migrate the stable dataset. A future real cutover must use explicit backup/preflight/restore under a later accepted gate.
 
-## P10 blocker found during reconstruction
+## P10-S1-I1 blocker resolution
 
-The current V2 backup `validateReferences()` still enforces pre-D-026 replacement invariants that require linked replacements to preserve transaction type, order item/category snapshot and `occurredAt`.
+The pre-cutover recovery blocker identified while defining P10-S1 is resolved.
 
-D-026 now legitimately permits those effective replacement business fields to change. A valid V2 dataset containing such a correction can therefore conflict with backup self-preflight/export.
+Before I1, `backupService.validateReferences()` still required linked replacements to preserve transaction type, order item/category snapshot and `occurredAt`, which conflicted with valid D-026 corrections.
 
-This is classified as a **pre-cutover recovery blocker**. It must be corrected before migration rehearsal or any live-store data movement.
+P10-S1-I1 removed only the obsolete cross-record assumptions:
 
-The fix must preserve valid audit constraints: bidirectional correction/reversal linkage, referenced-ID existence, chronology and each replacement transaction's own target-shape/reference validity.
+- replacement type may differ from the original;
+- replacement `occurredAt` may differ from the original;
+- an order replacement may select another item and carry that replacement item's valid category snapshot;
+- if an order replacement keeps the same item, the original D-025 category snapshot remains mandatory;
+- bidirectional correction/reversal links, referenced IDs, registration chronology and each transaction's own target shape/reference validity remain mandatory.
+
+Focused regression coverage proves valid type/date/item-changing corrections preflight and export successfully while broken links and invalid target shapes remain rejected.
 
 ## Authoritative decisions
 
@@ -119,32 +129,38 @@ D-016 through D-027 remain authoritative. In particular:
 - D-026 keeps effective transaction business fields correctable through audited linked replacement;
 - **D-027 requires a fail-closed non-production pre-cutover compatibility/rehearsal gate before copied-live-data beta or stable publication.**
 
-## P9 accepted validation baseline
+## Accepted validation baseline
 
 P9-S1 through P9-S5 have accepted validation/integration evidence. Final P9-S5 runtime-neutral verification was PR #56 / D-019 `32287018048` / `96178850066`, integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`. Canonical P9 closure PR #57 integrated as `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
 
-## P10-S1 contract validation and integration
+P10-S1 contract proof:
 
-- PR #58 D-019 run **`32290159119`**, job **`96188851730`**, validated merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**.
-- Validated merge ref combined head `f29de41c6fa668bebfd7a839c2b693eb9d971c55` with base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
-- Gate result: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-- PR #58 squash-integrated into `develop` as **`5c7a5dc23af435711059deff75cf7862972662a1`**.
-- Validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
-- The contract change was documentation-only; no runtime, schema, backup envelope, Vercel deployment, live-store data or `main` change occurred.
+- PR #58 D-019 `32290159119` / `96188851730`, validated merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75`;
+- 0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS;
+- PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`;
+- validated/integrated tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
 
-## P10-S1 accepted boundary
+P10-S1-I1 implementation proof:
 
-P10-S1 is deliberately fail-closed:
+- initial D-019 `32292405631` / `96196002726` correctly blocked integration when the first implementation over-relaxed D-025 same-item category-snapshot preservation; the five new P10 tests passed but one existing P9-S3 regression failed;
+- the implementation was narrowed to preserve the same-item snapshot rule while retaining D-026 item/type/date changes;
+- authoritative D-019 run **`32292888925`**, job **`96197514379`**, validated PR #60 merge ref **`d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`**, combining head `666e4c86df7c6328289d489db7c8eebcb714aad1` with base `a549ce79925aad0cae9e964babd28879e8ad1c15`;
+- gate result: **0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; production build PASS**;
+- PR #60 squash-integrated into `develop` as **`71b939b4c938288efb0f3c51e300e5c5541ee8c3`**;
+- validated merge ref and integrated squash share exact tree **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**.
+
+## P10-S1 boundary after I1
+
+P10-S1 remains deliberately fail-closed:
 
 1. `main` stays untouched;
-2. no live-store data is moved;
-3. no V2 stable publication occurs;
-4. no new Vercel candidate was deployed in the contract slice;
-5. P10-S1-I1 first fixes/proves D-026 backup compatibility with full D-019;
-6. only after I1 may P10-S1-I2 rehearse v1→V2 migration/recovery using synthetic/non-production data;
-7. copied-live-data beta, final freeze, stable publication and cutover remain later explicit go/no-go work;
-8. D-016 remains unchanged.
+2. no live-store data has been moved;
+3. no V2 stable publication has occurred;
+4. P10-S1-I1 is complete/integrated;
+5. P10-S1-I2 may now rehearse v1→V2 migration/recovery only with an exact validated candidate and synthetic/non-production data;
+6. copied-live-data beta, final freeze, stable publication and production cutover remain later explicit go/no-go work;
+7. D-016 remains unchanged.
 
 ## NEXT_ACTION
 
-**Execute only P10-S1-I1 — Backup/correction compatibility hardening. Update backup validation so valid D-026 linked replacements may change the business fields D-026 permits while preserving bidirectional audit linkage, referenced-ID existence, chronology and each transaction's own target-shape/reference validity. Add focused regression coverage for valid D-026 type/date/item replacement backup export/preflight and for broken-link/invalid-shape rejection; preserve backup-v1 and v2/schema4 compatibility. Run full D-019 before integration. Do not deploy Vercel, do not use live-store data, do not modify `main`, do not change schema/backup envelope or D-016, and do not start P10-S1-I2.**
+**Execute only P10-S1-I2 — Non-production migration/recovery rehearsal. Manually deploy an exact D-019-passing `develop` SHA to the `easy-v2` candidate, verify the deployed SHA rather than relying on an alias, and use only synthetic/non-production backup-v1 fixture data to rehearse v1→V2 preflight/restore, count/normalization checks, D-024 recovery setup before normal writes, representative legacy item classification/new-order gating, supported transaction/correction flows, V2 backup export and disposable restore round-trip. Record go/no-go evidence for later copied-live-data beta. Do not use live-store data, do not modify or publish `main`, do not perform production cutover or stable publication, and do not change D-016.**
