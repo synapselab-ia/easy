@@ -4,9 +4,9 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
-## 2026-08-19 — P9-S3-I3 category reporting implemented and functionally validated; final integration pending
+## 2026-08-19 — P9-S3-I3 category reporting completed and integrated; P9-S3 closed
 
-PR #48 implements only the D-025 category order-performance reporting slice.
+PR #48 completed the final D-025 category order-performance reporting slice.
 
 Implemented:
 
@@ -23,9 +23,13 @@ Implemented:
 
 No payment/signal/balance/open-debt/FIFO category allocation, historical backfill/recategorization, profitability inference, schema/backup change, P9-S4/P9-S5/P10 or backend/auth/cloud/live synchronization work was introduced.
 
-Functional D-019 run **`32261923163`**, job **`96096954271`**, passed on merge ref `02d656ea771e334622a6248139b508e20a98caf1`, combining head `01fcd986ed86fbe465592af3c5600a2570380ee8` with base `4191df77db83258f1125bffd445a6ec1f5b46bf9`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+Functional D-019 run `32261923163`, job `96096954271`, passed on merge ref `02d656ea771e334622a6248139b508e20a98caf1`: 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS.
 
-This entry does not yet declare I3/P9-S3 integrated. The documentation-complete PR #48 head must pass a fresh D-019 and that exact validated content must be integrated before canonical post-merge closure.
+The authoritative documentation-complete D-019 run **`32262877105`**, job **`96100129962`**, passed on merge ref `e9cb929b0eb8a109a44eba3408e1675249b11fd7`, combining head `b7e76e56c8049a002243fc693891880ba6bf0a50` with base `4191df77db83258f1125bffd445a6ec1f5b46bf9`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+
+PR #48 was squash-integrated into `develop` as **`08ad2973f387035301901f9f46b0c78039796c2d`**. The validated merge ref and integrated squash share exact tree **`af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`**.
+
+P9-S3 is therefore `DONE / INTEGRATED`. The next work is only the **P9-S4 evidence/contract gate**: map already-accepted store correction friction to concrete unsupported operator cases, distinguish what P2 already supports from what is genuinely missing, and define the smallest confirmed high-value subset before any new correction runtime is authorized.
 
 ---
 
