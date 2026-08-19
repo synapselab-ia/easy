@@ -4,80 +4,53 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
-## 2026-08-19 — P9-S4 correction evidence gate accepted/integrated; runtime remains blocked on direct confirmation
+## 2026-08-19 — P9-S4 direct evidence resolves blocker; D-026 full-field audited correction contract accepted
 
-The P9-S4 evidence/contract gate inspected only the accepted direct-store evidence, the accepted P9-S1 correction inventory and the current correction UI/domain needed to distinguish existing support from genuine source constraints.
+Direct operator evidence clarified the actual correction requirement: information entered into the system must remain editable after entry, while prior history does not need to be overwritten by the correction.
 
-Current V2 already supports audited correction of reseller, order quantity/unit price, payment/signal value and pure reversal/cancellation under D-012/D-013.
+The operator could not quantify individual wrong-item/type/observation/archive frequencies from memory. The date concern was clarified as the system presenting today's date by default in routine contexts. Current source confirms `TransactionForm` still initializes `Data da ocorrência` to today; that discoverability/default issue is retained for P9-S5 rather than used to redesign P3 dates in P9-S4.
 
-Current source still constrains:
+P9-S4 therefore does not invent a per-field frequency ranking. D-026 selects the smallest coherent implementation: one full-field audited transaction replacement editor. The replacement may define reseller, type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value. The original row remains immutable; correction remains a mandatory-reason atomic linked replacement/reversal under D-012/D-013.
 
-- post-save `occurredAt` correction;
-- changing the order item after save;
-- changing transaction type after save;
-- changing/adding observation after save;
-- guided replacement of an order whose original item is inactive.
+D-025 remains authoritative: keeping the same order item preserves the original item/category snapshot; changing/newly introducing an order item requires a current active/classified target and captures its current snapshot. P1/D-011 active-reference rules are not weakened for speculative inactive-entity exceptions. D-024 write enforcement remains mandatory.
 
-P8 directly confirmed that correction friction exists, but it did not identify which exact record/action pairs cause that friction. P9-S1 explicitly classified the rows above as source-proven gaps rather than direct claims about Duda's operation. Therefore no high-value implementation subset can be selected without inventing evidence.
+No runtime, schema or backup change is included in this decision slice. P9-S4-I1 is authorized but `NOT_STARTED`; P9-S5/P10 remain unstarted.
 
-`docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` records the minimum direct intake required: whether each case actually occurs, approximate frequency, current workaround, business consequence and any other exact missing record/action pair.
+---
 
-D-019 run `32265612927`, job `96109244644`, passed on PR #50 merge ref `5efb3bd2d0fd20909802a02e00d170150689a7d7`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**. The validated head was `211923d7900818d189b22ce8773be76591505d31` over base `825aca83d1f317119f8f0e4f3d203722c1e6cf85`.
+## 2026-08-19 — P9-S4 correction evidence gate accepted/integrated; runtime blocked pending direct confirmation
 
-PR #50 was squash-integrated into `develop` as `35a2e0d7495791dfda7f02e045067a85bad4aed9`. Validated merge ref and integrated squash share exact tree `5789c7863c0a62904b9d18692543f2b288290867`.
+The initial P9-S4 gate proved current audited support for reseller, order quantity/unit price, payment/signal value and pure reversal, and source-proven constraints around `occurredAt`, order item, transaction type, observation and inactive original items.
 
-No runtime, schema, backup, historical financial row, D-012/D-013 semantic, P9-S5/P10 work or backend/auth/cloud/live synchronization was changed. No new D-number was accepted. The gate is closed; the evidence blocker intentionally remains.
+P8 had confirmed generic correction friction but not exact record/action pairs, so runtime was correctly blocked. `P9_CORRECTION_EVIDENCE_REQUEST.md` was created as the direct intake.
+
+D-019 `32265612927` / `96109244644` passed on PR #50. PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`. Closure #51 integrated as `1221f71de460c266c165b92de0536f443c71fa08` after retry D-019 `32269262365` / `96121383857` on unchanged head; closure tree `7a7551f2815f9338d8b906a2bb6bf1e1d66c8ff2`.
 
 ---
 
 ## 2026-08-19 — P9-S3-I3 category reporting completed and integrated; P9-S3 closed
 
-PR #48 completed the final D-025 category order-performance reporting slice.
+PR #48 completed D-025 category order-performance reporting: effective non-reversed orders only, `occurredAt` period filtering, historical `transaction.categoryId` grouping, legacy no-category bucket, order count, item quantity and gross value. Payments/signals/balance/FIFO debt are excluded from category allocation.
 
-Implemented:
-
-- pure read-only aggregation over effective non-reversed `order` transactions;
-- `occurredAt` / `transactionOccurredAt()` as the reporting time basis, with inclusive optional period filtering;
-- grouping by stored historical `transaction.categoryId`, never the item's current classification;
-- explicit `Sem categoria — histórico legado` bucket for orders without a historical category snapshot;
-- order count, summed item quantity and gross order value;
-- linked correction semantics where the reversed original contributes zero and the effective replacement contributes once;
-- archived categories remain reportable;
-- current category name may label the existing stable category identity while immutable `transaction.categoryName` remains untouched;
-- bounded read-only `/category-report` operator view and navigation;
-- targeted domain and UI tests.
-
-No payment/signal/balance/open-debt/FIFO category allocation, historical backfill/recategorization, profitability inference, schema/backup change, P9-S4/P9-S5/P10 or backend/auth/cloud/live synchronization work was introduced.
-
-Functional D-019 run `32261923163`, job `96096954271`, passed on merge ref `02d656ea771e334622a6248139b508e20a98caf1`: 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-
-The authoritative documentation-complete D-019 run **`32262877105`**, job **`96100129962`**, passed on merge ref `e9cb929b0eb8a109a44eba3408e1675249b11fd7`, combining head `b7e76e56c8049a002243fc693891880ba6bf0a50` with base `4191df77db83258f1125bffd445a6ec1f5b46bf9`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-
-PR #48 was squash-integrated into `develop` as **`08ad2973f387035301901f9f46b0c78039796c2d`**. The validated merge ref and integrated squash share exact tree **`af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`**.
-
-P9-S3 is therefore `DONE / INTEGRATED`.
+Authoritative D-019 `32262877105` / `96100129962` passed; PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`; validated/integrated tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
 
 ---
 
 ## 2026-08-18 — P9-S3-I2 category lifecycle/classification/order snapshots completed and integrated
 
-P9-S3-I2 operationalized D-025 lifecycle/classification/history without reporting. It added category lifecycle and management, active-category item classification, lossless legacy compatibility, immutable new-order category snapshots and correction snapshot preservation while keeping D-024 enforcement.
-
-First functional gate `32202062045` / `95917767742` correctly failed with 199/205 tests and exposed stale fixtures plus a Dexie transaction-zone issue; the contract was not weakened. Functional accepted `32202440100` / `95918871077` passed. Final documentation-complete `32202876262` / `95920142630` passed with 0 errors / 81 warnings, 49 files / 205 Vitest, 17/17 Playwright and build PASS.
-
-PR #46 integrated as `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; validated/integrated tree `ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`. Canonical closure #47 integrated as `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
+P9-S3-I2 operationalized D-025 lifecycle/classification/history without reporting. Final D-019 `32202876262` / `95920142630`; PR #46 integrated as `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; closure #47 `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
 
 ---
 
 ## 2026-08-18 — P9-S3-I1 category persistence/migration/backup compatibility completed
 
-Dexie V5 category persistence, additive/non-inventive V4→V5 migration, `easy-backup` v2/schema5 with v1/schema4 compatibility, schema5 graph validation, category-aware backup preview and four-table D-018 restore. Final D-019 `32191707306` / `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`.
+Dexie V5 category persistence, additive/non-inventive V4→V5 migration, `easy-backup` v2/schema5 with v1/schema4 compatibility and four-table D-018 restore. Final D-019 `32191707306` / `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`.
 
 ---
 
 ## 2026-08-18 — P9-S3 category contract accepted; D-025 established
 
-D-025 established stable category identity/lifecycle, future-order transaction snapshots, non-inventive legacy handling, order-only category analytics, Dexie V5 direction and additive D-017/D-018 compatibility. Final contract D-019 `32185226251` / `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
+D-025 established stable category identity/lifecycle, future-order transaction snapshots, non-inventive legacy handling and order-only category analytics. Final contract D-019 `32185226251` / `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
 
 ---
 
