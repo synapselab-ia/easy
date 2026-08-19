@@ -83,19 +83,6 @@ P10-S1 reconstructed the actual stable/integration/deployment/recovery boundary 
 - stable `main` emits backup v1; V2 preflight explicitly accepts v1 and normalizes lifecycle/occurrence data without inventing category history;
 - D-024 permits restore on a fresh origin but blocks normal writes until recovery readiness is established.
 
-## P10-S1 source-proven blocker
-
-Inspection of current `backupService.validateReferences()` found pre-D-026 equality checks across correction pairs:
-
-- replacement type must equal original type;
-- replacement order item must equal original item;
-- replacement category snapshot must equal original snapshot;
-- replacement `occurredAt` must equal original `occurredAt`.
-
-Current D-026 intentionally permits those effective replacement business fields to change. Existing backup tests cover a P2 correction pair that preserves those fields, but there is no positive regression proving a D-026 type/date/item-changing correction can export/self-preflight.
-
-This mismatch is classified as a pre-cutover recovery blocker, not accepted warning debt.
-
 ## P10-S1 contract validation — PASS / INTEGRATED
 
 Authoritative contract proof:
@@ -110,9 +97,13 @@ Authoritative contract proof:
 - Validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
 - Contract integration was documentation-only; no Vercel candidate, runtime, live data or `main` change occurred.
 
-## P10-S1-I1 required QA
+## P10-S1-I1 — backup/correction compatibility hardening
 
-The current authorized implementation must add focused coverage proving:
+### Source-proven blocker
+
+Before I1, `backupService.validateReferences()` still imposed pre-D-026 equality across correction pairs for replacement type, order item/category snapshot and `occurredAt`. D-026 permits those effective business fields to change, so a valid corrected V2 dataset could conflict with backup self-preflight/export.
+
+The authorized QA required:
 
 1. valid D-026 type-changing linked correction passes backup preflight/export;
 2. valid D-026 occurrence-date change passes;
@@ -123,7 +114,40 @@ The current authorized implementation must add focused coverage proving:
 7. v2/schema4 compatibility remains passing;
 8. full D-019 passes on the exact integration candidate.
 
-No schema/backup-envelope/Vercel/live-data/`main`/D-016 change is authorized by that QA scope.
+### Initial D-019 — FAIL / BLOCKING
+
+- Run `32292405631`, job `96196002726`.
+- The five new P10-S1-I1 focused tests passed.
+- Full Vitest failed one existing P9-S3 regression: `rejects a linked order correction that rewrites the historical category snapshot`.
+- Cause: the first implementation removed category-snapshot equality unconditionally, which over-relaxed D-025 for an order correction keeping the same item.
+- Because `npm run qa:critical` is chained, this objective Vitest failure blocked integration; Playwright/build were not accepted from this candidate.
+
+The failure was resolved by narrowing the validator: type, `occurredAt` and item changes remain allowed under D-026, but order→order correction keeping the same `itemId` must preserve the original D-025 category snapshot. Changed-item order replacements may carry the new target item's valid snapshot.
+
+### Authoritative D-019 — PASS / DONE / INTEGRATED
+
+- PR #60 D-019 run **`32292888925`**, job **`96197514379`**.
+- Validated PR merge ref **`d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`**.
+- Validated head `666e4c86df7c6328289d489db7c8eebcb714aad1` over base `a549ce79925aad0cae9e964babd28879e8ad1c15`.
+- ESLint: **0 errors / 82 warnings**.
+- Vitest: **53 files / 222 tests PASS**.
+- Focused `backupService.p10s1.test.ts`: **5/5 PASS**.
+- Existing `categoryBackupService.test.ts`: **8/8 PASS**, including same-item historical snapshot rejection.
+- Existing backup-v1 and v2/schema4 migration compatibility coverage remained passing in the full suite.
+- Playwright: **17/17 PASS**.
+- Production build: **PASS**.
+- PR #60 squash-integrated into `develop` as **`71b939b4c938288efb0f3c51e300e5c5541ee8c3`**.
+- Validated merge ref and integrated squash share exact tree **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**.
+
+The unusually long pre-QA duration in the authoritative run came from external Playwright/Ubuntu font-package installation. No validation requirement was bypassed.
+
+P10-S1-I1 therefore satisfies all exit criteria. No schema, backup-envelope, Vercel, live-store-data, `main` or D-016 change occurred.
+
+## Boundary entering P10-S1-I2
+
+P10-S1-I2 is now `NOT_STARTED` and is the current bounded action. It must use an exact D-019-passing candidate and synthetic/non-production backup-v1 fixture data only. It may exercise deployment, migration/recovery rehearsal, D-024 recovery setup, classification gating, supported transaction/correction flows, V2 export and disposable restore round-trip.
+
+Live-store data, stable `main` publication, production cutover and D-016 changes remain unauthorized.
 
 ## Known non-blocking debt
 
