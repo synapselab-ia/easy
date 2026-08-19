@@ -27,7 +27,7 @@ Phase state:
 - P9-S3 — Categories/classification/reporting: `DONE / INTEGRATED`.
 - P9-S4 — Confirmed correction microflows: `DONE / INTEGRATED`.
 - P9-S5 — Occurrence-date usability verification: `DONE / INTEGRATED`.
-- **P10-S1 — Pre-cutover compatibility and rehearsal gate: `CONTRACT ACCEPTED / IMPLEMENTATION NOT_STARTED`.**
+- **P10-S1 — Pre-cutover compatibility and rehearsal gate: `CONTRACT ACCEPTED / INTEGRATED`.**
 - **P10-S1-I1 — Backup/correction compatibility hardening: `NOT_STARTED`.**
 - P10-S1-I2 — Non-production migration/recovery rehearsal: `BLOCKED BY I1`.
 
@@ -53,7 +53,7 @@ Phase-specific canonical evidence:
 - `docs/V2/P9_CATEGORY_CONTRACT.md` — completed D-025 / P9-S3 record;
 - `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` and `P9_CORRECTION_DECISION.md` — completed D-026 / P9-S4 record;
 - `docs/V2/P9_DATE_USABILITY.md` — completed P9-S5 verification record;
-- **`docs/V2/P10_CUTOVER_PLAN.md` — accepted first P10 pre-cutover contract and evidence baseline.**
+- **`docs/V2/P10_CUTOVER_PLAN.md` — integrated first P10 pre-cutover contract and evidence baseline.**
 
 ## Current technical baseline
 
@@ -69,7 +69,7 @@ Reconstruction on 2026-08-19 established:
 
 - `main` stable commit: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
 - P9-closed `develop` commit: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`;
-- `develop` is 55 commits ahead of `main` and `main` is not partially migrated;
+- `develop` was 55 commits ahead of `main` when the P10-S1 contract was established and `main` was not partially migrated;
 - both `main` and `develop` are currently unprotected branches, so accepted process/QA gates cannot be assumed to be enforced by branch protection;
 - current stable `main` deploys to GitHub Pages on push with its historical build/deploy workflow;
 - V2's `deploy.yml` upgrades eventual stable publication to D-019 `quality -> build -> deploy`;
@@ -77,7 +77,7 @@ Reconstruction on 2026-08-19 established:
 - repository `vercel.json` disables Git-triggered Vercel deployments, preserving manual candidate deployment;
 - latest observed READY `easy-v2` deployment points to `develop` commit `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind the completed-P9 baseline.
 
-No candidate refresh, `main` publication or live-store migration was performed while defining P10-S1.
+No candidate refresh, `main` publication or live-store migration was performed while defining or closing P10-S1.
 
 ## Stable → V2 migration boundary
 
@@ -123,6 +123,15 @@ D-016 through D-027 remain authoritative. In particular:
 
 P9-S1 through P9-S5 have accepted validation/integration evidence. Final P9-S5 runtime-neutral verification was PR #56 / D-019 `32287018048` / `96178850066`, integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`. Canonical P9 closure PR #57 integrated as `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
 
+## P10-S1 contract validation and integration
+
+- PR #58 D-019 run **`32290159119`**, job **`96188851730`**, validated merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**.
+- Validated merge ref combined head `f29de41c6fa668bebfd7a839c2b693eb9d971c55` with base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
+- Gate result: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- PR #58 squash-integrated into `develop` as **`5c7a5dc23af435711059deff75cf7862972662a1`**.
+- Validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
+- The contract change was documentation-only; no runtime, schema, backup envelope, Vercel deployment, live-store data or `main` change occurred.
+
 ## P10-S1 accepted boundary
 
 P10-S1 is deliberately fail-closed:
@@ -130,7 +139,7 @@ P10-S1 is deliberately fail-closed:
 1. `main` stays untouched;
 2. no live-store data is moved;
 3. no V2 stable publication occurs;
-4. no new Vercel candidate is deployed in the contract slice;
+4. no new Vercel candidate was deployed in the contract slice;
 5. P10-S1-I1 first fixes/proves D-026 backup compatibility with full D-019;
 6. only after I1 may P10-S1-I2 rehearse v1→V2 migration/recovery using synthetic/non-production data;
 7. copied-live-data beta, final freeze, stable publication and cutover remain later explicit go/no-go work;
