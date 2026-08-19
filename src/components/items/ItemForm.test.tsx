@@ -57,6 +57,7 @@ describe('ItemForm', () => {
 
     it('should validate negative price', async () => {
         render(<ItemForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
+        await screen.findByRole('option', { name: 'Porcelana' });
 
         const nameInput = screen.getByLabelText(/Nome do Item/i);
         const priceInput = screen.getByLabelText(/Preço Base/i);
@@ -75,19 +76,22 @@ describe('ItemForm', () => {
         vi.spyOn(db.items, 'add').mockRejectedValueOnce(new Error('Falha simulada ao criar item.'));
 
         render(<ItemForm onSubmitSuccess={onSubmitSuccess} onCancel={vi.fn()} />, { wrapper });
+        await screen.findByRole('option', { name: 'Porcelana' });
 
         const nameInput = screen.getByLabelText(/Nome do Item/i);
         const priceInput = screen.getByLabelText(/Preço Base/i);
+        const categoryInput = screen.getByLabelText(/Categoria/i);
         fireEvent.change(nameInput, { target: { value: 'Produto para retry' } });
         fireEvent.change(priceInput, { target: { value: '149.90' } });
-        fireEvent.change(screen.getByLabelText(/Categoria/i), { target: { value: String(categoryId) } });
+        fireEvent.change(categoryInput, { target: { value: String(categoryId) } });
+        expect(categoryInput).toHaveValue(String(categoryId));
         fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
         await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Falha simulada ao criar item.'));
         expect(onSubmitSuccess).not.toHaveBeenCalled();
         expect(nameInput).toHaveValue('Produto para retry');
         expect(priceInput).toHaveValue(149.9);
-        expect(screen.getByLabelText(/Categoria/i)).toHaveValue(String(categoryId));
+        expect(categoryInput).toHaveValue(String(categoryId));
         expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
     });
 
@@ -101,6 +105,7 @@ describe('ItemForm', () => {
             createdAt: new Date('2026-08-01T12:00:00.000Z'),
             updatedAt: new Date('2026-08-01T12:00:00.000Z'),
         };
+        await db.items.put(initialData);
         vi.spyOn(db.items, 'update').mockRejectedValueOnce(new Error('Falha simulada ao editar item.'));
 
         render(
