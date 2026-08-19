@@ -106,26 +106,21 @@ async function addValidatedTransaction(
         throw new Error('Itens inativos não podem ser usados em novos pedidos.');
     }
 
-    const categorySnapshot = preservedOrderSnapshot
-        ? {
-            categoryId: preservedOrderSnapshot.categoryId,
-            categoryName: preservedOrderSnapshot.categoryName,
-        }
-        : await requireActiveCategory(item.categoryId).then(category => ({
-            categoryId: category.id,
-            categoryName: category.name,
-        }));
+    let categoryId = preservedOrderSnapshot?.categoryId;
+    let categoryName = preservedOrderSnapshot?.categoryName;
+
+    if (!preservedOrderSnapshot) {
+        const category = await requireActiveCategory(item.categoryId);
+        categoryId = category.id;
+        categoryName = category.name;
+    }
 
     return db.transactions.add({
         ...cleanTransaction,
         occurredAt: occurrenceTimestamp,
         itemName: preservedOrderSnapshot?.itemName ?? item.name,
-        ...(categorySnapshot.categoryId !== undefined
-            ? { categoryId: categorySnapshot.categoryId }
-            : {}),
-        ...(categorySnapshot.categoryName !== undefined
-            ? { categoryName: categorySnapshot.categoryName }
-            : {}),
+        ...(categoryId !== undefined ? { categoryId } : {}),
+        ...(categoryName !== undefined ? { categoryName } : {}),
         ...correctionMetadata,
         createdAt: registrationTimestamp,
     });
