@@ -36,21 +36,22 @@ async function assertUniqueCategoryName(name: string, excludeId?: number) {
     }
 }
 
-export async function requireActiveCategory(categoryId: unknown): Promise<Category> {
+export function requireActiveCategory(categoryId: unknown): Promise<Category> {
     if (!isValidEntityId(categoryId)) {
         throw new Error(CATEGORY_ACTIVE_REQUIRED_ERROR);
     }
 
-    const category = await db.categories.get(categoryId);
-    if (!category) {
-        throw new Error(CATEGORY_NOT_FOUND_ERROR);
-    }
+    return db.categories.get(categoryId).then(category => {
+        if (!category) {
+            throw new Error(CATEGORY_NOT_FOUND_ERROR);
+        }
 
-    if (!isCategoryActive(category)) {
-        throw new Error(CATEGORY_ACTIVE_REQUIRED_ERROR);
-    }
+        if (!isCategoryActive(category)) {
+            throw new Error(CATEGORY_ACTIVE_REQUIRED_ERROR);
+        }
 
-    return category;
+        return category;
+    });
 }
 
 export async function createCategory(name: string) {
