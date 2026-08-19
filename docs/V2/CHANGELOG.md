@@ -4,133 +4,91 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-19 — P10-S1-I2 synthetic migration/recovery rehearsal passed; P10-S1 closed
+
+P10-S1-I2 executed the bounded non-production rehearsal required by D-027. No live-store backup was exported/imported and `main` remained untouched.
+
+The rehearsed Vercel candidate was verified as READY deployment **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`**, exact Git SHA **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**, tree **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**. The immutable deployment URL required Vercel SSO for `/backup`; Vercel metadata attached public alias `easy-v2-tau.vercel.app` to that exact deployment, so the alias was used only as browser access while deployment ID/SHA remained the identity proof.
+
+Evidence-only PR #62 used a temporary branch-local Playwright harness and was deliberately closed **without merge** after evidence capture. The authoritative run **`32298906351`**, job **`96216688953`**, exact PR merge ref **`b99a11e586c05322c8f6665770135cb8d6047172`**, first passed ordinary D-019: **0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 repository Playwright PASS; production build PASS**. The remote deployed-candidate rehearsal then passed **1/1**.
+
+Using only a synthetic stable-v1 fixture, the rehearsal proved v1→v2 preflight/restore and checkpoint creation; 2 items / 2 resellers / 3 legacy transactions with expected lifecycle/`occurredAt` normalization; no fabricated categories/history; D-024 write blocking before recovery setup; fresh backup plus explicit synchronized-copy verification; unclassified-item order blocking; representative classification; supported new order; D-026 changed-item/date correction; V2 export; and disposable fresh-context restore/re-export with identical business data.
+
+Two earlier runs are retained only as diagnostics: `32297959050` / `96213645569` exposed Vercel SSO before application access, and `32298286885` / `96214717360` exposed a Playwright viewport/actionability issue before restore dispatch. Neither was accepted as product evidence.
+
+**Result:** P10-S1 is `DONE / ACCEPTED`. The rehearsal gives a GO only to **define the P10-S2 copied-live-data beta gate**. It does not authorize moving real store data, production reconciliation, stable publication, canonical URL switch, production cutover or D-016 change.
+
+---
+
 ## 2026-08-19 — P10-S1-I1 backup/correction compatibility hardened and integrated
 
-P10-S1-I1 resolved the pre-cutover recovery blocker identified while defining D-027. `backupService.validateReferences()` no longer requires a valid D-026 replacement to preserve the original transaction type, order item or financial occurrence date.
+P10-S1-I1 resolved the pre-cutover recovery blocker identified while defining D-027. `backupService.validateReferences()` no longer requires a valid D-026 replacement to preserve original transaction type, order item or financial occurrence date.
 
-The change remains bounded by D-025 and the existing audit model:
+D-025/audit boundaries remain exact: changed item may carry the new target's valid category snapshot; same-item order replacement must preserve historical category snapshot; bidirectional correction/reversal linkage, referenced-ID existence, registration chronology and each row's target shape/reference validity remain mandatory. Backup-v1 and v2/schema4 compatibility remain passing; no schema or envelope version changed.
 
-- a replacement may change type and `occurredAt`;
-- an order replacement may select another valid item and carry that target item's valid category snapshot;
-- an order→order replacement that keeps the same `itemId` must preserve the original historical category snapshot;
-- bidirectional correction/reversal linkage, referenced-ID existence, replacement registration chronology and each transaction's own target shape/reference validity remain mandatory;
-- backup-v1 and v2/schema4 compatibility remain passing;
-- no schema or backup-envelope version changed.
+The first D-019 `32292405631` / `96196002726` correctly blocked an over-broad implementation because an existing P9-S3 same-item snapshot regression failed. After narrowing, authoritative D-019 **`32292888925`** / **`96197514379`** passed on PR #60 merge ref `d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`: **0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
 
-Five focused P10-S1-I1 regressions prove type/date changes, changed-item/category snapshot, broken-link rejection, invalid target-shape rejection and `exportData()` self-preflight/export of a persisted D-026 changed-item/date replacement.
-
-The first D-019 candidate, run **`32292405631`**, job **`96196002726`**, correctly blocked integration: the five new tests passed, but one existing P9-S3 test failed because the first implementation had removed same-item category-snapshot preservation unconditionally. That failure was treated as a real D-025 regression, not warning debt. The implementation was narrowed so same-item history remains protected while D-026 item/type/date changes stay supported.
-
-Authoritative D-019 run **`32292888925`**, job **`96197514379`**, passed on PR #60 merge ref **`d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`**, combining head `666e4c86df7c6328289d489db7c8eebcb714aad1` with base `a549ce79925aad0cae9e964babd28879e8ad1c15`: **0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-
-PR #60 was squash-integrated into `develop` as **`71b939b4c938288efb0f3c51e300e5c5541ee8c3`**. The validated merge ref and integrated squash share exact tree **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**.
-
-No Vercel deployment, live-store data, `main`, schema/envelope or D-016 change occurred. P10-S1-I1 is `DONE / INTEGRATED`; P10-S1-I2 non-production migration/recovery rehearsal becomes the next bounded action and remains `NOT_STARTED`.
+PR #60 integrated as **`71b939b4c938288efb0f3c51e300e5c5541ee8c3`**, tree **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**. Canonical closure PR #61 passed D-019 `32294362895` / `96202149317` and integrated as **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**, tree **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**.
 
 ---
 
-## 2026-08-19 — P10-S1 pre-cutover contract defined/integrated; D-027 accepted; backup/correction blocker identified
+## 2026-08-19 — P10-S1 pre-cutover contract defined/integrated; D-027 accepted
 
-P10 started with the bounded planning action required by the prior `NEXT_ACTION`; no live-store data movement, Vercel candidate refresh, `main` publication or production cutover was performed.
+P10 began by reconstructing the stable/integration/deployment/recovery boundary before authorizing any data movement. Stable `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9`; completed-P9 `develop` was `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`; Vercel remained candidate/beta hosting; stable `main` exported backup v1; and D-024 recovery state remained origin-local.
 
-The stable/integration/deployment/recovery baseline was reconstructed before defining the first slice:
+D-027 accepted fail-closed sequencing: first remove the D-026 backup-validation blocker, then perform a synthetic deployed rehearsal, while keeping live-store data, `main` publication and production cutover outside P10-S1.
 
-- stable `main` remains commit `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
-- completed-P9 `develop` was `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`, 55 commits ahead of `main`, when the contract was established;
-- both branches are currently unprotected;
-- current `main` publishes to GitHub Pages with its historical build/deploy workflow, while the V2 workflow on `develop` already defines D-019 `quality -> build -> deploy` for eventual stable publication;
-- Vercel `easy-v2` remains manual candidate/beta hosting because `vercel.json` disables Git deployment;
-- the latest observed READY candidate points to `develop` commit `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9;
-- stable `main` exports backup v1, which V2 preflight already accepts and normalizes without inventing lifecycle/category/occurrence history;
-- D-024 recovery health is origin-local and must be established on a restored candidate before normal writes.
-
-Source reconstruction also found a pre-cutover blocker: backup correction validation required replacement type, order item/category snapshot and `occurredAt` to equal the original, while D-026 explicitly permits the effective replacement to change those business fields. A valid D-026-corrected V2 dataset could therefore conflict with backup self-preflight/export.
-
-D-027 accepted a fail-closed sequence. P10-S1-I1 had to align backup validation with D-026 while retaining audit-link/reference/chronology/target-shape integrity and v1/v2-schema4 migration compatibility. Only after I1 integration could P10-S1-I2 become eligible for synthetic/non-production rehearsal.
-
-D-019 run **`32290159119`**, job **`96188851730`**, passed on PR #58 merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**, combining head `f29de41c6fa668bebfd7a839c2b693eb9d971c55` with base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-
-PR #58 was squash-integrated into `develop` as **`5c7a5dc23af435711059deff75cf7862972662a1`**. The validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
-
-Copied-live-data beta, real production reconciliation, final write freeze, stable `main` publication, canonical URL switch and production cutover remain explicitly unauthorized.
-
-Detailed contract: `docs/V2/P10_CUTOVER_PLAN.md`.
+Contract D-019 **`32290159119`** / **`96188851730`** passed on PR #58 merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75`: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; build PASS**. PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`, tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
 
 ---
 
-## 2026-08-19 — P9-S5 occurrence-date usability verified; no runtime gap; P9 closed
+## 2026-08-19 — P9-S5 occurrence-date usability verified; P9 closed
 
-P9-S5 reconstructed the direct operator signal retained from P9-S4: routine transaction entry presented today's date by default, and the operator was unsure whether that behavior still existed.
+No runtime usability gap was found. Transaction entry already defaulted `Data da ocorrência` to browser-local today, exposed the field in the primary entry block, allowed pre-save editing and persisted `occurredAt` independently of generated `createdAt`.
 
-Current-source verification found no evidence-backed usability gap. `TransactionForm` still defaults `Data da ocorrência` to the browser-local current date, exposes it in the main entry block beside reseller/type, allows direct editing before save and displays helper text distinguishing the financial occurrence date from automatically saved registration time. Existing D-014/P3 behavior continues to persist selected `occurredAt` independently from generated `createdAt`.
-
-Because the verified workflow already satisfies the bounded requirement, P9-S5 made **no production runtime/UI change**. A focused regression test was added only to prove today's local default, field/helper discoverability and pre-save editability while retaining the existing independent-persistence assertion.
-
-D-019 run **`32287018048`**, job **`96178850066`**, passed on PR #56 merge ref **`9459285920cfbd784a652e9db97cf40741977edf`**, combining head `fef66eb8da6602f0804d0c78eb3d6c30feaf2cac` with base `716fc3b9ec77bada5ca44d992a6760a276e38cfa`: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-
-PR #56 was squash-integrated into `develop` as **`88c70a20071bd97ef3a08285128756e2ce484a74`**. The validated merge ref and integrated squash share exact tree **`97a78d3e4d78a54ad117440c160920343513ba9f`**.
-
-P9-S1 through P9-S5 are complete, so P9 closed as `DONE / INTEGRATED`.
+D-019 **`32287018048`** / **`96178850066`** passed; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`, tree `97a78d3e4d78a54ad117440c160920343513ba9f`. Canonical P9 closure PR #57 integrated as `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
 
 ---
 
-## 2026-08-19 — P9-S4-I1 full-field audited transaction correction completed and integrated; P9-S4 closed
+## 2026-08-19 — P9-S4-I1 full-field audited transaction correction completed
 
-P9-S4-I1 implemented D-026 as one complete audited replacement editor. A correction can define the replacement reseller, transaction type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value without destructively overwriting the original transaction.
+D-026 was implemented as a full-field audited replacement editor. Replacement business state may define reseller, type, `occurredAt`, observation and applicable order item/quantity/unit price or payment/signal value while original history remains immutable under D-012/D-013.
 
-D-012/D-013 remain intact: correction still requires a reason, creates the replacement and reversal linkage atomically, and keeps the original business row immutable. D-024 freshness enforcement remains in front of the write.
-
-D-025 snapshot semantics are enforced in both directions: keeping the same order item preserves the original transaction-time item/category snapshot; changing/newly introducing an item requires a current active/classified target and captures that target's current snapshot. Payment/signal targets carry no order-shape fields. Inactive/missing historical order items are surfaced rather than bypassing P1/D-011.
-
-Focused UI/domain tests cover type/date/observation changes, item changes, target-shape validation, D-025 snapshot preservation/recapture, original immutability, reversal linkage, invalid/inactive targets and D-024 blocking.
-
-D-019 run **`32285620846`**, job **`96174326588`**, passed on PR #54 merge ref **`4b51a5f35c2104d636903ce89eecbc995a0f3ce3`**, combining head `a4f0b026e14fc85bd02eee56db262b5271507b3c` with base `0f3ec562717c75981802f330d64410ee612a034d`: **0 lint errors / 82 warnings; 52 files / 216 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-
-PR #54 was squash-integrated into `develop` as **`f1cfd126c18691da1256a1d3f918158d7aa9495a`**. The validated merge ref and integrated squash share exact tree **`5679693b5f588f58404050cfca8ffd17a9a49fb3`**.
+D-025 snapshot semantics and D-024 write enforcement remain mandatory. D-019 **`32285620846`** / **`96174326588`** passed; PR #54 integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`, tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
 
 ---
 
-## 2026-08-19 — P9-S4 direct evidence resolves blocker; D-026 full-field audited correction contract accepted/integrated
+## 2026-08-19 — P9-S4 direct evidence accepted D-026
 
-Direct operator evidence clarified that information entered into the system must remain editable after entry while prior history need not be overwritten by the correction.
+Direct operator evidence established that entered information must remain correctable after entry without overwriting prior history. D-026 selected one coherent audited full-field replacement editor while preserving D-012/D-013, D-025, P1/D-011 and D-024.
 
-The operator could not quantify individual wrong-item/type/observation/archive frequencies from memory. The date concern was clarified as the system presenting today's date by default in routine contexts. Current source confirmed `TransactionForm` still initializes `Data da ocorrência` to today; that issue was retained for P9-S5 rather than used to redesign P3 dates.
-
-D-026 selected one full-field audited transaction replacement editor. The replacement may define reseller, type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value. The original row remains immutable; correction remains a mandatory-reason atomic linked replacement/reversal under D-012/D-013.
-
-D-025 remains authoritative: keeping the same order item preserves the original item/category snapshot; changing/newly introducing an order item requires a current active/classified target and captures its current snapshot. P1/D-011 active-reference rules are not weakened. D-024 write enforcement remains mandatory.
-
-D-019 run **`32277770945`**, job **`96149101495`**, passed on merge ref `6a57fbe6b8674aca8723538f756b04f4a5af3f13`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**. PR #52 integrated as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**, validated/integrated tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**.
+Decision-gate D-019 **`32277770945`** / **`96149101495`** passed; PR #52 integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`, tree `c37ea55f83b15415678f5b2be2747fb5f06c6a27`.
 
 ---
 
-## 2026-08-19 — P9-S4 correction evidence gate accepted/integrated; runtime blocked pending direct confirmation
+## 2026-08-19 — P9-S4 evidence gate integrated
 
-The initial P9-S4 gate proved current audited support for reseller, order quantity/unit price, payment/signal value and pure reversal, and source-proven constraints around `occurredAt`, order item, transaction type, observation and inactive original items.
-
-P8 had confirmed generic correction friction but not exact record/action pairs, so runtime was correctly blocked. `P9_CORRECTION_EVIDENCE_REQUEST.md` was created as the direct intake.
-
-D-019 `32265612927` / `96109244644` passed on PR #50. PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`; validated/integrated tree `5789c7863c0a62904b9d18692543f2b288290867`. Closure #51 integrated as `1221f71de460c266c165b92de0536f443c71fa08` after retry D-019 `32269262365` / `96121383857`; closure tree `7a7551f2815f9338d8b906a2bb6bf1e1d66c8ff2`.
+The initial P9-S4 evidence gate proved current supported correction surfaces and correctly blocked runtime changes pending direct confirmation. D-019 `32265612927` / `96109244644`; PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`. Closure #51 integrated as `1221f71de460c266c165b92de0536f443c71fa08` after D-019 `32269262365` / `96121383857`.
 
 ---
 
-## 2026-08-19 — P9-S3-I3 category reporting completed and integrated; P9-S3 closed
+## 2026-08-19 — P9-S3-I3 category reporting completed
 
-PR #48 completed D-025 category order-performance reporting: effective non-reversed orders only, `occurredAt` period filtering, historical `transaction.categoryId` grouping, legacy no-category bucket, order count, item quantity and gross value. Payments/signals/balance/FIFO debt are excluded from category allocation.
+D-025 category order-performance reporting uses effective non-reversed orders, `occurredAt` period filtering, historical transaction category identity and an explicit legacy no-category bucket; payments/signals/balance/FIFO debt are excluded from category allocation.
 
-Authoritative D-019 `32262877105` / `96100129962` passed; PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`; validated/integrated tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
+D-019 `32262877105` / `96100129962` passed; PR #48 integrated as `08ad2973f387035301901f9f46b0c78039796c2d`, tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
 
 ---
 
-## 2026-08-18 — P9-S3-I2 category lifecycle/classification/order snapshots completed and integrated
+## 2026-08-18 — P9-S3-I2 category lifecycle/classification/order snapshots completed
 
 P9-S3-I2 operationalized D-025 lifecycle/classification/history without reporting. Final D-019 `32202876262` / `95920142630`; PR #46 integrated as `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; closure #47 `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
 
 ---
 
-## 2026-08-18 — P9-S3-I1 category persistence/migration/backup compatibility completed
+## 2026-08-18 — P9-S3-I1 category persistence/migration/backup completed
 
-Dexie V5 category persistence, additive/non-inventive V4→V5 migration, `easy-backup` v2/schema5 with v1/schema4 compatibility and four-table D-018 restore. Final D-019 `32191707306` / `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`.
+Dexie V5 category persistence, additive/non-inventive V4→V5 migration, `easy-backup` v2/schema5 with v1/schema4 compatibility and four-table D-018 restore were integrated. Final D-019 `32191707306` / `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`.
 
 ---
 
@@ -142,13 +100,13 @@ D-025 established stable category identity/lifecycle, future-order transaction s
 
 ## 2026-08-18 — P9-S2 recovery durability completed
 
-D-024 selected synchronized recovery-copy folder plus exact 24-hour freshness guard and kept D-016 local-first. Accepted D-019 `32180250834` / `95851336506`; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
+D-024 selected synchronized recovery-copy folder plus exact 24-hour freshness guard while keeping D-016 local-first. Accepted D-019 `32180250834` / `95851336506`; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
 
 ---
 
 ## 2026-08-18 — P9-S1 evidence-backed prioritization completed
 
-D-023 ranking: recovery durability 94/100, categories/reporting 83/100, correction microflows 70/100; occurrence-date usability 69/100. Critical QA `32166330198` / `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
+D-023 ranking: recovery durability 94/100, categories/reporting 83/100, correction microflows 70/100, occurrence-date usability 69/100. Critical QA `32166330198` / `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ---
 
