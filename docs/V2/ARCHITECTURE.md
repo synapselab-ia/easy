@@ -164,7 +164,7 @@ Both `main` and `develop` are currently unprotected GitHub branches. Therefore D
 ## Accepted P9 validation baseline
 
 - P9-S4-I1: D-019 `32285620846` / `96174326588`; PR #54 integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`; tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
-- P9-S5: D-019 `32287018048` / `96174326588`; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`; tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
+- P9-S5: D-019 `32287018048` / `96178850066`; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`; tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
 - Canonical P9 closure: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
 
 ## P10-S1 contract integration proof
