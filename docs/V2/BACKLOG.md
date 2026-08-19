@@ -43,34 +43,35 @@ D-024 selected synchronized recovery-copy folder + exact 24-hour freshness guard
 - I2 lifecycle/classification/order snapshots — `DONE`; PR #46 `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; closure #47 `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
 - I3 category order-performance reporting — `DONE`; PR #48 `08ad2973f387035301901f9f46b0c78039796c2d`.
 
-#### I3 delivered scope
-
-- effective non-reversed `order` transactions only;
-- `occurredAt` reporting basis;
-- historical stored `transaction.categoryId` grouping, never current item classification;
-- explicit `Sem categoria — histórico legado` bucket;
-- order count, summed quantity and gross order value;
-- linked correction counts only effective replacement;
-- archived categories remain reportable;
-- current category name may label stable identity without rewriting transaction snapshots;
-- read-only `/category-report` with all-time/inclusive occurrence-period filtering;
-- no category allocation of payment/signal/balance/open-debt/FIFO debt and no historical recategorization.
-
-Final I3 D-019 `32262877105` / `96100129962` passed on merge ref `e9cb929b0eb8a109a44eba3408e1675249b11fd7`: 0 errors / 81 warnings, 51 files / 210 Vitest, 17/17 Playwright, build PASS. Integrated/validated tree: `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
+Final I3 D-019 `32262877105` / `96100129962` passed; validated/integrated tree `af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`.
 
 ### P9-S4 — Confirmed correction microflows
 
-**Status:** `NOT_STARTED` — canonical next work.
+**Status:** `BLOCKED — direct operator confirmation required`.
 
-Required first gate:
+The evidence/contract gate is complete as far as existing evidence allows:
 
-1. inspect already-accepted direct store evidence for correction/edit friction;
-2. inspect current correction UI/domain only as needed;
-3. map source-proven unsupported actions to concrete operator cases;
-4. distinguish already-supported audited reversal/replacement from genuinely missing behavior;
-5. define the smallest confirmed high-value subset eligible for implementation while preserving D-012/D-013 history.
+#### Already supported by current audited correction/reversal
 
-Do **not** implement speculative correction actions or destructive historical editing before this mapping is established.
+- change reseller on an effective transaction;
+- change order quantity;
+- change order unit price / total;
+- change payment/signal amount;
+- pure reversal/cancellation with mandatory reason.
+
+#### Source-proven gaps/constraints requiring direct confirmation
+
+- change `occurredAt` after save;
+- change order item after save;
+- change transaction type after save;
+- change/add observation after save;
+- guided-correct an older order after its original item was archived.
+
+P8 confirmed generic real-store edit/correction friction but did not enumerate any of those exact record/action pairs. P9-S1 explicitly recorded that source gaps must not be represented as direct store reports. Therefore there is **no confirmed implementation subset yet**.
+
+The direct intake required to resolve this blocker is in `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md`. For each candidate, record whether it actually occurs, approximate frequency, current workaround and business consequence, plus any exact missing case outside the matrix.
+
+No correction runtime, destructive historical editing or new D-number is authorized until that evidence is received and the bounded mapping/decision gate is rerun.
 
 ### P9-S5 — Occurrence-date usability verification
 
