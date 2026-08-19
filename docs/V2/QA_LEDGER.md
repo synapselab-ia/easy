@@ -69,60 +69,32 @@ Authoritative proof:
 
 P9 canonical closure integrated as `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
 
-## P10-S1 pre-cutover contract — evidence reconstruction
+## P10-S1 pre-cutover contract — PASS / INTEGRATED
 
-P10-S1 reconstructed the actual stable/integration/deployment/recovery boundary before authorizing any data movement:
-
-- stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
-- completed-P9 `develop`: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`;
-- `develop` was 55 commits ahead of `main` when the contract was established;
-- both branches are currently unprotected;
-- current `main` GitHub Pages workflow builds/deploys on push without the V2 D-019 quality stage;
-- V2 `develop` deploy workflow contains `quality -> build -> deploy` for eventual stable publication;
-- Vercel `easy-v2` Git deployment is disabled and the latest observed READY candidate points to `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9;
-- stable `main` emits backup v1; V2 preflight explicitly accepts v1 and normalizes lifecycle/occurrence data without inventing category history;
-- D-024 permits restore on a fresh origin but blocks normal writes until recovery readiness is established.
-
-## P10-S1 contract validation — PASS / INTEGRATED
+P10-S1 reconstructed the stable/integration/deployment/recovery boundary before authorizing any data movement and accepted D-027 fail-closed sequencing.
 
 Authoritative contract proof:
 
 - PR #58 D-019 run **`32290159119`**, job **`96188851730`**.
-- Validated PR merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**, combining head `f29de41c6fa668bebfd7a839c2b693eb9d971c55` with base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
+- Validated PR merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**.
 - ESLint: **0 errors / 82 warnings**.
 - Vitest: **52 files / 217 tests PASS**.
 - Playwright: **17/17 PASS**.
 - Production build: **PASS**.
 - PR #58 squash-integrated as **`5c7a5dc23af435711059deff75cf7862972662a1`**.
-- Validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
-- Contract integration was documentation-only; no Vercel candidate, runtime, live data or `main` change occurred.
+- Validated/integrated tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
 
 ## P10-S1-I1 — backup/correction compatibility hardening
-
-### Source-proven blocker
-
-Before I1, `backupService.validateReferences()` still imposed pre-D-026 equality across correction pairs for replacement type, order item/category snapshot and `occurredAt`. D-026 permits those effective business fields to change, so a valid corrected V2 dataset could conflict with backup self-preflight/export.
-
-The authorized QA required:
-
-1. valid D-026 type-changing linked correction passes backup preflight/export;
-2. valid D-026 occurrence-date change passes;
-3. valid changed-order-item/category snapshot passes when each row is internally valid;
-4. broken bidirectional linkage remains rejected;
-5. invalid target references/shapes remain rejected;
-6. backup-v1 migration behavior remains passing;
-7. v2/schema4 compatibility remains passing;
-8. full D-019 passes on the exact integration candidate.
 
 ### Initial D-019 — FAIL / BLOCKING
 
 - Run `32292405631`, job `96196002726`.
-- The five new P10-S1-I1 focused tests passed.
+- Five new P10-S1-I1 focused tests passed.
 - Full Vitest failed one existing P9-S3 regression: `rejects a linked order correction that rewrites the historical category snapshot`.
-- Cause: the first implementation removed category-snapshot equality unconditionally, which over-relaxed D-025 for an order correction keeping the same item.
-- Because `npm run qa:critical` is chained, this objective Vitest failure blocked integration; Playwright/build were not accepted from this candidate.
+- Cause: the first implementation removed category-snapshot equality unconditionally, over-relaxing D-025 for an order correction keeping the same item.
+- Because `npm run qa:critical` is chained, this objective Vitest failure blocked integration.
 
-The failure was resolved by narrowing the validator: type, `occurredAt` and item changes remain allowed under D-026, but order→order correction keeping the same `itemId` must preserve the original D-025 category snapshot. Changed-item order replacements may carry the new target item's valid snapshot.
+The validator was narrowed: type, `occurredAt` and item changes remain allowed under D-026, but order→order correction keeping the same `itemId` must preserve the original D-025 category snapshot. Changed-item order replacements may carry the new target item's valid snapshot.
 
 ### Authoritative D-019 — PASS / DONE / INTEGRATED
 
@@ -133,21 +105,91 @@ The failure was resolved by narrowing the validator: type, `occurredAt` and item
 - Vitest: **53 files / 222 tests PASS**.
 - Focused `backupService.p10s1.test.ts`: **5/5 PASS**.
 - Existing `categoryBackupService.test.ts`: **8/8 PASS**, including same-item historical snapshot rejection.
-- Existing backup-v1 and v2/schema4 migration compatibility coverage remained passing in the full suite.
+- Existing backup-v1 and v2/schema4 migration compatibility coverage remained passing.
 - Playwright: **17/17 PASS**.
 - Production build: **PASS**.
 - PR #60 squash-integrated into `develop` as **`71b939b4c938288efb0f3c51e300e5c5541ee8c3`**.
-- Validated merge ref and integrated squash share exact tree **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**.
+- Validated/integrated tree: **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**.
 
-The unusually long pre-QA duration in the authoritative run came from external Playwright/Ubuntu font-package installation. No validation requirement was bypassed.
+P10-S1-I1 satisfied all exit criteria. No schema, backup-envelope, Vercel, live-store-data, `main` or D-016 change occurred.
 
-P10-S1-I1 therefore satisfies all exit criteria. No schema, backup-envelope, Vercel, live-store-data, `main` or D-016 change occurred.
+## P10-S1-I2 — non-production migration/recovery rehearsal — PASS / DONE
 
-## Boundary entering P10-S1-I2
+### Candidate identity
 
-P10-S1-I2 is now `NOT_STARTED` and is the current bounded action. It must use an exact D-019-passing candidate and synthetic/non-production backup-v1 fixture data only. It may exercise deployment, migration/recovery rehearsal, D-024 recovery setup, classification gating, supported transaction/correction flows, V2 export and disposable restore round-trip.
+The rehearsed candidate was verified independently of browser aliasing:
 
-Live-store data, stable `main` publication, production cutover and D-016 changes remain unauthorized.
+- Vercel project: `easy-v2`;
+- READY deployment: **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`**;
+- exact Git SHA: **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**;
+- integrated candidate tree: **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**;
+- prior accepted candidate closure D-019: `32294362895` / `96202149317`.
+
+The immutable deployment URL `easy-v2-lvbggu5ji-synapselabia-8285s-projects.vercel.app` requires Vercel SSO for `/backup`. Vercel metadata attaches public alias `easy-v2-tau.vercel.app` to this same deployment, so the public alias was used only as browser access while deployment ID + SHA remained the candidate identity proof.
+
+### Evidence-only PR
+
+PR #62 was created only to run a branch-local remote Playwright rehearsal after normal D-019. It contained no intended product change and was explicitly marked `DO NOT MERGE`.
+
+After evidence capture, PR #62 was **closed without merge**, ensuring no temporary rehearsal config/workflow/test entered `develop`.
+
+### Diagnostic attempt 1 — non-authoritative
+
+- Run **`32297959050`**, job **`96213645569`**.
+- Ordinary D-019 passed.
+- The remote scenario stopped before application access because the immutable deployment URL redirected `/backup` to Vercel SSO.
+- No synthetic backup upload or restore occurred.
+- Classification: access-path/harness discovery, not product acceptance evidence.
+
+### Diagnostic attempt 2 — non-authoritative
+
+- Run **`32298286885`**, job **`96214717360`**.
+- Ordinary D-019 passed.
+- Public alias reached the application and v1 preflight.
+- Playwright pointer actionability considered the already visible/enabled Restore button outside the runner viewport, so no restore was dispatched.
+- Harness-only mechanics were narrowed to trigger the visible/enabled DOM button handler; product/runtime code was unchanged.
+- Classification: harness actionability issue, not product acceptance evidence.
+
+### Authoritative run — PASS
+
+- Run **`32298906351`**, job **`96216688953`**.
+- Exact PR merge ref **`b99a11e586c05322c8f6665770135cb8d6047172`**.
+- Harness head **`5e5eaea8fbc51bf52c3e5bfc927b6da178082bda`** over candidate base **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**.
+
+Ordinary D-019 passed first:
+
+- ESLint: **0 errors / 82 warnings**.
+- Vitest: **53 files / 222 tests PASS**.
+- Repository Playwright: **17/17 PASS**.
+- Production build: **PASS**.
+
+Then the remote candidate rehearsal passed **1/1**.
+
+### Operational assertions proven by the authoritative remote scenario
+
+Synthetic stable-v1 fixture only; no store data was used.
+
+1. `/backup` loaded on the candidate origin.
+2. Initial D-024 recovery state was unknown.
+3. Backup-v1 preflight reported v1→v2 in-memory migration.
+4. Preflight exposed two unclassified items and one historical order lacking category snapshot, without inventing category history.
+5. Restore completed and produced the checkpoint download required by D-018.
+6. Normal write attempted before D-024 setup was rejected.
+7. Fresh V2 export proved normalized counts: **2 items / 2 resellers / 3 legacy transactions / 0 categories**.
+8. Legacy items/resellers normalized active; absent `occurredAt` normalized to historical `createdAt`; historical category fields remained absent.
+9. Fresh backup export plus explicit synchronized-copy verification established current recovery health.
+10. A migrated active but unclassified item remained blocked from new order creation.
+11. A representative category was created and both legacy items classified.
+12. A supported new order was recorded.
+13. A D-026 audited correction changed the order item and occurrence date while preserving original/replacement linkage.
+14. Final V2 export contained **1 category / 2 items / 2 resellers / 5 transactions** and valid correction/reversal links.
+15. A disposable fresh browser context preflighted/restored that final V2 backup and re-exported **identical business data**.
+
+### P10-S1-I2 acceptance result
+
+**GO only for defining the next bounded P10-S2 copied-live-data beta gate.**
+
+The rehearsal does not authorize exporting/importing the actual store backup, actual production-data reconciliation, stable `main` publication, canonical URL switch, production cutover or D-016 change.
 
 ## Known non-blocking debt
 
