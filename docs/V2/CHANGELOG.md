@@ -4,6 +4,24 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-19 — P9-S4-I1 full-field audited transaction correction completed and integrated; P9-S4 closed
+
+P9-S4-I1 implemented D-026 as one complete audited replacement editor. A correction can now define the replacement reseller, transaction type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value without destructively overwriting the original transaction.
+
+D-012/D-013 remain intact: correction still requires a reason, creates the replacement and reversal linkage atomically, and keeps the original business row immutable. D-024 freshness enforcement remains in front of the write.
+
+D-025 snapshot semantics are enforced in both directions: keeping the same order item preserves the original transaction-time item/category snapshot; changing/newly introducing an item requires a current active/classified target and captures that target's current snapshot. Payment/signal targets carry no order-shape fields. Inactive/missing historical order items are surfaced rather than bypassing P1/D-011; another valid item or another target type may be selected.
+
+Focused UI/domain tests cover type/date/observation changes, item changes, target-shape validation, D-025 snapshot preservation/recapture, original immutability, reversal linkage, invalid/inactive targets and D-024 blocking.
+
+D-019 run **`32285620846`**, job **`96174326588`**, passed on PR #54 merge ref **`4b51a5f35c2104d636903ce89eecbc995a0f3ce3`**, combining head `a4f0b026e14fc85bd02eee56db262b5271507b3c` with base `0f3ec562717c75981802f330d64410ee612a034d`: **0 lint errors / 82 warnings; 52 files / 216 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+
+PR #54 was squash-integrated into `develop` as **`f1cfd126c18691da1256a1d3f918158d7aa9495a`**. The validated merge ref and integrated squash share exact tree **`5679693b5f588f58404050cfca8ffd17a9a49fb3`**.
+
+No schema, backup, destructive-history, P9-S5/P10, backend/auth/cloud/live-sync change was introduced. P9-S4 is now `DONE / INTEGRATED`; P9-S5 occurrence-date usability verification is next and remains unstarted.
+
+---
+
 ## 2026-08-19 — P9-S4 direct evidence resolves blocker; D-026 full-field audited correction contract accepted/integrated
 
 Direct operator evidence clarified the actual correction requirement: information entered into the system must remain editable after entry, while prior history does not need to be overwritten by the correction.
@@ -18,7 +36,7 @@ D-019 run **`32277770945`**, job **`96149101495`**, passed on merge ref `6a57fbe
 
 PR #52 was squash-integrated into `develop` as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**. The validated merge ref and integrated squash share exact tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**. The prior slow runs were external Playwright dependency-download delays before `qa:critical`; no QA requirement was bypassed.
 
-No runtime, schema or backup change is included in this decision slice. P9-S4-I1 is authorized but `NOT_STARTED`; P9-S5/P10 remain unstarted.
+No runtime, schema or backup change is included in this decision slice. P9-S4-I1 was authorized by this entry and was completed in the subsequent implementation entry above.
 
 ---
 
