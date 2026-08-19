@@ -1,6 +1,6 @@
 # Easy V2 — Decision Ledger
 
-**Updated:** 2026-08-18
+**Updated:** 2026-08-19
 
 Only accepted decisions belong here. Open questions remain in `STATUS.md`/`BACKLOG.md`.
 
@@ -146,8 +146,9 @@ Selected mechanism preserves canonical `easy-backup` v2/D-018, uses a local fold
 Accepted P9-S2-I1 run `32180250834`, job `95851336506` passed; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
 
 ## D-025 — Category classification is snapshot-based; legacy history is not retroactively invented
-**Status:** ACCEPTED / I1 + I2 IMPLEMENTED AND INTEGRATED  
-**Date:** 2026-08-18
+**Status:** ACCEPTED / I1 + I2 INTEGRATED; I3 IMPLEMENTED + FUNCTIONALLY VALIDATED, FINAL INTEGRATION PENDING  
+**Date:** 2026-08-18  
+**Implementation update:** 2026-08-19
 
 Accepted semantics:
 
@@ -162,36 +163,30 @@ Accepted semantics:
 - D-017 remains logical `easy-backup` v2 with schema5 category data and v1/v2-schema4 compatibility;
 - D-018 atomic restore includes categories/items/resellers/transactions.
 
-### Contract and I1 proof
+### Contract / I1 / I2 proof
 
-Contract closure: D-019 `32185226251`, job `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
+- Contract: D-019 `32185226251`, job `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
+- I1: final D-019 `32191707306`, job `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`.
+- I2: final D-019 `32202876262`, job `95920142630`; PR #46 integrated as `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; canonical post-merge closure #47 integrated as `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
 
-I1 final D-019: `32191707306`, job `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`, validated/integrated tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
+### P9-S3-I3 implementation proof — pending final integration
 
-### P9-S3-I2 implementation proof
+I3 implements D-025 without changing the decision:
 
-I2 operationalizes the already-accepted lifecycle/classification/snapshot rules:
+- pure category order-performance aggregation over effective non-reversed orders;
+- `transactionOccurredAt()` / `occurredAt` as the reporting time basis;
+- grouping by historical `transaction.categoryId`, never current item category;
+- explicit `Sem categoria — histórico legado` group for missing historical snapshots;
+- order count, summed quantity and gross value;
+- linked corrections count only the effective replacement;
+- archived categories remain reportable;
+- current category name may label the existing stable identity while `transaction.categoryName` remains immutable history;
+- read-only `/category-report` operator flow;
+- no payment/signal/balance/debt allocation, historical recategorization, profitability inference or persistence/backup change.
 
-- category create/rename/archive/reactivate and guarded hard deletion;
-- category names unique case-insensitively across active/archived identities;
-- archive blocked by active-item references; hard deletion blocked by any item or historical snapshot reference;
-- bounded `/categories` operator management flow;
-- item assignment/reassignment only to active categories;
-- active category required for new active items and reactivation;
-- migrated active legacy unclassified items remain editable but are blocked from new orders until classified;
-- new order resolves item/category inside the transactional write boundary and stores immutable `categoryId + categoryName` snapshot;
-- guided replacement correction preserves the original snapshot, including no-category legacy history;
-- D-024 write guard remains authoritative across the new category mutations.
+Functional D-019 `32261923163`, job `96096954271`, passed on PR #48 merge ref `02d656ea771e334622a6248139b508e20a98caf1`, head `01fcd986ed86fbe465592af3c5600a2570380ee8` over base `4191df77db83258f1125bffd445a6ec1f5b46bf9`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
 
-First functional gate `32202062045`, job `95917767742`, correctly failed with 199/205 Vitest due to stale unclassified success fixtures, ItemForm test setup and a Dexie transaction-zone lookup issue. The decision contract was not weakened.
-
-Functional D-019 `32202440100`, job `95918871077`, passed on PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`: 0 lint errors / 81 warnings, 49/205 Vitest, 17/17 Playwright and production build PASS.
-
-Final documentation-complete D-019 **`32202876262`**, job **`95920142630`**, passed on merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, head `4591e103fb713f70ba34467a0beae1cb349deb5f` over base `d55b13bf5efedb12da937e70afe1e9501d83446b`: **0 lint errors / 81 warnings, 49/205 Vitest, 17/17 Playwright and production build PASS**.
-
-PR #46 integrated as **`aafb3e4821e345d320cf3b8f5cc10028e82ad66b`**. Validated merge ref and integrated squash share exact tree **`ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`**.
-
-No new decision number is required for I2 because it implements D-025 rather than changing its semantics. Category order-performance reporting remains the only unimplemented D-025 slice and is P9-S3-I3.
+No new decision number is required for I3. D-025 status becomes fully implemented only after the documentation-complete head passes D-019 and the exact validated content is integrated into `develop`.
 
 ---
 
