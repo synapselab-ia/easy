@@ -1,118 +1,88 @@
 # Easy V2 — P9-S3 Category Data/Reporting Contract
 
-**Status:** `ACCEPTED / I1 + I2 IMPLEMENTED AND INTEGRATED / P9-S3 IN_PROGRESS`  
+**Status:** `ACCEPTED / I1 + I2 INTEGRATED / I3 IMPLEMENTED + FUNCTIONALLY VALIDATED / FINAL INTEGRATION PENDING`  
 **Date:** 2026-08-18  
+**Implementation update:** 2026-08-19  
 **Decision:** D-025  
 **Scope:** category lifecycle, assignment, historical semantics, reporting, migration and D-017/D-018 compatibility
 
 ## 1. Evidence and contract boundary
 
-Direct store evidence accepted in P8-S2 establishes these category requirements:
+Direct store evidence accepted in P8-S2 requires operators to manage item categories, classify items and analyze performance separately by category. D-025 translates only those needs into persistence/history/reporting semantics. It does not reopen D-016 and does not authorize inventory, category debt allocation, backend/auth/cloud/live synchronization or unrelated later phases.
 
-- operators need to create/manage item categories;
-- each item should be classifiable into a category such as bronze or porcelain;
-- reporting/analysis should be available separately by category.
+P9-S3 is implemented in bounded slices: I1 persistence/recovery compatibility, I2 lifecycle/classification/order snapshots and I3 order-performance reporting.
 
-D-025 translates only those needs into persistence/history/reporting semantics. It does not reopen D-016 and does not authorize P9-S4/P9-S5/P10, inventory, category debt allocation, backend/auth/cloud/live synchronization or historical classification inference.
+## 2. Category identity and lifecycle — IMPLEMENTED / INTEGRATED IN I2
 
-P9-S3 is implemented in bounded slices. I1 implemented persistence/recovery compatibility. I2 implemented lifecycle, assignment and new-order snapshot enforcement. Reporting remains the final currently defined slice, I3.
+Persistent category entity has stable `id`, required `name`, reversible `isActive`, `createdAt`, `updatedAt`.
 
-## 2. Category identity and lifecycle — IMPLEMENTED IN I2
+Rules:
 
-Persistent category entity:
+1. Rename preserves stable ID.
+2. Names are trimmed, non-empty and case-insensitively unique across active/archived identities.
+3. Normal removal is archive/reactivate.
+4. Archive is blocked while an active item references the category.
+5. Inactive items may retain archived-category references.
+6. Hard delete is allowed only when no item row and no historical order snapshot references the category.
+7. Historical `transaction.categoryName` snapshots are immutable; analytical identity is stable `categoryId`.
+8. Category writes remain subject to D-024.
 
-```text
-Category
-- id: stable positive integer identity
-- name: required business label
-- isActive: reversible lifecycle state
-- createdAt
-- updatedAt
-```
+Operator management is bounded at `/categories`.
 
-Accepted and implemented identity rules:
+## 3. Item assignment and reassignment — IMPLEMENTED / INTEGRATED IN I2
 
-1. `id` is stable category identity. Rename does not create a new identity.
-2. Names are trimmed, non-empty and unique after case-insensitive normalization across active and inactive categories.
-3. Normal removal is reversible archive/reactivation.
-4. A category may be archived only when no active item references it.
-5. Inactive/historical items may retain an archived category.
-6. Permanent deletion is allowed only when neither any item row nor any historical order category snapshot references the category.
-7. Rename preserves identity. Historical transaction `categoryName` snapshots remain immutable; analytical grouping uses stable `categoryId`.
+`Item.categoryId?` remains optional for lossless legacy compatibility.
 
-I2 exposes these operations through a bounded `/categories` operator flow. All category mutations remain subject to D-024 freshness enforcement.
+Rules:
 
-## 3. Item assignment and reassignment — IMPLEMENTED IN I2
+- new assignment/reassignment may target only an active category;
+- new active item creation and reactivation require an active category;
+- reassignment affects future orders only;
+- migrated active legacy items may remain unclassified/readable/editable without backfill, but cannot enter a new order until classified;
+- inactive items may retain archived-category references;
+- P1 hard-delete history protection remains authoritative.
 
-`Item` has optional persisted:
+## 4. Historical order/category snapshots — IMPLEMENTED / INTEGRATED IN I2
 
-```text
-categoryId?: number
-```
+Orders support optional historical `categoryId?` and `categoryName?`.
 
-Implemented rules:
+Rules:
 
-1. Existing Dexie V4 items remain without invented category after migration.
-2. New assignment/reassignment may target only an existing active category.
-3. Reassignment affects future orders only and never rewrites historical transaction snapshots.
-4. New active item creation requires an active category.
-5. Reactivation for business use requires an active category.
-6. A migrated legacy active item may remain unclassified and editable so migration is non-destructive, but cannot participate in a new order until classified.
-7. An inactive item may retain an archived-category reference.
-8. P1 item hard-delete history protection remains authoritative.
+- new orders resolve the active item's active category inside the validated Dexie write transaction;
+- post-I2 orders store stable `categoryId` plus transaction-time `categoryName` alongside the canonical item snapshot;
+- rename/reassignment never rewrites old order snapshots;
+- pre-I2 orders receive no synthetic category snapshot and remain valid;
+- payments/signals never receive category fields;
+- guided replacement correction preserves original item/category snapshot and `occurredAt`, including explicit no-category legacy history;
+- pure reversal preserves history but contributes zero effective financial/analytical effect.
 
-## 4. Historical order/category snapshot semantics — IMPLEMENTED IN I2
+## 5. Category-level reporting semantics — IMPLEMENTED / FUNCTIONALLY VALIDATED IN I3
 
-Transactions support optional historical category snapshot fields:
+Minimum accepted analysis is **order-performance reporting**, not category debt allocation.
 
-```text
-categoryId?: number
-categoryName?: string
-```
-
-Implemented semantics:
-
-1. A new category-aware order resolves the selected active item and its active category inside the validated Dexie write transaction.
-2. It stores stable `categoryId` plus the category `name` at transaction time alongside the canonical item snapshot.
-3. `categoryId` is analytical identity; `categoryName` is immutable audit/display snapshot.
-4. Later item reassignment never alters old order snapshots.
-5. Later category rename never alters stored historical `categoryName`.
-6. Existing V4/pre-I2 orders receive no synthetic category snapshot.
-7. Orders without historical snapshot remain valid and will report as `Sem categoria — histórico legado`.
-8. Payment/signal transactions never receive category fields.
-9. Guided replacement correction preserves original `itemId`, `itemName`, `categoryId`, `categoryName` and `occurredAt`.
-10. A guided replacement of a legacy no-category order remains no-category rather than being reclassified from the item's current category.
-11. Pure reversal keeps the original snapshot but contributes zero analytical/financial effect under P2.
-
-## 5. Category-level reporting semantics — NOT YET IMPLEMENTED
-
-Minimum accepted category analysis is **order-performance reporting**, not category debt allocation.
-
-For a selected period or all-time view:
+Implemented in PR #48:
 
 - source: effective (`!reversal`) rows where `type === 'order'`;
 - time basis: `transactionOccurredAt()` / `occurredAt`;
-- grouping: historical transaction `categoryId`;
-- legacy grouping: missing snapshot -> `Sem categoria — histórico legado`;
-- minimum measures: order count, summed quantity and gross order value (`sum(totalPrice)`);
-- linked correction: reversed original contributes zero, effective replacement once;
-- archived categories remain reportable.
+- grouping key: historical stored `transaction.categoryId`;
+- missing snapshot: **`Sem categoria — histórico legado`**;
+- measures: order count, summed item quantity and gross order value (`sum(totalPrice)`);
+- linked correction: reversed original contributes zero; effective replacement contributes once;
+- archived categories remain reportable;
+- when the stable category still exists, current category name may label the group while immutable `transaction.categoryName` remains audit/detail evidence;
+- bounded read-only `/category-report` UI supports all-time or inclusive occurrence-period filtering.
 
-Category reporting must not:
+Reporting does **not**:
 
 - group old orders by current item category;
-- retroactively recategorize history;
-- allocate payments/signals, balances, open debt or FIFO debt lots to categories;
+- retroactively recategorize/backfill history;
+- allocate payments/signals, reseller balances, open debt or FIFO debt lots to categories;
 - infer profitability/margin without cost data;
-- invent persistent per-order settlement links.
+- create persistent settlement links or new write paths.
 
-When the category still exists after rename, reports group by stable `categoryId` and may use the current category name as group label; transaction `categoryName` remains available for audit/detail.
+## 6. Dexie V5 migration contract — IMPLEMENTED / INTEGRATED IN I1
 
-This reporting contract is the scope of P9-S3-I3.
-
-## 6. Dexie V5 migration contract — IMPLEMENTED IN I1
-
-Current persistence is Dexie V5:
+Current persistence:
 
 ```text
 categories: ++id, name, isActive
@@ -121,79 +91,49 @@ resellers: unchanged
 transactions: existing indexes + categoryId
 ```
 
-V4 -> V5 is additive/lossless/non-inventive: it creates an empty category table, preserves existing item/order rows with absent category fields, performs no heuristic/backfill and preserves P1/P2/P3 fields, IDs, dates and links.
+V4→V5 is additive/lossless/non-inventive: existing rows stay unchanged and no category backfill is fabricated.
 
-## 7. D-017 backup compatibility — IMPLEMENTED IN I1
+## 7. D-017 backup compatibility — IMPLEMENTED / INTEGRATED IN I1
 
-Logical backup remains `easy-backup` version 2. Current schema5 exports include `data.categories[]` and optional item/order category fields. Supported v1 and v2/schema4 backups remain accepted through in-memory normalization to empty categories/absent category fields without fabricated history.
+Logical backup remains `easy-backup` version 2. Schema5 exports include categories and optional item/order category fields. Supported v1 and v2/schema4 inputs normalize without invented category history. I2/I3 change no backup envelope or normalization contract.
 
-Schema5 preflight enforces category IDs, normalized-name uniqueness, references/lifecycle, paired order snapshots, payment/signal category exclusion and linked-correction snapshot preservation. Backup preview surfaces category count, unclassified-item count and legacy-order count.
+## 8. D-018 restore extension — IMPLEMENTED / INTEGRATED IN I1
 
-I2 changed no backup format/schema contract.
+Validated checkpoint and verified atomic replacement cover `categories + items + resellers + transactions`; post-write validation/read-back divergence rolls back the full replacement. D-024 recovery-health metadata remains outside D-017/D-018. I2/I3 change no restore contract.
 
-## 8. D-018 restore extension — IMPLEMENTED IN I1
-
-D-018 checkpoint/verified atomic restore covers:
-
-```text
-categories + items + resellers + transactions
-```
-
-Validated checkpoint, destructive clear/write, post-write validation and canonical read-back comparison all occur under the accepted four-table atomic boundary. Divergence rolls back the full replacement. D-024 recovery-health metadata remains outside D-017/D-018.
-
-I2 changed no restore contract.
-
-## 9. Implementation sequencing
+## 9. Implementation sequencing and proof
 
 ### Contract gate — DONE
 
-Authoritative final contract D-019: `32185226251`, job `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
+D-019 `32185226251`, job `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`.
 
-### P9-S3-I1 — Category persistence + migration + backup compatibility — DONE / INTEGRATED
+### I1 — persistence/migration/backup — DONE / INTEGRATED
 
-Final documentation-complete D-019: `32191707306`, job `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`, validated/integrated tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
+Final D-019 `32191707306`, job `95887236403`; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`, validated/integrated tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
 
-### P9-S3-I2 — Category lifecycle + item assignment + new-order snapshot enforcement — DONE / INTEGRATED
+### I2 — lifecycle/classification/order snapshots — DONE / INTEGRATED
 
-Implemented lifecycle, bounded operator management, active-category item classification/reclassification, new/reactivated-item enforcement, legacy unclassified compatibility, new-order transaction-time category snapshots and correction snapshot preservation.
+Final D-019 `32202876262`, job `95920142630`; PR #46 integrated as `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`, validated/integrated tree `ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`; canonical closure #47 integrated as `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
 
-Gate/integration history:
+### I3 — category order-performance reporting — IN REVIEW
 
-- `32202062045` / `95917767742` — FAIL with 199/205 Vitest passing; stale unclassified success fixtures, ItemForm fixture setup and Dexie transaction-zone lookup were corrected without relaxing D-025.
-- Functional accepted `32202440100` / `95918871077`, PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3` — 0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS.
-- Final documentation-complete **`32202876262` / `95920142630`**, merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, head `4591e103fb713f70ba34467a0beae1cb349deb5f` over base `d55b13bf5efedb12da937e70afe1e9501d83446b` — **0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS**.
-- PR #46 squash-integrated as **`aafb3e4821e345d320cf3b8f5cc10028e82ad66b`**; validated merge ref and integrated squash share exact tree **`ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`**.
+PR #48 is based exactly on `develop` `4191df77db83258f1125bffd445a6ec1f5b46bf9`.
 
-### P9-S3-I3 — Category order-performance reporting — NEXT
+Functional D-019 **`32261923163`**, job **`96096954271`**, passed on merge ref `02d656ea771e334622a6248139b508e20a98caf1`, combining head `01fcd986ed86fbe465592af3c5600a2570380ee8` with that base:
 
-Authorized scope:
+- 0 lint errors / 81 warnings;
+- 51 files / 210 Vitest PASS;
+- 17/17 Playwright PASS;
+- production build PASS.
 
-- effective non-reversed order rows only;
-- `occurredAt` time basis;
-- historical `transaction.categoryId` grouping;
-- explicit `Sem categoria — histórico legado` bucket;
-- order count, quantity and gross value minimum metrics;
-- linked correction counts only effective replacement;
-- archived categories remain reportable;
-- bounded reporting domain/UI and targeted tests.
-
-Explicitly not in I3: payment/signal/balance/FIFO category allocation, backfill/recategorization, profitability without costs, P9-S4/P9-S5/P10 or cloud/backend work.
+Final acceptance still requires a fresh D-019 on the documentation-complete PR #48 head, integration of that exact validated head, and canonical post-merge recording of integrated commit/tree equivalence.
 
 ## 10. Explicit exclusions
 
-This contract/implementation sequence introduces no authorization for:
-
-- backend/auth/cloud database/live synchronization or D-016 reopening;
-- inventory/stock control;
-- category-level debt/payment allocation;
-- profit/margin accounting;
-- historical recategorization heuristics/backfill;
-- P9-S4 correction expansion;
-- P9-S5 occurrence-date redesign;
-- P10 beta/cutover work.
+No authorization is introduced for backend/auth/cloud/live sync or D-016 reopening, inventory, category-level debt/payment allocation, profit/margin accounting, historical recategorization/backfill, P9-S4 expansion, P9-S5 redesign or P10 work.
 
 ## 11. Current acceptance state
 
-D-025 remains accepted. I1 and I2 are implemented and integrated. P9-S3 remains `IN_PROGRESS` because category order-performance reporting is not implemented yet.
+D-025 remains accepted and unchanged. I1 and I2 are integrated. I3 is implemented and functionally validated but remains `IN_REVIEW` until the documentation-complete gate and integration are recorded.
 
-The only canonical next slice is **P9-S3-I3 — category order-performance reporting**.
+The only current action is to close I3 itself; later P9 work must not start before that closure.
