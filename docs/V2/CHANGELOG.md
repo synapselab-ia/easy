@@ -4,7 +4,7 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
-## 2026-08-19 — P9-S4 correction evidence gate mapped; runtime blocked pending direct confirmation
+## 2026-08-19 — P9-S4 correction evidence gate accepted/integrated; runtime remains blocked on direct confirmation
 
 The P9-S4 evidence/contract gate inspected only the accepted direct-store evidence, the accepted P9-S1 correction inventory and the current correction UI/domain needed to distinguish existing support from genuine source constraints.
 
@@ -20,11 +20,13 @@ Current source still constrains:
 
 P8 directly confirmed that correction friction exists, but it did not identify which exact record/action pairs cause that friction. P9-S1 explicitly classified the rows above as source-proven gaps rather than direct claims about Duda's operation. Therefore no high-value implementation subset can be selected without inventing evidence.
 
-`docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` now records the minimum direct intake required: whether each case actually occurs, approximate frequency, current workaround, business consequence and any other exact missing record/action pair.
+`docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` records the minimum direct intake required: whether each case actually occurs, approximate frequency, current workaround, business consequence and any other exact missing record/action pair.
 
-No runtime, schema, backup, historical financial row, D-012/D-013 semantic, P9-S5/P10 work or backend/auth/cloud/live synchronization was changed. No new D-number was accepted.
+D-019 run `32265612927`, job `96109244644`, passed on PR #50 merge ref `5efb3bd2d0fd20909802a02e00d170150689a7d7`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**. The validated head was `211923d7900818d189b22ce8773be76591505d31` over base `825aca83d1f317119f8f0e4f3d203722c1e6cf85`.
 
-This documentation-only slice remains subject to D-019 before integration.
+PR #50 was squash-integrated into `develop` as `35a2e0d7495791dfda7f02e045067a85bad4aed9`. Validated merge ref and integrated squash share exact tree `5789c7863c0a62904b9d18692543f2b288290867`.
+
+No runtime, schema, backup, historical financial row, D-012/D-013 semantic, P9-S5/P10 work or backend/auth/cloud/live synchronization was changed. No new D-number was accepted. The gate is closed; the evidence blocker intentionally remains.
 
 ---
 
@@ -53,7 +55,7 @@ The authoritative documentation-complete D-019 run **`32262877105`**, job **`961
 
 PR #48 was squash-integrated into `develop` as **`08ad2973f387035301901f9f46b0c78039796c2d`**. The validated merge ref and integrated squash share exact tree **`af7c7e1eaa540f0a2d36e8dbc11d3c547e332e32`**.
 
-P9-S3 is therefore `DONE / INTEGRATED`. The next work is only the **P9-S4 evidence/contract gate**: map already-accepted store correction friction to concrete unsupported operator cases, distinguish what P2 already supports from what is genuinely missing, and define the smallest confirmed high-value subset before any new correction runtime is authorized.
+P9-S3 is therefore `DONE / INTEGRATED`.
 
 ---
 
