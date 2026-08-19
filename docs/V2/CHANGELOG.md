@@ -4,6 +4,31 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-19 — P10-S1 pre-cutover contract defined; D-027 accepted; backup/correction blocker identified
+
+P10 started with the bounded planning action required by the prior `NEXT_ACTION`; no live-store data movement, Vercel candidate refresh, `main` publication or production cutover was performed.
+
+The stable/integration/deployment/recovery baseline was reconstructed before defining the first slice:
+
+- stable `main` remains commit `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
+- completed-P9 `develop` is `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`, 55 commits ahead of `main`;
+- both branches are currently unprotected;
+- current `main` publishes to GitHub Pages with its historical build/deploy workflow, while the V2 workflow on `develop` already defines D-019 `quality -> build -> deploy` for eventual stable publication;
+- Vercel `easy-v2` remains manual candidate/beta hosting because `vercel.json` disables Git deployment;
+- the latest observed READY candidate points to `develop` commit `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9;
+- stable `main` exports backup v1, which V2 preflight already accepts and normalizes without inventing lifecycle/category/occurrence history;
+- D-024 recovery health is origin-local and must be established on a restored candidate before normal writes.
+
+Source reconstruction also found a pre-cutover blocker: current backup correction validation still requires replacement type, order item/category snapshot and `occurredAt` to equal the original, while D-026 explicitly permits the effective replacement to change those business fields. A valid D-026-corrected V2 dataset can therefore conflict with backup self-preflight/export.
+
+D-027 accepts a fail-closed sequence. P10-S1-I1 must first align backup validation with D-026 while retaining audit-link/reference/chronology/target-shape integrity and v1/v2-schema4 migration compatibility. Only after I1 is integrated may P10-S1-I2 rehearse candidate deployment and v1→V2 migration/recovery using synthetic/non-production data.
+
+Copied-live-data beta, real production reconciliation, final write freeze, stable `main` publication, canonical URL switch and production cutover remain explicitly unauthorized.
+
+Detailed contract: `docs/V2/P10_CUTOVER_PLAN.md`.
+
+---
+
 ## 2026-08-19 — P9-S5 occurrence-date usability verified; no runtime gap; P9 closed
 
 P9-S5 reconstructed the direct operator signal retained from P9-S4: routine transaction entry presented today's date by default, and the operator was unsure whether that behavior still existed.
