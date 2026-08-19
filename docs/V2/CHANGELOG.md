@@ -4,7 +4,7 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
-## 2026-08-19 — P9-S4 direct evidence resolves blocker; D-026 full-field audited correction contract accepted
+## 2026-08-19 — P9-S4 direct evidence resolves blocker; D-026 full-field audited correction contract accepted/integrated
 
 Direct operator evidence clarified the actual correction requirement: information entered into the system must remain editable after entry, while prior history does not need to be overwritten by the correction.
 
@@ -13,6 +13,10 @@ The operator could not quantify individual wrong-item/type/observation/archive f
 P9-S4 therefore does not invent a per-field frequency ranking. D-026 selects the smallest coherent implementation: one full-field audited transaction replacement editor. The replacement may define reseller, type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value. The original row remains immutable; correction remains a mandatory-reason atomic linked replacement/reversal under D-012/D-013.
 
 D-025 remains authoritative: keeping the same order item preserves the original item/category snapshot; changing/newly introducing an order item requires a current active/classified target and captures its current snapshot. P1/D-011 active-reference rules are not weakened for speculative inactive-entity exceptions. D-024 write enforcement remains mandatory.
+
+D-019 run **`32277770945`**, job **`96149101495`**, passed on merge ref `6a57fbe6b8674aca8723538f756b04f4a5af3f13`, combining head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` with base `1221f71de460c266c165b92de0536f443c71fa08`: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+
+PR #52 was squash-integrated into `develop` as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**. The validated merge ref and integrated squash share exact tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**. The prior slow runs were external Playwright dependency-download delays before `qa:critical`; no QA requirement was bypassed.
 
 No runtime, schema or backup change is included in this decision slice. P9-S4-I1 is authorized but `NOT_STARTED`; P9-S5/P10 remain unstarted.
 

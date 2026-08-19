@@ -1,6 +1,6 @@
 # Easy V2 — P9-S4 Correction Microflow Decision
 
-**Status:** `ACCEPTED — implementation NOT_STARTED`  
+**Status:** `ACCEPTED / INTEGRATED — implementation NOT_STARTED`  
 **Date:** 2026-08-19  
 **Scope:** bounded post-save transaction correction contract only
 
@@ -96,3 +96,11 @@ Explicitly out of scope:
 The prior P9-S4 evidence blocker is resolved. P9-S4 remains `IN_PROGRESS` because runtime implementation has not started.
 
 No P9-S4 runtime is implemented by this decision slice. The next action is only P9-S4-I1 under D-026.
+
+## 6. Accepted validation and integration
+
+- D-019 run **`32277770945`**, job **`96149101495`**, merge ref **`6a57fbe6b8674aca8723538f756b04f4a5af3f13`** — **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- The validated merge ref combined head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` with base `1221f71de460c266c165b92de0536f443c71fa08`.
+- PR #52 was squash-integrated into `develop` as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**.
+- Validated merge ref and integrated squash share exact tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**.
+- Earlier CI attempts were delayed before `qa:critical` by external Playwright system-dependency downloads; the accepted run executed the complete D-019 gate and no validation requirement was waived.

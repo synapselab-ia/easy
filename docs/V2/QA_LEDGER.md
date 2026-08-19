@@ -41,9 +41,9 @@ D-019 `32265612927` / `96109244644`: **0 lint errors / 81 warnings; 51 files / 2
 
 Canonical closure #51 was validated on retry `32269262365` / `96121383857` and integrated as `1221f71de460c266c165b92de0536f443c71fa08`; merge-ref/integrated tree `7a7551f2815f9338d8b906a2bb6bf1e1d66c8ff2`.
 
-## P9-S4 direct evidence + D-026 decision gate — IN_REVIEW
+## P9-S4 direct evidence + D-026 decision gate — PASS / DONE / INTEGRATED
 
-Direct operator clarification received 2026-08-19 resolves the blocker:
+Direct operator clarification received 2026-08-19 resolved the blocker:
 
 - the operator could not quantify individual wrong-item/type/observation/archive frequencies from memory;
 - the operator specifically recalled today's-date default behavior as the practical date concern;
@@ -64,8 +64,16 @@ Decision result:
 - current active-reference lifecycle rules remain intact; archive-specific exception is not authorized by this gate;
 - today's-date default/discoverability signal is deferred to P9-S5.
 
-**Runtime:** unchanged in this decision slice.  
-**D-019:** pending on the documentation-complete decision PR before integration.
+**Runtime:** unchanged in this decision slice.
+
+### Accepted validation/integration proof
+
+- D-019 run **`32277770945`**, job **`96149101495`**, merge ref **`6a57fbe6b8674aca8723538f756b04f4a5af3f13`**.
+- Validated head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` over base `1221f71de460c266c165b92de0536f443c71fa08`.
+- Result: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- PR #52 squash-integrated as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**.
+- Validated merge ref and integrated squash share exact tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**.
+- Earlier runners were delayed in Playwright system-dependency installation before `qa:critical`; the successful run executed the full D-019 and no gate was bypassed.
 
 ## Current known non-blocking debt
 

@@ -27,7 +27,7 @@ Phase state:
 - **P9-S4 — Confirmed correction microflows: `IN_PROGRESS`.**
   - evidence/source mapping gate: `DONE / INTEGRATED`;
   - direct operator evidence: `DONE`;
-  - D-026 correction contract/decision: `DONE / IN_REVIEW`;
+  - **D-026 correction contract/decision: `DONE / INTEGRATED`;**
   - P9-S4-I1 full-field audited replacement editor: `NOT_STARTED`.
 - P9-S5 — Occurrence-date usability verification: `NOT_STARTED`.
 - P10 — Controlled beta, migration and cutover: `NOT_STARTED`.
@@ -53,7 +53,7 @@ Phase-specific canonical evidence:
 - `docs/V2/P9_RECOVERY_EVIDENCE_REQUEST.md` and `P9_RECOVERY_DECISION.md` — P9-S2;
 - `docs/V2/P9_CATEGORY_CONTRACT.md` — completed D-025 / P9-S3 record;
 - `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` — direct P9-S4 evidence record;
-- `docs/V2/P9_CORRECTION_DECISION.md` — D-026 and bounded P9-S4-I1 contract.
+- `docs/V2/P9_CORRECTION_DECISION.md` — accepted/integrated D-026 and bounded P9-S4-I1 contract.
 
 ## Current technical baseline
 
@@ -61,11 +61,11 @@ Easy remains a browser-only React/TypeScript/Vite SPA using TanStack Query and l
 
 Runtime is Dexie **V5** with `categories`, `items`, `resellers`, `transactions`. Canonical interchange remains `easy-backup` version 2 / schema5. D-018 restores all four business tables atomically. D-024 recovery-health metadata remains separate and normal writes remain subject to its exact 24-hour guard.
 
-Current transaction correction runtime still reflects P2: it can change reseller, order quantity/unit price, payment/signal value and perform pure reversal, but it still preserves original type, occurrence date, order item and observation during guided replacement. **D-026 is accepted as the next contract but is not implemented yet.**
+Current transaction correction runtime still reflects P2: it can change reseller, order quantity/unit price, payment/signal value and perform pure reversal, but it still preserves original type, occurrence date, order item and observation during guided replacement. **D-026 is accepted/integrated as the next implementation contract but is not implemented yet.**
 
 ## Authoritative decisions
 
-D-016 through D-026 are authoritative once this decision slice is integrated. In particular:
+D-016 through D-026 are authoritative. In particular:
 
 - D-012 requires audited reversal instead of destructive financial-history editing;
 - D-013 requires atomic linked replacement correction;
@@ -79,7 +79,7 @@ D-016 through D-026 are authoritative once this decision slice is integrated. In
 
 ## P9-S4 direct evidence and decision result
 
-Direct operator evidence received 2026-08-19 resolves the prior blocker.
+Direct operator evidence received 2026-08-19 resolved the prior blocker.
 
 The operator first described the practical date concern as the system presenting today's date by default in routine transaction/report contexts and did not know the individual frequency of wrong item/type/observation/archive cases. The operator then clarified the actual product requirement: **information entered into the system must remain editable afterward, while prior history does not need to be overwritten by that correction.**
 
@@ -94,7 +94,16 @@ Canonical consequences:
 7. the archive-specific edge was not confirmed as a recurring store incident, so P1/D-011 lifecycle rules are not weakened by this decision;
 8. today's-date default/discoverability is retained as separate evidence for P9-S5, not changed in P9-S4.
 
-No correction runtime, schema or backup change is implemented by this decision slice.
+No correction runtime, schema or backup change was implemented by the D-026 decision slice.
+
+## Accepted D-026 decision validation and integration
+
+- PR #52 validated on D-019 run **`32277770945`**, job **`96149101495`**, merge ref **`6a57fbe6b8674aca8723538f756b04f4a5af3f13`**.
+- Validated merge ref combined head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` with base `1221f71de460c266c165b92de0536f443c71fa08`.
+- Gate result: **0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- PR #52 squash-integrated into `develop` as **`51f7ffae46432e0b82a696c1ebc07c275d733ed4`**.
+- Validated merge ref and integrated squash share exact tree **`c37ea55f83b15415678f5b2be2747fb5f06c6a27`**.
+- The prior slow runners were infrastructure delay in Playwright dependency installation before `qa:critical`; no gate was bypassed.
 
 ## NEXT_ACTION
 

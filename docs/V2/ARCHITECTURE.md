@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through integrated P9-S3-I3; P9-S4 D-026 contract accepted / runtime not started  
+**Status:** verified through integrated P9-S3-I3; P9-S4 D-026 contract accepted/integrated / runtime not started  
 **Integration target:** `develop`  
 **Date:** 2026-08-19
 
@@ -24,7 +24,7 @@ D-025 is fully implemented:
 
 Reporting never allocates payments/signals/balance/FIFO debt to categories.
 
-## Current correction runtime entering P9-S4
+## Current correction runtime entering P9-S4-I1
 
 P2 / D-012 / D-013 currently provide audited reversal and atomic linked replacement. The current guided correction runtime can change:
 
@@ -42,7 +42,7 @@ It currently preserves original:
 
 The current UI also blocks guided replacement when an original order item is inactive.
 
-## D-026 correction architecture — accepted, not implemented
+## D-026 correction architecture — accepted/integrated, not implemented
 
 Direct operator evidence confirms that transaction business data must remain correctable after entry without requiring destructive overwrite of prior history.
 
@@ -110,6 +110,13 @@ npm run qa:critical
 ```
 
 Known React test warnings, mocked-select DOM warnings, dependency/audit notices, Actions deprecation notices, lint warning debt and Vite large-chunk warning remain non-blocking only when objective commands pass.
+
+## D-026 decision validation/integration proof
+
+- D-019 run `32277770945`, job `96149101495`, merge ref `6a57fbe6b8674aca8723538f756b04f4a5af3f13` — 0 lint errors / 81 warnings; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+- Validated head `50cdab7bfc60d31bd3525ed0d4b66d0c3f8d7070` over base `1221f71de460c266c165b92de0536f443c71fa08`.
+- PR #52 integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`.
+- Validated merge ref and integrated squash share exact tree `c37ea55f83b15415678f5b2be2747fb5f06c6a27`.
 
 ## Occurrence-date usability evidence deferred to P9-S5
 
