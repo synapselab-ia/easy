@@ -27,10 +27,43 @@ const wrapper = ({ children }: { children: ReactNode }) => (
     </QueryClientProvider>
 );
 
+async function createActiveReseller(name = 'Active Reseller') {
+    return db.resellers.add({
+        name,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    }) as Promise<number>;
+}
+
+async function createActiveCategory(name = 'Categoria ativa') {
+    return db.categories.add({
+        name,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    }) as Promise<number>;
+}
+
+async function createActiveItem(name = 'Canonical Item Name', basePrice = 25) {
+    const categoryId = await createActiveCategory(`${name} categoria`);
+    const itemId = await db.items.add({
+        name,
+        basePrice,
+        isActive: true,
+        categoryId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    }) as number;
+
+    return { itemId, categoryId };
+}
+
 describe('useTransactions hooks', () => {
     beforeEach(async () => {
         await db.transactions.clear();
         await db.items.clear();
+        await db.categories.clear();
         await db.resellers.clear();
         queryClient.clear();
     });
@@ -46,19 +79,12 @@ describe('useTransactions hooks', () => {
     });
 
     it('should create a transaction for an active reseller', async () => {
-        const resellerId = await db.resellers.add({
-            name: 'Active Reseller',
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        }) as number;
-
+        const resellerId = await createActiveReseller();
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
         result.current.mutate({ resellerId, type: 'payment', totalPrice: 50, createdAt: new Date() });
 
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
         const transactions = await db.transactions.toArray();
         expect(transactions).toHaveLength(1);
         expect(transactions[0].type).toBe('payment');
@@ -66,13 +92,7 @@ describe('useTransactions hooks', () => {
 
     it('should not allow normal creation to forge reversal or correction audit metadata', async () => {
         const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Active Reseller',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-
+        const resellerId = await createActiveReseller();
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
         await result.current.mutateAsync({
@@ -89,22 +109,9 @@ describe('useTransactions hooks', () => {
         expect(stored.correction).toBeUndefined();
     });
 
-    it('should create an order for an active reseller and active item and derive the item snapshot from the reference', async () => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Active Reseller',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-        const itemId = await db.items.add({
-            name: 'Canonical Item Name',
-            basePrice: 25,
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-
+    it('should create an order for an active reseller and classified active item and derive immutable snapshots from references', async () => {
+        const resellerId = await createActiveReseller();
+        const { itemId, categoryId } = await createActiveItem();
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
         await result.current.mutateAsync({
@@ -115,13 +122,15 @@ describe('useTransactions hooks', () => {
             quantity: 2,
             unitPrice: 25,
             totalPrice: 50,
-            createdAt: now,
+            createdAt: new Date(),
         });
 
         const transactions = await db.transactions.toArray();
         expect(transactions).toHaveLength(1);
         expect(transactions[0].itemId).toBe(itemId);
         expect(transactions[0].itemName).toBe('Canonical Item Name');
+        expect(transactions[0].categoryId).toBe(categoryId);
+        expect(transactions[0].categoryName).toBe('Canonical Item Name categoria');
     });
 
     it('should reject a new transaction for an inactive reseller', async () => {
@@ -131,54 +140,29 @@ describe('useTransactions hooks', () => {
             createdAt: new Date(),
             updatedAt: new Date(),
         }) as number;
-
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
-        await expect(result.current.mutateAsync({
-            resellerId,
-            type: 'payment',
-            totalPrice: 50,
-            createdAt: new Date(),
-        })).rejects.toThrow('Revendedores inativos não podem receber novos lançamentos.');
-
+        await expect(result.current.mutateAsync({ resellerId, type: 'payment', totalPrice: 50, createdAt: new Date() }))
+            .rejects.toThrow('Revendedores inativos não podem receber novos lançamentos.');
         expect(await db.transactions.count()).toBe(0);
     });
 
     it('should reject a new transaction for a missing reseller', async () => {
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
-
-        await expect(result.current.mutateAsync({
-            resellerId: 999,
-            type: 'payment',
-            totalPrice: 50,
-            createdAt: new Date(),
-        })).rejects.toThrow('Revendedor não encontrado.');
-
+        await expect(result.current.mutateAsync({ resellerId: 999, type: 'payment', totalPrice: 50, createdAt: new Date() }))
+            .rejects.toThrow('Revendedor não encontrado.');
         expect(await db.transactions.count()).toBe(0);
     });
 
     it('should reject a new transaction with an invalid reseller identifier', async () => {
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
-
-        await expect(result.current.mutateAsync({
-            resellerId: 0,
-            type: 'payment',
-            totalPrice: 50,
-            createdAt: new Date(),
-        })).rejects.toThrow('Revendedor não encontrado.');
-
+        await expect(result.current.mutateAsync({ resellerId: 0, type: 'payment', totalPrice: 50, createdAt: new Date() }))
+            .rejects.toThrow('Revendedor não encontrado.');
         expect(await db.transactions.count()).toBe(0);
     });
 
     it('should reject a new order without an item reference', async () => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Active Reseller',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-
+        const resellerId = await createActiveReseller();
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
         await expect(result.current.mutateAsync({
@@ -188,28 +172,20 @@ describe('useTransactions hooks', () => {
             quantity: 1,
             unitPrice: 30,
             totalPrice: 30,
-            createdAt: now,
+            createdAt: new Date(),
         })).rejects.toThrow(ORDER_ITEM_REQUIRED_ERROR);
-
         expect(await db.transactions.count()).toBe(0);
     });
 
     it('should reject a new order for an inactive item', async () => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Active Reseller',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
+        const resellerId = await createActiveReseller();
         const itemId = await db.items.add({
             name: 'Archived Item',
             basePrice: 30,
             isActive: false,
-            createdAt: now,
-            updatedAt: now,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         }) as number;
-
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
         await expect(result.current.mutateAsync({
@@ -220,21 +196,13 @@ describe('useTransactions hooks', () => {
             quantity: 1,
             unitPrice: 30,
             totalPrice: 30,
-            createdAt: now,
+            createdAt: new Date(),
         })).rejects.toThrow('Itens inativos não podem ser usados em novos pedidos.');
-
         expect(await db.transactions.count()).toBe(0);
     });
 
     it('should reject a new order when the referenced item does not exist', async () => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Active Reseller',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-
+        const resellerId = await createActiveReseller();
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
         await expect(result.current.mutateAsync({
@@ -245,38 +213,18 @@ describe('useTransactions hooks', () => {
             quantity: 1,
             unitPrice: 30,
             totalPrice: 30,
-            createdAt: now,
+            createdAt: new Date(),
         })).rejects.toThrow('Item não encontrado.');
-
         expect(await db.transactions.count()).toBe(0);
     });
 
     it.each<TransactionType>(['payment', 'signal'])('should reject an item reference on a new %s', async (type) => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Active Reseller',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-        const itemId = await db.items.add({
-            name: 'Unrelated Item',
-            basePrice: 20,
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-
+        const resellerId = await createActiveReseller();
+        const { itemId } = await createActiveItem('Unrelated Item', 20);
         const { result } = renderHook(() => useCreateTransaction(), { wrapper });
 
-        await expect(result.current.mutateAsync({
-            resellerId,
-            type,
-            itemId,
-            totalPrice: 20,
-            createdAt: now,
-        })).rejects.toThrow(NON_ORDER_ITEM_REFERENCE_ERROR);
-
+        await expect(result.current.mutateAsync({ resellerId, type, itemId, totalPrice: 20, createdAt: new Date() }))
+            .rejects.toThrow(NON_ORDER_ITEM_REFERENCE_ERROR);
         expect(await db.transactions.count()).toBe(0);
     });
 
@@ -289,15 +237,12 @@ describe('useTransactions hooks', () => {
             observation: 'Pagamento via PIX',
             createdAt,
         }) as number;
-
         const { result } = renderHook(() => useReverseTransaction(), { wrapper });
 
         await result.current.mutateAsync({ id, reason: '  Pagamento duplicado  ' });
+        const stored = (await db.transactions.toArray())[0];
 
-        const transactions = await db.transactions.toArray();
-        const stored = transactions[0];
-
-        expect(transactions).toHaveLength(1);
+        expect(await db.transactions.count()).toBe(1);
         expect(stored.id).toBe(id);
         expect(stored.type).toBe('payment');
         expect(stored.totalPrice).toBe(250);
@@ -308,18 +253,10 @@ describe('useTransactions hooks', () => {
     });
 
     it('should require an explicit reversal reason', async () => {
-        const id = await db.transactions.add({
-            resellerId: 1,
-            type: 'order',
-            totalPrice: 5000,
-            createdAt: new Date(),
-        }) as number;
-
+        const id = await db.transactions.add({ resellerId: 1, type: 'order', totalPrice: 5000, createdAt: new Date() }) as number;
         const { result } = renderHook(() => useReverseTransaction(), { wrapper });
 
-        await expect(result.current.mutateAsync({ id, reason: '   ' }))
-            .rejects.toThrow(REVERSAL_REASON_REQUIRED_ERROR);
-
+        await expect(result.current.mutateAsync({ id, reason: '   ' })).rejects.toThrow(REVERSAL_REASON_REQUIRED_ERROR);
         expect((await db.transactions.get(id))?.reversal).toBeUndefined();
     });
 
@@ -328,29 +265,17 @@ describe('useTransactions hooks', () => {
             resellerId: 1,
             type: 'order',
             totalPrice: 5000,
-            reversal: {
-                reason: 'Valor incorreto',
-                reversedAt: '2026-08-17T15:00:00.000Z',
-            },
+            reversal: { reason: 'Valor incorreto', reversedAt: '2026-08-17T15:00:00.000Z' },
             createdAt: new Date(),
         }) as number;
-
         const { result } = renderHook(() => useReverseTransaction(), { wrapper });
 
-        await expect(result.current.mutateAsync({ id, reason: 'Outro motivo' }))
-            .rejects.toThrow(TRANSACTION_ALREADY_REVERSED_ERROR);
-
+        await expect(result.current.mutateAsync({ id, reason: 'Outro motivo' })).rejects.toThrow(TRANSACTION_ALREADY_REVERSED_ERROR);
         expect((await db.transactions.get(id))?.reversal?.reason).toBe('Valor incorreto');
     });
 
     it('should atomically reverse a payment and create a linked corrected-value replacement', async () => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Ana',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
+        const resellerId = await createActiveReseller('Ana');
         const originalId = await db.transactions.add({
             resellerId,
             type: 'payment',
@@ -358,17 +283,12 @@ describe('useTransactions hooks', () => {
             observation: 'PIX',
             createdAt: new Date('2026-08-10T10:00:00-03:00'),
         }) as number;
-
         const { result } = renderHook(() => useReplaceTransaction(), { wrapper });
 
         const response = await result.current.mutateAsync({
             originalId,
             reason: '  Valor digitado incorretamente  ',
-            replacement: {
-                resellerId,
-                totalPrice: 500,
-                observation: 'tentativa de sobrescrever observação',
-            },
+            replacement: { resellerId, totalPrice: 500, observation: 'tentativa de sobrescrever observação' },
         });
 
         const original = await db.transactions.get(originalId);
@@ -388,73 +308,48 @@ describe('useTransactions hooks', () => {
     });
 
     it('should support a linked wrong-reseller correction while preserving both records', async () => {
-        const now = new Date();
-        const wrongResellerId = await db.resellers.add({
-            name: 'Revendedor errado',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-        const intendedResellerId = await db.resellers.add({
-            name: 'Revendedor correto',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
+        const wrongResellerId = await createActiveReseller('Revendedor errado');
+        const intendedResellerId = await createActiveReseller('Revendedor correto');
         const originalId = await db.transactions.add({
             resellerId: wrongResellerId,
             type: 'signal',
             totalPrice: 120,
-            createdAt: now,
+            createdAt: new Date(),
         }) as number;
-
         const { result } = renderHook(() => useReplaceTransaction(), { wrapper });
+
         const response = await result.current.mutateAsync({
             originalId,
             reason: 'Revendedor selecionado incorretamente',
-            replacement: {
-                resellerId: intendedResellerId,
-                totalPrice: 120,
-            },
+            replacement: { resellerId: intendedResellerId, totalPrice: 120 },
         });
 
         const original = await db.transactions.get(originalId);
         const replacement = await db.transactions.get(response.replacementTransactionId);
-
         expect(original?.resellerId).toBe(wrongResellerId);
         expect(original?.reversal?.replacementTransactionId).toBe(replacement?.id);
         expect(replacement?.resellerId).toBe(intendedResellerId);
         expect(replacement?.correction?.replacesTransactionId).toBe(originalId);
     });
 
-    it('should preserve order type/item and derive corrected total from quantity and unit price', async () => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Ana',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-        const itemId = await db.items.add({
-            name: 'Perfume',
-            basePrice: 500,
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
+    it('should preserve order type/item/category snapshot and derive corrected total from quantity and unit price', async () => {
+        const resellerId = await createActiveReseller('Ana');
+        const { itemId, categoryId } = await createActiveItem('Perfume', 500);
         const originalId = await db.transactions.add({
             resellerId,
             type: 'order',
             itemId,
             itemName: 'Perfume',
+            categoryId,
+            categoryName: 'Perfume categoria',
             quantity: 10,
             unitPrice: 500,
             totalPrice: 5000,
             observation: 'Cliente X',
-            createdAt: now,
+            createdAt: new Date(),
         }) as number;
-
         const { result } = renderHook(() => useReplaceTransaction(), { wrapper });
+
         const response = await result.current.mutateAsync({
             originalId,
             reason: 'Quantidade digitada incorretamente',
@@ -473,6 +368,8 @@ describe('useTransactions hooks', () => {
         expect(replacement?.type).toBe('order');
         expect(replacement?.itemId).toBe(itemId);
         expect(replacement?.itemName).toBe('Perfume');
+        expect(replacement?.categoryId).toBe(categoryId);
+        expect(replacement?.categoryName).toBe('Perfume categoria');
         expect(replacement?.quantity).toBe(1);
         expect(replacement?.unitPrice).toBe(500);
         expect(replacement?.totalPrice).toBe(500);
@@ -480,27 +377,9 @@ describe('useTransactions hooks', () => {
     });
 
     it('should reject changing the item in guided order correction and roll back the whole operation', async () => {
-        const now = new Date();
-        const resellerId = await db.resellers.add({
-            name: 'Ana',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-        const originalItemId = await db.items.add({
-            name: 'Item A',
-            basePrice: 50,
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
-        const otherItemId = await db.items.add({
-            name: 'Item B',
-            basePrice: 60,
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
+        const resellerId = await createActiveReseller('Ana');
+        const { itemId: originalItemId } = await createActiveItem('Item A', 50);
+        const { itemId: otherItemId } = await createActiveItem('Item B', 60);
         const originalId = await db.transactions.add({
             resellerId,
             type: 'order',
@@ -509,21 +388,14 @@ describe('useTransactions hooks', () => {
             quantity: 1,
             unitPrice: 50,
             totalPrice: 50,
-            createdAt: now,
+            createdAt: new Date(),
         }) as number;
-
         const { result } = renderHook(() => useReplaceTransaction(), { wrapper });
 
         await expect(result.current.mutateAsync({
             originalId,
             reason: 'Item errado',
-            replacement: {
-                resellerId,
-                itemId: otherItemId,
-                quantity: 1,
-                unitPrice: 60,
-                totalPrice: 60,
-            },
+            replacement: { resellerId, itemId: otherItemId, quantity: 1, unitPrice: 60, totalPrice: 60 },
         })).rejects.toThrow(CORRECTION_ORDER_ITEM_PRESERVED_ERROR);
 
         expect(await db.transactions.count()).toBe(1);
@@ -531,35 +403,25 @@ describe('useTransactions hooks', () => {
     });
 
     it('should roll back the original reversal when the replacement reseller is invalid', async () => {
-        const now = new Date();
-        const activeResellerId = await db.resellers.add({
-            name: 'Ativo',
-            isActive: true,
-            createdAt: now,
-            updatedAt: now,
-        }) as number;
+        const activeResellerId = await createActiveReseller('Ativo');
         const inactiveResellerId = await db.resellers.add({
             name: 'Inativo',
             isActive: false,
-            createdAt: now,
-            updatedAt: now,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         }) as number;
         const originalId = await db.transactions.add({
             resellerId: activeResellerId,
             type: 'payment',
             totalPrice: 100,
-            createdAt: now,
+            createdAt: new Date(),
         }) as number;
-
         const { result } = renderHook(() => useReplaceTransaction(), { wrapper });
 
         await expect(result.current.mutateAsync({
             originalId,
             reason: 'Revendedor errado',
-            replacement: {
-                resellerId: inactiveResellerId,
-                totalPrice: 100,
-            },
+            replacement: { resellerId: inactiveResellerId, totalPrice: 100 },
         })).rejects.toThrow('Revendedores inativos não podem receber novos lançamentos.');
 
         expect(await db.transactions.count()).toBe(1);
