@@ -4,14 +4,14 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
-## 2026-08-19 — P10-S1 pre-cutover contract defined; D-027 accepted; backup/correction blocker identified
+## 2026-08-19 — P10-S1 pre-cutover contract defined/integrated; D-027 accepted; backup/correction blocker identified
 
 P10 started with the bounded planning action required by the prior `NEXT_ACTION`; no live-store data movement, Vercel candidate refresh, `main` publication or production cutover was performed.
 
 The stable/integration/deployment/recovery baseline was reconstructed before defining the first slice:
 
 - stable `main` remains commit `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
-- completed-P9 `develop` is `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`, 55 commits ahead of `main`;
+- completed-P9 `develop` was `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`, 55 commits ahead of `main`, when the contract was established;
 - both branches are currently unprotected;
 - current `main` publishes to GitHub Pages with its historical build/deploy workflow, while the V2 workflow on `develop` already defines D-019 `quality -> build -> deploy` for eventual stable publication;
 - Vercel `easy-v2` remains manual candidate/beta hosting because `vercel.json` disables Git deployment;
@@ -23,7 +23,11 @@ Source reconstruction also found a pre-cutover blocker: current backup correctio
 
 D-027 accepts a fail-closed sequence. P10-S1-I1 must first align backup validation with D-026 while retaining audit-link/reference/chronology/target-shape integrity and v1/v2-schema4 migration compatibility. Only after I1 is integrated may P10-S1-I2 rehearse candidate deployment and v1→V2 migration/recovery using synthetic/non-production data.
 
-Copied-live-data beta, real production reconciliation, final write freeze, stable `main` publication, canonical URL switch and production cutover remain explicitly unauthorized.
+D-019 run **`32290159119`**, job **`96188851730`**, passed on PR #58 merge ref **`dbacda8893c6d1073ba130440ef5bcc6ab11af75`**, combining head `f29de41c6fa668bebfd7a839c2b693eb9d971c55` with base `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+
+PR #58 was squash-integrated into `develop` as **`5c7a5dc23af435711059deff75cf7862972662a1`**. The validated merge ref and integrated squash share exact tree **`6afb4e77eecb97d2092d209b12c054ce2b1952db`**.
+
+Copied-live-data beta, real production reconciliation, final write freeze, stable `main` publication, canonical URL switch and production cutover remain explicitly unauthorized. P10-S1-I1 becomes the current `NEXT_ACTION` and remains `NOT_STARTED` at contract closure.
 
 Detailed contract: `docs/V2/P10_CUTOVER_PLAN.md`.
 
