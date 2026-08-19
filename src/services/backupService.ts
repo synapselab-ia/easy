@@ -554,6 +554,14 @@ function validateReferences(
                 if (replacement.correction?.replacesTransactionId !== transaction.id) {
                     pathError(errors, `${path}.reversal.replacementTransactionId`, 'não possui vínculo de correção bidirecional correspondente');
                 }
+                if (
+                    transaction.type === 'order' &&
+                    replacement.type === 'order' &&
+                    replacement.itemId === transaction.itemId &&
+                    (replacement.categoryId !== transaction.categoryId || replacement.categoryName !== transaction.categoryName)
+                ) {
+                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição do mesmo item deve preservar o snapshot de categoria original');
+                }
                 if (replacement.createdAt.getTime() < transaction.createdAt.getTime()) {
                     pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição não pode ser registrada antes do lançamento original');
                 }
