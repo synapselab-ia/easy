@@ -32,12 +32,41 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 );
 
+function localDateInput(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 describe('P3-S1 transaction form occurrence date', () => {
     beforeEach(async () => {
         await db.items.clear();
         await db.resellers.clear();
         await db.transactions.clear();
         queryClient.clear();
+    });
+
+    it('defaults the financial occurrence to today and keeps the field discoverable and editable before save', () => {
+        const beforeRender = localDateInput();
+
+        render(
+            <TransactionForm
+                initialType="payment"
+                onSubmitSuccess={vi.fn()}
+                onCancel={vi.fn()}
+            />,
+            { wrapper },
+        );
+
+        const afterRender = localDateInput();
+        const occurrenceInput = screen.getByLabelText(/Data da ocorrência/i) as HTMLInputElement;
+
+        expect([beforeRender, afterRender]).toContain(occurrenceInput.value);
+        expect(screen.getByText(/Data financeira da movimentação\. O momento de registro é salvo automaticamente\./i)).toBeInTheDocument();
+
+        fireEvent.change(occurrenceInput, { target: { value: '2026-07-04' } });
+        expect(occurrenceInput).toHaveValue('2026-07-04');
     });
 
     it('persists the selected financial date independently from registration time', async () => {
