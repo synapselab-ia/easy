@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through integrated P9-S4-I1 / D-026 runtime  
+**Status:** verified through completed/integrated P9  
 **Integration target:** `develop`  
 **Date:** 2026-08-19
 
@@ -12,7 +12,7 @@ Database: `ResellerManagerDB`, Dexie **V5** with `categories`, `items`, `reselle
 
 Migration path remains V1→V2 reseller lifecycle, V2→V3 item lifecycle, V3→V4 `occurredAt`, V4→V5 additive category substrate. V4→V5 performs no category backfill. Recovery-health state remains separate local control metadata (`easy.recoveryHealth.v1`) and is not part of Dexie/backup business data.
 
-P9-S4-I1 changes no Dexie schema, migration or backup envelope.
+P9-S4 and P9-S5 introduced no Dexie schema, migration or backup-envelope changes.
 
 ## Category lifecycle and reporting
 
@@ -28,57 +28,29 @@ Reporting never allocates payments/signals/balance/FIFO debt to categories.
 
 ## D-026 correction architecture — implemented/integrated
 
-P2 / D-012 / D-013 still provide the audit topology: the original row is not destructively rewritten, correction requires a reason, and replacement creation plus original reversal/linkage occur atomically.
+P2 / D-012 / D-013 provide the audit topology: the original row is not destructively rewritten, correction requires a reason, and replacement creation plus original reversal/linkage occur atomically.
 
-P9-S4-I1 expands the replacement business state:
+P9-S4-I1 permits the replacement business state to define reseller, target type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value.
 
-```text
-original effective transaction
-        |
-        | mandatory correction reason
-        v
-validate replacement business state
-        |
-        +-- reseller
-        +-- target type
-        +-- occurredAt
-        +-- observation
-        +-- order: item + quantity + unit price
-        +-- payment/signal: movement value
-        |
-        v
-single Dexie transaction
-        |
-        +-- create linked replacement
-        +-- reverse original with reason + replacement id
-        |
-        v
-original business row remains immutable + replacement becomes effective
-```
+Target-shape validity, D-025 snapshot preservation/recapture, P1/D-011 active-reference rules and D-024 recovery freshness enforcement remain mandatory. No speculative inactive-reference exception was introduced.
 
-The full correction editor now exposes that complete target state. The hook keeps the older bounded replacement call shape compatible, while explicit `type`/`occurredAt` selects the D-026 full-field path used by the UI.
+## D-014 occurrence-date architecture — P9-S5 reverified
 
-### Target-shape rules
+D-014 remains unchanged:
 
-- target `order` requires a valid item, positive integer quantity and valid unit price; total is derived from quantity × unit price;
-- target `payment`/`signal` carries no item/quantity/unit-price/category fields and requires positive movement value;
-- changing type affects only the replacement;
-- `createdAt`, IDs, correction links and reversal metadata remain system/audit state, not editable business data.
+- `occurredAt` = financial/business occurrence time;
+- `createdAt` = record-registration time;
+- `reversal.reversedAt` = audit/reversal time.
 
-### D-025 interaction
+The normal new-movement workflow uses `TransactionForm`, which currently:
 
-- same order item: preserve original `itemName`, `categoryId`, `categoryName` snapshot even if the catalog item was later renamed/reclassified;
-- changed/new order item: require current active/classified target and capture its current item/category snapshot;
-- order → non-order: remove order/category fields from the replacement only;
-- never recategorize or rewrite the reversed original.
+1. initializes `Data da ocorrência` from the browser-local current date;
+2. renders it in the main entry block beside reseller and transaction type;
+3. uses an editable date input before save;
+4. validates and converts that value to `occurredAt`;
+5. displays helper text distinguishing financial date from automatically saved registration time.
 
-### Lifecycle boundary
-
-D-026 does not weaken P1/D-011. Newly selected references remain subject to current active-reference rules. An inactive/missing historical order item cannot be reused as a new target; the editor surfaces that constraint and permits selecting another active/classified item or another target transaction type. No speculative lifecycle exception was introduced.
-
-### Query/recovery behavior
-
-Affected transaction/dashboard query consumers are invalidated after successful replacement. D-024 remains in front of the write, so stale/missing recovery readiness blocks correction before mutation.
+P9-S5 found no evidence-backed UI/runtime gap. Existing persistence tests plus the new focused usability test prove the current workflow satisfies the bounded direct evidence. **No production source file was changed.**
 
 ## Recovery/interchange invariants — unchanged
 
@@ -101,10 +73,20 @@ Known React test warnings, mocked-select DOM warnings, dependency/audit notices,
 ## P9-S4-I1 validation/integration proof
 
 - D-019 run `32285620846`, job `96174326588`, validated PR merge ref `4b51a5f35c2104d636903ce89eecbc995a0f3ce3` — 0 lint errors / 82 warnings; 52 files / 216 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-- Validated head `a4f0b026e14fc85bd02eee56db262b5271507b3c` over base `0f3ec562717c75981802f330d64410ee612a034d`.
 - PR #54 integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`.
-- Validated merge ref and integrated squash share exact tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
+- Validated merge ref and integrated squash share tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
 
-## Boundary entering P9-S5
+## P9-S5 validation/integration proof
 
-The creation form currently initializes `Data da ocorrência` to today's local date. Direct operator evidence specifically recalled that behavior as the remaining date-usability signal. P9-S5 must verify discoverability/editability and persistence semantics without introducing another date model or changing D-014/P3 financial-date semantics.
+- D-019 run `32287018048`, job `96178850066`, validated PR merge ref `9459285920cfbd784a652e9db97cf40741977edf` — 0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+- Validated head `fef66eb8da6602f0804d0c78eb3d6c30feaf2cac` over base `716fc3b9ec77bada5ca44d992a6760a276e38cfa`.
+- PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`.
+- Validated merge ref and integrated squash share exact tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
+
+## Boundary entering P10
+
+P9 is complete. P10 remains `NOT_STARTED`.
+
+The current V2 architecture entering P10 is still local-first/single-user under D-016, with D-017/D-018 recovery contracts, D-019 mandatory QA, D-024 recovery freshness enforcement, D-025 category snapshots/reporting, D-026 audited correction and D-014 financial-date semantics intact.
+
+No production migration, beta cutover, `main` publication or architecture change has been authorized merely by completing P9.

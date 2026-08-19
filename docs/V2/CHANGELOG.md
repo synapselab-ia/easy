@@ -4,6 +4,22 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-19 — P9-S5 occurrence-date usability verified; no runtime gap; P9 closed
+
+P9-S5 reconstructed the direct operator signal retained from P9-S4: routine transaction entry presented today's date by default, and the operator was unsure whether that behavior still existed.
+
+Current-source verification found no evidence-backed usability gap. `TransactionForm` still defaults `Data da ocorrência` to the browser-local current date, exposes it in the main entry block beside reseller/type, allows direct editing before save and displays helper text distinguishing the financial occurrence date from automatically saved registration time. Existing D-014/P3 behavior continues to persist selected `occurredAt` independently from generated `createdAt`.
+
+Because the verified workflow already satisfies the bounded requirement, P9-S5 made **no production runtime/UI change**. A focused regression test was added only to prove today's local default, field/helper discoverability and pre-save editability while retaining the existing independent-persistence assertion.
+
+D-019 run **`32287018048`**, job **`96178850066`**, passed on PR #56 merge ref **`9459285920cfbd784a652e9db97cf40741977edf`**, combining head `fef66eb8da6602f0804d0c78eb3d6c30feaf2cac` with base `716fc3b9ec77bada5ca44d992a6760a276e38cfa`: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+
+PR #56 was squash-integrated into `develop` as **`88c70a20071bd97ef3a08285128756e2ce484a74`**. The validated merge ref and integrated squash share exact tree **`97a78d3e4d78a54ad117440c160920343513ba9f`**.
+
+P9-S1 through P9-S5 are now complete, so P9 closes as `DONE / INTEGRATED`. P10 controlled beta/migration/cutover becomes the next phase but remains `NOT_STARTED`; no production data movement, cutover or `main` publication was started here.
+
+---
+
 ## 2026-08-19 — P9-S4-I1 full-field audited transaction correction completed and integrated; P9-S4 closed
 
 P9-S4-I1 implemented D-026 as one complete audited replacement editor. A correction can now define the replacement reseller, transaction type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value without destructively overwriting the original transaction.
@@ -84,7 +100,7 @@ D-024 selected synchronized recovery-copy folder plus exact 24-hour freshness gu
 
 ## 2026-08-18 — P9-S1 evidence-backed prioritization completed
 
-D-023 ranking: recovery durability 94/100, categories/reporting 83/100, correction microflows 70/100, occurrence-date usability 69/100. Critical QA `32166330198` / `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
+D-023 ranking: recovery durability 94/100, categories/reporting 83/100, correction microflows 70/100; occurrence-date usability 69/100. Critical QA `32166330198` / `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ---
 
