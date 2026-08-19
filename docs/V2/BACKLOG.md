@@ -107,7 +107,7 @@ Implemented Dexie V5 category persistence, non-inventive V4→V5 migration, `eas
 
 #### P9-S3-I2 — Category lifecycle + item assignment + new-order snapshot enforcement
 
-**Status:** `DONE` — 2026-08-18, pending only final documentation-head D-019/integration of the current closure PR.
+**Status:** `DONE / INTEGRATED` — 2026-08-18.
 
 Implemented scope:
 
@@ -123,16 +123,16 @@ Implemented scope:
 - payments/signals remain category-free;
 - D-024 write guard remains in force across category/item/transaction mutations.
 
-D-019 history:
+D-019/integration history:
 
 - `32202062045` / `95917767742` — **FAIL** at Vitest with 199/205 passing; exposed pre-I2 unclassified success fixtures, ItemForm fixture mismatches and Dexie transaction-zone category lookup. No contract relaxation occurred.
-- Functional accepted **`32202440100` / `95918871077`** — **PASS** on PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`, head `554e68d64ff9c67c455ff97116736472c5807ec1` over base `d55b13bf5efedb12da937e70afe1e9501d83446b`: 0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS.
-
-The documentation-complete head must pass a fresh D-019 before integration.
+- Functional accepted `32202440100` / `95918871077` — **PASS** on PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`: 0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS.
+- Final documentation-complete `32202876262` / `95920142630` — **PASS** on merge ref `7a8115489aafccf86408a50591fe474dbfb97f5f`, head `4591e103fb713f70ba34467a0beae1cb349deb5f` over base `d55b13bf5efedb12da937e70afe1e9501d83446b`: 0 errors / 81 warnings, 49/205 Vitest, 17/17 Playwright, build PASS.
+- PR #46 integrated as `aafb3e4821e345d320cf3b8f5cc10028e82ad66b`; validated merge ref and integrated squash share tree `ddbb14dcc6f66239b5e973f7da8eabb295c2cb49`.
 
 #### P9-S3-I3 — Category order-performance reporting
 
-**Status:** `NOT_STARTED` — canonical next slice after I2 integration.
+**Status:** `NOT_STARTED` — canonical `NEXT_ACTION`.
 
 Authorized scope:
 
