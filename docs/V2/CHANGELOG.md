@@ -4,6 +4,36 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-18 — P9-S3-I2 category lifecycle/classification/order snapshots implemented
+
+P9-S3-I2 operationalized the D-025 lifecycle/classification/history contract without implementing category reporting.
+
+Implemented:
+
+- category create, rename, archive/reactivate and guarded permanent deletion;
+- stable category identity across rename and case-insensitive name uniqueness across active/archived categories;
+- archive blocked while an active item references the category;
+- hard deletion blocked by any item reference or historical order category snapshot;
+- bounded operator category-management route at `/categories`;
+- active-category-only item assignment/reassignment;
+- active category required for new active items and reactivation;
+- migrated active legacy unclassified items remain readable/editable without backfill but are blocked from new orders until classified;
+- new orders resolve the active item's active category and persist immutable transaction-time `categoryId + categoryName` snapshots;
+- later category rename or item reassignment does not rewrite old snapshots;
+- guided replacement correction preserves the original category snapshot, including absence for a legacy no-category order;
+- payments/signals remain category-free;
+- D-024 freshness guard remains authoritative for the new category/item/transaction writes.
+
+The first functional D-019 run `32202062045`, job `95917767742`, correctly blocked integration: 199/205 Vitest passed, with failures limited to stale pre-I2 unclassified success fixtures, ItemForm fixture/setup mismatches and a Dexie transaction-zone issue in the active-category lookup. The category requirement was not relaxed; fixtures were classified and the lookup was kept inside the Dexie transaction zone.
+
+Functional accepted D-019 **`32202440100`**, job **`95918871077`**, passed on PR #46 merge ref `c166ad76f62dd892bcdbc547f54acaf1a2afc5c3`, combining head `554e68d64ff9c67c455ff97116736472c5807ec1` with base `d55b13bf5efedb12da937e70afe1e9501d83446b`: **0 lint errors / 81 warnings, 49 Vitest files / 205 tests PASS, 17/17 Playwright PASS and production build PASS**.
+
+No category reporting, historical recategorization/backfill, category debt/payment allocation, P9-S4/P9-S5/P10, backend/auth/cloud/live synchronization or D-016 reopen was introduced.
+
+P9-S3 remains `IN_PROGRESS`. After the documentation-complete head passes D-019 and I2 integrates, `NEXT_ACTION` advances only to **P9-S3-I3 — category order-performance reporting** under D-025.
+
+---
+
 ## 2026-08-18 — P9-S3-I1 category persistence/migration/backup compatibility implemented
 
 P9-S3-I1 implemented only the persistence/recovery substrate authorized by D-025.
@@ -19,20 +49,11 @@ Implemented:
 - schema5 preflight validates category IDs/names/references/lifecycle and paired order snapshots; payment/signal category fields are invalid;
 - D-018 checkpoint/atomic restore/read-back verification now covers `categories + items + resellers + transactions`;
 - backup preview surfaces categories, unclassified items and legacy orders without category snapshot;
-- guided order correction preserves any historical category snapshot already present, while normal new-order creation remains category-neutral until I2.
+- guided order correction preserves any historical category snapshot already present, while normal new-order creation remained category-neutral until I2.
 
 Targeted tests prove real Dexie V4→V5 migration, schema4 compatibility, schema5 category graph validation, four-table round-trip/checkpoint and full rollback including categories on simulated restore failure.
 
-D-019 correctly blocked two intermediate heads:
-
-- run `32190349921`, job `95883095871`: one obsolete historical test expected final Dexie V4; only that expectation was updated to V5;
-- run `32190552190`, job `95883712396`: all 195 Vitest and 17/17 Playwright passed, but TypeScript build exposed insufficient static narrowing of validated `rawCategories`; only explicit typing was changed.
-
-Functional accepted Critical QA **`32191018791`**, job **`95885134808`**, passed on PR #45 merge ref `c6891b5f7e01c6d36ea71fdfb52571e805d7655d`: **0 lint errors / 81 warnings, 47 Vitest files / 195 tests, 17/17 Playwright and production build PASS**.
-
-No category management/classification UI, new-order category enforcement/snapshot generation, category reporting, category debt allocation, backend/auth/cloud/live sync or D-016 reopen was introduced.
-
-P9-S3 remains `IN_PROGRESS`. `NEXT_ACTION` advances only to **P9-S3-I2 — category lifecycle + item assignment + new-order snapshot enforcement**. Category reporting remains a later P9-S3 slice.
+D-019 correctly blocked two intermediate heads before final success. Final documentation-complete Critical QA `32191707306`, job `95887236403`, passed; PR #45 integrated as `d55b13bf5efedb12da937e70afe1e9501d83446b`, sharing validated tree `7ae465da19e2716caace781c9dbdcf073226af5a`.
 
 ---
 
@@ -40,69 +61,45 @@ P9-S3 remains `IN_PROGRESS`. `NEXT_ACTION` advances only to **P9-S3-I2 — categ
 
 P9-S3 contract work established stable category identity/lifecycle, future-order transaction snapshots, non-inventive legacy handling, order-only category analytics, lossless Dexie V5 direction and additive D-017/D-018 compatibility. No runtime/schema/UI/reporting implementation occurred in the contract gate.
 
-The authoritative final contract validation is Critical QA **`32185226251`**, job **`95867186002`**, on PR #44 merge ref `ab910d1fbfbe2a007bc35e7bd8784e7697283312`: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and build PASS.
-
-PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`; validated merge ref and integrated squash share exact tree `676f70baa62a46cc353d756a2ff5624295d699c8`.
+Authoritative final contract validation: Critical QA `32185226251`, job `95867186002`; PR #44 integrated as `ede644b88ad00c11b566d82a21758cc82b7a8126`, validated/integrated tree `676f70baa62a46cc353d756a2ff5624295d699c8`.
 
 ---
 
 ## 2026-08-18 — P9-S2-I1 recovery freshness guard implemented; P9-S2 closed
 
-The D-024 runtime slice is implemented and P9-S2 is complete.
+The D-024 runtime slice implemented namespaced local recovery health, fail-safe 24-hour write blocking, synchronized-folder setup verification and persistent Backup/Restore escape access without Drive API/OAuth, backend/cloud/live sync or provider-side sync attestation.
 
-Implemented behavior:
-
-- namespaced local recovery-health metadata (`easy.recoveryHealth.v1`), outside business Dexie/backup data;
-- fail-safe `unknown/due` handling for missing, corrupt or unverified state;
-- global health states `unknown`, `due`, `current`, `warning` and `overdue`;
-- non-contractual 20-hour warning with exact hard **24-hour** boundary;
-- centralized recovery write guard across normal item, reseller and transaction mutations;
-- read-only operation and Backup/Restore remain available while normal writes are blocked;
-- validated `easy-backup` export returns exact filename/export timestamp for local freshness tracking;
-- one-time synchronized-folder setup guidance and explicit operator confirmation after observing the exported copy off the local-PC-only context;
-- Easy reports generation/download initiation, not provider synchronization acknowledgment.
-
-No Google Drive API/OAuth, backend/auth/cloud database/live synchronization, required File System Access API or provider-side sync verification was introduced.
-
-Accepted Critical QA `32180250834`, job `95851336506` passed on PR #39 merge ref `2455d5528e42d58dee43fb4b0f100741a705fe6a`: 0 lint errors / 80 warnings, 44/183 Vitest, 17/17 Playwright and build PASS. PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9` with exact validated tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
+Accepted Critical QA `32180250834`, job `95851336506`; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9` with validated tree `72b26596b44f2425f9b8b2d833eee0027ea8405e`.
 
 ---
 
 ## 2026-08-18 — P9-S2 recovery mechanism decision accepted; D-024 keeps local-first architecture
 
-D-024 selected **Synchronized recovery-copy folder + 24-hour freshness guard** and kept D-016. No Google OAuth/Drive API, backend/auth/cloud DB/live sync, File System Access baseline, Dexie migration or backup-format version change was authorized by the recovery decision.
-
-Critical QA `32177687434`, job `95843265579` passed on PR #37. PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4` with validated tree `6e7f6431c3dbdac8c58654d20873149efea2786c`.
+D-024 selected synchronized recovery-copy folder + exact 24-hour freshness guard and kept D-016. Critical QA `32177687434`, job `95843265579`; PR #37 integrated as `cb873b7ee4456ed8e5c00ace90f3926337c42bf4`.
 
 ---
 
 ## 2026-08-18 — P9-S2 direct recovery-target evidence accepted and integrated
 
-Direct evidence established newest usable off-device recovery copy **<=24 hours**, manual restoration on any computer, daily demand without invented numeric RTO, Google Drive as acceptable durable destination, local PC copy for convenience and no provider-operated remote recovery requirement.
-
-Critical QA `32175718073`, job `95837062983` passed on PR #35. PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`.
+Direct evidence established newest usable off-device recovery copy <=24 hours, manual restoration on any computer, Google Drive as acceptable durable destination and no provider-operated remote recovery requirement. Critical QA `32175718073`, job `95837062983`; PR #35 integrated as `5bf83b6cc8b078858dcd26e5144285a7dd389d73`.
 
 ---
 
 ## 2026-08-18 — P9-S2 recovery decision gate blocked on missing measurable store target
 
-The first P9-S2 attempt proved severe PC-loss/manual-backup exposure but lacked measurable copy-age/recovery/interruption constraints. Missing evidence was treated as a blocker rather than permission to invent SLA/RPO/RTO or cloud requirements. Blocked-state Critical QA `32168368086`, job `95813314347` passed on PR #33.
+The first P9-S2 attempt proved severe PC-loss/manual-backup exposure but lacked measurable copy-age/recovery/interruption constraints. Missing evidence was treated as blocker, not permission to invent SLA/RPO/RTO or cloud requirements. Blocked-state Critical QA `32168368086`, job `95813314347` passed on PR #33.
 
 ---
 
 ## 2026-08-18 — P9-S1 evidence-backed prioritization completed
 
-D-023 accepted ranking: recovery durability 94/100, categories/reporting 83/100, exact correction microflows 70/100 and occurrence-date usability 69/100.
-
-Critical QA `32166330198`, job `95806665221` passed on PR #31. PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
+D-023 accepted ranking: recovery durability 94/100, categories/reporting 83/100, exact correction microflows 70/100 and occurrence-date usability 69/100. Critical QA `32166330198`, job `95806665221`; PR #31 integrated as `3d99814c0f97dce640a91721fc68d33e79575cc3`.
 
 ---
 
 ## 2026-08-18 — P8-S2 direct real-store validation completed; P8 closed
 
-Direct stakeholder evidence established current non-concurrent PC-based operation, PDF/extract reseller sharing, manual JSON backup/portability, no mandatory trusted server integration and modest scale. It also confirmed severe device-loss/manual-backup exposure, item categories/category reporting needs and edit/correction friction. Delayed financial entry is already supported by `occurredAt`.
-
-D-022 keeps D-016. Critical QA `32158395391`, job `95781056589` passed on PR #27.
+Direct stakeholder evidence established current non-concurrent PC-based operation, PDF/extract reseller sharing, manual JSON backup/portability, no mandatory trusted server integration and modest scale. It also confirmed severe device-loss/manual-backup exposure, item categories/category reporting needs and edit/correction friction. D-022 keeps D-016. Critical QA `32158395391`, job `95781056589`.
 
 ---
 
@@ -114,7 +111,7 @@ The first P8-S2 attempt found no direct operator/interview/observation/SLA/secur
 
 ## 2026-08-18 — P8-S1 repository-evidence discovery
 
-P8-S1 inspected canonical documents, original prompts, historical PRDs, README and repository issues. Repository evidence did not prove a D-016 reopen trigger. D-021 was accepted. Critical QA `32149199373` and canonical closure `32150004427` passed.
+Repository evidence did not prove a D-016 reopen trigger. D-021 was accepted. Critical QA `32149199373` and canonical closure `32150004427` passed.
 
 ---
 
@@ -126,13 +123,13 @@ P7 resolved QG-011 through QG-015 under D-020. Final P7-S6 functional validation
 
 ## 2026-08-17 — P6 repository-wide QA/deployment gate
 
-P6 established `npm run qa:critical`, persistent CI and `quality -> build -> deploy` before GitHub Pages publication from `main`. D-019 accepted; functional validation `32064801009` and post-merge `32065713920` passed.
+P6 established `npm run qa:critical`, persistent CI and `quality -> build -> deploy` before publication from `main`. D-019 accepted; functional validation `32064801009` and post-merge `32065713920` passed.
 
 ---
 
 ## 2026-08-17 — P5 backup/recovery foundation completed
 
-P5-S1 established canonical logical `easy-backup` v2 with deep preflight and v1 normalization (`32058028793`). P5-S2 added validated checkpoint download plus verified atomic Dexie restore with rollback and migration/financial round-trip proof (`32060729538`). D-017/D-018 accepted.
+P5-S1 established canonical logical `easy-backup` v2 with deep preflight and v1 normalization (`32058028793`). P5-S2 added validated checkpoint download plus verified atomic Dexie restore (`32060729538`). D-017/D-018 accepted.
 
 ---
 
@@ -144,7 +141,7 @@ D-016 accepted: keep V2 local-first/single-user until direct requirements later 
 
 ## 2026-08-17 — P3 financial dates/statements/aging completed
 
-P3-S1 separated financial occurrence (`occurredAt`) from registration/audit time (`createdAt`) and migrated Dexie to V4 (`32052076684`). P3-S2 formalized opening → movements → closing statements, positive-reseller total debt and FIFO outstanding-debt aging (`32053837309`). D-014/D-015 accepted.
+P3-S1 separated `occurredAt` from registration/audit time and migrated Dexie to V4 (`32052076684`). P3-S2 formalized statements, total debt and FIFO outstanding-debt aging (`32053837309`). D-014/D-015 accepted.
 
 ---
 
@@ -156,10 +153,10 @@ P2 preserved original financial history through audited reversal and atomic link
 
 ## 2026-08-17 — P1 referential integrity and safe lifecycle completed
 
-P1 introduced reversible reseller/item archival, strict active references for new activity and guarded destructive deletion while preserving historical rows. Validations `32037965651`, `32038951903` and `32039763539` passed.
+P1 introduced reversible reseller/item archival, strict active references for new activity and guarded destructive deletion while preserving history. Validations `32037965651`, `32038951903` and `32039763539` passed.
 
 ---
 
 ## 2026-08-17 — P0 canonical V2 governance established
 
-The V2 laboratory repository, branch roles, canonical document precedence and incremental/no-default-rewrite discipline were established. `main` is the stable reference; `develop` is the V2 integration branch.
+The V2 laboratory repository, branch roles, canonical document precedence and incremental/no-default-rewrite discipline were established. `main` is stable reference; `develop` is the V2 integration branch.
