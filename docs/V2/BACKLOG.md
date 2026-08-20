@@ -172,21 +172,31 @@ A future P10-S2-I1 PASS may authorize only defining the later production-cutover
 
 ### P10-S2-I1 — Copied-live-data beta execution
 
-**Status:** `NOT_STARTED` — **CURRENT**.
+**Status:** `BLOCKED / NO-GO BEFORE EXPORT` — **CURRENT**.
 
-Execution must follow D-028 in order:
+Pre-export execution has started and the technical identity portion passed:
 
-1. re-verify exact candidate/D-019/deployment identity;
-2. verify operator/browser isolation and approved D-024 working/recovery location;
-3. only after the pre-export GO checklist passes, export one immutable point-in-time stable-v1 backup;
-4. preflight/restore and exact structural + financial reconciliation before mutation;
-5. establish D-018/D-024 recovery readiness and capture rollback baseline;
-6. run the minimum disposable operator beta checks;
-7. prove final V2 fresh-context round-trip with identical business data;
-8. dispose beta-specific copied data within 24 hours;
-9. retain only sanitized evidence.
+- candidate `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e` / tree `8d6479ce00caabce528c6971fbc1034bc1eabbcc` remains the exact candidate;
+- candidate D-019 `32294362895` / `96202149317` is PASS;
+- deployment `dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki` remains READY and reports the exact candidate Git SHA;
+- current alias metadata still maps `easy-v2-tau.vercel.app` to that deployment and `/backup` responds successfully;
+- current `develop` is only two documentation commits ahead of the candidate, with every changed path under `docs/V2/`.
 
-Any objective mismatch or contract breach is NO-GO and blocks acceptance.
+The gate is blocked before any real-data export because execution-time operator-local requirements cannot be proven remotely:
+
+1. establish one designated operator and a dedicated/isolated V2 beta browser profile/context on the trusted store PC, visibly distinct from stable;
+2. confirm on that PC that the browser backup destination is inside the accepted Google Drive for desktop synchronized folder and verify the current D-024 recovery boundary;
+3. explicitly acknowledge stable as authoritative and beta state as disposable.
+
+The stable dataset is browser-local IndexedDB on the store PC. D-028 prohibits uploading the raw backup to chat/GitHub/CI, so remote upload is not an allowed workaround.
+
+No live-store backup was exported/imported, no beta real-data artifact was created and the 24-hour disposal clock has not started.
+
+Detailed execution record: `docs/V2/P10_S2_I1_EXECUTION.md`.
+
+Once the remaining pre-export GO items are proven locally, continue the same P10-S2-I1 action in D-028 order: one immutable source export; sanitized source metadata/digest; preflight/restore; exact structural + financial reconciliation; D-018/D-024 readiness; minimum disposable beta checks; final fresh-context round-trip; disposal within 24 hours; sanitized evidence only.
+
+Any objective mismatch or contract breach remains NO-GO and blocks acceptance.
 
 ### Later P10 work
 
