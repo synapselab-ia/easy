@@ -4,6 +4,22 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-20 — P10-S3-I2-I1 private stable-v1 staging/import compatibility accepted
+
+P10-S3-I2-I1 implemented and synthetically proved the D-030 stable-v1 compatibility path without moving real store data. The exact historical backup-v1 surface is normalized through the already accepted `preflightBackupPayload`, converted to exact integer cents and staged only inside a non-exposed `private` PostgreSQL boundary.
+
+Committed migrations add private staging batches/items/resellers/transactions/classifications plus trusted database/admin functions. Browser/API roles cannot mutate staging tables or execute the staging/promotion/reconciliation entry points. Legacy active-unclassified items are allowed only in staging; complete explicit **current** classification is mandatory before atomic public promotion, and legacy order category history remains null rather than being fabricated.
+
+Synthetic proof covered invalid-reference rollback, promotion-before-classification rejection, incomplete-classification rollback, whole-promotion transaction rollback, exact stable IDs/timestamps, metadata-driven identity-sequence repair and exact structural/reference/financial reconciliation. Successful fixture totals reconciled exactly in cents: gross orders `2500`, payments `525`, signals `750`, net movement `1225`, aggregate positive debt `1975`. Security Advisor remained at 0 lints; Performance Advisor showed only INFO unused-index notices after staging FK indexes were added. Final Auth/public/staging counts all returned to zero.
+
+The first PR #69 D-019 `32403226500` / `96536125014` correctly stopped at TypeScript build narrowing after lint, all 231 Vitest tests and all 17 Playwright tests had already passed. The adapter was tightened fail-closed for a missing normalized `occurredAt`. Corrected substantive D-019 **`32403912177`** / **`96538355033`** then passed on merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b`: **0 lint errors / 82 warnings; 55 files / 231 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+
+P10-S3-I2-I1 is `DONE / ACCEPTED — SYNTHETIC ONLY`. P10-S3-I2-I2 is now the only next action: prove the US$ 0 unattended logical-dump/off-site/freshness-guard/restore path with synthetic data. Real Auth/runtime, real store migration, `main`, canonical URL and production cutover remain unauthorized.
+
+Authoritative execution record: `docs/V2/P10_S3_I2_I1_EXECUTION.md`.
+
+---
+
 ## 2026-08-20 — P10-S3-I2 migration + zero-cost durability contract accepted as D-030
 
 P10-S3-I2 defined the real-data migration/reconciliation contract without moving real store data. Source inspection exposed a deliberate compatibility boundary: stable-v1 items normalize active but unclassified, while the current Supabase public `items` table requires active items to have categories. D-030 therefore forbids direct v1 insertion and selects a non-exposed/private staging path, explicit **current** item classification, then atomic promotion while historical stable-v1 order category snapshots remain null.

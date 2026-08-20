@@ -201,7 +201,28 @@ Contract-definition evidence:
 - current Supabase documentation confirms paid automatic backups, Free-plan `db dump` + off-site recommendation, Free pausing behavior and supported logical dump/restore tooling;
 - no real store data or real operator identity was used.
 
-D-030 accepts the contract only. Authoritative closure D-019 **`32399725148`** / **`96524749660`** passed on exact PR merge ref **`f18f9b6c3d77b1b95284e92487be8819a9a48922`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS. This run validates the complete canonical contract tree before this evidence-line commit; a final tree-equivalent D-019 is required before merge.
+D-030 accepts the contract only. Authoritative closure D-019 **`32399725148`** / **`96524749660`** passed on exact PR merge ref **`f18f9b6c3d77b1b95284e92487be8819a9a48922`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS. This run validates the complete canonical contract tree before its final evidence-line commit; the contract later integrated to `develop` as `6bb0f8d2a332f978b182b0f6e88c890c6d175898`.
+
+## P10-S3-I2-I1 legacy staging/import compatibility — PASS / ACCEPTED SYNTHETICALLY
+
+Database/import proof against dedicated `easy-v2` homologation remained synthetic-only:
+
+- private `legacy_v1_*` staging tables/functions are committed as reproducible migrations, RLS-enabled and denied to `anon`, `authenticated` and `service_role` DML/function execution;
+- exact stable-v1 surface is normalized through the existing `preflightBackupPayload`, with safe positive IDs and exact integer-cent money; missing normalized `occurredAt` fails closed;
+- invalid references, missing/incomplete classification and forced outer transaction failure all rolled back without partial staging/public state;
+- successful promotion preserved item IDs `10/25`, reseller IDs `7/42`, transaction IDs `100/250/900`, timestamps and null legacy category history;
+- exact integer-cent reconciliation passed: gross orders `2500`, payments `525`, signals `750`, net movement `1225`, aggregate positive debt `1975`, plus exact per-reseller balances;
+- identity repair used actual PostgreSQL metadata via `pg_get_serial_sequence` and all generated next IDs were verified above imported maxima;
+- Security Advisor: 0 lints; Performance Advisor: no staging `unindexed_foreign_keys`, INFO-only unused-index notices on empty/tiny data;
+- final homologation state: 0 Auth users, 0 `easy_operators`, 0 public business rows and 0 private staging/classification rows.
+
+Repository validation:
+
+- diagnostic PR #69 D-019 `32403226500` / `96536125014` correctly blocked TS18048 only at build after lint, 231/231 Vitest and 17/17 Playwright had passed;
+- fail-closed TypeScript narrowing fix committed as `f970aceea1589c3ec46f1c906ddd0007547c2f41`;
+- authoritative substantive D-019 `32403912177` / `96538355033` passed on exact merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b`: 0 lint errors / 82 warnings; 55 files / 231 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+
+No unattended backup automation, real Auth operator, Supabase business-runtime switch, real store data, `main` publication, canonical URL switch or production cutover occurred. Exact final tree-equivalent D-019 belongs to PR #69 closure evidence before integration. Detailed record: `docs/V2/P10_S3_I2_I1_EXECUTION.md`.
 
 ## Known non-blocking debt
 

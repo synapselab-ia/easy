@@ -34,7 +34,7 @@ The application already provides:
 - historical GitHub Pages deployment from `main`;
 - a separately deployed V2 Vercel candidate used during P10 rehearsal.
 
-The current **user-facing runtime** remains Dexie/IndexedDB. P10-S3-I1 has now established the Supabase/Postgres schema, RLS/authorization, transactional RPC and typed-client foundation, but those cloud primitives are not yet wired as the application source of truth. Dexie remains a transitional implementation state, not the accepted final production topology.
+The current **user-facing runtime** remains Dexie/IndexedDB. P10-S3-I1 established the Supabase/Postgres schema, RLS/authorization, transactional RPC and typed-client foundation, and P10-S3-I2-I1 proved the private stable-v1 staging/import compatibility path with synthetic data. Neither cloud layer is yet wired as the application source of truth. Dexie remains a transitional implementation state, not the accepted final production topology.
 
 ## 3. V2 objectives
 
@@ -104,7 +104,7 @@ The V2 roadmap is organized into these phases:
 - **P10 — Controlled migration and cutover**
   - P10-S1: local compatibility + synthetic rehearsal — completed;
   - P10-S2: copied-live-data IndexedDB beta contract — accepted historically, execution abandoned before export;
-  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; D-030/I2 migration-durability contract accepted; I2-I1 synthetic staging/import compatibility current.**
+  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; D-030/I2 migration-durability contract accepted; I2-I1 staging/import compatibility accepted; I2-I2 zero-cost unattended backup/recovery proof current.**
 
 Large new features should not outrun the persistence/security/cutover foundation.
 

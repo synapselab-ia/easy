@@ -1,12 +1,12 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** D-029 foundation proven; D-030 migration/zero-cost durability contract accepted; synthetic staging/import implementation next  
+**Status:** D-029 foundation + D-030 staging/import compatibility proven; zero-cost unattended backup/recovery proof next  
 **Integration target:** `develop`  
 **Updated:** 2026-08-20
 
 ## 1. Current implemented runtime
 
-The current user-facing application remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB. P10-S3-I1 adds a Supabase/Postgres foundation in repository/live infrastructure, but existing business hooks/pages have not been switched to it.
+The current user-facing application remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB. P10-S3-I1 adds a Supabase/Postgres foundation in repository/live infrastructure, and P10-S3-I2-I1 adds the private stable-v1 staging/import compatibility boundary, but existing business hooks/pages have not been switched to Supabase.
 
 Current browser database: `ResellerManagerDB`, Dexie **V5** with:
 
@@ -213,9 +213,7 @@ P10-S1-I2 already proved with synthetic data that the stable-v1 envelope can be 
 - migrated items remain unclassified until classified;
 - D-026 correction state remains exportable/restorable.
 
-P10-S3 will reuse those semantics in a deterministic Supabase importer/reconciliation gate.
-
-No real-data import is authorized by D-029 itself.
+P10-S3-I2-I1 now reuses those semantics in a deterministic private Supabase staging/import path and proves it synthetically. No real-data import is authorized by that proof.
 
 ### Stable-v1 private staging under D-030
 
@@ -223,7 +221,9 @@ P10-S3-I2 identified one intentional schema mismatch that must be handled before
 
 The accepted migration architecture stages the normalized v1 snapshot in a non-exposed/private boundary, preserves stable IDs/timestamps and null historical category snapshots there, collects explicit **current** item classifications, then atomically promotes into public categories/items/resellers/transactions. Current classification is not historical backfill: legacy order snapshots remain null.
 
-Identity sequences must then be repaired from actual PostgreSQL metadata, and exact structural/reference/financial reconciliation must pass before promotion is accepted.
+P10-S3-I2-I1 now implements this boundary through committed `private.legacy_v1_*` staging tables/functions. It proves strict v1 surface validation, exact-cent normalization, explicit current classification, atomic promotion/rollback, metadata-driven identity-sequence repair and exact structural/reference/financial reconciliation with synthetic fixtures. The database was cleaned back to 0 Auth/application/staging rows after proof.
+
+Identity sequences are repaired from actual PostgreSQL metadata, and exact structural/reference/financial reconciliation is mandatory before promotion is accepted.
 
 ## 12. P10-S2-I1 status
 
@@ -241,7 +241,7 @@ D-029 now marks P10-S2-I1 **ABANDONED / SUPERSEDED BEFORE EXPORT**. There is no 
 
 ## 13. Supabase development discipline
 
-P10-S3-I1 provisioned the dedicated Easy Supabase project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`; unrelated application databases are not reused.
+P10-S3-I1 provisioned the dedicated Easy Supabase project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`; P10-S3-I2-I1 then applied only committed/reproducible private staging migrations while the project remained free of real store data. Unrelated application databases are not reused.
 
 Before real data:
 
@@ -320,21 +320,22 @@ Known React test warnings, mocked-select DOM warnings, dependency/audit notices,
 - P10-S2 contract: PR #64 final D-019 `32380528003` / `96462340384`; integrated as `4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`.
 - P10-S2-I1 pre-export record: PR #65 final D-019 `32382928429` / `96470305608`; integrated as `e06c659ecdb3aee79e2e451b00eb85d63c8b8612`, tree `4da05cdda530b1e7000d01460201dff1daf65910`.
 - P10-S3-I1 synthetic foundation: diagnostic D-019 `32388839983` / `96489804473` blocked TS2559; corrected authoritative D-019 `32394126648` / `96506890991` passed on merge ref `c12a535b665eb25626a1b3bb0aa15cd034808e00` with 0 errors / 82 lint warnings, 54 files / 225 Vitest PASS, 17/17 Playwright PASS and build PASS.
+- P10-S3-I2 contract: authoritative D-019 `32399725148` / `96524749660` passed on merge ref `f18f9b6c3d77b1b95284e92487be8819a9a48922`; contract integrated to `develop` as `6bb0f8d2a332f978b182b0f6e88c890c6d175898`.
+- P10-S3-I2-I1 staging/import: diagnostic D-019 `32403226500` / `96536125014` blocked TS18048 only at build after lint/Vitest/E2E passed; corrected substantive D-019 `32403912177` / `96538355033` passed on merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b` with 0 errors / 82 warnings, 55 files / 231 Vitest PASS, 17/17 Playwright PASS and build PASS.
 
-## 17. Boundary entering P10-S3-I2-I1
+## 17. Boundary entering P10-S3-I2-I2
 
-P10-S3-I2/D-030 is an accepted **contract only**. It defines source freeze/digest, private staging, current classification without fabricated history, atomic promotion, stable ID/sequence handling, exact cent reconciliation, private Auth onboarding evidence, candidate identity, rollback and a conditional zero-cost durability path.
+P10-S3-I2-I1 is accepted as the **synthetic private stable-v1 staging/import compatibility proof**. It does not authorize using that path with the real store dataset.
 
-The next slice is synthetic-only legacy staging/import compatibility. It may alter the current empty `easy-v2` homologation project through committed/reproducible migrations, but may not introduce real store data.
+P10-S3-I2-I2 is the only next permitted slice. It is synthetic-only and may implement/prove the zero-cost unattended backup/recovery layer required by D-030: trusted-PC scheduled logical dump, protected credential boundary, objective off-site/synchronized-copy verification, at least seven retained successful generations, exact-24h server-visible backup freshness enforcement and clean synthetic restore/reconciliation.
 
 It may not:
 
-1. implement or rely on a real store export;
+1. export/import the real store dataset;
 2. provision the real production operator;
 3. switch current business hooks/pages from Dexie to Supabase;
-4. implement the trusted-PC unattended backup job yet;
-5. modify/publish `main`;
-6. switch the canonical URL or perform production cutover;
-7. weaken D-012/D-013/D-025/D-026/D-029/D-030;
-8. fabricate category history for legacy orders;
-9. place real data or privileged credentials in GitHub/CI/chat/docs/Vercel client scope.
+4. modify/publish `main`;
+5. switch the canonical URL or perform production cutover;
+6. weaken D-012/D-013/D-025/D-026/D-029/D-030;
+7. place real data or privileged credentials in GitHub/CI/chat/docs/Vercel client scope;
+8. begin P10-S3-I2-I3 runtime/Auth work or P10-S3-I2-I4 real migration early.
