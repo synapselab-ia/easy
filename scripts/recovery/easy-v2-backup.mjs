@@ -64,7 +64,9 @@ export function buildRetentionPlan(names, keepDays = DEFAULT_KEEP_DAYS) {
 
 export function joinRemote(remoteDir, filename) {
   const trimmed = String(remoteDir ?? '').replace(/\/+$/, '');
-  if (!trimmed.includes(':')) fail('EASY_BACKUP_RCLONE_REMOTE must be an rclone remote path such as onedrive:EasyV2/backups.');
+  if (/^[A-Za-z]:[\\/]/.test(trimmed) || !/^[^/\\:]+:/.test(trimmed)) {
+    fail('EASY_BACKUP_RCLONE_REMOTE must be an rclone remote path such as onedrive:EasyV2/backups.');
+  }
   return `${trimmed}/${filename}`;
 }
 
