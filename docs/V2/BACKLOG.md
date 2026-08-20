@@ -142,7 +142,7 @@ Accepted final direction:
 - Dexie becomes transitional migration substrate/optional cache rather than source of truth;
 - first cloud migration does not include offline multi-master writes;
 - D-013/D-026 correction/reversal remains server/database-transaction atomic;
-- managed database backups become primary durability after cutover;
+- paid production uses managed database backup as primary durability; D-030/US$ 0 instead requires proven unattended off-site logical dumps + exact-24h freshness enforcement + restore drills before cutover;
 - logical/manual Easy backup remains independent secondary recovery/portability;
 - D-024 remains active on current browser-local stable until cutover;
 - no real store data may move until the synthetic Supabase foundation passes.
