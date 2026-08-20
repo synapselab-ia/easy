@@ -1,0 +1,390 @@
+name: P10-S3-I2 contract canonical closure
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop]
+    paths:
+      - .github/workflows/p10-s3-i2-contract-close.yml
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Align canonical documents
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def load(path):
+              return Path(path).read_text()
+
+          def save(path, text):
+              Path(path).write_text(text)
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 anchor, got {count}: {old[:120]!r}')
+              return text.replace(old, new, 1)
+
+          def replace_from(text, marker, new_tail, label):
+              i = text.find(marker)
+              if i < 0:
+                  raise SystemExit(f'{label}: marker not found: {marker!r}')
+              if text.find(marker, i + 1) >= 0:
+                  raise SystemExit(f'{label}: marker not unique: {marker!r}')
+              return text[:i] + new_tail
+
+          def replace_between(text, start, end, replacement, label):
+              i = text.find(start)
+              j = text.find(end, i + len(start)) if i >= 0 else -1
+              if i < 0 or j < 0:
+                  raise SystemExit(f'{label}: range markers missing')
+              return text[:i] + replacement + text[j:]
+
+          # STATUS
+          p = 'docs/V2/STATUS.md'
+          s = load(p)
+          s = replace_once(
+              s,
+              '- **P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract: `NOT_STARTED` — CURRENT.**',
+              '- **P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract: `DONE / ACCEPTED CONTRACT` — D-030.**\n- **P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility with synthetic data only: `NOT_STARTED` — CURRENT.**',
+              'STATUS phase',
+          )
+          s = replace_once(
+              s,
+              '- **`docs/V2/P10_S3_I1_EXECUTION.md` — accepted synthetic Supabase foundation execution evidence.**',
+              '- **`docs/V2/P10_S3_I1_EXECUTION.md` — accepted synthetic Supabase foundation execution evidence.**\n- **`docs/V2/P10_S3_I2_MIGRATION_GATE.md` — accepted D-030 real-data migration/reconciliation + zero-cost durability contract.**',
+              'STATUS evidence',
+          )
+          s = replace_once(
+              s,
+              'P10-S3-I1 now provides the accepted dedicated Supabase schema/security/client **foundation**. The current user-facing business hooks/pages still use Dexie/IndexedDB; no real operator, real store data or production cutover has been introduced.',
+              'P10-S3-I1 now provides the accepted dedicated Supabase schema/security/client **foundation**. D-030/P10-S3-I2 now defines the real migration/reconciliation and zero-cost durability contract, including private stable-v1 staging and unattended off-site logical backup prerequisites. The current user-facing business hooks/pages still use Dexie/IndexedDB; no real operator, real store data or production cutover has been introduced.',
+              'STATUS baseline',
+          )
+          status_tail = '''## P10 boundary entering P10-S3-I2-I1
+
+1. `main` remains untouched at the historical stable baseline;
+2. no live-store data has moved into V2/Supabase;
+3. no real Supabase Auth user/operator exists yet;
+4. the dedicated `easy-v2` project remains the single mutable cloud homologation project while it contains no real store data;
+5. P10-S3-I1 schema/RLS/RPC foundation remains accepted and the live Security Advisor is 0 lints;
+6. the live project remained empty during contract definition: 0 operator/category/item/reseller/transaction rows and 0 Auth users;
+7. D-030 accepts a zero-cost production-durability route only conditionally: Supabase Free is insufficient by itself and must be paired with proven unattended off-site logical dumps, >=7 retained successful generations, server-visible exact-24h freshness enforcement and restore proof;
+8. Free-plan pause is accepted only as an availability risk: connectivity/service loss blocks writes and never authorizes local offline financial writes;
+9. stable-v1 active items are legitimately unclassified, while the current public Supabase schema requires active items to have categories; direct v1→`public.items` insertion is therefore NO-GO;
+10. the accepted compatibility path is a private/non-exposed staging boundary, exact v1 normalization, explicit current-item classification, then atomic canonical promotion without backfilling historical transaction categories;
+11. P10-S3-I2 execution is decomposed; the current action is synthetic staging/import compatibility only;
+12. no backup automation, real Auth onboarding, Supabase-backed business-runtime cutover, real-data export/import, `main` publication or canonical URL switch is authorized by I2-I1.
+
+## NEXT_ACTION
+
+**Execute only P10-S3-I2-I1 — implement and prove the private stable-v1 staging/import compatibility path with synthetic data only under D-030 / `docs/V2/P10_S3_I2_MIGRATION_GATE.md`. Work directly against the current `easy-v2` homologation project only through reproducible migrations while it remains empty of real store data. Add a non-exposed staging/import boundary that accepts the already-approved stable-v1 normalization, preserves stable item/reseller/transaction IDs and timestamps, permits legacy active-unclassified items only in staging, requires explicit synthetic current-item classification before promotion, atomically promotes categories/items/resellers/transactions into the public schema without fabricating historical category snapshots, repairs identity sequences from database metadata, and proves exact structural/reference/financial reconciliation plus full synthetic cleanup. Regenerate types as needed, run Supabase security/performance advisors and repository D-019. Do not implement the unattended backup automation, real Auth operator, Supabase-backed business-runtime switch, real store export/import, `main` publication, canonical URL switch or production cutover in this slice.**'''
+          s = replace_from(s, '## P10 boundary entering P10-S3-I2\n', status_tail, 'STATUS tail')
+          save(p, s)
+
+          # PROJECT_SPEC
+          p = 'docs/V2/PROJECT_SPEC.md'
+          s = load(p)
+          s = replace_once(
+              s,
+              '  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; I2 migration/durability contract current.**',
+              '  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; D-030/I2 migration-durability contract accepted; I2-I1 synthetic staging/import compatibility current.**',
+              'SPEC sequence',
+          )
+          s = replace_once(
+              s,
+              'Current paid-infrastructure budget is **US$ 0**. This does not silently weaken D-029: P10-S3-I2 must either demonstrate a zero-cost production/recovery arrangement that actually satisfies the accepted durability objective or keep cloud production cutover blocked.',
+              'Current paid-infrastructure budget is **US$ 0**. D-030 resolves the architecture question conditionally: Supabase Free alone is not sufficient, but a Free canonical database may become production-eligible only after unattended off-site logical dumps, objective synchronized-copy verification, at least seven retained successful daily generations, exact-24h server-visible freshness enforcement and a restore drill are implemented/proven. Manual `easy-backup` remains secondary portability/contingency. Until those conditions pass, cloud production cutover remains blocked.',
+              'SPEC durability',
+          )
+          save(p, s)
+
+          # ARCHITECTURE
+          p = 'docs/V2/ARCHITECTURE.md'
+          s = load(p)
+          s = replace_once(
+              s,
+              '**Status:** D-029 accepted; P10-S3-I1 Supabase foundation implemented/proven; runtime cutover not started  ',
+              '**Status:** D-029 foundation proven; D-030 migration/zero-cost durability contract accepted; synthetic staging/import implementation next  ',
+              'ARCH status',
+          )
+          old_recovery = '''Production may not claim that human backup dependency is removed while using a cloud tier that lacks the required managed backup/availability guarantee. The current paid-infrastructure budget is US$ 0, so P10-S3-I2 must either prove a zero-cost recovery posture that genuinely satisfies D-029 or leave production cutover blocked; paid Supabase features may not be assumed.'''
+          new_recovery = '''D-030 now defines the accepted zero-cost alternative without pretending the Free tier itself has managed backups. Supabase Free may become first-production eligible only when it is paired with an unattended trusted-PC `db dump` path to an objectively verified off-site/synchronized recovery boundary, at least seven retained successful daily generations, server-visible exact-24h backup freshness that fails all business writes closed when stale, and successful synthetic + real pre-cutover restore drills. Manual `easy-backup` remains independent secondary portability/contingency. If the off-site verification or restore path cannot be proven, production cutover remains blocked. Free-plan pausing is accepted only as an availability limitation; it never authorizes offline local writes.'''
+          s = replace_once(s, old_recovery, new_recovery, 'ARCH recovery')
+          staging_insert = '''\n### Stable-v1 private staging under D-030\n\nP10-S3-I2 identified one intentional schema mismatch that must be handled before real data: stable-v1 items normalize to active while remaining unclassified, but the current public cloud table requires active items to have a category. Direct insertion is therefore forbidden.\n\nThe accepted migration architecture stages the normalized v1 snapshot in a non-exposed/private boundary, preserves stable IDs/timestamps and null historical category snapshots there, collects explicit **current** item classifications, then atomically promotes into public categories/items/resellers/transactions. Current classification is not historical backfill: legacy order snapshots remain null.\n\nIdentity sequences must then be repaired from actual PostgreSQL metadata, and exact structural/reference/financial reconciliation must pass before promotion is accepted.\n'''
+          anchor = 'P10-S3 will reuse those semantics in a deterministic Supabase importer/reconciliation gate.\n\nNo real-data import is authorized by D-029 itself.\n'
+          s = replace_once(s, anchor, anchor + staging_insert, 'ARCH staging')
+          arch_tail = '''## 17. Boundary entering P10-S3-I2-I1
+
+P10-S3-I2/D-030 is an accepted **contract only**. It defines source freeze/digest, private staging, current classification without fabricated history, atomic promotion, stable ID/sequence handling, exact cent reconciliation, private Auth onboarding evidence, candidate identity, rollback and a conditional zero-cost durability path.
+
+The next slice is synthetic-only legacy staging/import compatibility. It may alter the current empty `easy-v2` homologation project through committed/reproducible migrations, but may not introduce real store data.
+
+It may not:
+
+1. implement or rely on a real store export;
+2. provision the real production operator;
+3. switch current business hooks/pages from Dexie to Supabase;
+4. implement the trusted-PC unattended backup job yet;
+5. modify/publish `main`;
+6. switch the canonical URL or perform production cutover;
+7. weaken D-012/D-013/D-025/D-026/D-029/D-030;
+8. fabricate category history for legacy orders;
+9. place real data or privileged credentials in GitHub/CI/chat/docs/Vercel client scope.
+'''
+          s = replace_from(s, '## 17. Boundary entering P10-S3-I2\n', arch_tail, 'ARCH tail')
+          save(p, s)
+
+          # BACKLOG
+          p = 'docs/V2/BACKLOG.md'
+          s = load(p)
+          new_i2 = '''#### P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract
+
+**Status:** `DONE / ACCEPTED CONTRACT` — D-030.
+
+Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
+
+D-030 defines the exact source freeze/digest, private stable-v1 staging, deterministic normalization, current-item classification, atomic promotion, ID/sequence repair, structural/reference/financial reconciliation, private Auth onboarding evidence, candidate identity, rollback and zero-cost durability boundary. Supabase Free alone remains insufficient; production eligibility requires proven unattended off-site logical dumps, >=7 successful generations, exact-24h server-visible freshness enforcement and restore proof.
+
+No real store data moved in contract definition.
+
+##### P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility
+
+**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / SYNTHETIC ONLY**.
+
+Required work:
+
+1. add a non-exposed/private staging/import boundary through reproducible migration(s);
+2. accept only the already-approved stable-v1 normalization;
+3. preserve stable item/reseller/transaction IDs and timestamps;
+4. permit legacy active-unclassified items only in staging;
+5. require explicit synthetic current-item classification before public promotion;
+6. preserve null historical category snapshots for stable-v1 orders;
+7. atomically promote categories/items/resellers/transactions;
+8. repair identity sequences using actual PostgreSQL metadata;
+9. prove exact structural/reference/financial reconciliation with synthetic stable-v1 fixtures;
+10. clean all synthetic rows/staging state;
+11. regenerate types as needed and run Supabase advisors + D-019.
+
+No backup automation, real Auth, runtime switch or real data in this slice.
+
+##### P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof
+
+**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I1 PASSES`.
+
+Synthetic-only future slice: trusted-PC scheduled `db dump`, protected credential boundary, objective off-site/sync verification, >=7 generations, server-visible exact-24h write guard and synthetic clean restore proof.
+
+##### P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate
+
+**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I2 PASSES`.
+
+Synthetic-only future slice: one-operator Auth/session UI, cloud-authoritative CRUD/financial RPC reads/writes, fail-closed connectivity, full app-level parity and exact Vercel candidate identity.
+
+##### P10-S3-I2-I4 — Real migration/reconciliation execution
+
+**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I1/I2-I2/I2-I3 PASS`.
+
+Future maintenance-window execution only: real source freeze/export digest, private real Auth onboarding, staging/promotion, exact parity and first real automated backup + local restore drill. Canonical URL switch still requires an explicit later gate.
+
+'''
+          s = replace_between(s, '#### P10-S3-I2 — Real-data migration/reconciliation gate\n', '### Later P10 work\n', new_i2, 'BACKLOG I2')
+          save(p, s)
+
+          # DECISIONS
+          p = 'docs/V2/DECISIONS.md'
+          s = load(p)
+          d030 = '''## D-030 — Zero-cost migration/durability uses private stable-v1 staging and unattended off-site logical backups; Free alone is insufficient
+**Status:** ACCEPTED  
+**Date:** 2026-08-20
+
+P10-S3-I2 accepts the contract in `docs/V2/P10_S3_I2_MIGRATION_GATE.md` without moving real data.
+
+Accepted rules:
+
+1. stable-v1 source identity is commit/database/backup-version + exportedAt + filename + exact byte size + SHA-256, with raw payload confined to the operator/recovery boundary;
+2. real migration occurs only inside an explicit stable-write freeze/maintenance window and must either proceed directly toward the later cutover gate or roll back and resume stable;
+3. stable-v1 active unclassified items may not be forced directly into the current public `items` constraint and may not receive fabricated history;
+4. normalized v1 data first enters a non-exposed/private staging boundary;
+5. all active legacy items require explicit **current** category classification before canonical promotion, while historical stable-v1 order category snapshots stay null;
+6. item/reseller/transaction IDs and accepted source timestamps are preserved; identity sequences are repaired from PostgreSQL metadata;
+7. promotion is atomic and exact structural/reference/financial reconciliation has zero-cent tolerance;
+8. real Auth onboarding uses normal Supabase Auth/admin tooling and `easy_operators`; real email/credentials/full UUID stay out of Git/docs/chat evidence;
+9. Supabase Free by itself is not accepted as backed-up production;
+10. with paid infrastructure fixed at US$ 0, Free may become production-eligible only when paired with unattended trusted-PC logical dumps to an objectively verified off-site/synchronized boundary, at least seven retained successful daily generations, exact-24h server-visible write blocking when backup health is stale, and successful restore drills;
+11. Free-plan pausing is accepted as an availability limitation only; network/service loss blocks writes and does not create an offline-authoritative Dexie mode;
+12. logical/manual `easy-backup` remains secondary portability/contingency;
+13. current `easy-v2` may continue as the directly modified homologation cloud project only while it contains no real store data; after real data enters, experimental direct production changes without prior local/synthetic validation are prohibited;
+14. the contract authorizes only synthetic prerequisite implementation next, not real-data migration or production cutover.
+
+Provider guidance supporting the zero-cost route explicitly recommends `supabase db dump` plus off-site backups for Free projects; the project still requires its own unattended/off-site verification and restore evidence before production.
+
+'''
+          marker = '---\n\n# Open decisions\n'
+          if marker not in s:
+              raise SystemExit('DECISIONS insertion marker missing')
+          s = s.replace(marker, d030 + '---\n\n# Open decisions\n', 1)
+          s = replace_once(
+              s,
+              '- with current paid-infrastructure budget fixed at US$ 0, whether a zero-cost production/recovery posture can satisfy D-029; otherwise production cutover remains blocked;',
+              '- whether the trusted operator environment can objectively implement/prove D-030 off-site synchronization and exact-24h unattended recovery health; if it cannot, production cutover remains blocked;',
+              'DECISIONS open',
+          )
+          save(p, s)
+
+          # QA LEDGER
+          p = 'docs/V2/QA_LEDGER.md'
+          s = load(p)
+          qa = '''## P10-S3-I2 migration/durability contract — EVIDENCE READY / D-019 REQUIRED BEFORE INTEGRATION
+
+Contract-definition evidence:
+
+- `develop` source baseline: `5e2decd337b7912f118801cd75cbb27e4e03cfc2`;
+- stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
+- stable source inspection confirms backup version 1 with `items`, `resellers`, `transactions` and Dexie V1 business shapes;
+- current V2 normalization inspection confirms legacy missing lifecycle -> active, missing transaction `occurredAt` -> `createdAt`, and no fabricated category history;
+- live `easy-v2` recheck: `ACTIVE_HEALTHY`, 0 Auth users and 0 rows in `easy_operators`, `categories`, `items`, `resellers`, `transactions`;
+- live item constraint recheck confirms `items_active_requires_category`, proving direct active-unclassified v1 item insertion is incompatible and must use the D-030 private staging/classification path;
+- live Supabase Security Advisor: 0 lints;
+- current Supabase documentation confirms paid automatic backups, Free-plan `db dump` + off-site recommendation, Free pausing behavior and supported logical dump/restore tooling;
+- no real store data or real operator identity was used.
+
+D-030 accepts the contract only. Repository D-019 on the contract/canonical closure tree is mandatory before integration; final run/job and exact merge-ref identity are recorded in PR closure evidence.
+
+'''
+          marker = '## Known non-blocking debt\n'
+          if marker not in s:
+              raise SystemExit('QA marker missing')
+          s = s.replace(marker, qa + marker, 1)
+          save(p, s)
+
+          # CHANGELOG
+          p = 'docs/V2/CHANGELOG.md'
+          s = load(p)
+          entry = '''## 2026-08-20 — P10-S3-I2 migration + zero-cost durability contract accepted as D-030
+
+P10-S3-I2 defined the real-data migration/reconciliation contract without moving real store data. Source inspection exposed a deliberate compatibility boundary: stable-v1 items normalize active but unclassified, while the current Supabase public `items` table requires active items to have categories. D-030 therefore forbids direct v1 insertion and selects a non-exposed/private staging path, explicit **current** item classification, then atomic promotion while historical stable-v1 order category snapshots remain null.
+
+The contract preserves stable item/reseller/transaction IDs, requires identity-sequence repair from PostgreSQL metadata and keeps structural/reference/financial reconciliation exact to R$ 0,00 difference.
+
+With paid infrastructure fixed at US$ 0, D-030 does not pretend Supabase Free has managed automatic backups. It conditionally accepts a future Free production posture only after provider-recommended logical `db dump` is made unattended on the trusted store PC, placed in an objectively verified off-site/synchronized recovery boundary, retains at least seven successful daily generations, drives an exact-24h server-visible fail-closed write guard and passes restore drills. Free-plan pausing remains an availability risk; it never enables offline-authoritative writes.
+
+Execution is decomposed so the next action is synthetic-only private staging/import compatibility. Backup automation, real Auth/runtime, real migration and canonical publication remain later explicit slices.
+
+Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
+
+---
+
+'''
+          header = '# Easy V2 — Changelog\n\nThis changelog records material V2 project-state changes rather than every code-line edit. Detailed implementation history remains available in Git/PR history, `STATUS.md`, `QA_LEDGER.md`, `DECISIONS.md` and phase-specific documents.\n\n---\n\n'
+          if not s.startswith(header):
+              raise SystemExit('CHANGELOG header mismatch')
+          s = header + entry + s[len(header):]
+          save(p, s)
+
+          # P10 SUPABASE ARCHITECTURE GATE
+          p = 'docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md'
+          s = load(p)
+          s = replace_once(
+              s,
+              '**Status:** `ACCEPTED DESIGN / P10-S3-I1 FOUNDATION PROVEN`  ',
+              '**Status:** `ACCEPTED DESIGN / P10-S3-I1 FOUNDATION PROVEN / D-030 I2 CONTRACT ACCEPTED`  ',
+              'SUPABASE gate status',
+          )
+          gate_tail = '''## 14. P10-S3-I1 foundation + D-030 P10-S3-I2 contract
+
+P10-S3-I1 is accepted. Execution evidence is canonical in `docs/V2/P10_S3_I1_EXECUTION.md`.
+
+P10-S3-I2 contract definition is also accepted as D-030. Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
+
+D-030 resolves the next boundary without moving real data:
+
+1. stable-v1 source freeze/export identity is exact and digest-based;
+2. direct stable-v1 active-unclassified item insertion into current `public.items` is forbidden;
+3. normalized v1 data must first use private/non-exposed staging;
+4. current legacy items are explicitly classified before atomic public promotion while historical order category snapshots remain null;
+5. stable item/reseller/transaction IDs are preserved and identity sequences repaired;
+6. structural/reference/financial reconciliation has exact cent parity;
+7. real Auth evidence remains private/sanitized;
+8. Supabase Free alone is still insufficient for production durability;
+9. the accepted zero-cost alternative requires unattended off-site logical dumps, objective sync/off-site verification, >=7 retained successful generations, exact-24h server-visible write blocking on stale backup health and successful restore drills;
+10. Free pause/network failure blocks writes and never activates offline-authoritative Dexie writes.
+
+The next bounded action is **P10-S3-I2-I1 — implement/prove the private stable-v1 staging/import compatibility path with synthetic data only**.
+
+No backup automation, real Auth user, cloud business-runtime cutover, real-data export/import, stable publication, canonical URL switch or production cutover is authorized by that next slice.
+'''
+          s = replace_from(s, '## 14. P10-S3-I1 accepted foundation / next bounded gate\n', gate_tail, 'SUPABASE gate tail')
+          save(p, s)
+
+          # P10 CUTOVER PLAN
+          p = 'docs/V2/P10_CUTOVER_PLAN.md'
+          s = load(p)
+          s = replace_once(
+              s,
+              '**Status:** `P10-S1 DONE; P10-S2 CONTRACT DONE; P10-S2-I1 ABANDONED BEFORE EXPORT; P10-S3 CURRENT`  ',
+              '**Status:** `P10-S1 DONE; P10-S2 HISTORICAL; P10-S3-I1 FOUNDATION DONE; D-030/I2 CONTRACT DONE; I2-I1 CURRENT`  ',
+              'CUTOVER status',
+          )
+          replacement = '''## 6. P10-S3-I1 — Supabase foundation
+
+**Status:** `DONE / ACCEPTED`.
+
+The dedicated `easy-v2` project, reproducible migrations, RLS/allow-list authorization, controlled transactional financial RPC boundary, typed publishable-key-only client foundation, synthetic proof, Security Advisor 0 lints and zero-row cleanup are accepted in `docs/V2/P10_S3_I1_EXECUTION.md`.
+
+No real data or real Auth operator was introduced.
+
+## 7. P10-S3-I2 — migration/reconciliation + zero-cost durability contract
+
+**Status:** `DONE / ACCEPTED CONTRACT` — D-030.
+
+Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
+
+The contract defines:
+
+- one point-in-time stable-v1 source freeze/digest;
+- private stable-v1 staging because active legacy unclassified items cannot enter the current public item constraint directly;
+- explicit current-item classification with no historical category backfill;
+- atomic public promotion with stable IDs + sequence repair;
+- exact structural/reference/financial reconciliation;
+- private real Auth onboarding evidence;
+- rollback/abort behavior;
+- exact Git/Supabase/Vercel candidate identity;
+- a conditional US$ 0 durability route using unattended off-site logical dumps rather than pretending Free has managed backups.
+
+Execution is decomposed into I2-I1 staging/import compatibility, I2-I2 unattended backup/recovery proof, I2-I3 Supabase-backed Auth/runtime candidate and I2-I4 real migration execution. Only I2-I1 is current and it is synthetic-only.
+
+'''
+          s = replace_between(s, '## 6. P10-S3-I1 — Supabase foundation\n', '## 8. Backup/recovery transition\n', replacement, 'CUTOVER sections')
+          old_next = '''## 13. Current next action
+
+Execute only **P10-S3-I1** under D-029 and `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
+
+No real store data, no `main` publication and no production cutover.'''
+          new_next = '''## 13. Current next action
+
+Execute only **P10-S3-I2-I1 — private stable-v1 staging/import compatibility with synthetic data** under D-030 and `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
+
+The current empty `easy-v2` homologation project may be altered only through reproducible migrations. No unattended backup implementation, real Auth operator, Supabase-backed business-runtime switch, real store data, `main` publication, canonical URL switch or production cutover.'''
+          s = replace_once(s, old_next, new_next, 'CUTOVER next')
+          save(p, s)
+
+          PY
+
+          rm -f .github/workflows/p10-s3-i2-contract-close.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/V2/STATUS.md docs/V2/PROJECT_SPEC.md docs/V2/ARCHITECTURE.md docs/V2/BACKLOG.md docs/V2/DECISIONS.md docs/V2/QA_LEDGER.md docs/V2/CHANGELOG.md docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md docs/V2/P10_CUTOVER_PLAN.md .github/workflows/p10-s3-i2-contract-close.yml
+          git commit -m "docs(v2): accept P10-S3-I2 contract"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
