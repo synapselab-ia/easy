@@ -163,7 +163,8 @@ function assertCanonicalV1Normalization(normalized: NormalizedBackupData) {
                 `data.transactions[${index}]: histórico v1 não pode carregar snapshot de categoria`,
             ]);
         }
-        if (transaction.occurredAt.getTime() !== transaction.createdAt.getTime()) {
+        const occurredAt = transaction.occurredAt;
+        if (!occurredAt || occurredAt.getTime() !== transaction.createdAt.getTime()) {
             throw new BackupValidationError([
                 `data.transactions[${index}].occurredAt: normalização v1 deve preservar exatamente createdAt`,
             ]);
