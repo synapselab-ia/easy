@@ -1,49 +1,104 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through completed P10-S1 non-production rehearsal  
+**Status:** D-029 accepted architecture direction; Supabase implementation not started  
 **Integration target:** `develop`  
-**Date:** 2026-08-19
+**Updated:** 2026-08-20
 
-Easy remains a static browser-only React/TypeScript/Vite SPA using TanStack Query and local-first Dexie/IndexedDB. D-016 keeps the product single-user/local-first; there is no backend, authentication, remote database or live synchronization layer.
+## 1. Current implemented runtime
 
-## Persistence baseline
+The code currently integrated before D-029 remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB.
 
-Database: `ResellerManagerDB`, Dexie **V5** with `categories`, `items`, `resellers`, `transactions`.
+Current browser database: `ResellerManagerDB`, Dexie **V5** with:
 
-Migration path remains V1→V2 reseller lifecycle, V2→V3 item lifecycle, V3→V4 `occurredAt`, V4→V5 additive category substrate. V4→V5 performs no category backfill. Recovery-health state remains separate local control metadata (`easy.recoveryHealth.v1`) and is not part of Dexie/backup business data.
+- `categories`;
+- `items`;
+- `resellers`;
+- `transactions`.
 
-P9 and P10-S1 introduced no additional schema beyond V5 and no change to the logical backup-envelope version.
+Migration path remains V1→V2 reseller lifecycle, V2→V3 item lifecycle, V3→V4 `occurredAt`, V4→V5 additive category substrate. V4→V5 performs no category backfill.
 
-## Category lifecycle and reporting
+Recovery-health state remains separate local control metadata (`easy.recoveryHealth.v1`) and is not part of Dexie/backup business data.
 
-D-025 is fully implemented:
+Canonical logical interchange remains `easy-backup` version 2 / schema5. The current local restore path atomically replaces `categories + items + resellers + transactions` under D-018.
+
+This section describes **what is implemented now**, not the accepted final production persistence target.
+
+## 2. Accepted final target — D-029
+
+D-029 reopens/supersedes D-016 for final production persistence.
+
+Target topology:
+
+```text
+User browser
+  React + TypeScript + Vite
+         |
+         | supabase-js / HTTPS
+         v
+Vercel-hosted application
+         |
+         v
+Supabase
+  Auth
+  Postgres  <-- canonical source of truth
+  RLS
+  SQL constraints / indexes
+  transactional functions where atomicity is required
+  managed database backup
+         |
+         +--> logical/manual Easy export remains independent contingency
+
+Dexie / IndexedDB
+  transition/import substrate and optional cache
+  NOT final canonical production persistence
+```
+
+The transition does not require a framework rewrite. React/Vite remains accepted unless later evidence proves otherwise.
+
+## 3. Why D-016 changed
+
+D-016 originally kept the system local-first/single-user because P4/P8 had not proven a backend/cloud trigger.
+
+That decision was valid at the time.
+
+On 2026-08-20 a new explicit final-production requirement was accepted: routine durability must no longer depend primarily on an operator remembering to create/synchronize browser-local backups, while the application should retain an independent manual/logical backup option for defense in depth.
+
+That is a direct persistence/durability trigger. D-029 therefore changes the final topology before any actual store backup is moved into the V2 beta.
+
+## 4. Category lifecycle and reporting invariants
+
+D-025 remains authoritative through the cloud transition:
 
 - stable category identity and reversible lifecycle;
 - active-category item assignment;
 - immutable new-order `categoryId + categoryName` snapshots;
 - lossless legacy unclassified rows;
-- read-only effective-order category reporting at `/category-report` using `occurredAt` and transaction-time category identity.
+- read-only effective-order category reporting using `occurredAt` and transaction-time category identity;
+- payments/signals/balance/FIFO debt are not allocated to categories.
 
-Reporting never allocates payments/signals/balance/FIFO debt to categories.
+Postgres must preserve transaction-time snapshots. Reports must not join current category/item names in a way that rewrites historical meaning.
 
-## D-026 correction architecture — implemented/integrated
+## 5. Correction architecture — D-012/D-013/D-026
 
-P2 / D-012 / D-013 provide the audit topology: the original row is not destructively rewritten, correction requires a reason, and replacement creation plus original reversal/linkage occur atomically.
+The original transaction row remains immutable. A correction requires a reason and produces a linked replacement plus reversal of the original.
 
-P9-S4-I1 permits replacement business state to define reseller, target type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value.
+Replacement business state may change reseller, target type, `occurredAt`, observation and applicable order item/quantity/unit price or payment/signal value.
 
-Target-shape validity, D-025 snapshot preservation/recapture, P1/D-011 active-reference rules and D-024 recovery freshness enforcement remain mandatory.
+D-025 snapshot behavior remains mandatory:
 
-P10-S1-I1 aligned recovery validation with that runtime model:
+- order→order with the same item preserves the original category snapshot;
+- order→order selecting another valid item captures that target item's current valid snapshot;
+- type changes use the target type's valid shape.
 
-- replacement type may differ from the original;
-- replacement `occurredAt` may differ from the original;
-- order→order correction keeping the same `itemId` **must preserve** the original historical category snapshot;
-- order→order correction selecting a different valid item may carry that replacement item's valid category snapshot;
-- order↔payment/signal type changes carry the target type's own valid shape;
-- each row remains independently reference-valid.
+### Cloud atomicity requirement
 
-## D-014 occurrence-date architecture
+The current Dexie implementation can perform correction/reversal atomically inside one IndexedDB transaction.
+
+The Supabase migration must preserve this guarantee. The browser may **not** implement a correction as two independent network mutations that could partially succeed.
+
+P10-S3 must provide a single PostgreSQL transaction boundary, normally through a database function/RPC or equivalent server-side transactional operation. Prefer normal invoker/RLS-compatible semantics. `SECURITY DEFINER` is not accepted merely as a shortcut around authorization problems.
+
+## 6. D-014 occurrence dates
 
 D-014 remains unchanged:
 
@@ -51,36 +106,83 @@ D-014 remains unchanged:
 - `createdAt` = record-registration time;
 - `reversal.reversedAt` = audit/reversal time.
 
-The normal new-movement workflow initializes `Data da ocorrência` from the browser-local current date, renders it in the primary entry block, permits editing before save, converts it to `occurredAt`, and explains that registration time is saved automatically.
+Cloud schema/types must preserve those separate semantics.
 
-A D-026 replacement may carry a different `occurredAt` from the original. P10-S1-I1 permits that supported state through backup self-preflight/export while registration chronology remains separately validated through `createdAt`.
+A D-026 replacement may carry a different `occurredAt` from the original while registration chronology remains independently auditable.
 
-## Recovery/interchange invariants
+## 7. PostgreSQL integrity target
 
-D-017 remains logical `easy-backup` v2 / schema5; D-018 atomically restores `categories + items + resellers + transactions`; D-024 remains synchronized recovery-copy folder + exact 24-hour freshness guard.
+Before any real store import, the Supabase schema must move critical integrity into PostgreSQL where practical.
 
-D-024 recovery metadata is origin-local UI/control state. A fresh V2 browser origin may restore a backup while recovery state is absent, but normal writes remain blocked until synchronized-folder setup is verified and a fresh validated backup export establishes allowed recovery health.
+Minimum target:
 
-### Correction-pair validation after P10-S1-I1
+- primary keys for categories/items/resellers/transactions;
+- foreign keys for current entity references and audit links where compatible with preserved historical snapshots;
+- check/enum constraints for transaction type and valid target shapes;
+- positive/non-negative numeric constraints matching current domain semantics;
+- required timestamps and audit-link constraints;
+- indexes for reseller history, `occurredAt`, category reporting, lifecycle filters and correction/reversal relationships;
+- migration/import support for preserving existing IDs;
+- deterministic sequence/identity reset after imported IDs;
+- historical names/category snapshots stored directly on transaction records;
+- server-side transactional correction/reversal.
 
-`backupService.validateReferences()` validates correction pairs by audit integrity rather than obsolete business-field equality:
+Database constraints complement domain validation; they do not authorize changing accepted business semantics.
 
-- original/replacement IDs must exist;
-- original reversal and replacement correction links must be bidirectional;
-- neither side may self-reference;
-- replacement registration cannot predate the original registration;
-- reseller/item/category IDs referenced by each row must exist;
-- each transaction must satisfy the shape of its own target type;
-- same-item order replacement must preserve the original D-025 category snapshot;
-- changed-item order replacement may use the new item's valid snapshot.
+## 8. Authentication / authorization target
 
-`exportData()` self-preflights the generated envelope, so the same invariants govern both imported and freshly exported V2 recovery artifacts.
+Supabase Auth is mandatory before the cloud-backed V2 is production eligible.
 
-No schema, envelope-version or restore-algorithm change was required.
+Initial scope remains single-operator/admin. Auth is being introduced for data protection and durable remote persistence, **not** as implicit permission to build reseller/employee self-service.
 
-## Stable→V2 transfer architecture — synthetically rehearsed
+Requirements:
 
-The stable `main` application remains materially older than V2:
+1. every application table exposed through the Data API has RLS enabled;
+2. anonymous business-data access is forbidden;
+3. authorization must identify the actually approved Easy operator/store access;
+4. `TO authenticated` alone is insufficient if it would make every Supabase authenticated account equivalent;
+5. user-editable metadata is not used for authorization decisions;
+6. browser configuration contains only project URL plus publishable client key;
+7. `service_role`/secret keys never enter client bundles, Git, docs or public Vercel environment variables.
+
+The exact initial allow-list/profile table and policies are P10-S3-I1 implementation details and require policy tests.
+
+## 9. Dexie and connectivity after D-029
+
+Dexie ceases to be the target canonical production datastore.
+
+Accepted first-transition behavior:
+
+- Supabase/Postgres is authoritative;
+- Dexie may remain temporarily for migration compatibility and/or read cache;
+- financial/business writes must be confirmed by the server before being considered committed;
+- connectivity failure may block writes rather than silently queue them;
+- no offline multi-master or automatic write synchronization is introduced in P10-S3-I1.
+
+A future offline outbox would require explicit idempotency, conflict-resolution and duplicate-financial-movement design before implementation.
+
+## 10. Backup / recovery architecture
+
+### Existing local-first protection
+
+D-017 remains the logical `easy-backup` v2/schema5 contract for current interchange. D-018 remains the verified atomic local restore behavior. D-024 remains synchronized recovery-copy folder + exact 24-hour freshness guard for the **current browser-local stable/runtime boundary**.
+
+### Final cloud protection
+
+After Supabase is formally accepted as production canonical persistence:
+
+1. managed Supabase database backup is the intended primary durability layer;
+2. logical/manual Easy backup/export remains available as independent contingency/portability;
+3. automated off-site logical dumps may be added later;
+4. PITR is optional and requires a later RPO/cost decision.
+
+D-024's 24-hour manual-export write block is not intended to survive as the primary cloud production durability mechanism. It remains active until cloud cutover so the existing stable application does not lose its current protection prematurely.
+
+Production may not claim that human backup dependency is removed while using a cloud tier that lacks the required managed backup/availability guarantee.
+
+## 11. Stable → final cloud migration route
+
+The stable `main` application remains materially older:
 
 ```text
 stable main
@@ -89,52 +191,77 @@ stable main
   items + resellers + transactions
   backup version 1
           |
-          | explicit JSON backup/preflight/restore
-          | (real copy still requires later accepted gate)
+          | one controlled point-in-time logical export
+          | after cloud foundation/security gate
           v
-V2 candidate
-  tested develop SHA 2b6c1e5...
-  Dexie V5
-  categories + items + resellers + transactions
-  easy-backup v2/schema5
+migration/import pipeline
+  existing accepted v1 normalization
+  deterministic validation
+          |
+          v
+Supabase Postgres
+  final canonical persistence
 ```
 
-IndexedDB is origin-local. A Vercel or GitHub Pages deployment on another origin does not carry the stable database with it.
+The real dataset must not first be moved into a disposable IndexedDB beta and then moved again into Supabase.
 
-V2 backup preflight accepts the stable backup-v1 shape and normalizes it without retroactive invention:
+P10-S1-I2 already proved with synthetic data that the stable-v1 envelope can be normalized without invented category history:
 
-- lifecycle fields absent in v1 normalize legacy items/resellers to active;
-- absent `occurredAt` normalizes to historical `createdAt`;
-- no categories or category assignments are fabricated;
-- migrated legacy items remain unclassified;
-- new orders remain unavailable for unclassified active items until operator classification under D-025/P1.
+- missing item/reseller lifecycle -> active;
+- missing `occurredAt` -> historical `createdAt`;
+- no fabricated categories/category assignments/history;
+- migrated items remain unclassified until classified;
+- D-026 correction state remains exportable/restorable.
 
-P10-S1-I2 proved this path in a deployed browser using synthetic data only. The rehearsal restored a representative v1 fixture, verified expected counts/normalization, proved D-024 blocking and recovery setup, classified migrated items, exercised a new order plus D-026 changed-item/date correction, exported V2, restored that V2 backup into a disposable fresh browser context and re-exported identical business data.
+P10-S3 will reuse those semantics in a deterministic Supabase importer/reconciliation gate.
 
-This proof establishes mechanism compatibility only. No actual store backup has been exported, imported or reconciled.
+No real-data import is authorized by D-029 itself.
 
-## Deployment topology after P10-S1
+## 12. P10-S2-I1 status
 
-### Stable path
+The D-028 copied-live-data beta contract remains a valid historical safety design.
 
-`main` remains the stable publication branch and currently deploys the historical application to GitHub Pages on push.
+P10-S2-I1 executed only the pre-export portion:
 
-The historical workflow present on current `main` performs build/deploy without the V2 D-019 quality job. The V2 `develop` version of `.github/workflows/deploy.yml` already contains the stronger eventual stable path:
+- candidate/deployment identity passed;
+- operator-local isolation/recovery-location items could not be proven remotely;
+- fail-closed behavior stopped the action before export.
 
-```text
-push main
-   -> quality / npm run qa:critical
-   -> build
-   -> GitHub Pages deploy
-```
+No live-store backup was exported/imported and no real-data beta IndexedDB/artifact was created.
 
-That V2 workflow is not active on stable `main` until a future explicitly accepted publication.
+D-029 now marks P10-S2-I1 **ABANDONED / SUPERSEDED BEFORE EXPORT**. There is no beta data to dispose and its 24-hour disposal clock never started.
 
-### Candidate path
+## 13. Supabase development discipline
+
+A dedicated Easy Supabase project is required; unrelated application databases must not be reused.
+
+Before real data:
+
+- project/region identity must be recorded;
+- schema changes must be reproducible through committed migrations;
+- RLS policies must be versioned/reviewed;
+- synthetic fixtures only;
+- security and performance advisors must be checked after DDL/policy changes;
+- generated TypeScript database types should match the migrated schema;
+- frontend receives only publishable credentials;
+- Vercel environment variables must not expose database/service secrets to the client;
+- D-019 remains mandatory for repository integration.
+
+A paid Supabase development branch is optional; cost must be explicitly confirmed before creation. A separate dedicated development project/migration workflow is acceptable if it remains reproducible.
+
+## 14. Deployment topology
+
+### Current stable
+
+`main` remains the stable historical application and currently deploys through its existing GitHub Pages workflow.
+
+No D-029 work targets or publishes `main` directly.
+
+### Current V2 candidate
 
 The connected Vercel project `easy-v2` remains candidate/beta hosting only.
 
-Repository `vercel.json` intentionally sets:
+Repository `vercel.json` still disables Git-triggered deployments:
 
 ```json
 {
@@ -144,34 +271,21 @@ Repository `vercel.json` intentionally sets:
 }
 ```
 
-so candidate deployments remain manual/bounded rather than generated for every commit.
+P10-S1-I2 verified READY deployment `dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki` as exact Git SHA `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`, tree `8d6479ce00caabce528c6971fbc1034bc1eabbcc`.
 
-P10-S1-I2 verified READY deployment **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`** as exact Git SHA **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**, whose integrated tree is **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**.
+That deployment remains historical candidate evidence. The Supabase-backed application will require fresh D-019/deployment identity before any later real-data/cutover gate.
 
-The immutable deployment URL `easy-v2-lvbggu5ji-synapselabia-8285s-projects.vercel.app` requires Vercel SSO for `/backup`. Vercel metadata attaches public alias `easy-v2-tau.vercel.app` to that exact deployment, so the alias was used only as browser access while deployment ID + Git SHA remained the identity proof.
+### Final target
 
-Vercel's internal `target: production` label does not redefine repository/store governance; `easy-v2` is still non-stable candidate hosting under D-027.
+Vercel remains the accepted final frontend host, but D-029 does not itself:
 
-## P10-S1-I2 rehearsal architecture proof
+- enable automatic Git deploys;
+- publish `main`;
+- promote the beta alias;
+- switch the canonical store URL;
+- authorize production cutover.
 
-Evidence-only PR #62 added a temporary branch-local remote Playwright harness and conditional CI step. It was deliberately closed **without merge**, so no rehearsal harness or workflow alteration entered `develop`.
-
-Authoritative evidence:
-
-- run **`32298906351`**, job **`96216688953`**;
-- exact PR merge ref **`b99a11e586c05322c8f6665770135cb8d6047172`**;
-- harness head `5e5eaea8fbc51bf52c3e5bfc927b6da178082bda` over candidate base `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`;
-- D-019 first: 0 errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 repository Playwright PASS; build PASS;
-- remote candidate rehearsal: 1/1 PASS.
-
-Two earlier runs were diagnostics only:
-
-- `32297959050` / `96213645569` exposed Vercel SSO on the immutable deployment URL before app access;
-- `32298286885` / `96214717360` reached v1 preflight but a Playwright viewport/actionability issue blocked restore dispatch.
-
-No product defect or real-data issue was accepted from either diagnostic run; both were superseded by the authoritative passing scenario.
-
-## Repository-wide QA architecture
+## 15. Repository-wide QA architecture
 
 D-019 remains mandatory:
 
@@ -183,11 +297,11 @@ npm run qa:critical
   + npm run build
 ```
 
+For Supabase-bearing implementation, D-019 is necessary but no longer sufficient by itself. P10-S3 gates additionally require database tests and Supabase advisor review.
+
 Known React test warnings, mocked-select DOM warnings, dependency/audit notices, Actions deprecation notices, lint warning debt and Vite large-chunk warning remain non-blocking only when objective commands pass.
 
-Both `main` and `develop` remain unprotected GitHub branches. Therefore D-019/PR discipline is a canonical process requirement and cannot be assumed to be enforced by branch protection during P10.
-
-## Accepted validation baseline
+## 16. Accepted historical validation baseline
 
 - P9-S4-I1: D-019 `32285620846` / `96174326588`; PR #54 integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`; tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
 - P9-S5: D-019 `32287018048` / `96178850066`; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`; tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
@@ -195,19 +309,23 @@ Both `main` and `develop` remain unprotected GitHub branches. Therefore D-019/PR
 - P10-S1 contract: D-019 `32290159119` / `96188851730`; PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`; tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
 - P10-S1-I1: D-019 `32292888925` / `96197514379`; PR #60 integrated as `71b939b4c938288efb0f3c51e300e5c5541ee8c3`; tree `06d1f8c4582b5dcabd02b633c8597852b1cedfa4`.
 - P10-S1-I2: evidence-only PR #62, authoritative run `32298906351` / `96216688953`; remote rehearsal 1/1 PASS; PR closed without merge.
+- P10-S2 contract: PR #64 final D-019 `32380528003` / `96462340384`; integrated as `4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`.
+- P10-S2-I1 pre-export record: PR #65 final D-019 `32382928429` / `96470305608`; integrated as `e06c659ecdb3aee79e2e451b00eb85d63c8b8612`, tree `4da05cdda530b1e7000d01460201dff1daf65910`.
 
-## Boundary entering P10-S2 planning
+## 17. Boundary entering P10-S3-I1
 
-P10-S1 is complete as a non-production pre-cutover gate. The next bounded action is to **define and accept the P10-S2 copied-live-data beta gate**, not to execute it.
+P10-S3-I1 is allowed to build/prove the **synthetic Supabase foundation only**.
 
-That contract must establish the minimum data-handling, operator-access, reconciliation, recovery, rollback/disposal and explicit go/no-go criteria before any real store backup may be exported or imported.
+It may provision a dedicated Supabase project after the required organization/cost choice, establish schema/Auth/RLS/transactional functions, wire the client and run synthetic tests.
 
-Until that contract is accepted:
+It may not:
 
-1. no live-store data may be moved;
-2. `main` remains untouched;
-3. no stable V2 publication or canonical URL switch may occur;
-4. no production cutover may occur;
-5. D-016 remains unchanged.
+1. import the live store dataset;
+2. modify/publish `main`;
+3. switch the canonical URL;
+4. perform production cutover;
+5. weaken D-012/D-013/D-025/D-026;
+6. expose anonymous business access or privileged client secrets;
+7. introduce offline write synchronization without a new explicit gate.
 
-Detailed plan: `docs/V2/P10_CUTOVER_PLAN.md`.
+Authoritative D-029 gate: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.

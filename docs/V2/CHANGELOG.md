@@ -4,25 +4,63 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-20 — Final persistence redirected to Supabase/Postgres; D-029 accepted
+
+Before any real store backup was exported for the P10-S2-I1 IndexedDB beta, the final production durability requirement was explicitly changed: routine production safety should no longer depend primarily on an operator remembering to create/synchronize browser-local backups, while the system should retain an independent logical/manual backup option for contingency and portability.
+
+D-029 therefore reopens/supersedes D-016 for final production persistence and selects:
+
+- Supabase/Postgres as canonical production business persistence;
+- Vercel as the target application host;
+- Supabase Auth + RLS before production;
+- publishable-key-only browser configuration with no service/secret credential exposure;
+- database/server transactional preservation of D-013/D-026 correction/reversal atomicity;
+- Dexie/IndexedDB as transitional migration substrate/optional cache rather than final source of truth;
+- managed database backups as primary post-cutover durability;
+- logical/manual Easy backup as independent secondary protection/portability;
+- no offline multi-master/write queue in the first cloud migration.
+
+D-024 remains mandatory for the current browser-local stable system until cloud cutover, but its 24-hour operator-export write guard is no longer the intended final production durability mechanism after managed cloud backup readiness is proven.
+
+P10-S2-I1 is now `ABANDONED / SUPERSEDED BEFORE EXPORT`; no real data moved and no beta disposal clock ever started. P10-S3 is current. The next bounded action is P10-S3-I1: provision/prove a dedicated Supabase foundation with synthetic data only, reproducible schema migrations, Auth/RLS, transactional correction/reversal, `supabase-js` client wiring, advisor review and D-019.
+
+Authoritative contract: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
+
+No Supabase schema/client runtime, real-data migration, `main` publication, canonical URL switch or production cutover is accepted by this architecture-decision step.
+
+---
+
+## 2026-08-20 — P10-S2-I1 stopped fail-closed before any real-data export
+
+P10-S2-I1 began only the D-028 pre-export checklist. Candidate/deployment identity passed, but the trusted store PC still needed to prove an isolated beta browser context, the actual D-024 synchronized recovery destination and the explicit stable-authoritative/beta-disposable boundary.
+
+Because those operator-local facts could not be proven from the remote repository/deployment environment, the gate correctly remained `NO-GO BEFORE EXPORT`.
+
+PR #65 recorded the result. Substantive D-019 `32382362960` / `96468435138` passed; final D-019 `32382928429` / `96470305608` passed on merge ref `af01a7f8ac280305f5ff86c06416127321580ec2`: 0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; production build PASS. PR #65 squash-integrated as `e06c659ecdb3aee79e2e451b00eb85d63c8b8612`, tree `4da05cdda530b1e7000d01460201dff1daf65910`.
+
+No live-store backup was exported/imported, no real copied data entered GitHub/chat/CI/docs, no beta real-data IndexedDB/artifact was created and the 24-hour D-028 disposal clock never started.
+
+This fail-closed stop later made it possible to redirect final persistence under D-029 without moving the real dataset twice.
+
+---
+
 ## 2026-08-20 — P10-S2 copied-live-data beta contract defined; D-028 accepted
 
-P10-S2 contract definition completed without moving any live-store data and without changing runtime, schema, backup envelope, deployment configuration, `main` or D-016.
+P10-S2 contract definition completed without moving any live-store data and without changing runtime, schema, backup envelope, deployment configuration, `main` or then-current D-016.
 
 Authoritative contract: `docs/V2/P10_S2_BETA_GATE.md`.
 
-D-028 defines the future copied-live-data beta as a point-in-time, single-operator, isolated and disposable non-production exercise. Stable remains the only authoritative production system; beta state never synchronizes or promotes back to stable.
+D-028 defined a point-in-time, single-operator, isolated and disposable non-production beta. Stable would remain the only authoritative production system; beta state would never synchronize or promote back to stable.
 
-Before any future real-data export, P10-S2-I1 must prove an exact D-019-passing Git SHA/tree, READY deployment identity, current alias→deployment mapping when a mutable alias is used, trusted operator/browser isolation and the approved D-024 working/recovery boundary.
+Before any real-data export, P10-S2-I1 had to prove exact D-019-passing Git SHA/tree, READY deployment identity, current alias→deployment mapping when a mutable alias was used, trusted operator/browser isolation and the approved D-024 working/recovery boundary.
 
-The source snapshot is identified only by non-sensitive timestamp/file-size/SHA-256 metadata. Raw backups, identifiable screenshots/PDFs and transaction payloads are prohibited from Git/GitHub, CI artifacts, chat and canonical docs.
+The source snapshot would be identified only by non-sensitive timestamp/file-size/SHA-256 metadata. Raw backups, identifiable screenshots/PDFs and transaction payloads were prohibited from Git/GitHub, CI artifacts, chat and canonical docs.
 
-Reconciliation is exact and fail-closed. Before any beta mutation, entity/type counts, IDs, references and stored business values must survive accepted v1→V2 normalization without unexplained differences. Gross orders, payments, signals, net movement, every reseller balance and aggregate positive debt must reconcile exactly; any displayed difference of R$ 0,01 is NO-GO.
+Reconciliation was exact and fail-closed. Before any beta mutation, entity/type counts, IDs, references and stored business values had to survive accepted v1→V2 normalization without unexplained differences. Gross orders, payments, signals, net movement, every reseller balance and aggregate positive debt had to reconcile exactly; any displayed difference of R$ 0,01 was NO-GO.
 
-D-018 checkpoint and D-024 blocking/setup/current-state proof are mandatory before beta writes. A post-reconciliation V2 backup becomes the rollback baseline. Minimum beta acceptance then requires unclassified-item gating, representative classification, one beta-only order, one D-026 correction, final V2 export and disposable fresh-context restore/re-export with identical business data.
+D-018 checkpoint and D-024 blocking/setup/current-state proof were mandatory before beta writes. A post-reconciliation V2 backup would become the rollback baseline. Minimum beta acceptance then required unclassified-item gating, representative classification, one beta-only order, one D-026 correction, final V2 export and disposable fresh-context restore/re-export with identical business data.
 
-Any mismatch, unexpected warning, isolation/data-boundary breach, D-024 bypass or stable-origin write is NO-GO. Beta-specific copied real data must be removed from operator-controlled locations within 24 hours after the gate is accepted, rejected or abandoned. Only sanitized metadata/hashes/counts/PASS-FAIL evidence remains canonical.
-
-**Result:** P10-S2 contract is `DONE / ACCEPTED`; P10-S2-I1 copied-live-data execution is `NOT_STARTED`. No real store backup has been exported/imported. A future P10-S2-I1 PASS may authorize only defining the production-cutover gate, not cutover itself.
+D-029 later superseded **resuming** this IndexedDB real-data beta route before any live-store export occurred. D-028 remains historical safety evidence.
 
 ---
 
@@ -38,7 +76,7 @@ Using only a synthetic stable-v1 fixture, the rehearsal proved v1→v2 preflight
 
 Two earlier runs are retained only as diagnostics: `32297959050` / `96213645569` exposed Vercel SSO before application access, and `32298286885` / `96214717360` exposed a Playwright viewport/actionability issue before restore dispatch. Neither was accepted as product evidence.
 
-**Result:** P10-S1 is `DONE / ACCEPTED`. The rehearsal gives a GO only to **define the P10-S2 copied-live-data beta gate**. It does not authorize moving real store data, production reconciliation, stable publication, canonical URL switch, production cutover or D-016 change.
+**Result:** P10-S1 is `DONE / ACCEPTED`. The rehearsal gave a GO only to define the P10-S2 copied-live-data beta gate. It did not authorize moving real store data, production reconciliation, stable publication, canonical URL switch, production cutover or architecture change.
 
 ---
 
@@ -122,7 +160,9 @@ D-025 established stable category identity/lifecycle, future-order transaction s
 
 ## 2026-08-18 — P9-S2 recovery durability completed
 
-D-024 selected synchronized recovery-copy folder plus exact 24-hour freshness guard while keeping D-016 local-first. Accepted D-019 `32180250834` / `95851336506`; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
+D-024 selected synchronized recovery-copy folder plus exact 24-hour freshness guard while keeping the then-current D-016 local-first architecture. Accepted D-019 `32180250834` / `95851336506`; PR #39 integrated as `7e20d50be357d0179adf0afe4894ddfebbeb2eb9`.
+
+D-029 later keeps this mechanism only until cloud cutover rather than as final production durability.
 
 ---
 
@@ -134,7 +174,9 @@ D-023 ranking: recovery durability 94/100, categories/reporting 83/100, correcti
 
 ## 2026-08-18 — P8 real-store requirements discovery completed
 
-Direct evidence kept D-016 for current non-concurrent PC operation and confirmed recovery durability, category/reporting and correction-friction roadmap inputs. Final P8-S2 Critical QA `32158395391` / `95781056589`.
+Direct evidence kept D-016 for then-current non-concurrent PC operation and confirmed recovery durability, category/reporting and correction-friction roadmap inputs. Final P8-S2 Critical QA `32158395391` / `95781056589`.
+
+D-029 later records a new accepted final-product durability requirement; it does not retroactively change the P8 evidence.
 
 ---
 
@@ -159,6 +201,8 @@ P5-S1 established logical `easy-backup` v2 with deep preflight/v1 normalization 
 ## 2026-08-17 — P4 persistence architecture decision
 
 D-016 accepted: keep V2 local-first/single-user until direct requirements later prove a reopen trigger.
+
+On 2026-08-20 D-029 accepted such a later trigger and superseded D-016 for final production persistence.
 
 ---
 
