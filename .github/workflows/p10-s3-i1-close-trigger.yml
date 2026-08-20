@@ -30,6 +30,11 @@ jobs:
           end = helper.index("\n          PY\n", start)
           block = helper[start:end]
           block = '\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+          bad = "edit('docs/V2/CHANGELOG.md', prepend_after='''---\\n''', prepend_text=changelog_entry)"
+          good = "edit('docs/V2/CHANGELOG.md', prepend_after='''This changelog records material V2 project-state changes rather than every code-line edit. Detailed implementation history remains available in Git/PR history, `STATUS.md`, `QA_LEDGER.md`, `DECISIONS.md` and phase-specific documents.\\n\\n---\\n''', prepend_text=changelog_entry)"
+          if bad not in block:
+              raise SystemExit('expected changelog helper anchor not found')
+          block = block.replace(bad, good, 1)
           exec(compile(block, 'p10-s3-i1-close', 'exec'))
           PY
           rm -f .github/workflows/p10-s3-i1-close-trigger.yml
