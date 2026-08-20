@@ -187,7 +187,7 @@ Repository validation:
 
 Data/cutover boundary: no real store data, real operator cutover, `main` publication, canonical URL switch or production cutover occurred. Current user-facing runtime remains Dexie. Detailed evidence: `docs/V2/P10_S3_I1_EXECUTION.md`.
 
-## P10-S3-I2 migration/durability contract — EVIDENCE READY / D-019 REQUIRED BEFORE INTEGRATION
+## P10-S3-I2 migration/durability contract — PASS / ACCEPTED
 
 Contract-definition evidence:
 
@@ -201,7 +201,7 @@ Contract-definition evidence:
 - current Supabase documentation confirms paid automatic backups, Free-plan `db dump` + off-site recommendation, Free pausing behavior and supported logical dump/restore tooling;
 - no real store data or real operator identity was used.
 
-D-030 accepts the contract only. Repository D-019 on the contract/canonical closure tree is mandatory before integration; final run/job and exact merge-ref identity are recorded in PR closure evidence.
+D-030 accepts the contract only. Authoritative closure D-019 **`32399725148`** / **`96524749660`** passed on exact PR merge ref **`f18f9b6c3d77b1b95284e92487be8819a9a48922`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS. This run validates the complete canonical contract tree before this evidence-line commit; a final tree-equivalent D-019 is required before merge.
 
 ## Known non-blocking debt
 
