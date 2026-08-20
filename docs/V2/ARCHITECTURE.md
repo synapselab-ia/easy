@@ -1,6 +1,6 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** verified through integrated P10-S1-I1 backup compatibility hardening  
+**Status:** verified through completed P10-S1 non-production rehearsal  
 **Integration target:** `develop`  
 **Date:** 2026-08-19
 
@@ -12,7 +12,7 @@ Database: `ResellerManagerDB`, Dexie **V5** with `categories`, `items`, `reselle
 
 Migration path remains V1→V2 reseller lifecycle, V2→V3 item lifecycle, V3→V4 `occurredAt`, V4→V5 additive category substrate. V4→V5 performs no category backfill. Recovery-health state remains separate local control metadata (`easy.recoveryHealth.v1`) and is not part of Dexie/backup business data.
 
-P9 and P10-S1-I1 introduced no additional schema beyond V5 and no change to the logical backup-envelope version.
+P9 and P10-S1 introduced no additional schema beyond V5 and no change to the logical backup-envelope version.
 
 ## Category lifecycle and reporting
 
@@ -32,10 +32,12 @@ P2 / D-012 / D-013 provide the audit topology: the original row is not destructi
 
 P9-S4-I1 permits replacement business state to define reseller, target type, `occurredAt`, observation and the applicable order item/quantity/unit price or payment/signal value.
 
-Target-shape validity, D-025 snapshot preservation/recapture, P1/D-011 active-reference rules and D-024 recovery freshness enforcement remain mandatory. No speculative inactive-reference exception was introduced.
+Target-shape validity, D-025 snapshot preservation/recapture, P1/D-011 active-reference rules and D-024 recovery freshness enforcement remain mandatory.
 
-P10-S1-I1 aligned recovery validation with that runtime model. The backup validator no longer requires the replacement to match the original type, item or financial occurrence date. D-025 still applies to the replacement itself:
+P10-S1-I1 aligned recovery validation with that runtime model:
 
+- replacement type may differ from the original;
+- replacement `occurredAt` may differ from the original;
 - order→order correction keeping the same `itemId` **must preserve** the original historical category snapshot;
 - order→order correction selecting a different valid item may carry that replacement item's valid category snapshot;
 - order↔payment/signal type changes carry the target type's own valid shape;
@@ -51,7 +53,7 @@ D-014 remains unchanged:
 
 The normal new-movement workflow initializes `Data da ocorrência` from the browser-local current date, renders it in the primary entry block, permits editing before save, converts it to `occurredAt`, and explains that registration time is saved automatically.
 
-A D-026 replacement may carry a different `occurredAt` from the original. P10-S1-I1 now permits that supported state through backup self-preflight/export while registration chronology remains separately validated through `createdAt`.
+A D-026 replacement may carry a different `occurredAt` from the original. P10-S1-I1 permits that supported state through backup self-preflight/export while registration chronology remains separately validated through `createdAt`.
 
 ## Recovery/interchange invariants
 
@@ -61,7 +63,7 @@ D-024 recovery metadata is origin-local UI/control state. A fresh V2 browser ori
 
 ### Correction-pair validation after P10-S1-I1
 
-`backupService.validateReferences()` now validates correction pairs by audit integrity rather than obsolete business-field equality:
+`backupService.validateReferences()` validates correction pairs by audit integrity rather than obsolete business-field equality:
 
 - original/replacement IDs must exist;
 - original reversal and replacement correction links must be bidirectional;
@@ -72,13 +74,13 @@ D-024 recovery metadata is origin-local UI/control state. A fresh V2 browser ori
 - same-item order replacement must preserve the original D-025 category snapshot;
 - changed-item order replacement may use the new item's valid snapshot.
 
-`exportData()` still self-preflights the generated envelope, so the same invariants govern both imported and freshly exported V2 recovery artifacts.
+`exportData()` self-preflights the generated envelope, so the same invariants govern both imported and freshly exported V2 recovery artifacts.
 
-No schema, envelope-version or restore algorithm change was required.
+No schema, envelope-version or restore-algorithm change was required.
 
-## Stable→V2 transfer architecture entering rehearsal
+## Stable→V2 transfer architecture — synthetically rehearsed
 
-The stable `main` application is materially older than V2:
+The stable `main` application remains materially older than V2:
 
 ```text
 stable main
@@ -88,10 +90,10 @@ stable main
   backup version 1
           |
           | explicit JSON backup/preflight/restore
-          | (future cutover only; no implicit browser DB transfer)
+          | (real copy still requires later accepted gate)
           v
 V2 candidate
-  develop after P10-S1-I1
+  tested develop SHA 2b6c1e5...
   Dexie V5
   categories + items + resellers + transactions
   easy-backup v2/schema5
@@ -107,13 +109,15 @@ V2 backup preflight accepts the stable backup-v1 shape and normalizes it without
 - migrated legacy items remain unclassified;
 - new orders remain unavailable for unclassified active items until operator classification under D-025/P1.
 
-P10-S1-I1 retained the existing passing backup-v1 and v2/schema4 compatibility suites. Actual live-data transfer remains unauthorized.
+P10-S1-I2 proved this path in a deployed browser using synthetic data only. The rehearsal restored a representative v1 fixture, verified expected counts/normalization, proved D-024 blocking and recovery setup, classified migrated items, exercised a new order plus D-026 changed-item/date correction, exported V2, restored that V2 backup into a disposable fresh browser context and re-exported identical business data.
 
-## Deployment topology entering P10-S1-I2
+This proof establishes mechanism compatibility only. No actual store backup has been exported, imported or reconciled.
+
+## Deployment topology after P10-S1
 
 ### Stable path
 
-`main` is the stable publication branch and currently deploys to GitHub Pages on push.
+`main` remains the stable publication branch and currently deploys the historical application to GitHub Pages on push.
 
 The historical workflow present on current `main` performs build/deploy without the V2 D-019 quality job. The V2 `develop` version of `.github/workflows/deploy.yml` already contains the stronger eventual stable path:
 
@@ -128,7 +132,7 @@ That V2 workflow is not active on stable `main` until a future explicitly accept
 
 ### Candidate path
 
-The connected Vercel project `easy-v2` is candidate/beta hosting only.
+The connected Vercel project `easy-v2` remains candidate/beta hosting only.
 
 Repository `vercel.json` intentionally sets:
 
@@ -140,11 +144,32 @@ Repository `vercel.json` intentionally sets:
 }
 ```
 
-so Vercel candidate deployments are manual rather than generated for every commit.
+so candidate deployments remain manual/bounded rather than generated for every commit.
 
-The latest observed READY Vercel deployment before I2 still points to `develop` commit `1221f71de460c266c165b92de0536f443c71fa08`, six commits behind completed P9. It cannot be used as P10-S1-I2 acceptance evidence; I2 must explicitly deploy and verify an exact D-019-passing `develop` SHA.
+P10-S1-I2 verified READY deployment **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`** as exact Git SHA **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**, whose integrated tree is **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**.
 
-Vercel's internal target label `production` does not redefine repository/store governance; `easy-v2` remains non-stable candidate hosting under D-027.
+The immutable deployment URL `easy-v2-lvbggu5ji-synapselabia-8285s-projects.vercel.app` requires Vercel SSO for `/backup`. Vercel metadata attaches public alias `easy-v2-tau.vercel.app` to that exact deployment, so the alias was used only as browser access while deployment ID + Git SHA remained the identity proof.
+
+Vercel's internal `target: production` label does not redefine repository/store governance; `easy-v2` is still non-stable candidate hosting under D-027.
+
+## P10-S1-I2 rehearsal architecture proof
+
+Evidence-only PR #62 added a temporary branch-local remote Playwright harness and conditional CI step. It was deliberately closed **without merge**, so no rehearsal harness or workflow alteration entered `develop`.
+
+Authoritative evidence:
+
+- run **`32298906351`**, job **`96216688953`**;
+- exact PR merge ref **`b99a11e586c05322c8f6665770135cb8d6047172`**;
+- harness head `5e5eaea8fbc51bf52c3e5bfc927b6da178082bda` over candidate base `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`;
+- D-019 first: 0 errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 repository Playwright PASS; build PASS;
+- remote candidate rehearsal: 1/1 PASS.
+
+Two earlier runs were diagnostics only:
+
+- `32297959050` / `96213645569` exposed Vercel SSO on the immutable deployment URL before app access;
+- `32298286885` / `96214717360` reached v1 preflight but a Playwright viewport/actionability issue blocked restore dispatch.
+
+No product defect or real-data issue was accepted from either diagnostic run; both were superseded by the authoritative passing scenario.
 
 ## Repository-wide QA architecture
 
@@ -160,45 +185,29 @@ npm run qa:critical
 
 Known React test warnings, mocked-select DOM warnings, dependency/audit notices, Actions deprecation notices, lint warning debt and Vite large-chunk warning remain non-blocking only when objective commands pass.
 
-Both `main` and `develop` are currently unprotected GitHub branches. Therefore D-019/PR discipline is a canonical process requirement and cannot be assumed to be enforced by branch protection during P10.
+Both `main` and `develop` remain unprotected GitHub branches. Therefore D-019/PR discipline is a canonical process requirement and cannot be assumed to be enforced by branch protection during P10.
 
-## Accepted P9 validation baseline
+## Accepted validation baseline
 
 - P9-S4-I1: D-019 `32285620846` / `96174326588`; PR #54 integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`; tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
 - P9-S5: D-019 `32287018048` / `96178850066`; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`; tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
 - Canonical P9 closure: `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
+- P10-S1 contract: D-019 `32290159119` / `96188851730`; PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`; tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
+- P10-S1-I1: D-019 `32292888925` / `96197514379`; PR #60 integrated as `71b939b4c938288efb0f3c51e300e5c5541ee8c3`; tree `06d1f8c4582b5dcabd02b633c8597852b1cedfa4`.
+- P10-S1-I2: evidence-only PR #62, authoritative run `32298906351` / `96216688953`; remote rehearsal 1/1 PASS; PR closed without merge.
 
-## P10-S1 contract integration proof
+## Boundary entering P10-S2 planning
 
-- D-019 run `32290159119`, job `96188851730`, validated PR #58 merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75` — 0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-- PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`.
-- Validated/integrated tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
+P10-S1 is complete as a non-production pre-cutover gate. The next bounded action is to **define and accept the P10-S2 copied-live-data beta gate**, not to execute it.
 
-## P10-S1-I1 integration proof
+That contract must establish the minimum data-handling, operator-access, reconciliation, recovery, rollback/disposal and explicit go/no-go criteria before any real store backup may be exported or imported.
 
-The first I1 D-019 candidate (`32292405631` / `96196002726`) correctly failed one existing P9-S3 test after category-snapshot equality had initially been removed unconditionally. That failure proved the D-025 same-item rule still had to remain and blocked integration.
+Until that contract is accepted:
 
-The narrowed implementation passed the authoritative gate:
-
-- D-019 run **`32292888925`**, job **`96197514379`**;
-- validated PR #60 merge ref **`d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`**, head `666e4c86df7c6328289d489db7c8eebcb714aad1`, base `a549ce79925aad0cae9e964babd28879e8ad1c15`;
-- ESLint: 0 errors / 82 warnings;
-- Vitest: 53 files / 222 tests PASS;
-- Playwright: 17/17 PASS;
-- production build: PASS;
-- PR #60 integrated as **`71b939b4c938288efb0f3c51e300e5c5541ee8c3`**;
-- validated/integrated tree: **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**.
-
-## D-027 / P10-S1 boundary after I1
-
-P10-S1 remains a non-production pre-cutover gate:
-
-1. `main` remains untouched;
-2. no live-store data has been moved;
-3. no stable V2 publication has occurred;
-4. P10-S1-I1 backup/correction compatibility is complete/integrated;
-5. P10-S1-I2 is now the current bounded rehearsal and may use only an exact validated candidate plus synthetic/non-production backup-v1 data;
-6. copied-live-data beta, final freeze, stable publication and production cutover require later explicit acceptance;
-7. D-016 remains unchanged.
+1. no live-store data may be moved;
+2. `main` remains untouched;
+3. no stable V2 publication or canonical URL switch may occur;
+4. no production cutover may occur;
+5. D-016 remains unchanged.
 
 Detailed plan: `docs/V2/P10_CUTOVER_PLAN.md`.
