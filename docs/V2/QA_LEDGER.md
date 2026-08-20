@@ -224,6 +224,30 @@ Repository validation:
 
 No unattended backup automation, real Auth operator, Supabase business-runtime switch, real store data, `main` publication, canonical URL switch or production cutover occurred. Exact final tree-equivalent D-019 belongs to PR #69 closure evidence before integration. Detailed record: `docs/V2/P10_S3_I2_I1_EXECUTION.md`.
 
+## P10-S3-I2-I2 zero-cost unattended backup/recovery — IMPLEMENTATION PASS / ACCEPTANCE BLOCKED
+
+Repository/database prerequisite proof:
+
+- trusted-PC tooling is committed for pinned Supabase CLI `2.111.0` data-only dumps, rclone `1.75.0` copy/check/list verification, UTC daily retention, Windows Task Scheduler and disposable restore fingerprinting;
+- private recovery-health migrations enforce freshness and retention on all canonical business writes;
+- missing evidence, stale evidence and fresh evidence with only six retained daily generations block writes;
+- exactly 24h remains fresh, while 24h + 1 microsecond is stale;
+- fresh evidence with retention >=7 reopens writes;
+- financial RPC writes pass through the same guard;
+- API-style `service_role` cannot bypass the durability guard, while direct no-JWT database execution remains the bounded restore/import maintenance path;
+- private recovery-health state is inaccessible to `anon`, `authenticated` and `service_role` for trusted mutation/read paths;
+- Security Advisor: **0 lints**;
+- Performance Advisor: INFO-only existing `unused_index` notices in the empty/tiny environment;
+- final homologation cleanup: 0 Auth users, 0 operators, 0 public business rows, 0 recovery rows and 0 legacy staging rows.
+
+Repository validation:
+
+- substantive PR #70 D-019 `32408393343` / `96552818604` passed on merge ref `6b83fe3e9b5939c788aa7a3640e7fc83607fd260`: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS;
+- final canonical-tree D-019 **`32411404495`** / **`96562427495`** passed on exact merge ref **`b8d01bcbe2b333f704f7ea75d1bc6c5813fabd5a`** with the same objective results;
+- validated feature tree `414ebfc01dd67c711ce94af90653696f42c13bf5` was squash-integrated by PR #70 as `0103f9ac44d9ee10ace85fddb144352fd305a9ee`, with the identical tree.
+
+**Acceptance remains BLOCKED:** the actual trusted-PC scheduled dump/off-site verification, at least seven real retained daily generations and disposable Docker/local restore drill have not yet been executed. I2-I3 remains unauthorized. Detailed record: `docs/V2/P10_S3_I2_I2_EXECUTION.md`.
+
 ## Known non-blocking debt
 
 Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking only when the accepted D-019 objective commands pass.
