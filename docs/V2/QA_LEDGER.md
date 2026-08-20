@@ -209,6 +209,46 @@ The accepted contract requires exact candidate/deployment identity before export
 
 A P10-S2-I1 PASS may authorize only defining the later production-cutover gate. It does not authorize cutover itself.
 
+## P10-S2-I1 pre-export execution — BLOCKED / NO-GO BEFORE EXPORT
+
+P10-S2-I1 executed only the D-028 pre-export gate. The technical candidate/deployment identity passed; operator-local execution requirements remain unproven, so fail-closed behavior stopped the action before any real store backup moved.
+
+Authoritative pre-export documentation proof before this QA-ledger evidence-only append:
+
+- PR **#65** D-019 run **`32382362960`**, job **`96468435138`**.
+- Exact validated PR merge ref **`b72bd60542fecc06fc28748aba8e216a55928029`**.
+- Validated branch head **`2bd4d18cea9a8419749443bb1dadf5850706814d`** over base **`4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`**.
+- ESLint: **0 errors / 82 warnings**.
+- Vitest: **53 files / 222 tests PASS**.
+- Playwright: **17/17 PASS**.
+- Production build: **PASS**.
+
+Pre-export technical evidence:
+
+- candidate Git SHA/tree remain `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e` / `8d6479ce00caabce528c6971fbc1034bc1eabbcc`;
+- candidate D-019 `32294362895` / `96202149317` remains PASS;
+- live Vercel metadata confirms deployment `dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki` remains READY and still reports exact Git SHA `2b6c1e5...`;
+- current deployment aliases still include `easy-v2-tau.vercel.app`; authenticated `/backup` fetch returned HTTP 200;
+- candidate→current `develop` comparison is exactly two commits ahead and every changed path is under `docs/V2/`, so no later runtime-bearing change invalidated the candidate.
+
+Fail-closed blocker:
+
+- the trusted store PC must still prove a designated operator and dedicated/isolated V2 beta browser context visibly distinct from stable;
+- that PC must confirm its actual browser backup destination is inside the accepted Google Drive for desktop synchronized folder and verify the current D-024 recovery boundary;
+- stable-authoritative / beta-disposable acknowledgement must be explicit before export;
+- the authoritative stable dataset is browser-local IndexedDB on that PC and D-028 prohibits transferring the raw backup through chat/GitHub/CI as a workaround.
+
+Execution result:
+
+- live-store backup exported for beta: **NO**;
+- live-store backup imported into V2: **NO**;
+- copied real data entered GitHub/chat/CI/docs: **NO**;
+- real-data beta artifacts/IndexedDB created: **NO**;
+- D-028 24-hour disposal clock: **NOT STARTED / NOT APPLICABLE**;
+- P10-S2-I1 remains **BLOCKED / NO-GO BEFORE EXPORT** and no later P10 work is authorized.
+
+Detailed execution record: `docs/V2/P10_S2_I1_EXECUTION.md`.
+
 ## Known non-blocking debt
 
 Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking only when the accepted D-019 objective commands pass.
