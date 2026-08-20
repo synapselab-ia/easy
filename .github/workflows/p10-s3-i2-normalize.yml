@@ -1,0 +1,74 @@
+name: P10-S3-I2 normalize D-030 wording
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop]
+    paths:
+      - .github/workflows/p10-s3-i2-normalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def repl(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{path}: expected one anchor, got {n}: {old[:100]!r}')
+              p.write_text(s.replace(old, new, 1))
+
+          repl('docs/V2/STATUS.md',
+               'D-012 through D-029 remain authoritative, with supersession relationships respected. In particular:',
+               'D-012 through D-030 remain authoritative, with supersession/refinement relationships respected. In particular:')
+          repl('docs/V2/STATUS.md',
+               '- **D-029 selects Supabase/Postgres canonical persistence + Auth/RLS + Vercel final hosting, keeps manual logical backup as secondary protection, and forbids real-data import before the synthetic cloud foundation passes.**\n\nNo production/cutover authorization is accepted by D-029.',
+               '- **D-029 selects Supabase/Postgres canonical persistence + Auth/RLS + Vercel final hosting, keeps manual logical backup as secondary protection, and forbids real-data import before the synthetic cloud foundation passes.**\n- **D-030 refines D-029 for the US$ 0 posture: Supabase Free alone is insufficient, but a proven unattended off-site logical-dump layer + exact-24h server write guard + restore drills may satisfy the durability objective without paid managed backups.**\n\nNo production/cutover authorization is accepted by D-029 or D-030.')
+
+          repl('docs/V2/DECISIONS.md',
+               '## D-029 — Final V2 uses Supabase/Postgres canonical persistence with Vercel hosting; manual backup remains secondary defense\n**Status:** ACCEPTED  ',
+               '## D-029 — Final V2 uses Supabase/Postgres canonical persistence with Vercel hosting; manual backup remains secondary defense\n**Status:** ACCEPTED / REFINED BY D-030 FOR THE US$ 0 DURABILITY PATH  ')
+          repl('docs/V2/DECISIONS.md',
+               'P10-S3-I2 accepts the contract in `docs/V2/P10_S3_I2_MIGRATION_GATE.md` without moving real data.\n\nAccepted rules:',
+               'P10-S3-I2 accepts the contract in `docs/V2/P10_S3_I2_MIGRATION_GATE.md` without moving real data. D-030 specifically refines D-029 items 19/22 for the accepted US$ 0 posture: until paid managed backups become available, the objectively proven unattended off-site logical-dump layer is the required primary recovery layer; Supabase Free by itself remains insufficient.\n\nAccepted rules:')
+
+          repl('docs/V2/PROJECT_SPEC.md',
+               '- managed Supabase database backups are the intended primary durability mechanism after cutover;\n- logical/manual Easy backup/export remains available as independent contingency and portability;',
+               '- on a paid posture, managed Supabase database backups are the intended primary durability mechanism; under D-030/US$ 0, the required primary recovery layer is instead a proven unattended off-site logical-dump process with freshness enforcement and restore drills;\n- logical/manual Easy backup/export remains available as independent contingency and portability;')
+
+          repl('docs/V2/ARCHITECTURE.md',
+               'After Supabase is formally accepted as production canonical persistence:\n\n1. managed Supabase database backup is the intended primary durability layer;\n2. logical/manual Easy backup/export remains available as independent contingency/portability;\n3. automated off-site logical dumps may be added later;\n4. PITR is optional and requires a later RPO/cost decision.',
+               'After Supabase is formally accepted as production canonical persistence, the primary recovery layer follows the accepted budget posture:\n\n1. paid posture: managed Supabase database backup is primary;\n2. D-030 / US$ 0 posture: objectively verified unattended off-site logical dumps + exact-24h server-side freshness enforcement + restore drills are primary;\n3. logical/manual Easy backup/export remains independent contingency/portability in either posture;\n4. PITR is optional and requires a later RPO/cost decision.')
+
+          repl('docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md',
+               'Final recovery layers should be:\n\n1. Supabase managed database backup appropriate to the production plan;\n2. independent logical/manual Easy backup/export for portability and contingency;\n3. optional automated off-site logical dump later if recovery requirements justify it;\n4. PITR only if the accepted RPO/cost decision justifies the add-on.',
+               'Final recovery layers follow the accepted budget posture:\n\n1. paid posture: Supabase managed database backup appropriate to the production plan is primary;\n2. D-030 / US$ 0 posture: proven unattended off-site logical dumps with exact-24h server-side freshness enforcement and restore drills are primary;\n3. independent logical/manual Easy backup/export remains portability/contingency in either posture;\n4. PITR only if a later accepted RPO/cost decision justifies the add-on.')
+
+          repl('docs/V2/P10_CUTOVER_PLAN.md',
+               'Manual Easy backup remains available; managed database backup becomes primary durability after cloud cutover.',
+               'Manual Easy backup remains available. Paid production uses managed database backup as primary durability; under D-030/US$ 0, production eligibility instead requires the proven unattended off-site logical-dump/freshness/restore layer before cutover.')
+          repl('docs/V2/P10_CUTOVER_PLAN.md',
+               'Expected layered protection:\n\n1. managed Supabase database backup appropriate to the production plan;\n2. independent logical/manual Easy backup/export;\n3. optional automated off-site logical dump later;\n4. PITR only if an explicit RPO/cost decision accepts it.',
+               'Expected layered protection follows the accepted budget posture:\n\n1. paid posture: managed Supabase database backup appropriate to the production plan is primary;\n2. D-030 / US$ 0 posture: proven unattended off-site logical dump + exact-24h server-side freshness + restore drill is primary;\n3. independent logical/manual Easy backup/export remains secondary;\n4. PITR only if an explicit later RPO/cost decision accepts it.')
+
+          PY
+          rm -f .github/workflows/p10-s3-i2-normalize.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/V2 .github/workflows/p10-s3-i2-normalize.yml
+          git commit -m "docs(v2): normalize D-030 durability wording"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
