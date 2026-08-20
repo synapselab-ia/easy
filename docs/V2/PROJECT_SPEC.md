@@ -104,7 +104,7 @@ The V2 roadmap is organized into these phases:
 - **P10 — Controlled migration and cutover**
   - P10-S1: local compatibility + synthetic rehearsal — completed;
   - P10-S2: copied-live-data IndexedDB beta contract — accepted historically, execution abandoned before export;
-  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; I2 migration/durability contract current.**
+  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; D-030/I2 migration-durability contract accepted; I2-I1 synthetic staging/import compatibility current.**
 
 Large new features should not outrun the persistence/security/cutover foundation.
 
@@ -151,7 +151,7 @@ The project keeps defense in depth:
 
 D-024 remains mandatory for the current browser-local stable production system until cloud cutover. Its synchronized-folder/24-hour manual-export write block is transitional and is not the intended final durability policy after managed cloud backup readiness is proven.
 
-Current paid-infrastructure budget is **US$ 0**. This does not silently weaken D-029: P10-S3-I2 must either demonstrate a zero-cost production/recovery arrangement that actually satisfies the accepted durability objective or keep cloud production cutover blocked.
+Current paid-infrastructure budget is **US$ 0**. D-030 resolves the architecture question conditionally: Supabase Free alone is not sufficient, but a Free canonical database may become production-eligible only after unattended off-site logical dumps, objective synchronized-copy verification, at least seven retained successful daily generations, exact-24h server-visible freshness enforcement and a restore drill are implemented/proven. Manual `easy-backup` remains secondary portability/contingency. Until those conditions pass, cloud production cutover remains blocked.
 
 ## 10. Repository governance
 

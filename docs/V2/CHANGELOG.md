@@ -4,6 +4,20 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-20 — P10-S3-I2 migration + zero-cost durability contract accepted as D-030
+
+P10-S3-I2 defined the real-data migration/reconciliation contract without moving real store data. Source inspection exposed a deliberate compatibility boundary: stable-v1 items normalize active but unclassified, while the current Supabase public `items` table requires active items to have categories. D-030 therefore forbids direct v1 insertion and selects a non-exposed/private staging path, explicit **current** item classification, then atomic promotion while historical stable-v1 order category snapshots remain null.
+
+The contract preserves stable item/reseller/transaction IDs, requires identity-sequence repair from PostgreSQL metadata and keeps structural/reference/financial reconciliation exact to R$ 0,00 difference.
+
+With paid infrastructure fixed at US$ 0, D-030 does not pretend Supabase Free has managed automatic backups. It conditionally accepts a future Free production posture only after provider-recommended logical `db dump` is made unattended on the trusted store PC, placed in an objectively verified off-site/synchronized recovery boundary, retains at least seven successful daily generations, drives an exact-24h server-visible fail-closed write guard and passes restore drills. Free-plan pausing remains an availability risk; it never enables offline-authoritative writes.
+
+Execution is decomposed so the next action is synthetic-only private staging/import compatibility. Backup automation, real Auth/runtime, real migration and canonical publication remain later explicit slices.
+
+Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
+
+---
+
 ## 2026-08-20 — P10-S3-I1 Supabase foundation proven with synthetic data
 
 P10-S3-I1 established the dedicated `easy-v2` Supabase/Postgres foundation in `sa-east-1` without importing any real store data. Repository/live migrations create the canonical category/item/reseller/transaction substrate plus server-managed operator authorization metadata. All exposed application tables have RLS. Financial create/reverse/correct operations cross one controlled PostgreSQL transaction boundary through public invoker RPCs backed by non-exposed privileged implementations.
