@@ -181,29 +181,46 @@ No real store data moved in contract definition.
 
 ##### P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility
 
-**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / SYNTHETIC ONLY**.
+**Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`.
 
-Required work:
+Accepted execution: `docs/V2/P10_S3_I2_I1_EXECUTION.md`.
 
-1. add a non-exposed/private staging/import boundary through reproducible migration(s);
-2. accept only the already-approved stable-v1 normalization;
-3. preserve stable item/reseller/transaction IDs and timestamps;
-4. permit legacy active-unclassified items only in staging;
-5. require explicit synthetic current-item classification before public promotion;
-6. preserve null historical category snapshots for stable-v1 orders;
-7. atomically promote categories/items/resellers/transactions;
-8. repair identity sequences using actual PostgreSQL metadata;
-9. prove exact structural/reference/financial reconciliation with synthetic stable-v1 fixtures;
-10. clean all synthetic rows/staging state;
-11. regenerate types as needed and run Supabase advisors + D-019.
+Completed proof:
 
-No backup automation, real Auth, runtime switch or real data in this slice.
+1. committed non-exposed/private staging/import migrations;
+2. reused only the already-approved stable-v1 normalization and rejected unexplained source fields;
+3. preserved stable item/reseller/transaction IDs and timestamps;
+4. permitted legacy active-unclassified items only in private staging;
+5. required complete explicit current-item classification before public promotion;
+6. preserved null historical category snapshots for stable-v1 orders;
+7. promoted categories/items/resellers/transactions atomically with rollback proof;
+8. repaired identity sequences using `pg_get_serial_sequence` metadata rather than hard-coded names;
+9. reconciled exact structure, references and integer-cent financial totals with synthetic fixtures;
+10. denied staging DML/function execution to browser/API roles;
+11. cleaned all synthetic public/staging/Auth state back to zero and completed advisor + repository QA evidence.
+
+Substantive D-019 `32403912177` / `96538355033` passed on merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b`: 0 lint errors / 82 warnings; 55 files / 231 Vitest PASS; 17/17 Playwright PASS; production build PASS. Exact final PR-tree validation remains part of PR #69 closure.
+
+No unattended backup automation, real Auth, runtime switch or real data was introduced in this slice.
 
 ##### P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof
 
-**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I1 PASSES`.
+**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / SYNTHETIC ONLY**.
 
-Synthetic-only future slice: trusted-PC scheduled `db dump`, protected credential boundary, objective off-site/sync verification, >=7 generations, server-visible exact-24h write guard and synthetic clean restore proof.
+Required bounded proof under D-030:
+
+1. implement a reproducible unattended Supabase/Postgres logical-dump path on the trusted-PC/scheduler boundary;
+2. keep dump credentials protected outside browser/client/Git and document only non-secret configuration boundaries;
+3. objectively verify successful arrival in the accepted off-site/synchronized recovery destination;
+4. retain at least seven successful daily generations under an objective rotation rule;
+5. make latest successful backup freshness visible to the server/database;
+6. fail all canonical business writes closed once freshness exceeds exactly 24 hours;
+7. prove the guard fails closed when backup evidence is stale/missing and reopens only after valid fresh evidence;
+8. restore an eligible synthetic dump into a clean disposable database boundary and reconcile structure/references/financial data exactly;
+9. dispose all synthetic recovery artifacts/data that should not persist in homologation;
+10. run relevant Supabase advisors and repository D-019 and record exact evidence.
+
+No real store data, real production Auth operator, Supabase-backed business-runtime switch, `main` publication, canonical URL switch or production cutover is authorized by I2-I2.
 
 ##### P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate
 
