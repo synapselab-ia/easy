@@ -35,7 +35,8 @@ Phase state:
 - **P10-S3 — Supabase canonical-persistence transition: `IN_PROGRESS` — D-029.**
 - **P10-S3-I1 — Supabase foundation with synthetic data only: `DONE / ACCEPTED`.**
 - **P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract: `DONE / ACCEPTED CONTRACT` — D-030.**
-- **P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility with synthetic data only: `NOT_STARTED` — CURRENT.**
+- **P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility with synthetic data only: `DONE / ACCEPTED`.**
+- **P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof with synthetic data only: `NOT_STARTED` — CURRENT.**
 
 ## Startup protocol for a new conversation
 
@@ -65,6 +66,7 @@ Phase-specific canonical evidence:
 - **`docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md` — authoritative D-029 final architecture and P10-S3 boundary.**
 - **`docs/V2/P10_S3_I1_EXECUTION.md` — accepted synthetic Supabase foundation execution evidence.**
 - **`docs/V2/P10_S3_I2_MIGRATION_GATE.md` — accepted D-030 real-data migration/reconciliation + zero-cost durability contract.**
+- **`docs/V2/P10_S3_I2_I1_EXECUTION.md` — accepted synthetic private stable-v1 staging/import compatibility proof.**
 
 ## Current technical baseline versus accepted final target
 
@@ -89,7 +91,7 @@ No real store data was ever moved into the V2 IndexedDB beta.
 - managed database backup becomes the primary durability layer after cloud cutover;
 - D-024 remains mandatory for the current browser-local stable system until cutover, but its 24-hour manual-export write guard is not the intended final cloud durability mechanism.
 
-P10-S3-I1 now provides the accepted dedicated Supabase schema/security/client **foundation**. D-030/P10-S3-I2 now defines the real migration/reconciliation and zero-cost durability contract, including private stable-v1 staging and unattended off-site logical backup prerequisites. The current user-facing business hooks/pages still use Dexie/IndexedDB; no real operator, real store data or production cutover has been introduced.
+P10-S3-I1 provides the accepted dedicated Supabase schema/security/client **foundation**. D-030/P10-S3-I2 defines the real migration/reconciliation and zero-cost durability contract. P10-S3-I2-I1 now provides the accepted private stable-v1 staging/import compatibility implementation with synthetic data only: exact historical source surface, explicit current-item classification, atomic promotion, metadata-driven sequence repair and exact reconciliation are proven without fabricated historical categories. The current user-facing business hooks/pages still use Dexie/IndexedDB; no real operator, real store data or production cutover has been introduced.
 
 ## Repository / deployment baseline entering P10-S3
 
@@ -97,6 +99,7 @@ P10-S3-I1 now provides the accepted dedicated Supabase schema/security/client **
 - candidate/rehearsal runtime SHA remains **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**, tree **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**;
 - P10-S2 contract integrated as **`4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`**, tree **`2ab1e7b476ef620cf067faecd7c996fcf362c88a`**;
 - P10-S2-I1 pre-export NO-GO record integrated as **`e06c659ecdb3aee79e2e451b00eb85d63c8b8612`**, tree **`4da05cdda530b1e7000d01460201dff1daf65910`**;
+- P10-S3-I2 contract entered this slice integrated on `develop` as **`6bb0f8d2a332f978b182b0f6e88c890c6d175898`**;
 - both `main` and `develop` remain unprotected branches, so D-019/PR discipline remains a process requirement;
 - stable `main` still deploys its historical application to GitHub Pages;
 - repository `vercel.json` continues to disable Git-triggered Vercel deployments;
@@ -123,7 +126,7 @@ P10-S1-I2 synthetically proved the normalization mechanism:
 - after classification, supported order/correction flows operate normally;
 - a final V2 backup containing a D-026 item/date correction can be restored into a disposable fresh browser context and re-exported with identical business data.
 
-This evidence remains valuable for the future stable-v1 → Supabase import path. It does **not** authorize real-data import by itself.
+P10-S3-I2-I1 then reused the same accepted v1 normalization in a deterministic private Supabase staging/import path and proved it with synthetic fixtures. Stable IDs/timestamps, legacy null category history and exact-cent financial reconciliation survive promotion; active current items require explicit classification. This still does **not** authorize any real-data import.
 
 ## P10-S1-I1 blocker resolution
 
@@ -250,21 +253,39 @@ P10-S3-I1 synthetic Supabase foundation proof:
 - corrected authoritative D-019 **`32394126648`** / **`96506890991`**, exact validated PR merge ref **`c12a535b665eb25626a1b3bb0aa15cd034808e00`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS;
 - final synthetic-data disposal verified all five application/authorization tables at 0 rows; no real store data moved.
 
-## P10 boundary entering P10-S3-I2-I1
+P10-S3-I2 migration/durability contract proof:
+
+- D-030 contract closure D-019 `32399725148` / `96524749660` passed on merge ref `f18f9b6c3d77b1b95284e92487be8819a9a48922`;
+- contract integrated to `develop` as `6bb0f8d2a332f978b182b0f6e88c890c6d175898`;
+- no real data/Auth/runtime/publication moved in contract definition.
+
+P10-S3-I2-I1 synthetic staging/import proof:
+
+- private staging migrations `20260820181848`, `20260820182305`, `20260820182344` applied/reproduced against empty `easy-v2` homologation;
+- synthetic invalid-reference/classification/promotion rollback cases passed; successful import preserved IDs `10/25`, `7/42`, `100/250/900`, legacy null category history and exact timestamps;
+- integer-cent reconciliation passed: gross `2500`, payments `525`, signals `750`, net `1225`, aggregate positive debt `1975`, exact per-reseller balances;
+- identity sequence repair used PostgreSQL metadata and verified next values above maxima;
+- Security Advisor 0 lints; Performance Advisor only INFO `unused_index` findings, no staging `unindexed_foreign_keys`;
+- diagnostic D-019 `32403226500` / `96536125014` correctly blocked TS18048 only at build after lint/231 Vitest/17 Playwright had passed;
+- corrected substantive D-019 **`32403912177`** / **`96538355033`**, exact merge ref **`9844a2f0095fa3443aed358892f9801f1c2bc64b`**: 0 lint errors / 82 warnings; 55 files / 231 Vitest PASS; 17/17 Playwright PASS; production build PASS;
+- final homologation cleanup rechecked 0 Auth users, 0 operator/public business rows and 0 private staging/classification rows;
+- exact final tree-equivalent D-019 is recorded in PR #69 closure evidence before integration.
+
+## P10 boundary entering P10-S3-I2-I2
 
 1. `main` remains untouched at the historical stable baseline;
 2. no live-store data has moved into V2/Supabase;
 3. no real Supabase Auth user/operator exists yet;
-4. the dedicated `easy-v2` project remains the single mutable cloud homologation project while it contains no real store data;
-5. P10-S3-I1 schema/RLS/RPC foundation remains accepted and the live Security Advisor is 0 lints;
-6. the live project remained empty during contract definition: 0 operator/category/item/reseller/transaction rows and 0 Auth users;
+4. the dedicated `easy-v2` project remains the single mutable cloud homologation project and is currently empty of Auth/application/staging data;
+5. P10-S3-I1 schema/RLS/RPC foundation and P10-S3-I2-I1 private stable-v1 staging/import compatibility are accepted synthetically;
+6. Security Advisor remains 0 lints; current performance findings are INFO-only unused indexes on an empty environment;
 7. D-030 accepts a zero-cost production-durability route only conditionally: Supabase Free is insufficient by itself and must be paired with proven unattended off-site logical dumps, >=7 retained successful generations, server-visible exact-24h freshness enforcement and restore proof;
 8. Free-plan pause is accepted only as an availability risk: connectivity/service loss blocks writes and never authorizes local offline financial writes;
-9. stable-v1 active items are legitimately unclassified, while the current public Supabase schema requires active items to have categories; direct v1→`public.items` insertion is therefore NO-GO;
-10. the accepted compatibility path is a private/non-exposed staging boundary, exact v1 normalization, explicit current-item classification, then atomic canonical promotion without backfilling historical transaction categories;
-11. P10-S3-I2 execution is decomposed; the current action is synthetic staging/import compatibility only;
-12. no backup automation, real Auth onboarding, Supabase-backed business-runtime cutover, real-data export/import, `main` publication or canonical URL switch is authorized by I2-I1.
+9. the private stable-v1 staging/import path is now reproducible/proven, but using it with real store data remains explicitly unauthorized;
+10. P10-S3-I2-I2 is the only next slice and may implement/prove the unattended logical-dump/off-site/freshness/restore layer with synthetic data only;
+11. P10-S3-I2-I3 Auth/runtime candidate and P10-S3-I2-I4 real migration remain not authorized until their prerequisite slices pass;
+12. no real-data export/import, real Auth onboarding, Supabase-backed business-runtime switch, `main` publication, canonical URL switch or production cutover is authorized by I2-I2.
 
 ## NEXT_ACTION
 
-**Execute only P10-S3-I2-I1 — implement and prove the private stable-v1 staging/import compatibility path with synthetic data only under D-030 / `docs/V2/P10_S3_I2_MIGRATION_GATE.md`. Work directly against the current `easy-v2` homologation project only through reproducible migrations while it remains empty of real store data. Add a non-exposed staging/import boundary that accepts the already-approved stable-v1 normalization, preserves stable item/reseller/transaction IDs and timestamps, permits legacy active-unclassified items only in staging, requires explicit synthetic current-item classification before promotion, atomically promotes categories/items/resellers/transactions into the public schema without fabricating historical category snapshots, repairs identity sequences from database metadata, and proves exact structural/reference/financial reconciliation plus full synthetic cleanup. Regenerate types as needed, run Supabase security/performance advisors and repository D-019. Do not implement the unattended backup automation, real Auth operator, Supabase-backed business-runtime switch, real store export/import, `main` publication, canonical URL switch or production cutover in this slice.**
+**Execute only P10-S3-I2-I2 — implement and prove the zero-cost unattended backup/recovery path with synthetic data only under D-030 / `docs/V2/P10_S3_I2_MIGRATION_GATE.md`. Establish a reproducible trusted-PC/scheduler logical `db dump` boundary with credentials protected outside browser/client/Git, objectively verify successful off-site/synchronized-copy arrival, retain at least seven successful daily generations, expose the latest successful backup timestamp to the server/database, enforce the exact-24h fail-closed business-write guard, and prove both stale/missing-evidence blocking and recovery after fresh valid evidence. Restore an eligible synthetic dump into a clean disposable database boundary and reconcile structure/references/financial data exactly, then clean synthetic recovery state. Run relevant Supabase advisors and repository D-019 and record exact evidence. Do not create/use the real production Auth operator, switch the business runtime from Dexie to Supabase, export/import real store data, modify/publish `main`, switch the canonical URL or perform production cutover in this slice.**
