@@ -4,6 +4,28 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-20 — P10-S2 copied-live-data beta contract defined; D-028 accepted
+
+P10-S2 contract definition completed without moving any live-store data and without changing runtime, schema, backup envelope, deployment configuration, `main` or D-016.
+
+Authoritative contract: `docs/V2/P10_S2_BETA_GATE.md`.
+
+D-028 defines the future copied-live-data beta as a point-in-time, single-operator, isolated and disposable non-production exercise. Stable remains the only authoritative production system; beta state never synchronizes or promotes back to stable.
+
+Before any future real-data export, P10-S2-I1 must prove an exact D-019-passing Git SHA/tree, READY deployment identity, current alias→deployment mapping when a mutable alias is used, trusted operator/browser isolation and the approved D-024 working/recovery boundary.
+
+The source snapshot is identified only by non-sensitive timestamp/file-size/SHA-256 metadata. Raw backups, identifiable screenshots/PDFs and transaction payloads are prohibited from Git/GitHub, CI artifacts, chat and canonical docs.
+
+Reconciliation is exact and fail-closed. Before any beta mutation, entity/type counts, IDs, references and stored business values must survive accepted v1→V2 normalization without unexplained differences. Gross orders, payments, signals, net movement, every reseller balance and aggregate positive debt must reconcile exactly; any displayed difference of R$ 0,01 is NO-GO.
+
+D-018 checkpoint and D-024 blocking/setup/current-state proof are mandatory before beta writes. A post-reconciliation V2 backup becomes the rollback baseline. Minimum beta acceptance then requires unclassified-item gating, representative classification, one beta-only order, one D-026 correction, final V2 export and disposable fresh-context restore/re-export with identical business data.
+
+Any mismatch, unexpected warning, isolation/data-boundary breach, D-024 bypass or stable-origin write is NO-GO. Beta-specific copied real data must be removed from operator-controlled locations within 24 hours after the gate is accepted, rejected or abandoned. Only sanitized metadata/hashes/counts/PASS-FAIL evidence remains canonical.
+
+**Result:** P10-S2 contract is `DONE / ACCEPTED`; P10-S2-I1 copied-live-data execution is `NOT_STARTED`. No real store backup has been exported/imported. A future P10-S2-I1 PASS may authorize only defining the production-cutover gate, not cutover itself.
+
+---
+
 ## 2026-08-19 — P10-S1-I2 synthetic migration/recovery rehearsal passed; P10-S1 closed
 
 P10-S1-I2 executed the bounded non-production rehearsal required by D-027. No live-store backup was exported/imported and `main` remained untouched.
@@ -38,7 +60,7 @@ P10 began by reconstructing the stable/integration/deployment/recovery boundary 
 
 D-027 accepted fail-closed sequencing: first remove the D-026 backup-validation blocker, then perform a synthetic deployed rehearsal, while keeping live-store data, `main` publication and production cutover outside P10-S1.
 
-Contract D-019 **`32290159119`** / **`96188851730`** passed on PR #58 merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75`: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; build PASS**. PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`, tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
+Contract D-019 **`32290159119`** / **`96188851730`** passed on PR #58 merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75`: **0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 PASS; build PASS**. PR #58 integrated as `5c7a5dc23af435711059deff75cf7862972662a1`, tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
 
 ---
 

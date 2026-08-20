@@ -1,7 +1,7 @@
 # Easy V2 — Canonical Backlog
 
 **Status:** canonical ordered backlog  
-**Updated:** 2026-08-19
+**Updated:** 2026-08-20
 
 `STATUS.md` determines active work. Legacy `tasks/` checkboxes are historical only.
 
@@ -58,7 +58,7 @@ Detailed verification record: `docs/V2/P9_DATE_USABILITY.md`.
 
 ## P10 — Controlled beta, migration and cutover
 
-**Status:** `IN_PROGRESS` — 2026-08-19.
+**Status:** `IN_PROGRESS` — 2026-08-20.
 
 P10 is fail-closed. Completion of a prior slice never authorizes the next data/publication boundary implicitly.
 
@@ -144,21 +144,52 @@ Neither diagnostic attempt was treated as product acceptance evidence.
 
 ### P10-S2 — Copied-live-data beta acceptance gate
 
+**Status:** `DONE / ACCEPTED` — 2026-08-20.  
+**Decision:** D-028.  
+**Authoritative contract:** `docs/V2/P10_S2_BETA_GATE.md`.
+
+Contract definition only was executed in this slice. No real store backup was exported/imported and no runtime/deployment/persistence change was made.
+
+D-028 requires, before any future copied-data beta execution:
+
+- exact D-019-passing candidate Git SHA/tree + READY deployment identity;
+- current alias→deployment verification when a mutable alias is used;
+- single designated operator on a trusted isolated browser context under D-016;
+- copied real data confined to the trusted operator machine/browser and the existing D-024 recovery boundary;
+- no raw/identifiable real data in GitHub, CI artifacts, chat or canonical docs;
+- immutable source snapshot identity recorded only by timestamp/file-size/SHA-256 metadata;
+- only already accepted stable-v1 normalization warnings;
+- exact structural reconciliation of counts, IDs, references and stored business values before any beta mutation;
+- exact financial reconciliation of orders, payments, signals, net movement, every reseller balance and aggregate positive debt, with zero cent-level tolerance;
+- D-018 checkpoint + D-024 block/setup/current-state proof before beta writes;
+- a post-reconciliation V2 backup as rollback baseline;
+- minimum beta-only classification/order/D-026 correction and final fresh-context round-trip checks;
+- fail-closed NO-GO on any mismatch, unexpected warning, isolation/data-boundary breach, D-024 bypass or stable-origin write;
+- disposal of beta-specific copied real data from operator-controlled locations within 24 hours of gate closure;
+- sanitized metadata/hashes/counts/PASS-FAIL evidence only in the repository.
+
+A future P10-S2-I1 PASS may authorize only defining the later production-cutover gate.
+
+### P10-S2-I1 — Copied-live-data beta execution
+
 **Status:** `NOT_STARTED` — **CURRENT**.
 
-The next action is **contract definition only**. Before any real store backup is exported or imported, P10-S2 must define and accept the minimum criteria for a non-production beta using a copy of the live-store dataset, including:
+Execution must follow D-028 in order:
 
-- data-handling and access boundary;
-- reconciliation evidence and tolerances;
-- D-024/recovery requirements on the beta origin;
-- rollback/no-go behavior;
-- disposal of copied data and temporary artifacts;
-- explicit go/no-go evidence required before any copied-live-data beta may actually occur.
+1. re-verify exact candidate/D-019/deployment identity;
+2. verify operator/browser isolation and approved D-024 working/recovery location;
+3. only after the pre-export GO checklist passes, export one immutable point-in-time stable-v1 backup;
+4. preflight/restore and exact structural + financial reconciliation before mutation;
+5. establish D-018/D-024 recovery readiness and capture rollback baseline;
+6. run the minimum disposable operator beta checks;
+7. prove final V2 fresh-context round-trip with identical business data;
+8. dispose beta-specific copied data within 24 hours;
+9. retain only sanitized evidence.
 
-During this contract-definition action, it is **not authorized** to export/import the live-store dataset, modify/publish `main`, publish stable V2, switch the canonical URL, perform production cutover or change D-016.
+Any objective mismatch or contract breach is NO-GO and blocks acceptance.
 
 ### Later P10 work
 
 **Status:** `NOT_AUTHORIZED`.
 
-Actual copied-live-data beta execution, real-data reconciliation, final write freeze, `main` publication, canonical URL switch, rollback after production V2 writes and decommissioning of the original stable app remain outside the current action and require later canonical acceptance.
+Final write freeze, `main` publication, canonical URL switch, production restore/migration, V2 production writes, rollback after production V2 writes and decommissioning of the original stable app remain outside the current action and require later canonical acceptance.

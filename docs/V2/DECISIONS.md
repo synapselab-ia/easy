@@ -1,6 +1,6 @@
 # Easy V2 — Decision Ledger
 
-**Updated:** 2026-08-19
+**Updated:** 2026-08-20
 
 Only accepted decisions belong here. Open questions remain in `STATUS.md`/`BACKLOG.md`.
 
@@ -192,11 +192,36 @@ Accepted P10 gate:
 
 Detailed plan: `docs/V2/P10_CUTOVER_PLAN.md`.
 
+## D-028 — Copied-live-data beta is isolated, exact-reconciliation, recoverable and disposable
+**Status:** ACCEPTED  
+**Date:** 2026-08-20
+
+P10-S2 may use a copy of the actual live-store dataset only as a bounded, point-in-time, non-production acceptance exercise. Stable remains the sole authoritative production system throughout; beta state is disposable and must never synchronize or be manually promoted back to stable.
+
+Accepted contract:
+
+1. Before any real-data export, one exact Git SHA/tree, passing D-019 evidence and exact READY browser deployment identity must be recorded. If a mutable public alias is used, current deployment metadata must re-prove alias → deployment identity. Failure is NO-GO before export.
+2. P10-S2-I1 remains single-operator/single-beta-origin under D-016 on a trusted machine/browser context clearly isolated from stable.
+3. Copied real data may exist only in the stable source, one source JSON on the trusted operator machine, the isolated beta browser origin, required D-018 checkpoint/V2 backup artifacts and the existing approved D-024 synchronized recovery-copy boundary.
+4. Raw backups, identifiable screenshots/PDFs and transaction payloads may not enter Git/GitHub, CI artifacts, chat or canonical docs. Snapshot/evidence identity uses sanitized timestamp, file size, SHA-256, counts and PASS/FAIL metadata.
+5. Stable-v1 preflight may normalize only already accepted behavior: missing lifecycle → active, missing `occurredAt` → `createdAt`, and no fabricated categories/category assignments/history. Any unexplained warning is NO-GO.
+6. Before any beta business mutation/classification, structural reconciliation must be exact: entity/type counts, IDs, references, stored monetary/business values and dates must be preserved under the accepted normalization, and a normalized semantic diff must be empty apart from documented v1→V2 additions/envelope timestamps.
+7. Financial reconciliation must be exact for gross order value, payments, signals, net movement, every reseller balance and aggregate positive reseller debt. Stored numeric values must be identical and any displayed difference of R$ 0,01 is NO-GO; no non-zero tolerance is accepted.
+8. Objective reconciliation is mandatory; sanitized human spot checks are supplementary only.
+9. D-018 restore/checkpoint must pass. D-024 must be observed blocking normal writes before setup, then a fresh validated V2 backup must be synchronized/verified and recovery health observed current before beta writes.
+10. The post-reconciliation V2 backup is the beta rollback baseline. D-024's 24-hour guard remains mandatory for the duration of the beta.
+11. Minimum beta-only acceptance requires unclassified-item order blocking, representative beta category/classification, one beta-only order, one D-026 audited correction, correct effective financial/linkage behavior, final V2 export and disposable fresh-context restore/re-export with identical business data.
+12. Any mismatch, unexpected warning, D-018/D-024 failure, isolation/data-boundary breach, D-024 bypass, stable-origin write or failed final round-trip is fail-closed NO-GO. Beta state is never written back to stable.
+13. Within 24 hours after P10-S2-I1 is accepted, rejected or abandoned, beta-specific copied real data must be removed from operator-controlled locations, including source-copy export, beta checkpoints/exports/PDFs, beta origin IndexedDB/recovery state and synchronized-folder beta artifacts; trash/provider recovery areas are emptied when directly available.
+14. Ordinary stable production data and pre-existing operational backup policy are not deleted by beta disposal.
+15. A P10-S2-I1 PASS authorizes only proposing/defining the next production-cutover gate. It does not authorize final freeze, `main` publication, canonical URL switch, production restore/writes, post-production rollback or D-016 change.
+
+Detailed authoritative contract: `docs/V2/P10_S2_BETA_GATE.md`.
+
 ---
 
 # Open decisions
 
 - D-016 local vs cloud only if later direct evidence proves a reopen trigger;
 - whether any future directly observed inactive-entity correction case justifies a bounded lifecycle exception beyond D-026;
-- copied-live-data beta acceptance criteria after P10-S1 completes;
-- final write-freeze, rollback and stable-publication policy for the eventual production cutover.
+- final write-freeze, rollback and stable-publication policy for the eventual production cutover after a successful copied-live-data beta.
