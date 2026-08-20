@@ -1,12 +1,12 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** D-029 accepted architecture direction; Supabase implementation not started  
+**Status:** D-029 accepted; P10-S3-I1 Supabase foundation implemented/proven; runtime cutover not started  
 **Integration target:** `develop`  
 **Updated:** 2026-08-20
 
 ## 1. Current implemented runtime
 
-The code currently integrated before D-029 remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB.
+The current user-facing application remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB. P10-S3-I1 adds a Supabase/Postgres foundation in repository/live infrastructure, but existing business hooks/pages have not been switched to it.
 
 Current browser database: `ResellerManagerDB`, Dexie **V5** with:
 
@@ -96,7 +96,7 @@ The current Dexie implementation can perform correction/reversal atomically insi
 
 The Supabase migration must preserve this guarantee. The browser may **not** implement a correction as two independent network mutations that could partially succeed.
 
-P10-S3 must provide a single PostgreSQL transaction boundary, normally through a database function/RPC or equivalent server-side transactional operation. Prefer normal invoker/RLS-compatible semantics. `SECURITY DEFINER` is not accepted merely as a shortcut around authorization problems.
+P10-S3-I1 now provides that single PostgreSQL boundary. Public `create_transaction`, `reverse_transaction` and `correct_transaction` RPCs are `SECURITY INVOKER`; privileged implementations live in the non-exposed `private` schema with fixed search paths and explicit approved-operator checks. Browser direct transaction DML is unavailable. Supabase Security Advisor returned 0 lints after this hardening.
 
 ## 6. D-014 occurrence dates
 
@@ -145,7 +145,7 @@ Requirements:
 6. browser configuration contains only project URL plus publishable client key;
 7. `service_role`/secret keys never enter client bundles, Git, docs or public Vercel environment variables.
 
-The exact initial allow-list/profile table and policies are P10-S3-I1 implementation details and require policy tests.
+P10-S3-I1 implements the initial model as `public.easy_operators`: a server-managed allow-list keyed by Supabase Auth UUID. All five public application tables have RLS; anonymous table access is absent; authenticated business access requires the approved-operator predicate; `transactions` is client read-only outside the controlled RPC boundary.
 
 ## 9. Dexie and connectivity after D-029
 
@@ -178,7 +178,7 @@ After Supabase is formally accepted as production canonical persistence:
 
 D-024's 24-hour manual-export write block is not intended to survive as the primary cloud production durability mechanism. It remains active until cloud cutover so the existing stable application does not lose its current protection prematurely.
 
-Production may not claim that human backup dependency is removed while using a cloud tier that lacks the required managed backup/availability guarantee.
+Production may not claim that human backup dependency is removed while using a cloud tier that lacks the required managed backup/availability guarantee. The current paid-infrastructure budget is US$ 0, so P10-S3-I2 must either prove a zero-cost recovery posture that genuinely satisfies D-029 or leave production cutover blocked; paid Supabase features may not be assumed.
 
 ## 11. Stable → final cloud migration route
 
@@ -233,7 +233,7 @@ D-029 now marks P10-S2-I1 **ABANDONED / SUPERSEDED BEFORE EXPORT**. There is no 
 
 ## 13. Supabase development discipline
 
-A dedicated Easy Supabase project is required; unrelated application databases must not be reused.
+P10-S3-I1 provisioned the dedicated Easy Supabase project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`; unrelated application databases are not reused.
 
 Before real data:
 
@@ -311,20 +311,21 @@ Known React test warnings, mocked-select DOM warnings, dependency/audit notices,
 - P10-S1-I2: evidence-only PR #62, authoritative run `32298906351` / `96216688953`; remote rehearsal 1/1 PASS; PR closed without merge.
 - P10-S2 contract: PR #64 final D-019 `32380528003` / `96462340384`; integrated as `4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`.
 - P10-S2-I1 pre-export record: PR #65 final D-019 `32382928429` / `96470305608`; integrated as `e06c659ecdb3aee79e2e451b00eb85d63c8b8612`, tree `4da05cdda530b1e7000d01460201dff1daf65910`.
+- P10-S3-I1 synthetic foundation: diagnostic D-019 `32388839983` / `96489804473` blocked TS2559; corrected authoritative D-019 `32394126648` / `96506890991` passed on merge ref `c12a535b665eb25626a1b3bb0aa15cd034808e00` with 0 errors / 82 lint warnings, 54 files / 225 Vitest PASS, 17/17 Playwright PASS and build PASS.
 
-## 17. Boundary entering P10-S3-I1
+## 17. Boundary entering P10-S3-I2
 
-P10-S3-I1 is allowed to build/prove the **synthetic Supabase foundation only**.
+P10-S3-I1 is accepted as the **synthetic Supabase foundation**: dedicated project, reproducible migrations, RLS/authorization, controlled transactional financial RPCs, typed client, advisor review, synthetic correction/reconciliation proof and zero-row cleanup are complete.
 
-It may provision a dedicated Supabase project after the required organization/cost choice, establish schema/Auth/RLS/transactional functions, wire the client and run synthetic tests.
+P10-S3-I2 is contract definition only. It must specify the controlled stable-v1 source snapshot, real operator onboarding, deterministic import/identity repair, structural/reference/financial reconciliation, rollback/recovery and candidate identity before real data. With a current US$ 0 paid-infrastructure budget, it must not assume Pro/PITR; if D-029 durability cannot be met at zero cost, cutover remains blocked.
 
 It may not:
 
-1. import the live store dataset;
+1. export/import the live store dataset;
 2. modify/publish `main`;
 3. switch the canonical URL;
 4. perform production cutover;
-5. weaken D-012/D-013/D-025/D-026;
+5. weaken D-012/D-013/D-025/D-026/D-029;
 6. expose anonymous business access or privileged client secrets;
 7. introduce offline write synchronization without a new explicit gate.
 

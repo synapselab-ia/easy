@@ -135,7 +135,7 @@ Data boundary:
 
 Detailed record: `docs/V2/P10_S2_I1_EXECUTION.md`.
 
-## D-029 / P10-S3 architecture redirect — PASS / ACCEPTANCE IN REVIEW
+## D-029 / P10-S3 architecture redirect — PASS / INTEGRATED
 
 D-029 changes only the accepted **future persistence architecture**. It reopens/supersedes D-016 for final production persistence, selects Supabase/Postgres as canonical final datastore and Vercel as final frontend host, retains manual/logical Easy backup as independent secondary protection, and keeps the current stable/D-024 boundary in place until cloud cutover.
 
@@ -161,7 +161,31 @@ Scope proof:
 - P10-S2-I1 becomes `ABANDONED / SUPERSEDED BEFORE EXPORT` only because the final persistence route changed before data movement;
 - P10-S3-I1 synthetic Supabase foundation is the next bounded action and is not executed by D-029 acceptance itself.
 
-A final D-019 after this QA-ledger append and the historical changelog correction is required before PR #66 integration.
+Final D-019 `32386064578` / `96480732008` passed on exact validated merge ref `2d6936cd8f74d2205f1c0b0a2f696287b66ae2dc`. PR #66 squash-integrated to `develop` as `0e054bc5e640c35ce567ccd710d9574cf1a93454`, tree `fe92fb0626449ba30456e85f37152e43f1faf864`. No real store data moved and `main` remained untouched.
+
+## P10-S3-I1 Supabase foundation — PASS / ACCEPTED
+
+P10-S3-I1 used synthetic data only against dedicated project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`. Live/repository migrations are `20260820154034_p10_s3_i1_foundation` and `20260820154402_harden_transaction_rpc_boundary`.
+
+Database/security proof:
+
+- RLS enabled on `easy_operators`, `categories`, `items`, `resellers`, `transactions`;
+- `anon` has no application-table grant; authenticated category/item/reseller CRUD requires approved-operator RLS; transaction direct DML is SELECT-only;
+- synthetic authorized UUID passed the allow-list predicate; unauthorized UUID saw no rows and could not call financial mutations;
+- public financial RPC wrappers are invoker functions; privileged implementations are confined to the non-exposed `private` schema with explicit operator assertion;
+- changed-item correction captured replacement-time snapshot; same-item correction preserved historical D-025 category snapshot;
+- intentionally invalid correction rolled back atomically with no partial reversal/link;
+- final Security Advisor: **0 lints**;
+- Performance Advisor: INFO-only `unused_index` notices expected on the empty/tiny synthetic dataset;
+- synthetic cleanup verified 0 rows in all five application/authorization tables.
+
+Repository validation:
+
+- diagnostic D-019 `32388839983` / `96489804473` correctly blocked TS2559 in the new Supabase env typing after lint (0/82), Vitest (54/225) and Playwright (17/17) had passed;
+- minimal explicit-env-boundary fix committed as `3f1f49c002c3c1a8531181ec66e995e7f753da8e`;
+- authoritative substantive D-019 **`32394126648`** / **`96506890991`** passed on exact PR merge ref **`c12a535b665eb25626a1b3bb0aa15cd034808e00`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+
+Data/cutover boundary: no real store data, real operator cutover, `main` publication, canonical URL switch or production cutover occurred. Current user-facing runtime remains Dexie. Detailed evidence: `docs/V2/P10_S3_I1_EXECUTION.md`.
 
 ## Known non-blocking debt
 

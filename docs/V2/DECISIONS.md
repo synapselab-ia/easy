@@ -242,9 +242,11 @@ This is an explicit D-016 reopen trigger.
 24. No real store data may enter Supabase until the synthetic schema/Auth/RLS/transactional-integrity foundation passes its own gate.
 25. D-029 itself does not publish `main`, switch the canonical URL or authorize production cutover.
 
-### Next implementation gate
+### Implementation evidence and next gate
 
-P10-S3-I1 must use synthetic data only to provision/prove a dedicated Supabase foundation, including schema migrations, Auth/RLS, atomic correction/reversal, React/Vite client integration, advisor review and D-019.
+P10-S3-I1 accepted a dedicated `easy-v2` project in `sa-east-1`, the `easy_operators` allow-list authorization model, reproducible schema migrations, RLS on all exposed application tables, controlled transactional financial RPCs and a typed publishable-key-only client foundation. Synthetic proof and advisors passed; no real store data moved.
+
+P10-S3-I2 is now the bounded contract-definition gate for real-data migration/reconciliation and production durability. The current paid-infrastructure budget is US$ 0. This is a constraint, not a silent reversal of item 22 above: if an acceptable zero-cost recovery posture cannot satisfy D-029, production cutover remains blocked.
 
 Detailed authoritative contract: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
 
@@ -252,9 +254,8 @@ Detailed authoritative contract: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
 
 # Open decisions
 
-- exact Supabase organization/project/region choice for the dedicated Easy project;
-- exact initial one-operator authorization table/policy shape;
-- production Supabase plan and whether PITR is justified by accepted RPO/cost;
+- with current paid-infrastructure budget fixed at US$ 0, whether a zero-cost production/recovery posture can satisfy D-029; otherwise production cutover remains blocked;
+- whether PITR or another paid durability mechanism becomes justified only if budget constraints later change;
 - whether a later observed offline-write requirement justifies a durable outbox/synchronization protocol;
 - whether any future directly observed inactive-entity correction case justifies a bounded lifecycle exception beyond D-026;
 - final write-freeze, rollback and stable-publication policy after the Supabase real-data migration/reconciliation gate passes.

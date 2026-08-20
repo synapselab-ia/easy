@@ -1,6 +1,6 @@
 # Easy V2 — P10 Supabase Architecture Gate
 
-**Status:** `ACCEPTED DESIGN / IMPLEMENTATION NOT STARTED`  
+**Status:** `ACCEPTED DESIGN / P10-S3-I1 FOUNDATION PROVEN`  
 **Date:** 2026-08-20  
 **Decision:** D-029  
 **Scope:** reopen D-016 before any copied-live-data beta export and redirect the final V2 toward Vercel + Supabase/Postgres
@@ -166,7 +166,7 @@ Current Supabase production guidance verified on 2026-08-20:
 - free projects may be paused for inactivity and do not provide the same production backup guarantee;
 - PITR is a separate paid option and is not required by D-029.
 
-Therefore the final production cutover may not claim removal of human backup dependency while relying only on a free/pausable database tier. The exact paid-plan/cost choice remains a later pre-production gate.
+Therefore the final production cutover may not claim removal of human backup dependency while relying only on a free/pausable database tier **unless a later gate proves an alternative zero-cost recovery arrangement that genuinely satisfies the same durability objective**. The current paid-infrastructure budget is US$ 0, so P10-S3-I2 must resolve this objectively or keep cutover blocked; paid features may not be assumed.
 
 ### D-024 transition
 
@@ -244,20 +244,22 @@ D-029 is accepted when canonical documentation agrees that:
 
 NO-GO for implementation if a proposed shortcut would expose business data anonymously, ship privileged keys to the browser, weaken D-012/D-013/D-025/D-026 integrity, or import real store data before schema/security/reconciliation gates are proven.
 
-## 14. Next bounded implementation gate
+## 14. P10-S3-I1 accepted foundation / next bounded gate
 
-After D-029 is integrated, the next action is **P10-S3-I1 — provision and prove the Supabase foundation using synthetic data only**.
+P10-S3-I1 is accepted. Execution evidence is canonical in `docs/V2/P10_S3_I1_EXECUTION.md`.
 
-That action must:
+Accepted foundation:
 
-1. create/select a dedicated Easy Supabase project in an explicitly chosen organization and region;
-2. establish reproducible schema migrations for categories/items/resellers/transactions and minimal authorization metadata;
-3. enable and test RLS for every exposed application table;
-4. establish the initial single-operator Auth/authorization model;
-5. implement the server-side atomic correction/reversal boundary required by D-013/D-026;
-6. wire the React/Vite client through `supabase-js` using only URL + publishable key;
-7. keep real store data out;
-8. run database security/performance advisors plus repository D-019;
-9. document exact synthetic evidence and the next migration gate.
+1. dedicated project `easy-v2` / `hrmkkhqfyfoqucwbcszq`, organization `synapselab-ia's Org`, region `sa-east-1`;
+2. reproducible migrations `20260820154034` and `20260820154402`;
+3. RLS on all five public application/authorization tables and an explicit `easy_operators` Auth UUID allow-list;
+4. public invoker financial RPCs backed by non-exposed privileged implementations, preserving D-013/D-026 atomicity;
+5. typed `supabase-js` client foundation using only URL + publishable key;
+6. synthetic authorization/correction/history/rollback proof;
+7. final Security Advisor 0 lints; performance advisor INFO-only unused-index notices on an empty/tiny synthetic dataset;
+8. all synthetic rows disposed and final application-table counts zero;
+9. repository D-019 passed after the implementation type fix; no real store data moved.
 
-No stable publication, canonical URL switch or production cutover is authorized by P10-S3-I1.
+The next action is **P10-S3-I2 — define and accept the real-data migration/reconciliation + production-durability contract before any real export/import**. The current paid-infrastructure budget is US$ 0, so this gate may not assume Supabase Pro, PITR or another paid add-on. It must either prove a zero-cost recovery posture that actually satisfies D-029 or keep production cutover blocked.
+
+No real-data export/import, stable publication, canonical URL switch or production cutover is authorized by P10-S3-I2 contract definition.
