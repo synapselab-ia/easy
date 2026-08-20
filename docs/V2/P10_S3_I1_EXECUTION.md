@@ -161,6 +161,29 @@ Final project row counts:
 
 No real store backup or real reseller/item/transaction data entered Supabase, GitHub, CI, docs or chat.
 
+## Repository D-019 and final live recheck
+
+The first repository D-019 after the foundation code correctly failed only at TypeScript build validation:
+
+- run `32388839983`, job `96489804473`;
+- lint had already passed with 0 errors / 82 warnings;
+- Vitest had passed 54 files / 225 tests;
+- Playwright had passed 17/17;
+- build blocked on TS2559 because `ImportMetaEnv` was being passed structurally as `EasySupabaseEnv`.
+
+The client boundary was narrowed to read only the two explicit Vite variables. The corrected authoritative run then passed:
+
+- run **`32394126648`**, job **`96506890991`**;
+- exact validated PR merge ref **`c12a535b665eb25626a1b3bb0aa15cd034808e00`**;
+- ESLint **0 errors / 82 warnings**;
+- Vitest **54 files / 225 tests PASS**;
+- Playwright **17/17 PASS**;
+- production build **PASS**.
+
+Known existing non-blocking debt remains visible: React `act(...)`/mock-select warnings, lint warning debt, 17 npm audit findings (2 low / 4 moderate / 11 high), Actions runtime deprecation notices and the Vite large-chunk warning. None produced an objective D-019 failure.
+
+A final live Supabase recheck after cleanup confirmed RLS enabled on all five public tables, public financial wrappers as invoker functions, privileged implementations confined to `private`, Security Advisor at 0 lints, performance advisor at INFO-only unused-index notices, and all five application/authorization tables at 0 rows.
+
 ## Boundary after P10-S3-I1
 
 P10-S3-I1 proves only the cloud persistence foundation. It does **not** authorize:
@@ -173,4 +196,4 @@ P10-S3-I1 proves only the cloud persistence foundation. It does **not** authoriz
 - declaring Supabase free-plan backup posture sufficient for production;
 - production cutover.
 
-The later real-data migration gate must explicitly prove source snapshot identity, operator Auth onboarding, import/reconciliation, identity-sequence repair, rollback/recovery, managed-backup production posture, candidate deployment identity and exact structural/financial parity before any canonical switch.
+The later real-data migration gate must explicitly prove source snapshot identity, operator Auth onboarding, import/reconciliation, identity-sequence repair, rollback/recovery, production-durability posture, candidate deployment identity and exact structural/financial parity before any canonical switch. Current paid-infrastructure budget is US$ 0; the next gate must not assume paid Supabase features and must keep cutover blocked if D-029 cannot be satisfied at zero cost.

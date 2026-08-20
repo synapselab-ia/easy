@@ -34,7 +34,7 @@ The application already provides:
 - historical GitHub Pages deployment from `main`;
 - a separately deployed V2 Vercel candidate used during P10 rehearsal.
 
-The currently implemented V2 persistence remains Dexie/IndexedDB until P10-S3 implementation. That is now a transitional implementation state, not the accepted final production topology.
+The current **user-facing runtime** remains Dexie/IndexedDB. P10-S3-I1 has now established the Supabase/Postgres schema, RLS/authorization, transactional RPC and typed-client foundation, but those cloud primitives are not yet wired as the application source of truth. Dexie remains a transitional implementation state, not the accepted final production topology.
 
 ## 3. V2 objectives
 
@@ -104,7 +104,7 @@ The V2 roadmap is organized into these phases:
 - **P10 — Controlled migration and cutover**
   - P10-S1: local compatibility + synthetic rehearsal — completed;
   - P10-S2: copied-live-data IndexedDB beta contract — accepted historically, execution abandoned before export;
-  - **P10-S3: Supabase canonical-persistence transition — current after D-029.**
+  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; I2 migration/durability contract current.**
 
 Large new features should not outrun the persistence/security/cutover foundation.
 
@@ -150,6 +150,8 @@ The project keeps defense in depth:
 - PITR remains a later RPO/cost choice rather than an assumption.
 
 D-024 remains mandatory for the current browser-local stable production system until cloud cutover. Its synchronized-folder/24-hour manual-export write block is transitional and is not the intended final durability policy after managed cloud backup readiness is proven.
+
+Current paid-infrastructure budget is **US$ 0**. This does not silently weaken D-029: P10-S3-I2 must either demonstrate a zero-cost production/recovery arrangement that actually satisfies the accepted durability objective or keep cloud production cutover blocked.
 
 ## 10. Repository governance
 

@@ -149,9 +149,11 @@ Accepted final direction:
 
 #### P10-S3-I1 — Supabase foundation with synthetic data only
 
-**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION**.
+**Status:** `DONE / ACCEPTED`.
 
-Required work:
+Accepted execution: `docs/V2/P10_S3_I1_EXECUTION.md`. Dedicated `easy-v2` Supabase project, reproducible migrations, RLS/allow-list authorization, transactional financial RPC boundary, typed `supabase-js` client foundation, advisor review and synthetic reconciliation all passed. All synthetic rows were disposed and no real store data moved.
+
+Completed work:
 
 1. explicitly select a Supabase organization and region, then create/select a **dedicated Easy project**;
 2. establish reproducible schema migrations for categories/items/resellers/transactions plus minimum authorization metadata;
@@ -169,11 +171,11 @@ Exit criterion: a synthetic Supabase-backed foundation that objectively preserve
 
 #### P10-S3-I2 — Real-data migration/reconciliation gate
 
-**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I1 PASSES`.
+**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / CONTRACT DEFINITION ONLY**.
 
-Future bounded goal only: one controlled stable-v1 snapshot imported directly into the proven Supabase final architecture, followed by exact structural/financial reconciliation and rollback evidence.
+Bounded goal: define and accept the exact real-data migration/reconciliation, Auth onboarding, rollback/recovery and production-durability contract before any real store export/import. The current paid-infrastructure budget is **US$ 0**, so this gate may not assume Supabase Pro/PITR or another paid add-on. It must either prove an acceptable zero-cost recovery posture consistent with D-029 or leave production cutover explicitly blocked.
 
-No implementation permission exists until P10-S3-I1 is accepted.
+No real store export/import, production operator cutover, canonical URL switch or production publication is authorized by contract definition.
 
 ### Later P10 work
 

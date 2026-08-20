@@ -4,6 +4,22 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-20 — P10-S3-I1 Supabase foundation proven with synthetic data
+
+P10-S3-I1 established the dedicated `easy-v2` Supabase/Postgres foundation in `sa-east-1` without importing any real store data. Repository/live migrations create the canonical category/item/reseller/transaction substrate plus server-managed operator authorization metadata. All exposed application tables have RLS. Financial create/reverse/correct operations cross one controlled PostgreSQL transaction boundary through public invoker RPCs backed by non-exposed privileged implementations.
+
+Synthetic proof covered approved/unauthorized access, blocked direct transaction DML, changed-item snapshot capture, same-item historical category preservation and atomic rollback on invalid correction. Security Advisor finished with 0 lints; performance advisor reported only INFO unused-index notices on the empty/tiny synthetic dataset. All synthetic rows were then disposed and final table counts were zero.
+
+Repository client foundation pins `@supabase/supabase-js` 2.112.3, commits the npm lockfile/generated types, exposes only URL + publishable-key variable names and keeps existing Dexie business hooks/pages unchanged.
+
+Diagnostic D-019 `32388839983` / `96489804473` correctly blocked a TypeScript env-boundary mismatch. After the minimal fix, authoritative run **`32394126648`** / **`96506890991`** passed on merge ref `c12a535b665eb25626a1b3bb0aa15cd034808e00`: **0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+
+P10-S3-I1 is `DONE / ACCEPTED`. P10-S3-I2 is now the only current action and is contract-definition only. Current paid-infrastructure budget is **US$ 0**: the next gate may not assume Supabase Pro/PITR or another paid add-on and must keep cutover blocked if a zero-cost recovery posture cannot satisfy D-029. No real-data export/import, `main` publication, canonical URL switch or production cutover is authorized.
+
+Authoritative execution record: `docs/V2/P10_S3_I1_EXECUTION.md`.
+
+---
+
 ## 2026-08-20 — Final persistence redirected to Supabase/Postgres; D-029 accepted
 
 Before any real store backup was exported for the P10-S2-I1 IndexedDB beta, the final production durability requirement was explicitly changed: routine production safety should no longer depend primarily on an operator remembering to create/synchronize browser-local backups, while the system should retain an independent logical/manual backup option for contingency and portability.
