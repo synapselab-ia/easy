@@ -36,7 +36,7 @@ Phase state:
 - **P10-S3-I1 — Supabase foundation with synthetic data only: `DONE / ACCEPTED`.**
 - **P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract: `DONE / ACCEPTED CONTRACT` — D-030.**
 - **P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility with synthetic data only: `DONE / ACCEPTED`.**
-- **P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof with synthetic data only: `NOT_STARTED` — CURRENT.**
+- **P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof with synthetic data only: `BLOCKED / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF REQUIRED` — CURRENT.**
 
 ## Startup protocol for a new conversation
 
@@ -67,6 +67,7 @@ Phase-specific canonical evidence:
 - **`docs/V2/P10_S3_I1_EXECUTION.md` — accepted synthetic Supabase foundation execution evidence.**
 - **`docs/V2/P10_S3_I2_MIGRATION_GATE.md` — accepted D-030 real-data migration/reconciliation + zero-cost durability contract.**
 - **`docs/V2/P10_S3_I2_I1_EXECUTION.md` — accepted synthetic private stable-v1 staging/import compatibility proof.**
+- **`docs/V2/P10_S3_I2_I2_EXECUTION.md` — implemented recovery-health/automation boundary and current operator-local acceptance blocker.**
 
 ## Current technical baseline versus accepted final target
 
@@ -91,7 +92,7 @@ No real store data was ever moved into the V2 IndexedDB beta.
 - managed database backup becomes the primary durability layer after cloud cutover;
 - D-024 remains mandatory for the current browser-local stable system until cutover, but its 24-hour manual-export write guard is not the intended final cloud durability mechanism.
 
-P10-S3-I1 provides the accepted dedicated Supabase schema/security/client **foundation**. D-030/P10-S3-I2 defines the real migration/reconciliation and zero-cost durability contract. P10-S3-I2-I1 now provides the accepted private stable-v1 staging/import compatibility implementation with synthetic data only: exact historical source surface, explicit current-item classification, atomic promotion, metadata-driven sequence repair and exact reconciliation are proven without fabricated historical categories. The current user-facing business hooks/pages still use Dexie/IndexedDB; no real operator, real store data or production cutover has been introduced.
+P10-S3-I1 provides the accepted dedicated Supabase schema/security/client **foundation**. D-030/P10-S3-I2 defines the real migration/reconciliation and zero-cost durability contract. P10-S3-I2-I1 provides the accepted private stable-v1 staging/import compatibility implementation with synthetic data only. P10-S3-I2-I2 now adds the committed trusted-PC dump/rclone/scheduler/restore-drill tooling and the private server-visible recovery-health guard; however the actual operator-local off-site, seven-daily-generation and Docker restore evidence is still missing, so the durability slice remains blocked rather than accepted. The current user-facing business hooks/pages still use Dexie/IndexedDB; no real operator, real store data or production cutover has been introduced.
 
 ## Repository / deployment baseline entering P10-S3
 
@@ -99,7 +100,8 @@ P10-S3-I1 provides the accepted dedicated Supabase schema/security/client **foun
 - candidate/rehearsal runtime SHA remains **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**, tree **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**;
 - P10-S2 contract integrated as **`4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`**, tree **`2ab1e7b476ef620cf067faecd7c996fcf362c88a`**;
 - P10-S2-I1 pre-export NO-GO record integrated as **`e06c659ecdb3aee79e2e451b00eb85d63c8b8612`**, tree **`4da05cdda530b1e7000d01460201dff1daf65910`**;
-- P10-S3-I2 contract entered this slice integrated on `develop` as **`6bb0f8d2a332f978b182b0f6e88c890c6d175898`**;
+- P10-S3-I2 contract integrated on `develop` as **`6bb0f8d2a332f978b182b0f6e88c890c6d175898`**;
+- P10-S3-I2-I1 integrated on `develop` as **`a78331444f254688523aae70f8a0b81318735e5e`**, tree **`d4e690599b88379a5af13a408c47d56c3bb514d2`**;
 - both `main` and `develop` remain unprotected branches, so D-019/PR discipline remains a process requirement;
 - stable `main` still deploys its historical application to GitHub Pages;
 - repository `vercel.json` continues to disable Git-triggered Vercel deployments;
@@ -271,21 +273,31 @@ P10-S3-I2-I1 synthetic staging/import proof:
 - final homologation cleanup rechecked 0 Auth users, 0 operator/public business rows and 0 private staging/classification rows;
 - exact final tree-equivalent D-019 is recorded in PR #69 closure evidence before integration.
 
-## P10 boundary entering P10-S3-I2-I2
+P10-S3-I2-I2 implementation evidence — **NOT acceptance**:
+
+- committed trusted-PC backup/rclone/scheduler/restore-drill tooling and private server-visible recovery-health migrations;
+- live homologation proves missing/stale evidence blocks, exact 24h is accepted, 24h + 1 microsecond blocks, fresh evidence reopens, retention `<7` blocks through the actual trigger, RPC writes obey the same guard, and API-style `service_role` cannot bypass it;
+- direct no-JWT database execution remains the narrow restore/import maintenance boundary;
+- Security Advisor 0 lints; Performance Advisor remains INFO-only `unused_index` on the empty environment;
+- final homologation cleanup rechecked 0 Auth/operator/business/recovery/staging rows;
+- substantive PR #70 D-019 **`32408393343`** / **`96552818604`** passed on exact merge ref **`6b83fe3e9b5939c788aa7a3640e7fc83607fd260`**: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS;
+- the actual trusted-PC off-site copy, seven retained successful daily generations and disposable Docker restore drill remain unproven; therefore I2-I2 is still blocked and I2-I3 is not authorized.
+
+## P10-S3-I2-I2 current blocked boundary
 
 1. `main` remains untouched at the historical stable baseline;
 2. no live-store data has moved into V2/Supabase;
 3. no real Supabase Auth user/operator exists yet;
-4. the dedicated `easy-v2` project remains the single mutable cloud homologation project and is currently empty of Auth/application/staging data;
-5. P10-S3-I1 schema/RLS/RPC foundation and P10-S3-I2-I1 private stable-v1 staging/import compatibility are accepted synthetically;
-6. Security Advisor remains 0 lints; current performance findings are INFO-only unused indexes on an empty environment;
-7. D-030 accepts a zero-cost production-durability route only conditionally: Supabase Free is insufficient by itself and must be paired with proven unattended off-site logical dumps, >=7 retained successful generations, server-visible exact-24h freshness enforcement and restore proof;
-8. Free-plan pause is accepted only as an availability risk: connectivity/service loss blocks writes and never authorizes local offline financial writes;
-9. the private stable-v1 staging/import path is now reproducible/proven, but using it with real store data remains explicitly unauthorized;
-10. P10-S3-I2-I2 is the only next slice and may implement/prove the unattended logical-dump/off-site/freshness/restore layer with synthetic data only;
-11. P10-S3-I2-I3 Auth/runtime candidate and P10-S3-I2-I4 real migration remain not authorized until their prerequisite slices pass;
-12. no real-data export/import, real Auth onboarding, Supabase-backed business-runtime switch, `main` publication, canonical URL switch or production cutover is authorized by I2-I2.
+4. the dedicated `easy-v2` project remains empty of Auth/application/staging/recovery rows after synthetic proof;
+5. P10-S3-I1 schema/RLS/RPC foundation and P10-S3-I2-I1 private stable-v1 staging/import compatibility remain accepted synthetically;
+6. I2-I2 repository/database prerequisites are implemented: unattended dump tooling, objective rclone verification path, retention logic, server-visible recovery health, exact-24h/retention write guard and disposable restore-drill code;
+7. actual off-site execution evidence is intentionally absent because the trusted operator PC/rclone credential boundary is outside this environment;
+8. at least seven real successful daily generations have not yet been observed in the accepted recovery destination;
+9. the committed Docker/local restore drill has not yet been executed against the trusted-PC synthetic artifact;
+10. Security Advisor is 0 lints; performance findings remain INFO-only unused indexes in the empty environment;
+11. P10-S3-I2-I3 Auth/runtime candidate and P10-S3-I2-I4 real migration remain unauthorized;
+12. no real-data export/import, real Auth onboarding, Supabase-backed business-runtime switch, `main` publication, canonical URL switch or production cutover is authorized while I2-I2 remains blocked.
 
 ## NEXT_ACTION
 
-**Execute only P10-S3-I2-I2 — implement and prove the zero-cost unattended backup/recovery path with synthetic data only under D-030 / `docs/V2/P10_S3_I2_MIGRATION_GATE.md`. Establish a reproducible trusted-PC/scheduler logical `db dump` boundary with credentials protected outside browser/client/Git, objectively verify successful off-site/synchronized-copy arrival, retain at least seven successful daily generations, expose the latest successful backup timestamp to the server/database, enforce the exact-24h fail-closed business-write guard, and prove both stale/missing-evidence blocking and recovery after fresh valid evidence. Restore an eligible synthetic dump into a clean disposable database boundary and reconcile structure/references/financial data exactly, then clean synthetic recovery state. Run relevant Supabase advisors and repository D-019 and record exact evidence. Do not create/use the real production Auth operator, switch the business runtime from Dexie to Supabase, export/import real store data, modify/publish `main`, switch the canonical URL or perform production cutover in this slice.**
+**Execute only the remaining operator-local acceptance proof for P10-S3-I2-I2 using the committed `scripts/recovery/` procedure on the trusted store PC. Configure Supabase CLI native credentials and the rclone remote outside Git/browser/Vercel/chat, install/run the unattended scheduler, capture sanitized evidence of a successful synthetic data-only dump and objective off-site verification, accumulate and verify at least seven successful retained UTC daily generations, confirm the server-side recovery health becomes healthy only with both freshness <= exactly 24h and retention >=7, execute the committed disposable Docker/local restore drill from an eligible synthetic artifact and reconcile structure/references/financial data exactly, clean disposable recovery state, then rerun relevant Supabase advisors and repository D-019 and record sanitized evidence. Do not begin P10-S3-I2-I3, create/use the real production Auth operator, switch the business runtime from Dexie to Supabase, export/import real store data, modify/publish `main`, switch the canonical URL or perform production cutover until this proof passes.**

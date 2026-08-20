@@ -205,20 +205,36 @@ No unattended backup automation, real Auth, runtime switch or real data was intr
 
 ##### P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof
 
-**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / SYNTHETIC ONLY**.
+**Status:** `BLOCKED / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF REQUIRED` — **CURRENT NEXT ACTION / SYNTHETIC ONLY**.
 
-Required bounded proof under D-030:
+Execution record: `docs/V2/P10_S3_I2_I2_EXECUTION.md`.
 
-1. implement a reproducible unattended Supabase/Postgres logical-dump path on the trusted-PC/scheduler boundary;
-2. keep dump credentials protected outside browser/client/Git and document only non-secret configuration boundaries;
-3. objectively verify successful arrival in the accepted off-site/synchronized recovery destination;
-4. retain at least seven successful daily generations under an objective rotation rule;
-5. make latest successful backup freshness visible to the server/database;
-6. fail all canonical business writes closed once freshness exceeds exactly 24 hours;
-7. prove the guard fails closed when backup evidence is stale/missing and reopens only after valid fresh evidence;
-8. restore an eligible synthetic dump into a clean disposable database boundary and reconcile structure/references/financial data exactly;
-9. dispose all synthetic recovery artifacts/data that should not persist in homologation;
-10. run relevant Supabase advisors and repository D-019 and record exact evidence.
+Implemented/proven remotely:
+
+1. reproducible trusted-PC backup tooling using pinned Supabase CLI `2.111.0` and `supabase db dump --linked --data-only`;
+2. protected configuration contract outside browser/client/Git with scheduled-job rejection of injected database URLs/passwords;
+3. rclone `1.75.0` off-site path using `copyto` + `check --download --one-way` + remote listing verification;
+4. daily-generation rotation that refuses retention configuration below seven days;
+5. private server-visible latest-success/retention state;
+6. exact-24h business-write guard on categories/items/resellers/transactions and financial RPC paths;
+7. fail-closed proof for missing/stale evidence and for fresh evidence with only six retained daily generations;
+8. recovery after valid fresh evidence with retention >=7;
+9. API-style `service_role` cannot bypass the guard, while direct no-JWT database execution remains the narrow restore/import maintenance boundary;
+10. committed disposable local restore-drill/fingerprint implementation for exact structure/reference/integer-cent financial reconciliation;
+11. Security Advisor 0 lints and final synthetic homologation cleanup to zero rows;
+12. substantive PR #70 D-019 `32408393343` / `96552818604` passed on merge ref `6b83fe3e9b5939c788aa7a3640e7fc83607fd260`: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+
+Still required before acceptance:
+
+1. execute the committed scheduled dump on the actual trusted operator PC using its local Supabase credential boundary;
+2. objectively prove arrival/check success on the actual configured off-site rclone remote;
+3. accumulate and verify at least seven successful retained UTC daily generations in that destination;
+4. prove the server-side health becomes healthy only after the real freshness + retention conditions are met;
+5. execute the committed disposable Docker/local restore drill from an eligible synthetic artifact on the trusted PC;
+6. reconcile the restored synthetic structure/references/financial data exactly and clean the disposable recovery state;
+7. rerun advisors and final D-019 with sanitized evidence.
+
+Until those operator-local items pass, I2-I2 remains `BLOCKED`, I2-I3 is not authorized and Supabase Free remains production-ineligible under D-030.
 
 No real store data, real production Auth operator, Supabase-backed business-runtime switch, `main` publication, canonical URL switch or production cutover is authorized by I2-I2.
 
