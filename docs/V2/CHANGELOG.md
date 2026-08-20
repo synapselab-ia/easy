@@ -208,7 +208,7 @@ On 2026-08-20 D-029 accepted such a later trigger and superseded D-016 for final
 
 ## 2026-08-17 — P3 financial dates/statements/aging completed
 
-P3-S1 separated `occurredAt` from registration/audit time (`32052076651`). P3-S2 formalized statements, total debt and FIFO aging (`32053837309`). D-014/D-015 accepted.
+P3-S1 separated `occurredAt` from registration/audit time (`32052076684`). P3-S2 formalized statements, total debt and FIFO aging (`32053837309`). D-014/D-015 accepted.
 
 ---
 
