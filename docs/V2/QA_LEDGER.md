@@ -1,6 +1,6 @@
 # Easy V2 — QA Ledger
 
-**Updated:** 2026-08-19
+**Updated:** 2026-08-20
 
 D-019 remains the mandatory V2 integration/publication gate:
 
@@ -190,6 +190,24 @@ Synthetic stable-v1 fixture only; no store data was used.
 **GO only for defining the next bounded P10-S2 copied-live-data beta gate.**
 
 The rehearsal does not authorize exporting/importing the actual store backup, actual production-data reconciliation, stable `main` publication, canonical URL switch, production cutover or D-016 change.
+
+## P10-S2 copied-live-data beta contract — PASS / ACCEPTED
+
+P10-S2 defined D-028 only. The contract branch moved no live-store data and changed no runtime, schema, backup envelope, deployment configuration, `main` or D-016 topology.
+
+Authoritative contract proof before the QA-ledger evidence-only append:
+
+- PR **#64** D-019 run **`32380195551`**, job **`96461233352`**.
+- Validated PR merge ref **`3945e8b2778b6233f6a5af0984bb06084ebfa6cd`**.
+- Validated branch head **`13ef59181d2ca1ce916d43c564068e710de3d73f`** over base **`816794694d0a9b6c92da273a81ee745c2f53ecdc`**.
+- ESLint: **0 errors / 82 warnings**.
+- Vitest: **53 files / 222 tests PASS**.
+- Playwright: **17/17 PASS**.
+- Production build: **PASS**.
+
+The accepted contract requires exact candidate/deployment identity before export, isolated single-operator handling, no raw/identifiable data in repository evidence, exact structural and zero-cent-tolerance financial reconciliation, D-018/D-024 readiness before beta writes, an explicit rollback baseline, fail-closed NO-GO behavior, minimum disposable beta checks, final fresh-context round-trip and 24-hour disposal of beta-specific copied data.
+
+A P10-S2-I1 PASS may authorize only defining the later production-cutover gate. It does not authorize cutover itself.
 
 ## Known non-blocking debt
 
