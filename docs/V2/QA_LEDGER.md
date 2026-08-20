@@ -163,8 +163,6 @@ Scope proof:
 
 Final D-019 `32386064578` / `96480732008` passed on exact validated merge ref `2d6936cd8f74d2205f1c0b0a2f696287b66ae2dc`. PR #66 squash-integrated to `develop` as `0e054bc5e640c35ce567ccd710d9574cf1a93454`, tree `fe92fb0626449ba30456e85f37152e43f1faf864`. No real store data moved and `main` remained untouched.
 
-## Known non-blocking debt
-
 ## P10-S3-I1 Supabase foundation — PASS / ACCEPTED
 
 P10-S3-I1 used synthetic data only against dedicated project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`. Live/repository migrations are `20260820154034_p10_s3_i1_foundation` and `20260820154402_harden_transaction_rpc_boundary`.
@@ -189,5 +187,6 @@ Repository validation:
 
 Data/cutover boundary: no real store data, real operator cutover, `main` publication, canonical URL switch or production cutover occurred. Current user-facing runtime remains Dexie. Detailed evidence: `docs/V2/P10_S3_I1_EXECUTION.md`.
 
+## Known non-blocking debt
 
 Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking only when the accepted D-019 objective commands pass.
