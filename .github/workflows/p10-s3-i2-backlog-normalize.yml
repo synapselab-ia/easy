@@ -1,0 +1,38 @@
+name: P10-S3-I2 backlog D-030 normalization
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop]
+    paths:
+      - .github/workflows/p10-s3-i2-backlog-normalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/V2/BACKLOG.md')
+          s = p.read_text()
+          old = '- managed database backups become primary durability after cutover;'
+          new = '- paid production uses managed database backup as primary durability; D-030/US$ 0 instead requires proven unattended off-site logical dumps + exact-24h freshness enforcement + restore drills before cutover;'
+          if s.count(old) != 1:
+              raise SystemExit(f'anchor count={s.count(old)}')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          rm -f .github/workflows/p10-s3-i2-backlog-normalize.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/V2/BACKLOG.md .github/workflows/p10-s3-i2-backlog-normalize.yml
+          git commit -m "docs(v2): normalize D-030 backlog wording"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
