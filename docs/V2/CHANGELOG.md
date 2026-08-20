@@ -4,6 +4,20 @@ This changelog records material V2 project-state changes rather than every code-
 
 ---
 
+## 2026-08-20 — P10-S3-I2-I2 recovery prerequisite implemented; acceptance remains fail-closed
+
+P10-S3-I2-I2 implemented the D-030 zero-cost recovery prerequisite without moving real store data. Committed trusted-PC tooling now defines pinned Supabase CLI data-only dumps, rclone off-site copy/check verification, UTC daily-generation retention, Windows Task Scheduler execution and a disposable restore/fingerprint drill. Database migrations add a private recovery-health ledger plus a canonical business-write guard that requires both backup freshness and the minimum retained-generation condition.
+
+Synthetic homologation proved missing/stale recovery evidence blocks writes; exactly 24 hours remains fresh while 24 hours + 1 microsecond is stale; fresh evidence with only six retained daily generations remains blocked; valid fresh evidence with retention >=7 reopens writes; financial RPCs obey the same guard; and API-style `service_role` cannot bypass it. Direct no-JWT database execution remains the narrow restore/import maintenance boundary. Security Advisor finished at 0 lints, Performance Advisor remained INFO-only on existing unused indexes, and final Auth/operator/business/recovery/staging counts returned to zero.
+
+Substantive PR #70 D-019 `32408393343` / `96552818604` passed. Final canonical-tree D-019 **`32411404495`** / **`96562427495`** passed on exact merge ref `b8d01bcbe2b333f704f7ea75d1bc6c5813fabd5a`: **0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS**. The validated feature tree `414ebfc01dd67c711ce94af90653696f42c13bf5` was squash-integrated as `0103f9ac44d9ee10ace85fddb144352fd305a9ee` with the same tree.
+
+The implementation is integrated, but **P10-S3-I2-I2 remains `BLOCKED / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF REQUIRED`**. Acceptance still requires the actual trusted-PC scheduled dump/off-site verification, at least seven real retained successful UTC daily generations and execution of the committed disposable Docker/local restore drill with exact reconciliation. P10-S3-I2-I3 therefore remains unauthorized. No real Auth operator, real store data, Supabase-backed business runtime, `main` publication, canonical URL switch or production cutover occurred.
+
+Authoritative execution record: `docs/V2/P10_S3_I2_I2_EXECUTION.md`.
+
+---
+
 ## 2026-08-20 — P10-S3-I2-I1 private stable-v1 staging/import compatibility accepted
 
 P10-S3-I2-I1 implemented and synthetically proved the D-030 stable-v1 compatibility path without moving real store data. The exact historical backup-v1 surface is normalized through the already accepted `preflightBackupPayload`, converted to exact integer cents and staged only inside a non-exposed `private` PostgreSQL boundary.

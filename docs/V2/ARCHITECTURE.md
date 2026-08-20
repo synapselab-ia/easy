@@ -1,12 +1,12 @@
 # Easy V2 — Architecture Baseline
 
-**Status:** D-029 foundation + D-030 staging/import compatibility proven; zero-cost unattended backup/recovery proof next  
+**Status:** D-029 foundation + D-030 staging/import compatibility accepted; I2-I2 recovery implementation integrated but operator-local proof blocked  
 **Integration target:** `develop`  
 **Updated:** 2026-08-20
 
 ## 1. Current implemented runtime
 
-The current user-facing application remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB. P10-S3-I1 adds a Supabase/Postgres foundation in repository/live infrastructure, and P10-S3-I2-I1 adds the private stable-v1 staging/import compatibility boundary, but existing business hooks/pages have not been switched to Supabase.
+The current user-facing application remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB. P10-S3-I1 adds a Supabase/Postgres foundation in repository/live infrastructure, P10-S3-I2-I1 adds the private stable-v1 staging/import compatibility boundary, and P10-S3-I2-I2 adds the server-side recovery-health guard plus trusted-PC backup/restore tooling. Existing business hooks/pages have not been switched to Supabase, and I2-I2 remains blocked pending operator-local off-site/retention/restore evidence.
 
 Current browser database: `ResellerManagerDB`, Dexie **V5** with:
 
@@ -178,7 +178,7 @@ After Supabase is formally accepted as production canonical persistence, the pri
 
 D-024's 24-hour manual-export write block is not intended to survive as the primary cloud production durability mechanism. It remains active until cloud cutover so the existing stable application does not lose its current protection prematurely.
 
-D-030 now defines the accepted zero-cost alternative without pretending the Free tier itself has managed backups. Supabase Free may become first-production eligible only when it is paired with an unattended trusted-PC `db dump` path to an objectively verified off-site/synchronized recovery boundary, at least seven retained successful daily generations, server-visible exact-24h backup freshness that fails all business writes closed when stale, and successful synthetic + real pre-cutover restore drills. Manual `easy-backup` remains independent secondary portability/contingency. If the off-site verification or restore path cannot be proven, production cutover remains blocked. Free-plan pausing is accepted only as an availability limitation; it never authorizes offline local writes.
+D-030 defines the accepted zero-cost alternative without pretending the Free tier itself has managed backups. P10-S3-I2-I2 now implements the prerequisite architecture: pinned trusted-PC `supabase db dump --data-only` tooling, rclone off-site verification, daily-generation retention logic, a private server-visible recovery ledger, an exact-24h + >=7-generation fail-closed business-write guard and a disposable restore-drill/fingerprint path. Synthetic homologation proves missing/stale evidence and retention `<7` block writes, exactly 24h is still fresh, 24h + 1 microsecond is stale, valid fresh evidence reopens writes, and API-style `service_role` cannot bypass the durability guard. The architecture is still **not accepted for production** because the actual trusted-PC off-site run, seven retained successful daily generations and Docker/local restore drill have not yet been objectively executed. Manual `easy-backup` remains independent secondary portability/contingency. Free-plan pausing is accepted only as an availability limitation; it never authorizes offline local writes.
 
 ## 11. Stable → final cloud migration route
 
@@ -241,7 +241,7 @@ D-029 now marks P10-S2-I1 **ABANDONED / SUPERSEDED BEFORE EXPORT**. There is no 
 
 ## 13. Supabase development discipline
 
-P10-S3-I1 provisioned the dedicated Easy Supabase project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`; P10-S3-I2-I1 then applied only committed/reproducible private staging migrations while the project remained free of real store data. Unrelated application databases are not reused.
+P10-S3-I1 provisioned the dedicated Easy Supabase project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`; P10-S3-I2-I1 applied committed/reproducible private staging migrations; P10-S3-I2-I2 added committed recovery-health migrations and trusted-PC recovery tooling while the project remained free of real store data. Unrelated application databases are not reused.
 
 Before real data:
 
@@ -322,14 +322,15 @@ Known React test warnings, mocked-select DOM warnings, dependency/audit notices,
 - P10-S3-I1 synthetic foundation: diagnostic D-019 `32388839983` / `96489804473` blocked TS2559; corrected authoritative D-019 `32394126648` / `96506890991` passed on merge ref `c12a535b665eb25626a1b3bb0aa15cd034808e00` with 0 errors / 82 lint warnings, 54 files / 225 Vitest PASS, 17/17 Playwright PASS and build PASS.
 - P10-S3-I2 contract: authoritative D-019 `32399725148` / `96524749660` passed on merge ref `f18f9b6c3d77b1b95284e92487be8819a9a48922`; contract integrated to `develop` as `6bb0f8d2a332f978b182b0f6e88c890c6d175898`.
 - P10-S3-I2-I1 staging/import: diagnostic D-019 `32403226500` / `96536125014` blocked TS18048 only at build after lint/Vitest/E2E passed; corrected substantive D-019 `32403912177` / `96538355033` passed on merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b` with 0 errors / 82 warnings, 55 files / 231 Vitest PASS, 17/17 Playwright PASS and build PASS.
+- P10-S3-I2-I2 implementation/block record: substantive D-019 `32408393343` / `96552818604`; final canonical-tree D-019 `32411404495` / `96562427495` passed on merge ref `b8d01bcbe2b333f704f7ea75d1bc6c5813fabd5a` with 0 errors / 82 warnings, 56 files / 237 Vitest PASS, 17/17 Playwright PASS and build PASS; PR #70 squash-integrated as `0103f9ac44d9ee10ace85fddb144352fd305a9ee`, tree `414ebfc01dd67c711ce94af90653696f42c13bf5`.
 
-## 17. Boundary entering P10-S3-I2-I2
+## 17. Boundary after P10-S3-I2-I2 implementation
 
-P10-S3-I2-I1 is accepted as the **synthetic private stable-v1 staging/import compatibility proof**. It does not authorize using that path with the real store dataset.
+P10-S3-I2-I1 remains accepted as the **synthetic private stable-v1 staging/import compatibility proof**. P10-S3-I2-I2 has implemented the zero-cost durability prerequisite but is **BLOCKED / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF REQUIRED**.
 
-P10-S3-I2-I2 is the only next permitted slice. It is synthetic-only and may implement/prove the zero-cost unattended backup/recovery layer required by D-030: trusted-PC scheduled logical dump, protected credential boundary, objective off-site/synchronized-copy verification, at least seven retained successful generations, exact-24h server-visible backup freshness enforcement and clean synthetic restore/reconciliation.
+The only permitted next work is the remaining trusted-PC acceptance proof using the committed `scripts/recovery/` procedure: execute the unattended synthetic dump, objectively verify the configured rclone off-site destination, observe at least seven successful retained UTC daily generations, verify the server-side health transition and execute the disposable Docker/local restore drill with exact structural/reference/financial reconciliation and cleanup.
 
-It may not:
+Until that passes, it may not:
 
 1. export/import the real store dataset;
 2. provision the real production operator;

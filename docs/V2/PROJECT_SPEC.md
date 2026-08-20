@@ -34,7 +34,7 @@ The application already provides:
 - historical GitHub Pages deployment from `main`;
 - a separately deployed V2 Vercel candidate used during P10 rehearsal.
 
-The current **user-facing runtime** remains Dexie/IndexedDB. P10-S3-I1 established the Supabase/Postgres schema, RLS/authorization, transactional RPC and typed-client foundation, and P10-S3-I2-I1 proved the private stable-v1 staging/import compatibility path with synthetic data. Neither cloud layer is yet wired as the application source of truth. Dexie remains a transitional implementation state, not the accepted final production topology.
+The current **user-facing runtime** remains Dexie/IndexedDB. P10-S3-I1 established the Supabase/Postgres schema, RLS/authorization, transactional RPC and typed-client foundation; P10-S3-I2-I1 proved the private stable-v1 staging/import compatibility path with synthetic data; and P10-S3-I2-I2 implemented the unattended-dump/recovery-health/restore-drill prerequisite while remaining fail-closed pending trusted-PC evidence. None of these cloud layers is yet wired as the application source of truth. Dexie remains a transitional implementation state, not the accepted final production topology.
 
 ## 3. V2 objectives
 
@@ -104,7 +104,7 @@ The V2 roadmap is organized into these phases:
 - **P10 — Controlled migration and cutover**
   - P10-S1: local compatibility + synthetic rehearsal — completed;
   - P10-S2: copied-live-data IndexedDB beta contract — accepted historically, execution abandoned before export;
-  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; D-030/I2 migration-durability contract accepted; I2-I1 staging/import compatibility accepted; I2-I2 zero-cost unattended backup/recovery proof current.**
+  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; D-030/I2 migration-durability contract accepted; I2-I1 staging/import compatibility accepted; I2-I2 implementation ready but blocked pending operator-local off-site/retention/restore proof.**
 
 Large new features should not outrun the persistence/security/cutover foundation.
 
@@ -146,12 +146,11 @@ The project keeps defense in depth:
 
 - on a paid posture, managed Supabase database backups are the intended primary durability mechanism; under D-030/US$ 0, the required primary recovery layer is instead a proven unattended off-site logical-dump process with freshness enforcement and restore drills;
 - logical/manual Easy backup/export remains available as independent contingency and portability;
-- optional automated off-site dumps may be added later;
 - PITR remains a later RPO/cost choice rather than an assumption.
 
-D-024 remains mandatory for the current browser-local stable production system until cloud cutover. Its synchronized-folder/24-hour manual-export write block is transitional and is not the intended final durability policy after managed cloud backup readiness is proven.
+D-024 remains mandatory for the current browser-local stable production system until cloud cutover. Its synchronized-folder/24-hour manual-export write block is transitional and is not the intended final durability policy after cloud recovery readiness is proven.
 
-Current paid-infrastructure budget is **US$ 0**. D-030 resolves the architecture question conditionally: Supabase Free alone is not sufficient, but a Free canonical database may become production-eligible only after unattended off-site logical dumps, objective synchronized-copy verification, at least seven retained successful daily generations, exact-24h server-visible freshness enforcement and a restore drill are implemented/proven. Manual `easy-backup` remains secondary portability/contingency. Until those conditions pass, cloud production cutover remains blocked.
+Current paid-infrastructure budget is **US$ 0**. D-030 resolves the architecture question conditionally: Supabase Free alone is not sufficient. P10-S3-I2-I2 has implemented the unattended dump/rclone path, >=7-generation retention rule, server-visible exact-24h/retention write guard and disposable restore-drill tooling, and the server-side guard has passed synthetic homologation proof. Production eligibility remains blocked until the committed process is actually exercised on the trusted operator PC, objective off-site arrival is proven, at least seven real successful daily generations are observed and the disposable restore drill reconciles exactly. Manual `easy-backup` remains secondary portability/contingency.
 
 ## 10. Repository governance
 
