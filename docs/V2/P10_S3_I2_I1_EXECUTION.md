@@ -1,7 +1,7 @@
 # P10-S3-I2-I1 — Stable-v1 private staging/import compatibility
 
 **Date:** 2026-08-20  
-**Status:** IMPLEMENTED / SYNTHETIC PROOF COMPLETE / D-019 PENDING FINAL CLOSURE  
+**Status:** DONE / ACCEPTED — SYNTHETIC ONLY  
 **Decision basis:** D-029 + D-030  
 **Project:** dedicated Supabase homologation project `easy-v2` (`sa-east-1`)  
 **Real data:** none
@@ -56,7 +56,7 @@ The TypeScript adapter does not redefine the accepted migration semantics. It ca
 - missing item/reseller lifecycle remains normalized to active;
 - no item category exists before current classification;
 - no transaction category snapshot, reversal or correction is fabricated;
-- v1 `occurredAt` remains exactly `createdAt`;
+- v1 `occurredAt` remains exactly `createdAt` and a missing normalized occurrence date fails closed;
 - order quantity must be an integer;
 - all imported money is converted to exact integer cents, rejecting values whose cent representation would change;
 - an order's stored total must equal `quantity × unitPrice` exactly in cents.
@@ -185,8 +185,21 @@ No real store data or real operator identity was created or moved.
 
 ## 8. Repository QA
 
-Repository D-019 (`npm run qa:critical`) remains mandatory on the exact final PR tree before integration. The final run/job IDs, exact merge ref and objective lint/Vitest/Playwright/build results belong in PR closure evidence and `QA_LEDGER.md` once available.
+The first PR #69 D-019 run `32403226500` / job `96536125014` correctly failed only at TypeScript build narrowing after lint, all 231 Vitest tests and all 17 Playwright tests had passed. `NormalizedBackupData` still typed `occurredAt` as optional, so the staging adapter was tightened fail-closed instead of weakening the invariant.
+
+Fix commit: `f970aceea1589c3ec46f1c906ddd0007547c2f41` (`fix(v2): fail closed on missing normalized occurrence date`).
+
+Authoritative substantive D-019 after the fix:
+
+- run `32403912177` / job `96538355033`;
+- exact PR merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 55 files / 231 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS.
+
+A final tree-equivalent D-019 remains required after the canonical closure-document updates and is recorded in PR #69 closure evidence before integration.
 
 ## 9. Boundary after this slice
 
-If repository D-019 passes and this slice is integrated, P10-S3-I2-I1 is complete. The next permitted slice is P10-S3-I2-I2 only: prove the zero-cost unattended backup/recovery path with synthetic data and without introducing real store data, a real Auth operator or a runtime/cutover change.
+P10-S3-I2-I1 is accepted as complete once the final exact PR tree passes D-019 and PR #69 integrates into `develop`. The next permitted slice is P10-S3-I2-I2 only: prove the zero-cost unattended backup/recovery path with synthetic data and without introducing real store data, a real Auth operator or a runtime/cutover change.
