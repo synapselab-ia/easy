@@ -31,7 +31,7 @@ Phase state:
 - P10-S1-I1 — Backup/correction compatibility hardening: `DONE / INTEGRATED`.
 - **P10-S1-I2 — Non-production migration/recovery rehearsal: `DONE / REHEARSED`.**
 - **P10-S2 — Copied-live-data beta acceptance contract: `DONE / ACCEPTED` — D-028.**
-- **P10-S2-I1 — Copied-live-data beta execution: `NOT_STARTED` — CURRENT.**
+- **P10-S2-I1 — Copied-live-data beta execution: `BLOCKED / NO-GO BEFORE EXPORT` — CURRENT.**
 
 ## Startup protocol for a new conversation
 
@@ -56,7 +56,8 @@ Phase-specific canonical evidence:
 - `docs/V2/P9_CORRECTION_EVIDENCE_REQUEST.md` and `P9_CORRECTION_DECISION.md` — completed D-026 / P9-S4 record;
 - `docs/V2/P9_DATE_USABILITY.md` — completed P9-S5 verification record;
 - `docs/V2/P10_CUTOVER_PLAN.md` — P10-S1 contract, I1 compatibility result, accepted I2 rehearsal evidence and P10 sequencing;
-- **`docs/V2/P10_S2_BETA_GATE.md` — authoritative D-028 copied-live-data beta contract and P10-S2-I1 go/no-go criteria.**
+- `docs/V2/P10_S2_BETA_GATE.md` — authoritative D-028 copied-live-data beta contract and P10-S2-I1 go/no-go criteria;
+- **`docs/V2/P10_S2_I1_EXECUTION.md` — current P10-S2-I1 execution record, candidate/deployment re-verification and pre-export NO-GO blocker.**
 
 ## Current technical baseline
 
@@ -68,24 +69,24 @@ D-025 category snapshot/reporting behavior and D-026 full-field audited transact
 
 P10-S1-I1 aligns backup self-preflight/export with D-026 while retaining D-025 history semantics: type and financial occurrence date may change; a corrected order may change item and capture that target item's valid replacement-time snapshot; an order correction that keeps the same item must preserve the original category snapshot. Bidirectional audit linkage, referenced-ID existence, registration chronology and each transaction's own target shape/reference validity remain enforced.
 
-No schema, Dexie migration or backup-envelope version changed in P10-S1. Backup-v1 and v2/schema4 compatibility remain covered by the passing suite. P10-S2 contract definition adds no runtime, schema, deployment or persistence-topology change.
+No schema, Dexie migration or backup-envelope version changed in P10-S1. Backup-v1 and v2/schema4 compatibility remain covered by the passing suite. P10-S2 contract definition and the blocked P10-S2-I1 pre-export attempt add no runtime, schema, deployment or persistence-topology change.
 
 ## Repository / deployment baseline after P10-S2 contract definition
 
 - stable `main` remains **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**;
 - candidate/rehearsal runtime SHA remains **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**, tree **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**;
-- canonical P10-S1 closure integrated `develop` as **`816794694d0a9b6c92da273a81ee745c2f53ecdc`**, tree **`417dd4097144d9f69124161b34747b3e81244ae7`**;
+- canonical P10-S2 contract closure integrated `develop` as **`4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`**, tree **`2ab1e7b476ef620cf067faecd7c996fcf362c88a`**;
 - both `main` and `develop` remain unprotected branches, so D-019/PR discipline remains a process requirement;
 - stable `main` still deploys its historical application to GitHub Pages;
 - V2's eventual stable deploy workflow remains `quality -> build -> deploy` and has not been activated on `main`;
 - repository `vercel.json` continues to disable Git-triggered Vercel deployments;
 - Vercel project `easy-v2` remains candidate/beta hosting only.
 
-P10-S1-I2 verified READY Vercel deployment **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`** as exact Git SHA `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`. The immutable deployment URL requires Vercel SSO for `/backup`; Vercel metadata also attached public alias `easy-v2-tau.vercel.app` to that exact deployment, so the alias was used only as browser access while deployment ID/SHA provided candidate identity.
+P10-S1-I2 verified READY Vercel deployment **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`** as exact Git SHA `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`. The immutable deployment URL requires Vercel SSO for `/backup`; Vercel metadata also attached public alias `easy-v2-tau.vercel.app` to that exact deployment, so the alias is used only as browser access while deployment ID/SHA provide candidate identity.
 
-D-028 requires this candidate/deployment relationship to be re-verified at P10-S2-I1 execution time. A mutable alias alone is never identity proof.
+P10-S2-I1 re-verification on 2026-08-20 confirmed that this exact deployment remains `READY`, still reports Git SHA `2b6c1e5...`, still carries the public alias, remains the newest recorded `easy-v2` deployment, and the alias `/backup` route returns HTTP 200. Candidate→current `develop` comparison shows exactly two later commits and every changed path is under `docs/V2/`; no runtime-bearing commit followed the candidate.
 
-No live-store dataset was exported/imported during P10-S2 contract definition, no `main` publication occurred and no stable/canonical URL was switched.
+No live-store dataset has been exported/imported for P10-S2-I1, no `main` publication occurred and no stable/canonical URL was switched.
 
 ## Stable → V2 migration boundary — rehearsed synthetically
 
@@ -146,6 +147,27 @@ Core D-028 requirements:
 
 Detailed contract: `docs/V2/P10_S2_BETA_GATE.md`.
 
+## P10-S2-I1 pre-export execution — BLOCKED / NO-GO
+
+Technical candidate identity passed:
+
+- candidate SHA/tree: `2b6c1e5...` / `8d6479ce...`;
+- accepted candidate D-019 `32294362895` / `96202149317` remains PASS;
+- exact deployment `dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki` remains READY and mapped to the same Git SHA;
+- current alias metadata still includes `easy-v2-tau.vercel.app` and `/backup` is reachable;
+- candidate→`develop` delta contains documentation only.
+
+The gate stops before export because two execution-time requirements are operator-local and cannot be proven by a remote repository/deployment session:
+
+1. the trusted store PC must establish a dedicated/isolated V2 beta browser profile/context that is visibly distinct from stable;
+2. that PC must confirm its actual browser backup destination is inside the accepted Google Drive for desktop synchronized recovery folder and verify the current D-024 recovery boundary.
+
+The authoritative stable data is browser-local IndexedDB on that PC. D-028 prohibits sending the raw backup through chat/GitHub, so remote upload is not a permitted workaround.
+
+Result: **NO-GO BEFORE EXPORT**. No real copied data or beta artifact was created, so the D-028 24-hour disposal clock has not started.
+
+Detailed record: `docs/V2/P10_S2_I1_EXECUTION.md`.
+
 ## Authoritative decisions
 
 D-016 through D-028 remain authoritative. In particular:
@@ -197,19 +219,25 @@ P10-S1 canonical closure proof:
 - PR #63 squash-integrated as **`816794694d0a9b6c92da273a81ee745c2f53ecdc`**;
 - validated/integrated tree **`417dd4097144d9f69124161b34747b3e81244ae7`**.
 
-P10-S2 contract proof is documentation/governance only. Its authoritative PR/D-019 evidence is recorded in `QA_LEDGER.md` before integration; no runtime behavior is claimed from contract definition itself.
+P10-S2 contract proof:
 
-## P10 boundary after P10-S2 contract definition
+- PR #64 substantive contract D-019 `32380195551` / `96461233352`;
+- final PR-head D-019 `32380528003` / `96462340384` — PASS;
+- final validated PR merge ref `e204c8e03fc1f4e9f7bea66c20faf09866b13c3a`;
+- PR #64 squash-integrated as **`4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`**;
+- validated/integrated tree **`2ab1e7b476ef620cf067faecd7c996fcf362c88a`**.
+
+## P10 boundary during blocked P10-S2-I1
 
 1. `main` remains untouched;
-2. no live-store data has moved yet;
+2. no live-store data has moved;
 3. no V2 stable publication/canonical URL switch/production cutover has occurred;
-4. backup/correction compatibility and synthetic rehearsal remain accepted;
-5. D-028 now defines the only permitted copied-data beta boundary;
-6. P10-S2-I1 may move exactly one controlled point-in-time copy only after its pre-export GO checklist passes;
+4. D-028 remains the only permitted copied-data beta boundary;
+5. candidate/deployment identity is currently proven;
+6. P10-S2-I1 remains blocked before export until the operator-local isolation and D-024 working/recovery-location checks pass on the trusted store PC;
 7. a P10-S2-I1 PASS may authorize only defining the next production-cutover gate;
 8. D-016 remains unchanged.
 
 ## NEXT_ACTION
 
-**Execute only P10-S2-I1 — copied-live-data beta under D-028 / `docs/V2/P10_S2_BETA_GATE.md`. Begin by re-verifying one exact D-019-passing V2 candidate and READY deployment/alias identity, operator/browser isolation and approved D-024 working/recovery location. Only after every pre-export GO item is proven may one point-in-time stable-v1 backup be exported. Then preflight/restore, perform exact structural and financial reconciliation, establish D-018/D-024 recovery readiness before beta writes, run the minimum beta-only operator checks, prove final V2 fresh-context round-trip, dispose beta-specific copied data within 24 hours, and record only sanitized evidence. Any mismatch or contract breach is NO-GO. Do not modify/publish `main`, switch the canonical URL, perform production cutover or change D-016.**
+**Resume only P10-S2-I1 at the remaining D-028 pre-export GO items. On the trusted store PC, establish one designated operator and a dedicated/isolated V2 beta browser profile/context that is visibly distinct from stable; confirm that the browser backup destination is inside the accepted Google Drive for desktop synchronized folder and verify the current D-024 recovery boundary; explicitly acknowledge that stable remains authoritative and beta state is disposable. Do not export the live-store backup until all of those items are proven. Once they pass, export exactly one immutable point-in-time stable-v1 backup locally, retain it only inside the permitted operator/recovery boundary, record only its non-sensitive timestamp/file-size/SHA-256, and continue the same P10-S2-I1 D-028 sequence. Do not upload the raw backup to chat/GitHub/CI, modify/publish `main`, switch the canonical URL, perform production cutover or change D-016.**
