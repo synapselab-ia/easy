@@ -1,0 +1,40 @@
+name: P10-S3-I2 contract closure trigger
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop]
+    paths:
+      - .github/workflows/p10-s3-i2-contract-trigger.yml
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Execute canonical closure helper
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          helper = Path('.github/workflows/p10-s3-i2-contract-close.yml').read_text()
+          marker = "          python - <<'PY'\n"
+          start = helper.index(marker) + len(marker)
+          end = helper.index("\n          PY\n", start)
+          block = helper[start:end]
+          block = '\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+          exec(compile(block, 'p10-s3-i2-contract-close', 'exec'))
+          PY
+          rm -f .github/workflows/p10-s3-i2-contract-close.yml .github/workflows/p10-s3-i2-contract-trigger.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/V2/STATUS.md docs/V2/PROJECT_SPEC.md docs/V2/ARCHITECTURE.md docs/V2/BACKLOG.md docs/V2/DECISIONS.md docs/V2/QA_LEDGER.md docs/V2/CHANGELOG.md docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md docs/V2/P10_CUTOVER_PLAN.md .github/workflows/p10-s3-i2-contract-close.yml .github/workflows/p10-s3-i2-contract-trigger.yml
+          git commit -m "docs(v2): accept P10-S3-I2 contract"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
