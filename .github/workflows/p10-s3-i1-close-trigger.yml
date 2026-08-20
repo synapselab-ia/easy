@@ -1,0 +1,41 @@
+name: P10-S3-I1 closure trigger
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [develop]
+    paths:
+      - .github/workflows/p10-s3-i1-close-trigger.yml
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Execute canonical closure helper
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          helper = Path('.github/workflows/p10-s3-i1-close.yml').read_text()
+          marker = "          python - <<'PY'\n"
+          start = helper.index(marker) + len(marker)
+          end = helper.index("\n          PY\n", start)
+          block = helper[start:end]
+          block = '\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+          exec(compile(block, 'p10-s3-i1-close', 'exec'))
+          PY
+          rm -f .github/workflows/p10-s3-i1-close-trigger.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/V2 .github/workflows/p10-s3-i1-close.yml .github/workflows/p10-s3-i1-close-trigger.yml
+          git diff --cached --check
+          git commit -m "docs(v2): accept P10-S3-I1 foundation"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
