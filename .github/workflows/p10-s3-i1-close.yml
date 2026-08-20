@@ -1,0 +1,147 @@
+name: P10-S3-I1 canonical closure
+
+on:
+  push:
+    branches:
+      - feat/p10-s3-i1-supabase-foundation
+    paths:
+      - .github/workflows/p10-s3-i1-close.yml
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p10-s3-i1-supabase-foundation
+          fetch-depth: 0
+      - name: Update canonical documents and self-remove
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def edit(path, replacements=(), prepend_after=None, prepend_text=None):
+              p = Path(path)
+              s = p.read_text()
+              for old, new in replacements:
+                  count = s.count(old)
+                  if count != 1:
+                      raise SystemExit(f'{path}: expected exactly one anchor, got {count}: {old[:100]!r}')
+                  s = s.replace(old, new, 1)
+              if prepend_after is not None:
+                  count = s.count(prepend_after)
+                  if count != 1:
+                      raise SystemExit(f'{path}: prepend anchor count {count}')
+                  s = s.replace(prepend_after, prepend_after + prepend_text, 1)
+              p.write_text(s)
+
+          # STATUS
+          status_old_tail = '''## P10 boundary entering P10-S3-I1
+
+1. `main` remains untouched;
+2. no live-store data has moved into V2/Supabase;
+3. no V2 stable publication/canonical URL switch/production cutover has occurred;
+4. D-029 now controls the persistence route;
+5. the prior P10-S2-I1 IndexedDB beta must not be resumed by default;
+6. current stable production remains browser-local and keeps D-024 until cutover;
+7. P10-S3-I1 must use **synthetic data only**;
+8. no service-role/secret key may be exposed to the browser/repository;
+9. no real-data import is allowed until schema, RLS/Auth, transactional integrity, synthetic migration/reconciliation and QA evidence pass;
+10. a later explicit gate is still required for real-data migration and production cutover.
+
+## NEXT_ACTION
+
+**Execute only P10-S3-I1 — Supabase foundation with synthetic data under D-029 / `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`. First select/create one dedicated Easy Supabase project in an explicitly chosen Supabase organization and region; do not reuse an unrelated application's database. Then establish reproducible schema migrations for categories/items/resellers/transactions plus the minimum authorization metadata, enable/test RLS on every exposed table, establish the initial single-operator Supabase Auth/authorization model, preserve D-013/D-026 correction atomicity through a transactional database/server boundary, wire React/Vite through `supabase-js` with only project URL + publishable key, and prove the foundation with synthetic data, Supabase security/performance advisors and repository D-019. Keep all real store data out. Do not modify/publish `main`, switch the canonical URL or perform production cutover.**'''
+          status_new_tail = '''## P10 boundary entering P10-S3-I2
+
+1. `main` remains untouched;
+2. no live-store data has moved into V2/Supabase;
+3. no V2 stable publication/canonical URL switch/production cutover has occurred;
+4. the dedicated `easy-v2` Supabase project now carries the accepted synthetic foundation in `sa-east-1`;
+5. repository/live migration identities are `20260820154034_p10_s3_i1_foundation` and `20260820154402_harden_transaction_rpc_boundary`;
+6. all five exposed application tables have RLS and the initial authorization model is an explicit server-managed operator UUID allow-list;
+7. financial writes use public invoker RPCs over non-exposed privileged implementations so D-013/D-026 correction/reversal remains one PostgreSQL transaction boundary;
+8. all P10-S3-I1 synthetic rows were disposed; final counts for operator/category/item/reseller/transaction tables are zero;
+9. the user-facing runtime still uses Dexie/IndexedDB and D-024 remains active until an explicit cloud cutover;
+10. current paid-infrastructure budget is **US$ 0**; P10-S3-I2 may not assume Supabase Pro/PITR or another paid add-on and must either prove a zero-cost recovery posture consistent with D-029 or keep production cutover blocked;
+11. no real store export/import is authorized until P10-S3-I2 is accepted and its preconditions are objectively satisfiable.
+
+## NEXT_ACTION
+
+**Execute only P10-S3-I2 — define and accept the real-data migration/reconciliation and zero-cost production-durability gate under D-029 before any real store export/import. Specify exact stable-v1 source-freeze/export identity and digest, deterministic v1→cloud normalization/import path, real operator Auth onboarding without exposing secrets, ID preservation + identity-sequence repair, structural/reference/financial reconciliation, rollback/recovery behavior, candidate deployment identity and disposal/abort behavior. Treat the current paid-infrastructure budget as US$ 0: do not assume Supabase Pro, PITR or another paid add-on. Either prove an acceptable zero-cost primary/secondary recovery posture consistent with D-029, or explicitly keep production cutover blocked. Do not export/import real store data until this contract is integrated and its preconditions are objectively satisfiable. Do not modify/publish `main`, switch the canonical URL or cut over production.**'''
+          edit('docs/V2/STATUS.md', [
+              ('- **P10-S3-I1 — Supabase foundation with synthetic data only: `NOT_STARTED` — CURRENT.**', '- **P10-S3-I1 — Supabase foundation with synthetic data only: `DONE / ACCEPTED`.**\n- **P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract: `NOT_STARTED` — CURRENT.**'),
+              ('- **`docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md` — authoritative D-029 final architecture and P10-S3 boundary.**', '- **`docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md` — authoritative D-029 final architecture and P10-S3 boundary.**\n- **`docs/V2/P10_S3_I1_EXECUTION.md` — accepted synthetic Supabase foundation execution evidence.**'),
+              ('No Supabase schema/client runtime implementation is accepted yet. That is P10-S3-I1.', 'P10-S3-I1 now provides the accepted dedicated Supabase schema/security/client **foundation**. The current user-facing business hooks/pages still use Dexie/IndexedDB; no real operator, real store data or production cutover has been introduced.'),
+              (status_old_tail, status_new_tail),
+          ], prepend_after='''- `main` remained untouched and no live-store data moved.\n''', prepend_text='''\nP10-S3-I1 synthetic Supabase foundation proof:\n\n- dedicated project `easy-v2` / `hrmkkhqfyfoqucwbcszq` in `sa-east-1`;\n- migrations `20260820154034` and `20260820154402`; all five public application tables RLS-enabled; final Security Advisor 0 lints;\n- diagnostic D-019 `32388839983` / `96489804473` correctly blocked a TypeScript env-boundary mismatch after lint/Vitest/E2E had passed;\n- corrected authoritative D-019 **`32394126648`** / **`96506890991`**, exact validated PR merge ref **`c12a535b665eb25626a1b3bb0aa15cd034808e00`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS;\n- final synthetic-data disposal verified all five application/authorization tables at 0 rows; no real store data moved.\n''')
+
+          # BACKLOG
+          edit('docs/V2/BACKLOG.md', [
+              ('''**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION**.\n\nRequired work:''', '''**Status:** `DONE / ACCEPTED`.\n\nAccepted execution: `docs/V2/P10_S3_I1_EXECUTION.md`. Dedicated `easy-v2` Supabase project, reproducible migrations, RLS/allow-list authorization, transactional financial RPC boundary, typed `supabase-js` client foundation, advisor review and synthetic reconciliation all passed. All synthetic rows were disposed and no real store data moved.\n\nCompleted work:'''),
+              ('''**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I1 PASSES`.\n\nFuture bounded goal only: one controlled stable-v1 snapshot imported directly into the proven Supabase final architecture, followed by exact structural/financial reconciliation and rollback evidence.\n\nNo implementation permission exists until P10-S3-I1 is accepted.''', '''**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / CONTRACT DEFINITION ONLY**.\n\nBounded goal: define and accept the exact real-data migration/reconciliation, Auth onboarding, rollback/recovery and production-durability contract before any real store export/import. The current paid-infrastructure budget is **US$ 0**, so this gate may not assume Supabase Pro/PITR or another paid add-on. It must either prove an acceptable zero-cost recovery posture consistent with D-029 or leave production cutover explicitly blocked.\n\nNo real store export/import, production operator cutover, canonical URL switch or production publication is authorized by contract definition.'''),
+          ])
+
+          # PROJECT SPEC
+          edit('docs/V2/PROJECT_SPEC.md', [
+              ('The currently implemented V2 persistence remains Dexie/IndexedDB until P10-S3 implementation. That is now a transitional implementation state, not the accepted final production topology.', 'The current **user-facing runtime** remains Dexie/IndexedDB. P10-S3-I1 has now established the Supabase/Postgres schema, RLS/authorization, transactional RPC and typed-client foundation, but those cloud primitives are not yet wired as the application source of truth. Dexie remains a transitional implementation state, not the accepted final production topology.'),
+              ('  - **P10-S3: Supabase canonical-persistence transition — current after D-029.**', '  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; I2 migration/durability contract current.**'),
+              ('D-024 remains mandatory for the current browser-local stable production system until cloud cutover. Its synchronized-folder/24-hour manual-export write block is transitional and is not the intended final durability policy after managed cloud backup readiness is proven.', 'D-024 remains mandatory for the current browser-local stable production system until cloud cutover. Its synchronized-folder/24-hour manual-export write block is transitional and is not the intended final durability policy after managed cloud backup readiness is proven.\n\nCurrent paid-infrastructure budget is **US$ 0**. This does not silently weaken D-029: P10-S3-I2 must either demonstrate a zero-cost production/recovery arrangement that actually satisfies the accepted durability objective or keep cloud production cutover blocked.'),
+          ])
+
+          # ARCHITECTURE
+          edit('docs/V2/ARCHITECTURE.md', [
+              ('**Status:** D-029 accepted architecture direction; Supabase implementation not started', '**Status:** D-029 accepted; P10-S3-I1 Supabase foundation implemented/proven; runtime cutover not started'),
+              ('The code currently integrated before D-029 remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB.', 'The current user-facing application remains a static React/TypeScript/Vite SPA using TanStack Query and Dexie/IndexedDB. P10-S3-I1 adds a Supabase/Postgres foundation in repository/live infrastructure, but existing business hooks/pages have not been switched to it.'),
+              ('''P10-S3 must provide a single PostgreSQL transaction boundary, normally through a database function/RPC or equivalent server-side transactional operation. Prefer normal invoker/RLS-compatible semantics. `SECURITY DEFINER` is not accepted merely as a shortcut around authorization problems.''', '''P10-S3-I1 now provides that single PostgreSQL boundary. Public `create_transaction`, `reverse_transaction` and `correct_transaction` RPCs are `SECURITY INVOKER`; privileged implementations live in the non-exposed `private` schema with fixed search paths and explicit approved-operator checks. Browser direct transaction DML is unavailable. Supabase Security Advisor returned 0 lints after this hardening.'''),
+              ('The exact initial allow-list/profile table and policies are P10-S3-I1 implementation details and require policy tests.', 'P10-S3-I1 implements the initial model as `public.easy_operators`: a server-managed allow-list keyed by Supabase Auth UUID. All five public application tables have RLS; anonymous table access is absent; authenticated business access requires the approved-operator predicate; `transactions` is client read-only outside the controlled RPC boundary.'),
+              ('Production may not claim that human backup dependency is removed while using a cloud tier that lacks the required managed backup/availability guarantee.', 'Production may not claim that human backup dependency is removed while using a cloud tier that lacks the required managed backup/availability guarantee. The current paid-infrastructure budget is US$ 0, so P10-S3-I2 must either prove a zero-cost recovery posture that genuinely satisfies D-029 or leave production cutover blocked; paid Supabase features may not be assumed.'),
+              ('A dedicated Easy Supabase project is required; unrelated application databases must not be reused.', 'P10-S3-I1 provisioned the dedicated Easy Supabase project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`; unrelated application databases are not reused.'),
+              ('''## 17. Boundary entering P10-S3-I1\n\nP10-S3-I1 is allowed to build/prove the **synthetic Supabase foundation only**.\n\nIt may provision a dedicated Supabase project after the required organization/cost choice, establish schema/Auth/RLS/transactional functions, wire the client and run synthetic tests.\n\nIt may not:\n\n1. import the live store dataset;\n2. modify/publish `main`;\n3. switch the canonical URL;\n4. perform production cutover;\n5. weaken D-012/D-013/D-025/D-026;\n6. expose anonymous business access or privileged client secrets;\n7. introduce offline write synchronization without a new explicit gate.\n\nAuthoritative D-029 gate: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.''', '''## 17. Boundary entering P10-S3-I2\n\nP10-S3-I1 is accepted as the **synthetic Supabase foundation**: dedicated project, reproducible migrations, RLS/authorization, controlled transactional financial RPCs, typed client, advisor review, synthetic correction/reconciliation proof and zero-row cleanup are complete.\n\nP10-S3-I2 is contract definition only. It must specify the controlled stable-v1 source snapshot, real operator onboarding, deterministic import/identity repair, structural/reference/financial reconciliation, rollback/recovery and candidate identity before real data. With a current US$ 0 paid-infrastructure budget, it must not assume Pro/PITR; if D-029 durability cannot be met at zero cost, cutover remains blocked.\n\nIt may not:\n\n1. export/import the live store dataset;\n2. modify/publish `main`;\n3. switch the canonical URL;\n4. perform production cutover;\n5. weaken D-012/D-013/D-025/D-026/D-029;\n6. expose anonymous business access or privileged client secrets;\n7. introduce offline write synchronization without a new explicit gate.\n\nAuthoritative D-029 gate: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.'''),
+          ], prepend_after='''- P10-S2-I1 pre-export record: PR #65 final D-019 `32382928429` / `96470305608`; integrated as `e06c659ecdb3aee79e2e451b00eb85d63c8b8612`, tree `4da05cdda530b1e7000d01460201dff1daf65910`.\n''', prepend_text='''- P10-S3-I1 synthetic foundation: diagnostic D-019 `32388839983` / `96489804473` blocked TS2559; corrected authoritative D-019 `32394126648` / `96506890991` passed on merge ref `c12a535b665eb25626a1b3bb0aa15cd034808e00` with 0 errors / 82 lint warnings, 54 files / 225 Vitest PASS, 17/17 Playwright PASS and build PASS.\n''')
+
+          # DECISIONS
+          edit('docs/V2/DECISIONS.md', [
+              ('''### Next implementation gate\n\nP10-S3-I1 must use synthetic data only to provision/prove a dedicated Supabase foundation, including schema migrations, Auth/RLS, atomic correction/reversal, React/Vite client integration, advisor review and D-019.''', '''### Implementation evidence and next gate\n\nP10-S3-I1 accepted a dedicated `easy-v2` project in `sa-east-1`, the `easy_operators` allow-list authorization model, reproducible schema migrations, RLS on all exposed application tables, controlled transactional financial RPCs and a typed publishable-key-only client foundation. Synthetic proof and advisors passed; no real store data moved.\n\nP10-S3-I2 is now the bounded contract-definition gate for real-data migration/reconciliation and production durability. The current paid-infrastructure budget is US$ 0. This is a constraint, not a silent reversal of item 22 above: if an acceptable zero-cost recovery posture cannot satisfy D-029, production cutover remains blocked.'''),
+              ('''- exact Supabase organization/project/region choice for the dedicated Easy project;\n- exact initial one-operator authorization table/policy shape;\n- production Supabase plan and whether PITR is justified by accepted RPO/cost;''', '''- with current paid-infrastructure budget fixed at US$ 0, whether a zero-cost production/recovery posture can satisfy D-029; otherwise production cutover remains blocked;\n- whether PITR or another paid durability mechanism becomes justified only if budget constraints later change;'''),
+          ])
+
+          # ARCHITECTURE GATE
+          gate_old = '''## 14. Next bounded implementation gate\n\nAfter D-029 is integrated, the next action is **P10-S3-I1 — provision and prove the Supabase foundation using synthetic data only**.\n\nThat action must:\n\n1. create/select a dedicated Easy Supabase project in an explicitly chosen organization and region;\n2. establish reproducible schema migrations for categories/items/resellers/transactions and minimal authorization metadata;\n3. enable and test RLS for every exposed application table;\n4. establish the initial single-operator Auth/authorization model;\n5. implement the server-side atomic correction/reversal boundary required by D-013/D-026;\n6. wire the React/Vite client through `supabase-js` using only URL + publishable key;\n7. keep real store data out;\n8. run database security/performance advisors plus repository D-019;\n9. document exact synthetic evidence and the next migration gate.\n\nNo stable publication, canonical URL switch or production cutover is authorized by P10-S3-I1.'''
+          gate_new = '''## 14. P10-S3-I1 accepted foundation / next bounded gate\n\nP10-S3-I1 is accepted. Execution evidence is canonical in `docs/V2/P10_S3_I1_EXECUTION.md`.\n\nAccepted foundation:\n\n1. dedicated project `easy-v2` / `hrmkkhqfyfoqucwbcszq`, organization `synapselab-ia's Org`, region `sa-east-1`;\n2. reproducible migrations `20260820154034` and `20260820154402`;\n3. RLS on all five public application/authorization tables and an explicit `easy_operators` Auth UUID allow-list;\n4. public invoker financial RPCs backed by non-exposed privileged implementations, preserving D-013/D-026 atomicity;\n5. typed `supabase-js` client foundation using only URL + publishable key;\n6. synthetic authorization/correction/history/rollback proof;\n7. final Security Advisor 0 lints; performance advisor INFO-only unused-index notices on an empty/tiny synthetic dataset;\n8. all synthetic rows disposed and final application-table counts zero;\n9. repository D-019 passed after the implementation type fix; no real store data moved.\n\nThe next action is **P10-S3-I2 — define and accept the real-data migration/reconciliation + production-durability contract before any real export/import**. The current paid-infrastructure budget is US$ 0, so this gate may not assume Supabase Pro, PITR or another paid add-on. It must either prove a zero-cost recovery posture that actually satisfies D-029 or keep production cutover blocked.\n\nNo real-data export/import, stable publication, canonical URL switch or production cutover is authorized by P10-S3-I2 contract definition.'''
+          edit('docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md', [
+              ('**Status:** `ACCEPTED DESIGN / IMPLEMENTATION NOT STARTED`', '**Status:** `ACCEPTED DESIGN / P10-S3-I1 FOUNDATION PROVEN`'),
+              ('Therefore the final production cutover may not claim removal of human backup dependency while relying only on a free/pausable database tier. The exact paid-plan/cost choice remains a later pre-production gate.', 'Therefore the final production cutover may not claim removal of human backup dependency while relying only on a free/pausable database tier **unless a later gate proves an alternative zero-cost recovery arrangement that genuinely satisfies the same durability objective**. The current paid-infrastructure budget is US$ 0, so P10-S3-I2 must resolve this objectively or keep cutover blocked; paid features may not be assumed.'),
+              (gate_old, gate_new),
+          ])
+
+          # EXECUTION EVIDENCE
+          exec_insert = '''\n## Repository D-019 and final live recheck\n\nThe first repository D-019 after the foundation code correctly failed only at TypeScript build validation:\n\n- run `32388839983`, job `96489804473`;\n- lint had already passed with 0 errors / 82 warnings;\n- Vitest had passed 54 files / 225 tests;\n- Playwright had passed 17/17;\n- build blocked on TS2559 because `ImportMetaEnv` was being passed structurally as `EasySupabaseEnv`.\n\nThe client boundary was narrowed to read only the two explicit Vite variables. The corrected authoritative run then passed:\n\n- run **`32394126648`**, job **`96506890991`**;\n- exact validated PR merge ref **`c12a535b665eb25626a1b3bb0aa15cd034808e00`**;\n- ESLint **0 errors / 82 warnings**;\n- Vitest **54 files / 225 tests PASS**;\n- Playwright **17/17 PASS**;\n- production build **PASS**.\n\nKnown existing non-blocking debt remains visible: React `act(...)`/mock-select warnings, lint warning debt, 17 npm audit findings (2 low / 4 moderate / 11 high), Actions runtime deprecation notices and the Vite large-chunk warning. None produced an objective D-019 failure.\n\nA final live Supabase recheck after cleanup confirmed RLS enabled on all five public tables, public financial wrappers as invoker functions, privileged implementations confined to `private`, Security Advisor at 0 lints, performance advisor at INFO-only unused-index notices, and all five application/authorization tables at 0 rows.\n'''
+          edit('docs/V2/P10_S3_I1_EXECUTION.md', [
+              ('The later real-data migration gate must explicitly prove source snapshot identity, operator Auth onboarding, import/reconciliation, identity-sequence repair, rollback/recovery, managed-backup production posture, candidate deployment identity and exact structural/financial parity before any canonical switch.', 'The later real-data migration gate must explicitly prove source snapshot identity, operator Auth onboarding, import/reconciliation, identity-sequence repair, rollback/recovery, production-durability posture, candidate deployment identity and exact structural/financial parity before any canonical switch. Current paid-infrastructure budget is US$ 0; the next gate must not assume paid Supabase features and must keep cutover blocked if D-029 cannot be satisfied at zero cost.'),
+          ], prepend_after='''No real store backup or real reseller/item/transaction data entered Supabase, GitHub, CI, docs or chat.\n''', prepend_text=exec_insert)
+
+          # QA LEDGER
+          qa_i1 = '''\n## P10-S3-I1 Supabase foundation — PASS / ACCEPTED\n\nP10-S3-I1 used synthetic data only against dedicated project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`. Live/repository migrations are `20260820154034_p10_s3_i1_foundation` and `20260820154402_harden_transaction_rpc_boundary`.\n\nDatabase/security proof:\n\n- RLS enabled on `easy_operators`, `categories`, `items`, `resellers`, `transactions`;\n- `anon` has no application-table grant; authenticated category/item/reseller CRUD requires approved-operator RLS; transaction direct DML is SELECT-only;\n- synthetic authorized UUID passed the allow-list predicate; unauthorized UUID saw no rows and could not call financial mutations;\n- public financial RPC wrappers are invoker functions; privileged implementations are confined to the non-exposed `private` schema with explicit operator assertion;\n- changed-item correction captured replacement-time snapshot; same-item correction preserved historical D-025 category snapshot;\n- intentionally invalid correction rolled back atomically with no partial reversal/link;\n- final Security Advisor: **0 lints**;\n- Performance Advisor: INFO-only `unused_index` notices expected on the empty/tiny synthetic dataset;\n- synthetic cleanup verified 0 rows in all five application/authorization tables.\n\nRepository validation:\n\n- diagnostic D-019 `32388839983` / `96489804473` correctly blocked TS2559 in the new Supabase env typing after lint (0/82), Vitest (54/225) and Playwright (17/17) had passed;\n- minimal explicit-env-boundary fix committed as `3f1f49c002c3c1a8531181ec66e995e7f753da8e`;\n- authoritative substantive D-019 **`32394126648`** / **`96506890991`** passed on exact PR merge ref **`c12a535b665eb25626a1b3bb0aa15cd034808e00`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS.\n\nData/cutover boundary: no real store data, real operator cutover, `main` publication, canonical URL switch or production cutover occurred. Current user-facing runtime remains Dexie. Detailed evidence: `docs/V2/P10_S3_I1_EXECUTION.md`.\n'''
+          edit('docs/V2/QA_LEDGER.md', [
+              ('## D-029 / P10-S3 architecture redirect — PASS / ACCEPTANCE IN REVIEW', '## D-029 / P10-S3 architecture redirect — PASS / INTEGRATED'),
+              ('''A final D-019 after this QA-ledger append and the historical changelog correction is required before PR #66 integration.''', '''Final D-019 `32386064578` / `96480732008` passed on exact validated merge ref `2d6936cd8f74d2205f1c0b0a2f696287b66ae2dc`. PR #66 squash-integrated to `develop` as `0e054bc5e640c35ce567ccd710d9574cf1a93454`, tree `fe92fb0626449ba30456e85f37152e43f1faf864`. No real store data moved and `main` remained untouched.'''),
+          ], prepend_after='''## Known non-blocking debt\n''', prepend_text=qa_i1 + '\n')
+
+          # CHANGELOG
+          changelog_entry = '''\n## 2026-08-20 — P10-S3-I1 Supabase foundation proven with synthetic data\n\nP10-S3-I1 established the dedicated `easy-v2` Supabase/Postgres foundation in `sa-east-1` without importing any real store data. Repository/live migrations create the canonical category/item/reseller/transaction substrate plus server-managed operator authorization metadata. All exposed application tables have RLS. Financial create/reverse/correct operations cross one controlled PostgreSQL transaction boundary through public invoker RPCs backed by non-exposed privileged implementations.\n\nSynthetic proof covered approved/unauthorized access, blocked direct transaction DML, changed-item snapshot capture, same-item historical category preservation and atomic rollback on invalid correction. Security Advisor finished with 0 lints; performance advisor reported only INFO unused-index notices on the empty/tiny synthetic dataset. All synthetic rows were then disposed and final table counts were zero.\n\nRepository client foundation pins `@supabase/supabase-js` 2.112.3, commits the npm lockfile/generated types, exposes only URL + publishable-key variable names and keeps existing Dexie business hooks/pages unchanged.\n\nDiagnostic D-019 `32388839983` / `96489804473` correctly blocked a TypeScript env-boundary mismatch. After the minimal fix, authoritative run **`32394126648`** / **`96506890991`** passed on merge ref `c12a535b665eb25626a1b3bb0aa15cd034808e00`: **0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS**.\n\nP10-S3-I1 is `DONE / ACCEPTED`. P10-S3-I2 is now the only current action and is contract-definition only. Current paid-infrastructure budget is **US$ 0**: the next gate may not assume Supabase Pro/PITR or another paid add-on and must keep cutover blocked if a zero-cost recovery posture cannot satisfy D-029. No real-data export/import, `main` publication, canonical URL switch or production cutover is authorized.\n\nAuthoritative execution record: `docs/V2/P10_S3_I1_EXECUTION.md`.\n\n---\n'''
+          edit('docs/V2/CHANGELOG.md', prepend_after='''---\n''', prepend_text=changelog_entry)
+
+          # Remove temporary workflow from final tree.
+          Path('.github/workflows/p10-s3-i1-close.yml').unlink()
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/V2 .github/workflows/p10-s3-i1-close.yml
+          git diff --cached --check
+          git commit -m "docs(v2): accept P10-S3-I1 foundation"
+          git push origin HEAD:feat/p10-s3-i1-supabase-foundation
