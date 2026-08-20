@@ -1,9 +1,9 @@
 name: P10-S3 lockfile generator
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/p10-s3-i1-supabase-foundation
+      - develop
     paths:
       - .github/workflows/p10-s3-lock.yml
 
