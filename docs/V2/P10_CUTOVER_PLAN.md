@@ -1,6 +1,6 @@
 # Easy V2 — P10 Controlled Migration / Cutover Plan
 
-**Status:** `P10-S1 DONE; P10-S2 CONTRACT DONE; P10-S2-I1 ABANDONED BEFORE EXPORT; P10-S3 CURRENT`  
+**Status:** `P10-S1 DONE; P10-S2 HISTORICAL; P10-S3-I1 FOUNDATION DONE; D-030/I2 CONTRACT DONE; I2-I1 CURRENT`  
 **Updated:** 2026-08-20  
 **Scope:** fail-closed progression from the current stable browser-local system toward a Supabase/Postgres-backed final V2 on Vercel
 
@@ -118,70 +118,35 @@ React/Vite application on Vercel
 
 Dexie may remain temporarily as migration substrate/cache but is not final canonical production persistence.
 
-Manual Easy backup remains available; managed database backup becomes primary durability after cloud cutover.
+Manual Easy backup remains available. Paid production uses managed database backup as primary durability; under D-030/US$ 0, production eligibility instead requires the proven unattended off-site logical-dump/freshness/restore layer before cutover.
 
 ## 6. P10-S3-I1 — Supabase foundation
 
-**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION**.
+**Status:** `DONE / ACCEPTED`.
 
-This slice is synthetic-only and must not touch real store data.
+The dedicated `easy-v2` project, reproducible migrations, RLS/allow-list authorization, controlled transactional financial RPC boundary, typed publishable-key-only client foundation, synthetic proof, Security Advisor 0 lints and zero-row cleanup are accepted in `docs/V2/P10_S3_I1_EXECUTION.md`.
 
-Required sequence:
+No real data or real Auth operator was introduced.
 
-1. explicitly select the Supabase organization and region;
-2. create/select a dedicated Easy Supabase project;
-3. establish reproducible repository migrations;
-4. implement canonical tables for categories/items/resellers/transactions plus minimal authorization metadata;
-5. preserve historical snapshot fields and existing importable IDs;
-6. add keys/constraints/indexes that reinforce existing domain invariants;
-7. enable RLS on every exposed application table;
-8. establish and test the initial single-operator Auth/authorization model;
-9. implement D-013/D-026 correction/reversal through one PostgreSQL/server transaction boundary;
-10. wire React/Vite through `supabase-js` using only project URL + publishable key;
-11. keep offline write synchronization out of scope;
-12. use synthetic fixtures only;
-13. run Supabase security/performance advisors;
-14. run repository D-019;
-15. record evidence and define the next real-data migration gate.
+## 7. P10-S3-I2 — migration/reconciliation + zero-cost durability contract
 
-### P10-S3-I1 exit criteria
+**Status:** `DONE / ACCEPTED CONTRACT` — D-030.
 
-PASS only if:
+Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
 
-- project identity/region are recorded;
-- migrations reproduce schema/policies;
-- no application table is anonymously exposed;
-- RLS policy tests prove only the intended operator access;
-- no service/secret credential exists in browser/repository scope;
-- synthetic CRUD/reporting behaviors preserve accepted domain semantics;
-- D-013/D-026 correction atomicity is proven against Postgres;
-- synthetic stable-v1 import/normalization can be reconciled exactly or the next slice explicitly implements that importer before any real data;
-- Supabase security advisor has no unresolved critical exposure caused by this implementation;
-- performance advisor results are reviewed;
-- D-019 passes;
-- no real store data moved.
+The contract defines:
 
-Any security/integrity mismatch is NO-GO.
+- one point-in-time stable-v1 source freeze/digest;
+- private stable-v1 staging because active legacy unclassified items cannot enter the current public item constraint directly;
+- explicit current-item classification with no historical category backfill;
+- atomic public promotion with stable IDs + sequence repair;
+- exact structural/reference/financial reconciliation;
+- private real Auth onboarding evidence;
+- rollback/abort behavior;
+- exact Git/Supabase/Vercel candidate identity;
+- a conditional US$ 0 durability route using unattended off-site logical dumps rather than pretending Free has managed backups.
 
-## 7. P10-S3-I2 — real-data migration/reconciliation
-
-**Status:** `NOT_STARTED / NOT AUTHORIZED UNTIL I1 PASSES`.
-
-Future bounded sequence only:
-
-1. freeze an agreed point-in-time stable-v1 source snapshot;
-2. retain source only within the approved operator/recovery boundary;
-3. record sanitized timestamp/file-size/SHA-256;
-4. validate/normalize deterministically;
-5. import directly into the proven Supabase schema, preserving IDs/snapshots;
-6. reset database identity/sequence state safely;
-7. reconcile exact structural counts/IDs/references;
-8. reconcile gross orders, payments, signals, net movement, every reseller balance and aggregate positive debt with zero-cent tolerance;
-9. verify Auth/RLS against the migrated dataset without exposing raw data in repository evidence;
-10. prove rollback/recreate strategy;
-11. retain only sanitized evidence.
-
-This slice must be defined in more detail after P10-S3-I1 establishes the actual schema/import surface.
+Execution is decomposed into I2-I1 staging/import compatibility, I2-I2 unattended backup/recovery proof, I2-I3 Supabase-backed Auth/runtime candidate and I2-I4 real migration execution. Only I2-I1 is current and it is synthetic-only.
 
 ## 8. Backup/recovery transition
 
@@ -191,12 +156,12 @@ The current stable browser-local system keeps D-024 and its existing manual/sync
 
 ### After cloud cutover
 
-Expected layered protection:
+Expected layered protection follows the accepted budget posture:
 
-1. managed Supabase database backup appropriate to the production plan;
-2. independent logical/manual Easy backup/export;
-3. optional automated off-site logical dump later;
-4. PITR only if an explicit RPO/cost decision accepts it.
+1. paid posture: managed Supabase database backup appropriate to the production plan is primary;
+2. D-030 / US$ 0 posture: proven unattended off-site logical dump + exact-24h server-side freshness + restore drill is primary;
+3. independent logical/manual Easy backup/export remains secondary;
+4. PITR only if an explicit later RPO/cost decision accepts it.
 
 The project must not claim that human backup dependency is removed if final production is left on a cloud tier without the managed backup/availability properties required by D-029.
 
@@ -258,6 +223,6 @@ None of those are authorized by D-029 or P10-S3-I1.
 
 ## 13. Current next action
 
-Execute only **P10-S3-I1** under D-029 and `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
+Execute only **P10-S3-I2-I1 — private stable-v1 staging/import compatibility with synthetic data** under D-030 and `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
 
-No real store data, no `main` publication and no production cutover.
+The current empty `easy-v2` homologation project may be altered only through reproducible migrations. No unattended backup implementation, real Auth operator, Supabase-backed business-runtime switch, real store data, `main` publication, canonical URL switch or production cutover.

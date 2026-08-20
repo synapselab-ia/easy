@@ -205,7 +205,7 @@ D-029 then superseded **resuming** this IndexedDB real-data beta because the fin
 Detailed contract: `docs/V2/P10_S2_BETA_GATE.md`.
 
 ## D-029 — Final V2 uses Supabase/Postgres canonical persistence with Vercel hosting; manual backup remains secondary defense
-**Status:** ACCEPTED  
+**Status:** ACCEPTED / REFINED BY D-030 FOR THE US$ 0 DURABILITY PATH  
 **Date:** 2026-08-20
 
 ### Trigger
@@ -250,11 +250,36 @@ P10-S3-I2 is now the bounded contract-definition gate for real-data migration/re
 
 Detailed authoritative contract: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
 
+## D-030 — Zero-cost migration/durability uses private stable-v1 staging and unattended off-site logical backups; Free alone is insufficient
+**Status:** ACCEPTED  
+**Date:** 2026-08-20
+
+P10-S3-I2 accepts the contract in `docs/V2/P10_S3_I2_MIGRATION_GATE.md` without moving real data. D-030 specifically refines D-029 items 19/22 for the accepted US$ 0 posture: until paid managed backups become available, the objectively proven unattended off-site logical-dump layer is the required primary recovery layer; Supabase Free by itself remains insufficient.
+
+Accepted rules:
+
+1. stable-v1 source identity is commit/database/backup-version + exportedAt + filename + exact byte size + SHA-256, with raw payload confined to the operator/recovery boundary;
+2. real migration occurs only inside an explicit stable-write freeze/maintenance window and must either proceed directly toward the later cutover gate or roll back and resume stable;
+3. stable-v1 active unclassified items may not be forced directly into the current public `items` constraint and may not receive fabricated history;
+4. normalized v1 data first enters a non-exposed/private staging boundary;
+5. all active legacy items require explicit **current** category classification before canonical promotion, while historical stable-v1 order category snapshots stay null;
+6. item/reseller/transaction IDs and accepted source timestamps are preserved; identity sequences are repaired from PostgreSQL metadata;
+7. promotion is atomic and exact structural/reference/financial reconciliation has zero-cent tolerance;
+8. real Auth onboarding uses normal Supabase Auth/admin tooling and `easy_operators`; real email/credentials/full UUID stay out of Git/docs/chat evidence;
+9. Supabase Free by itself is not accepted as backed-up production;
+10. with paid infrastructure fixed at US$ 0, Free may become production-eligible only when paired with unattended trusted-PC logical dumps to an objectively verified off-site/synchronized boundary, at least seven retained successful daily generations, exact-24h server-visible write blocking when backup health is stale, and successful restore drills;
+11. Free-plan pausing is accepted as an availability limitation only; network/service loss blocks writes and does not create an offline-authoritative Dexie mode;
+12. logical/manual `easy-backup` remains secondary portability/contingency;
+13. current `easy-v2` may continue as the directly modified homologation cloud project only while it contains no real store data; after real data enters, experimental direct production changes without prior local/synthetic validation are prohibited;
+14. the contract authorizes only synthetic prerequisite implementation next, not real-data migration or production cutover.
+
+Provider guidance supporting the zero-cost route explicitly recommends `supabase db dump` plus off-site backups for Free projects; the project still requires its own unattended/off-site verification and restore evidence before production.
+
 ---
 
 # Open decisions
 
-- with current paid-infrastructure budget fixed at US$ 0, whether a zero-cost production/recovery posture can satisfy D-029; otherwise production cutover remains blocked;
+- whether the trusted operator environment can objectively implement/prove D-030 off-site synchronization and exact-24h unattended recovery health; if it cannot, production cutover remains blocked;
 - whether PITR or another paid durability mechanism becomes justified only if budget constraints later change;
 - whether a later observed offline-write requirement justifies a durable outbox/synchronization protocol;
 - whether any future directly observed inactive-entity correction case justifies a bounded lifecycle exception beyond D-026;

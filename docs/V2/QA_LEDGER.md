@@ -187,6 +187,22 @@ Repository validation:
 
 Data/cutover boundary: no real store data, real operator cutover, `main` publication, canonical URL switch or production cutover occurred. Current user-facing runtime remains Dexie. Detailed evidence: `docs/V2/P10_S3_I1_EXECUTION.md`.
 
+## P10-S3-I2 migration/durability contract — PASS / ACCEPTED
+
+Contract-definition evidence:
+
+- `develop` source baseline: `5e2decd337b7912f118801cd75cbb27e4e03cfc2`;
+- stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
+- stable source inspection confirms backup version 1 with `items`, `resellers`, `transactions` and Dexie V1 business shapes;
+- current V2 normalization inspection confirms legacy missing lifecycle -> active, missing transaction `occurredAt` -> `createdAt`, and no fabricated category history;
+- live `easy-v2` recheck: `ACTIVE_HEALTHY`, 0 Auth users and 0 rows in `easy_operators`, `categories`, `items`, `resellers`, `transactions`;
+- live item constraint recheck confirms `items_active_requires_category`, proving direct active-unclassified v1 item insertion is incompatible and must use the D-030 private staging/classification path;
+- live Supabase Security Advisor: 0 lints;
+- current Supabase documentation confirms paid automatic backups, Free-plan `db dump` + off-site recommendation, Free pausing behavior and supported logical dump/restore tooling;
+- no real store data or real operator identity was used.
+
+D-030 accepts the contract only. Authoritative closure D-019 **`32399725148`** / **`96524749660`** passed on exact PR merge ref **`f18f9b6c3d77b1b95284e92487be8819a9a48922`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS. This run validates the complete canonical contract tree before this evidence-line commit; a final tree-equivalent D-019 is required before merge.
+
 ## Known non-blocking debt
 
 Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking only when the accepted D-019 objective commands pass.

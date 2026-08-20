@@ -1,6 +1,6 @@
 # Easy V2 — P10 Supabase Architecture Gate
 
-**Status:** `ACCEPTED DESIGN / P10-S3-I1 FOUNDATION PROVEN`  
+**Status:** `ACCEPTED DESIGN / P10-S3-I1 FOUNDATION PROVEN / D-030 I2 CONTRACT ACCEPTED`  
 **Date:** 2026-08-20  
 **Decision:** D-029  
 **Scope:** reopen D-016 before any copied-live-data beta export and redirect the final V2 toward Vercel + Supabase/Postgres
@@ -152,12 +152,12 @@ This keeps the first cloud migration smaller and avoids creating duplicate-order
 
 The objective is **not** to remove backup. It is to remove human manual backup as the sole primary durability layer.
 
-Final recovery layers should be:
+Final recovery layers follow the accepted budget posture:
 
-1. Supabase managed database backup appropriate to the production plan;
-2. independent logical/manual Easy backup/export for portability and contingency;
-3. optional automated off-site logical dump later if recovery requirements justify it;
-4. PITR only if the accepted RPO/cost decision justifies the add-on.
+1. paid posture: Supabase managed database backup appropriate to the production plan is primary;
+2. D-030 / US$ 0 posture: proven unattended off-site logical dumps with exact-24h server-side freshness enforcement and restore drills are primary;
+3. independent logical/manual Easy backup/export remains portability/contingency in either posture;
+4. PITR only if a later accepted RPO/cost decision justifies the add-on.
 
 Current Supabase production guidance verified on 2026-08-20:
 
@@ -244,22 +244,25 @@ D-029 is accepted when canonical documentation agrees that:
 
 NO-GO for implementation if a proposed shortcut would expose business data anonymously, ship privileged keys to the browser, weaken D-012/D-013/D-025/D-026 integrity, or import real store data before schema/security/reconciliation gates are proven.
 
-## 14. P10-S3-I1 accepted foundation / next bounded gate
+## 14. P10-S3-I1 foundation + D-030 P10-S3-I2 contract
 
 P10-S3-I1 is accepted. Execution evidence is canonical in `docs/V2/P10_S3_I1_EXECUTION.md`.
 
-Accepted foundation:
+P10-S3-I2 contract definition is also accepted as D-030. Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
 
-1. dedicated project `easy-v2` / `hrmkkhqfyfoqucwbcszq`, organization `synapselab-ia's Org`, region `sa-east-1`;
-2. reproducible migrations `20260820154034` and `20260820154402`;
-3. RLS on all five public application/authorization tables and an explicit `easy_operators` Auth UUID allow-list;
-4. public invoker financial RPCs backed by non-exposed privileged implementations, preserving D-013/D-026 atomicity;
-5. typed `supabase-js` client foundation using only URL + publishable key;
-6. synthetic authorization/correction/history/rollback proof;
-7. final Security Advisor 0 lints; performance advisor INFO-only unused-index notices on an empty/tiny synthetic dataset;
-8. all synthetic rows disposed and final application-table counts zero;
-9. repository D-019 passed after the implementation type fix; no real store data moved.
+D-030 resolves the next boundary without moving real data:
 
-The next action is **P10-S3-I2 — define and accept the real-data migration/reconciliation + production-durability contract before any real export/import**. The current paid-infrastructure budget is US$ 0, so this gate may not assume Supabase Pro, PITR or another paid add-on. It must either prove a zero-cost recovery posture that actually satisfies D-029 or keep production cutover blocked.
+1. stable-v1 source freeze/export identity is exact and digest-based;
+2. direct stable-v1 active-unclassified item insertion into current `public.items` is forbidden;
+3. normalized v1 data must first use private/non-exposed staging;
+4. current legacy items are explicitly classified before atomic public promotion while historical order category snapshots remain null;
+5. stable item/reseller/transaction IDs are preserved and identity sequences repaired;
+6. structural/reference/financial reconciliation has exact cent parity;
+7. real Auth evidence remains private/sanitized;
+8. Supabase Free alone is still insufficient for production durability;
+9. the accepted zero-cost alternative requires unattended off-site logical dumps, objective sync/off-site verification, >=7 retained successful generations, exact-24h server-visible write blocking on stale backup health and successful restore drills;
+10. Free pause/network failure blocks writes and never activates offline-authoritative Dexie writes.
 
-No real-data export/import, stable publication, canonical URL switch or production cutover is authorized by P10-S3-I2 contract definition.
+The next bounded action is **P10-S3-I2-I1 — implement/prove the private stable-v1 staging/import compatibility path with synthetic data only**.
+
+No backup automation, real Auth user, cloud business-runtime cutover, real-data export/import, stable publication, canonical URL switch or production cutover is authorized by that next slice.

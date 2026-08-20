@@ -142,7 +142,7 @@ Accepted final direction:
 - Dexie becomes transitional migration substrate/optional cache rather than source of truth;
 - first cloud migration does not include offline multi-master writes;
 - D-013/D-026 correction/reversal remains server/database-transaction atomic;
-- managed database backups become primary durability after cutover;
+- paid production uses managed database backup as primary durability; D-030/US$ 0 instead requires proven unattended off-site logical dumps + exact-24h freshness enforcement + restore drills before cutover;
 - logical/manual Easy backup remains independent secondary recovery/portability;
 - D-024 remains active on current browser-local stable until cutover;
 - no real store data may move until the synthetic Supabase foundation passes.
@@ -169,13 +169,53 @@ Completed work:
 
 Exit criterion: a synthetic Supabase-backed foundation that objectively preserves the critical domain/security boundaries and is reproducible from repository migrations. **No real-data import or production publication.**
 
-#### P10-S3-I2 — Real-data migration/reconciliation gate
+#### P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract
 
-**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / CONTRACT DEFINITION ONLY**.
+**Status:** `DONE / ACCEPTED CONTRACT` — D-030.
 
-Bounded goal: define and accept the exact real-data migration/reconciliation, Auth onboarding, rollback/recovery and production-durability contract before any real store export/import. The current paid-infrastructure budget is **US$ 0**, so this gate may not assume Supabase Pro/PITR or another paid add-on. It must either prove an acceptable zero-cost recovery posture consistent with D-029 or leave production cutover explicitly blocked.
+Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
 
-No real store export/import, production operator cutover, canonical URL switch or production publication is authorized by contract definition.
+D-030 defines the exact source freeze/digest, private stable-v1 staging, deterministic normalization, current-item classification, atomic promotion, ID/sequence repair, structural/reference/financial reconciliation, private Auth onboarding evidence, candidate identity, rollback and zero-cost durability boundary. Supabase Free alone remains insufficient; production eligibility requires proven unattended off-site logical dumps, >=7 successful generations, exact-24h server-visible freshness enforcement and restore proof.
+
+No real store data moved in contract definition.
+
+##### P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility
+
+**Status:** `NOT_STARTED` — **CURRENT NEXT ACTION / SYNTHETIC ONLY**.
+
+Required work:
+
+1. add a non-exposed/private staging/import boundary through reproducible migration(s);
+2. accept only the already-approved stable-v1 normalization;
+3. preserve stable item/reseller/transaction IDs and timestamps;
+4. permit legacy active-unclassified items only in staging;
+5. require explicit synthetic current-item classification before public promotion;
+6. preserve null historical category snapshots for stable-v1 orders;
+7. atomically promote categories/items/resellers/transactions;
+8. repair identity sequences using actual PostgreSQL metadata;
+9. prove exact structural/reference/financial reconciliation with synthetic stable-v1 fixtures;
+10. clean all synthetic rows/staging state;
+11. regenerate types as needed and run Supabase advisors + D-019.
+
+No backup automation, real Auth, runtime switch or real data in this slice.
+
+##### P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof
+
+**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I1 PASSES`.
+
+Synthetic-only future slice: trusted-PC scheduled `db dump`, protected credential boundary, objective off-site/sync verification, >=7 generations, server-visible exact-24h write guard and synthetic clean restore proof.
+
+##### P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate
+
+**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I2 PASSES`.
+
+Synthetic-only future slice: one-operator Auth/session UI, cloud-authoritative CRUD/financial RPC reads/writes, fail-closed connectivity, full app-level parity and exact Vercel candidate identity.
+
+##### P10-S3-I2-I4 — Real migration/reconciliation execution
+
+**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I1/I2-I2/I2-I3 PASS`.
+
+Future maintenance-window execution only: real source freeze/export digest, private real Auth onboarding, staging/promotion, exact parity and first real automated backup + local restore drill. Canonical URL switch still requires an explicit later gate.
 
 ### Later P10 work
 
