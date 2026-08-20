@@ -176,7 +176,7 @@ Detailed contract: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
 
 ## Authoritative decisions
 
-D-012 through D-029 remain authoritative, with supersession relationships respected. In particular:
+D-012 through D-030 remain authoritative, with supersession/refinement relationships respected. In particular:
 
 - D-012 requires audited reversal instead of destructive financial-history editing;
 - D-013 requires atomic linked replacement correction;
@@ -191,8 +191,9 @@ D-012 through D-029 remain authoritative, with supersession relationships respec
 - D-027 retains fail-closed pre-cutover discipline;
 - D-028 is the accepted historical IndexedDB copied-beta contract, now superseded as the final route;
 - **D-029 selects Supabase/Postgres canonical persistence + Auth/RLS + Vercel final hosting, keeps manual logical backup as secondary protection, and forbids real-data import before the synthetic cloud foundation passes.**
+- **D-030 refines D-029 for the US$ 0 posture: Supabase Free alone is insufficient, but a proven unattended off-site logical-dump layer + exact-24h server write guard + restore drills may satisfy the durability objective without paid managed backups.**
 
-No production/cutover authorization is accepted by D-029.
+No production/cutover authorization is accepted by D-029 or D-030.
 
 ## Accepted validation baseline
 

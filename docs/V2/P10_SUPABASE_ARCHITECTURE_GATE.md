@@ -152,12 +152,12 @@ This keeps the first cloud migration smaller and avoids creating duplicate-order
 
 The objective is **not** to remove backup. It is to remove human manual backup as the sole primary durability layer.
 
-Final recovery layers should be:
+Final recovery layers follow the accepted budget posture:
 
-1. Supabase managed database backup appropriate to the production plan;
-2. independent logical/manual Easy backup/export for portability and contingency;
-3. optional automated off-site logical dump later if recovery requirements justify it;
-4. PITR only if the accepted RPO/cost decision justifies the add-on.
+1. paid posture: Supabase managed database backup appropriate to the production plan is primary;
+2. D-030 / US$ 0 posture: proven unattended off-site logical dumps with exact-24h server-side freshness enforcement and restore drills are primary;
+3. independent logical/manual Easy backup/export remains portability/contingency in either posture;
+4. PITR only if a later accepted RPO/cost decision justifies the add-on.
 
 Current Supabase production guidance verified on 2026-08-20:
 

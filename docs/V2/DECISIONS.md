@@ -205,7 +205,7 @@ D-029 then superseded **resuming** this IndexedDB real-data beta because the fin
 Detailed contract: `docs/V2/P10_S2_BETA_GATE.md`.
 
 ## D-029 — Final V2 uses Supabase/Postgres canonical persistence with Vercel hosting; manual backup remains secondary defense
-**Status:** ACCEPTED  
+**Status:** ACCEPTED / REFINED BY D-030 FOR THE US$ 0 DURABILITY PATH  
 **Date:** 2026-08-20
 
 ### Trigger
@@ -254,7 +254,7 @@ Detailed authoritative contract: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
 **Status:** ACCEPTED  
 **Date:** 2026-08-20
 
-P10-S3-I2 accepts the contract in `docs/V2/P10_S3_I2_MIGRATION_GATE.md` without moving real data.
+P10-S3-I2 accepts the contract in `docs/V2/P10_S3_I2_MIGRATION_GATE.md` without moving real data. D-030 specifically refines D-029 items 19/22 for the accepted US$ 0 posture: until paid managed backups become available, the objectively proven unattended off-site logical-dump layer is the required primary recovery layer; Supabase Free by itself remains insufficient.
 
 Accepted rules:
 

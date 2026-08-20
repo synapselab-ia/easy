@@ -144,7 +144,7 @@ Before any real store dataset is imported into Supabase:
 
 The project keeps defense in depth:
 
-- managed Supabase database backups are the intended primary durability mechanism after cutover;
+- on a paid posture, managed Supabase database backups are the intended primary durability mechanism; under D-030/US$ 0, the required primary recovery layer is instead a proven unattended off-site logical-dump process with freshness enforcement and restore drills;
 - logical/manual Easy backup/export remains available as independent contingency and portability;
 - optional automated off-site dumps may be added later;
 - PITR remains a later RPO/cost choice rather than an assumption.

@@ -169,11 +169,11 @@ D-017 remains the logical `easy-backup` v2/schema5 contract for current intercha
 
 ### Final cloud protection
 
-After Supabase is formally accepted as production canonical persistence:
+After Supabase is formally accepted as production canonical persistence, the primary recovery layer follows the accepted budget posture:
 
-1. managed Supabase database backup is the intended primary durability layer;
-2. logical/manual Easy backup/export remains available as independent contingency/portability;
-3. automated off-site logical dumps may be added later;
+1. paid posture: managed Supabase database backup is primary;
+2. D-030 / US$ 0 posture: objectively verified unattended off-site logical dumps + exact-24h server-side freshness enforcement + restore drills are primary;
+3. logical/manual Easy backup/export remains independent contingency/portability in either posture;
 4. PITR is optional and requires a later RPO/cost decision.
 
 D-024's 24-hour manual-export write block is not intended to survive as the primary cloud production durability mechanism. It remains active until cloud cutover so the existing stable application does not lose its current protection prematurely.

@@ -118,7 +118,7 @@ React/Vite application on Vercel
 
 Dexie may remain temporarily as migration substrate/cache but is not final canonical production persistence.
 
-Manual Easy backup remains available; managed database backup becomes primary durability after cloud cutover.
+Manual Easy backup remains available. Paid production uses managed database backup as primary durability; under D-030/US$ 0, production eligibility instead requires the proven unattended off-site logical-dump/freshness/restore layer before cutover.
 
 ## 6. P10-S3-I1 — Supabase foundation
 
@@ -156,12 +156,12 @@ The current stable browser-local system keeps D-024 and its existing manual/sync
 
 ### After cloud cutover
 
-Expected layered protection:
+Expected layered protection follows the accepted budget posture:
 
-1. managed Supabase database backup appropriate to the production plan;
-2. independent logical/manual Easy backup/export;
-3. optional automated off-site logical dump later;
-4. PITR only if an explicit RPO/cost decision accepts it.
+1. paid posture: managed Supabase database backup appropriate to the production plan is primary;
+2. D-030 / US$ 0 posture: proven unattended off-site logical dump + exact-24h server-side freshness + restore drill is primary;
+3. independent logical/manual Easy backup/export remains secondary;
+4. PITR only if an explicit later RPO/cost decision accepts it.
 
 The project must not claim that human backup dependency is removed if final production is left on a cloud tier without the managed backup/availability properties required by D-029.
 
