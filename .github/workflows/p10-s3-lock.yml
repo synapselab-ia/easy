@@ -1,0 +1,27 @@
+name: P10-S3 lockfile generator
+
+on:
+  push:
+    branches:
+      - feat/p10-s3-i1-supabase-foundation
+    paths:
+      - .github/workflows/p10-s3-lock.yml
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --package-lock-only --save-exact @supabase/supabase-js@2.112.3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p10-s3-package-lock
+          path: package-lock.json
+          if-no-files-found: error
