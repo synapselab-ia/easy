@@ -1,33 +1,38 @@
 # Easy V2 — P10 Controlled Beta / Migration / Cutover Plan
 
-**Status:** `P10-S1 DONE / ACCEPTED; I1 DONE / INTEGRATED; I2 DONE / REHEARSED; P10-S2 NOT_STARTED`  
-**Date:** 2026-08-19  
-**Scope:** controlled progression from validated V2 candidate toward beta/cutover; every data/publication boundary remains explicit and fail-closed
+**Status:** `P10-S1 DONE / ACCEPTED; P10-S2 CONTRACT DONE / ACCEPTED; P10-S2-I1 NOT_STARTED`  
+**Date:** 2026-08-20  
+**Scope:** controlled progression from validated V2 candidate toward copied-data beta and eventual cutover; every data/publication boundary remains explicit and fail-closed
 
 ## 1. Purpose
 
-P10 moves the completed V2 from integration state toward controlled store use without treating a deploy, branch merge or synthetic rehearsal as proof that actual production-data migration and cutover are safe.
+P10 moves the completed V2 from integration state toward controlled store use without treating a deploy, branch merge, synthetic rehearsal or copied-data experiment as automatic production approval.
 
-P10-S1 is now complete. It established backup/correction compatibility and proved the stable-v1→V2 migration/recovery mechanism on a deployed candidate using synthetic data only.
+Completed:
 
-This document still does **not** authorize production cutover, publication of V2 from `main`, canonical URL switching, a persistence-architecture change, or concurrent operation across origins.
+- P10-S1-I1 aligned backup validation with D-026 while preserving D-025/reference/audit integrity;
+- P10-S1-I2 proved stable-v1→V2 migration/recovery on a deployed candidate using synthetic data only;
+- P10-S2 defined and accepted D-028, the copied-live-data beta contract.
 
-The next bounded action is to define and accept the P10-S2 copied-live-data beta gate **before** any real store backup is exported or imported.
+Current next action:
+
+- **P10-S2-I1 — execute one bounded copied-live-data beta under `docs/V2/P10_S2_BETA_GATE.md`.**
+
+This plan still does **not** authorize production cutover, publication from `main`, canonical URL switching, persistence-topology change or concurrent operation across origins.
 
 ## 2. Stable repository and persistence baseline
 
 ### Stable repository state
 
-- `main` remains the stable/original application at commit **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**.
-- P10-S1-I2 rehearsed candidate `develop` SHA **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**.
-- Candidate integrated tree: **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**.
-- Both `main` and `develop` remain unprotected in GitHub, so branch protection cannot be assumed to enforce the cutover gate automatically.
+- stable `main`: **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**;
+- `develop` entering the P10-S2 contract branch: **`816794694d0a9b6c92da273a81ee745c2f53ecdc`**;
+- both branches remain unprotected, so D-019/PR discipline remains a process requirement.
 
 ### Stable publication path
 
-Current `main` publishes the historical application to GitHub Pages on push. Its present historical workflow builds/deploys without the V2 D-019 quality job.
+Current `main` publishes the historical application to GitHub Pages on push. Its historical workflow does not contain the V2 D-019 quality stage.
 
-The V2 version of `.github/workflows/deploy.yml` on `develop` already defines the stronger eventual stable path:
+The V2 `develop` workflow already defines the eventual stronger stable path:
 
 ```text
 push main
@@ -36,227 +41,215 @@ push main
   -> deploy
 ```
 
-That workflow remains inactive on stable `main` until a future explicitly accepted stable-publication step.
+That path remains inactive on stable `main` until a later accepted publication gate.
 
 ### Persistence and transfer boundary
 
 Stable `main` uses `ResellerManagerDB` Dexie V1 with `items`, `resellers`, `transactions` and exports backup version 1.
 
-V2 uses Dexie V5 with `categories`, `items`, `resellers`, `transactions` and canonical `easy-backup` v2/schema5.
+V2 uses Dexie V5 with `categories`, `items`, `resellers`, `transactions` and `easy-backup` v2/schema5.
 
-IndexedDB is browser-origin-local. Publishing V2 at another origin does not migrate stable data. The accepted transfer mechanism is explicit backup/preflight/restore.
+IndexedDB is browser-origin-local. Publishing another origin never migrates the stable database implicitly. The accepted transfer route is explicit backup → preflight → restore.
 
-V2 backup preflight accepts the stable backup-v1 envelope and normalizes it without inventing history:
+Accepted stable-v1 normalization:
 
-- legacy items/resellers without lifecycle state become active;
-- legacy transactions without `occurredAt` use historical `createdAt` as occurrence time;
-- no categories or historical category assignments are fabricated;
-- migrated legacy items remain unclassified until operator classification;
-- new orders remain blocked for unclassified active items under D-025/P1.
+- missing item/reseller lifecycle state → active;
+- missing transaction `occurredAt` → historical `createdAt`;
+- no categories or category assignments fabricated;
+- migrated legacy items initially unclassified;
+- new orders blocked for unclassified active items until classification.
 
 ### Recovery boundary
 
-D-024 remains authoritative on any V2 origin:
+D-018/D-024 remain authoritative on any V2 origin:
 
-- restore/backup remains reachable when recovery-health metadata is absent;
-- normal writes are blocked while recovery state is unknown/due/overdue;
-- after restore on a fresh origin, a fresh validated backup must be created and the synchronized-copy location explicitly verified before normal writes may continue.
+- restore requires checkpoint + verified atomic replacement;
+- restore/backup remains reachable when recovery health is absent;
+- normal writes are blocked while recovery health is unknown/due/overdue;
+- a fresh validated backup + explicit synchronized-copy verification is required before normal writes proceed.
 
-No provider-side sync acknowledgment is implied.
+## 3. P10-S1 — completed compatibility/rehearsal gate
 
-## 3. P10-S1-I1 — backup/correction compatibility hardening
+### P10-S1-I1 — backup/correction compatibility
 
-**Status:** `DONE / INTEGRATED` — 2026-08-19.
+**Status:** `DONE / INTEGRATED`.
 
-P10-S1-I1 resolved the pre-cutover blocker where backup validation still imposed pre-D-026 equality across correction pairs.
+Current correction-pair backup rules permit supported D-026 type/date/item changes while keeping:
 
-Current correction-pair backup rules:
+- bidirectional non-self correction/reversal linkage;
+- referenced-ID validity;
+- registration chronology;
+- target-type shape/reference validity;
+- same-item D-025 historical category snapshot preservation;
+- changed-item valid replacement-time category snapshot.
 
-- replacement type may differ from the original;
-- replacement `occurredAt` may differ from the original;
-- an order replacement may select another valid item and carry that item's valid replacement-time category snapshot;
-- if an order replacement keeps the same `itemId`, D-025 requires the original historical category snapshot to remain unchanged;
-- replacement/original IDs must exist;
-- correction/reversal linkage remains bidirectional and non-self-referential;
-- replacement registration cannot predate original registration;
-- every row must satisfy its own reseller/item/category references and target-type shape.
+Authoritative proof: PR #60 D-019 `32292888925` / `96197514379`; integrated as `71b939b4c938288efb0f3c51e300e5c5541ee8c3`.
 
-Because `exportData()` self-preflights the generated envelope, ordinary supported D-026 corrections remain recoverable/exportable.
+### P10-S1-I2 — synthetic deployed rehearsal
 
-Backup-v1 and v2/schema4 compatibility remain passing; no schema or backup-envelope version changed.
+**Status:** `DONE / REHEARSED`.
 
-### I1 validation history
+Rehearsed candidate:
 
-Initial D-019 `32292405631` / `96196002726` correctly blocked integration because the first implementation over-relaxed D-025 same-item snapshot preservation.
+- Vercel project `easy-v2`;
+- READY deployment **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`**;
+- exact Git SHA **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**;
+- tree **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**.
 
-Authoritative proof after narrowing:
+Evidence-only PR #62 authoritative run **`32298906351`**, job **`96216688953`**, first passed D-019 and then the remote rehearsal 1/1.
 
-- PR #60 D-019 **`32292888925`**, job **`96197514379`**;
-- merge ref **`d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`**;
-- 0 lint errors / 82 warnings;
-- 53 files / 222 Vitest PASS;
-- 17/17 Playwright PASS;
-- production build PASS;
-- PR #60 integrated as **`71b939b4c938288efb0f3c51e300e5c5541ee8c3`**;
-- validated/integrated tree **`06d1f8c4582b5dcabd02b633c8597852b1cedfa4`**.
+Using synthetic stable-v1 data only, it proved:
 
-## 4. P10-S1-I2 — non-production migration/recovery rehearsal
+1. v1 preflight and expected in-memory normalization;
+2. restore + D-018 checkpoint;
+3. no fabricated category history;
+4. D-024 blocking before setup;
+5. fresh backup + synchronized-copy verification;
+6. migrated unclassified-item order blocking;
+7. representative category/classification;
+8. supported order + D-026 changed-item/date correction;
+9. final V2 export;
+10. disposable fresh-context restore/re-export with identical business data.
 
-**Status:** `DONE / REHEARSED` — 2026-08-19.
+Canonical P10-S1 closure PR #63 integrated as `816794694d0a9b6c92da273a81ee745c2f53ecdc`.
 
-### Candidate identity
+P10-S1 proved mechanism compatibility only. No real store data moved.
 
-P10-S1-I2 used the current validated V2 candidate:
+## 4. P10-S2 — copied-live-data beta contract
 
-- Vercel project: `easy-v2`;
-- READY deployment: **`dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki`**;
-- exact Git SHA: **`2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`**;
-- candidate tree: **`8d6479ce00caabce528c6971fbc1034bc1eabbcc`**.
+**Status:** `DONE / ACCEPTED` — D-028.
 
-The immutable deployment URL `easy-v2-lvbggu5ji-synapselabia-8285s-projects.vercel.app` requires Vercel SSO for `/backup`. Vercel metadata attaches public alias `easy-v2-tau.vercel.app` to the same exact deployment. The alias was therefore used only as a browser-access route; deployment ID and Git SHA remained the identity proof.
+Authoritative detailed contract: `docs/V2/P10_S2_BETA_GATE.md`.
 
-### Rehearsal data boundary
+D-028 defines the copied-data beta as:
 
-Only synthetic/non-production backup-v1 data was used:
+- point-in-time;
+- single-operator;
+- isolated from stable;
+- disposable;
+- exact-reconciliation;
+- D-018/D-024 recoverable;
+- fail-closed;
+- sanitized-evidence only.
 
-- 2 fabricated legacy items;
-- 2 fabricated resellers;
-- 3 fabricated legacy transactions (order, payment and signal);
-- intentionally missing lifecycle/category/`occurredAt` fields representative of the stable-v1 migration boundary.
+Stable remains authoritative. Beta state never synchronizes/promotes back to stable.
 
-No actual store backup was exported, uploaded, restored, inspected or reconciled.
+### Candidate gate before export
 
-### Authoritative evidence
+Before any real-data export, the execution must prove:
 
-Evidence-only PR #62 ran a temporary branch-local remote Playwright harness after ordinary D-019. It was closed **without merge** after evidence capture.
+- exact Git SHA/tree;
+- passing D-019 evidence;
+- exact READY deployment traceable to that SHA;
+- current alias → deployment identity when a mutable alias is used;
+- no unvalidated runtime-bearing commit after the accepted candidate.
 
-Authoritative run:
+No identity proof = NO-GO before export.
 
-- **`32298906351`**, job **`96216688953`**;
-- exact PR merge ref **`b99a11e586c05322c8f6665770135cb8d6047172`**;
-- harness head `5e5eaea8fbc51bf52c3e5bfc927b6da178082bda` over candidate base `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`.
+### Data-handling gate
 
-D-019 passed first:
+Copied real data may exist only in:
 
-- ESLint: 0 errors / 82 warnings;
-- Vitest: 53 files / 222 tests PASS;
-- repository Playwright: 17/17 PASS;
-- production build: PASS.
+- the authoritative stable origin;
+- one exported source JSON on the trusted operator machine;
+- the isolated V2 beta browser origin;
+- required D-018 checkpoint/V2 backup artifacts;
+- the existing approved D-024 synchronized recovery-copy boundary.
 
-Remote rehearsal then passed **1/1**.
+It may not be placed in Git/GitHub, CI artifacts, chat, project docs, unrelated cloud folders or Vercel project files.
 
-### Rehearsal assertions proven
+Evidence records only sanitized metadata such as timestamp, file size and SHA-256 digest.
 
-1. Candidate `/backup` loaded through the verified deployment's public alias.
-2. Initial D-024 state was unknown.
-3. Synthetic backup-v1 preflight identified v1→v2 in-memory migration.
-4. Legacy counts normalized to 2 items / 2 resellers / 3 transactions with no categories invented.
-5. Missing lifecycle normalized active; missing `occurredAt` normalized to historical `createdAt`; legacy order category history stayed absent.
-6. Restore completed with checkpoint download.
-7. A normal write before recovery setup was blocked by D-024.
-8. Fresh V2 export plus explicit synchronized-copy verification established current recovery health.
-9. A migrated active but unclassified item remained blocked from new-order entry.
-10. A representative category was created and both migrated items classified.
-11. A supported new order was recorded.
-12. D-026 audited correction changed the order item and occurrence date while preserving original/replacement linkage.
-13. Final V2 backup contained 1 category / 2 items / 2 resellers / 5 transactions and valid correction/reversal state.
-14. A disposable fresh browser context preflighted/restored that final V2 backup and re-exported identical business data.
+### Exact reconciliation gate
 
-### Diagnostic attempts retained but not accepted
+Before any beta mutation/classification:
 
-- `32297959050` / `96213645569`: D-019 passed; immutable URL SSO stopped app access before upload/restore.
-- `32298286885` / `96214717360`: D-019 passed; app/v1 preflight was reached, but Playwright viewport actionability blocked restore dispatch.
+- preflight must PASS;
+- only already accepted v1 normalization warnings are allowed;
+- item/reseller/transaction/type counts must match exactly;
+- IDs, references, stored monetary/business values and source dates must be preserved under accepted normalization;
+- semantic normalized-data diff must be empty except documented v1→V2 additions/envelope timestamps;
+- gross order value, payments, signals, net movement, every reseller balance and aggregate positive debt must match exactly;
+- any R$ 0,01 displayed financial difference is NO-GO.
 
-Neither diagnostic attempt is product acceptance evidence.
+Human spot checks are supplementary, sanitized and never replace objective reconciliation.
 
-### I2 result
+### Recovery gate
 
-**GO only for defining the next bounded copied-live-data beta gate.**
+Before beta writes:
 
-P10-S1-I2 does not authorize copying real store data, production-data reconciliation, stable publication, canonical URL switching, production cutover or D-016 change.
+1. D-018 checkpoint PASS;
+2. D-024 normal-write block observed before setup;
+3. fresh V2 backup exported;
+4. synchronized-copy verification explicitly confirmed;
+5. recovery health observed current;
+6. post-reconciliation V2 export captured as rollback baseline.
 
-## 5. D-027 / P10-S1 acceptance result
+### Minimum operator beta checks
 
-P10-S1 is now `DONE / ACCEPTED` as a non-production pre-cutover gate.
+After reconciliation/recovery PASS:
 
-It proved:
+- confirm unclassified-item order block;
+- create representative beta category/classification;
+- create one beta-only order;
+- perform one D-026 audited correction of that beta-only transaction;
+- verify effective financial/linkage behavior;
+- export final V2 backup;
+- restore into disposable fresh context and re-export identical business data.
 
-1. backup/recovery accepts supported D-026 correction state;
-2. stable-v1→V2 normalization/restore works on an exact deployed candidate;
-3. D-024 recovery gating works on a fresh restored origin;
-4. legacy classification gating behaves as designed;
-5. supported transaction/correction state remains exportable and restorable;
-6. a fresh-context V2 round-trip preserves business data.
+### Fail-closed / rollback
 
-It did **not** prove actual production-data reconciliation or operator acceptance on a copy of the real store dataset.
+Any unexpected warning, mismatch, reference loss, D-018/D-024 failure, isolation breach, copied-data boundary breach, D-024 bypass, stable-origin write or failed final round-trip is NO-GO.
 
-## 6. P10-S2 — copied-live-data beta acceptance gate
-
-**Status:** `NOT_STARTED` — **NEXT CONTRACT ACTION ONLY**.
-
-Before any real store backup is exported or imported, P10-S2 must define and canonically accept the minimum non-production beta contract.
-
-The contract-definition action must reconstruct and specify at least the following dimensions without moving data yet:
-
-### Data handling
-
-- exact purpose and permitted use of the copied store dataset;
-- where the copy may exist during beta;
-- who/operator contexts may access it;
-- whether any local/downloaded checkpoint or exported artifact is retained and for how long;
-- explicit prohibition on external sharing or unrelated use.
-
-### Reconciliation
-
-Define objective evidence required after a future copy-based restore, such as:
-
-- item/reseller/transaction counts;
-- effective financial totals/balances;
-- migration warnings/unclassified-item counts;
-- representative historical spot checks where needed;
-- accepted tolerance, which should normally be exact unless the contract documents a justified non-zero tolerance.
-
-These exact criteria are **not yet accepted**; defining them is the next action.
-
-### Recovery
-
-Define how D-024 recovery readiness must be established on the copied-data beta origin before normal beta writes, and what recovery artifacts/evidence must be retained.
-
-### Operator access and isolation
-
-Define how the beta remains non-production and how operator actions are prevented from being mistaken for stable-store writes. The stable application remains authoritative during this beta gate unless a later cutover decision says otherwise.
-
-### Rollback / no-go
-
-Define the response if restore, reconciliation, recovery setup or operator checks fail. At minimum, failure must not require modifying `main` or the live stable dataset.
+Default beta rollback is restore of the recorded post-reconciliation baseline or complete disposal/clearing of the beta origin. Beta state is never written to stable.
 
 ### Disposal
 
-Define how copied real data and temporary beta artifacts are removed when the beta ends or is rejected, consistent with the approved data-handling boundary.
+Within 24 hours after P10-S2-I1 acceptance/rejection/abandonment, beta-specific copied real data must be removed from operator-controlled locations, including source-copy artifact, checkpoint/exports/PDFs, beta origin IndexedDB/recovery state and synchronized-folder beta artifacts. Trash/provider recovery areas are emptied when directly available.
 
-### Explicit go/no-go
+Only sanitized metadata/hashes/counts/PASS-FAIL evidence remains canonical.
 
-Define the evidence package needed before the actual copied-live-data beta may start, and separately the evidence needed before any later production cutover gate may be proposed.
+## 5. P10-S2-I1 — execution sequence
 
-## 7. What remains explicitly unauthorized
+**Status:** `NOT_STARTED` — CURRENT.
 
-Until the P10-S2 contract is accepted, the following are not authorized:
+Execute exactly in this order:
 
-- exporting/importing the actual live-store dataset;
-- executing an operator beta using copied production data;
-- reconciling actual production data in V2;
-- final write freeze;
-- merging/publishing V2 from `main`;
-- switching the store's canonical URL;
-- production cutover;
-- rollback after V2 has accepted production writes;
-- decommissioning the original stable application;
-- changing D-016 topology.
+1. re-verify candidate identity and D-019;
+2. verify trusted operator/browser isolation and approved D-024 working location;
+3. record pre-export GO evidence;
+4. export one immutable point-in-time stable-v1 source snapshot;
+5. record neutral identity metadata/hash;
+6. preflight;
+7. restore and capture D-018 checkpoint;
+8. perform exact structural/financial reconciliation before mutation;
+9. prove D-024 blocking/setup/current state;
+10. capture rollback-baseline V2 export;
+11. perform minimum disposable operator beta checks;
+12. export final V2 backup and prove fresh-context identical round-trip;
+13. dispose beta-specific real-data artifacts within 24 hours;
+14. record only sanitized evidence and PASS/NO-GO result.
 
-## 8. Immediate next action
+A PASS authorizes only defining the next production-cutover gate.
 
-Define and accept only **P10-S2 — copied-live-data beta acceptance gate** before any real store backup is exported or imported.
+## 6. Production-cutover boundary remains closed
 
-Reconstruct the minimum data-handling, operator-access, reconciliation, recovery, rollback and disposal criteria for a non-production beta using a copy of live-store data and specify explicit go/no-go evidence.
+Even after a successful P10-S2-I1, the following require a later explicit contract/decision:
 
-Do not move live-store data while defining the gate. Do not modify or publish `main`, do not perform stable publication, production cutover or canonical URL switch, and do not change D-016.
+- final stable write freeze;
+- final production backup identity;
+- V2 publication/merge from `main`;
+- stable/canonical URL switch;
+- production restore/migration;
+- first V2 production write;
+- rollback rules after V2 production writes;
+- stable decommissioning;
+- any D-016 topology change.
+
+## 7. Immediate next action
+
+Execute only **P10-S2-I1 — copied-live-data beta under D-028**.
+
+Start with the pre-export candidate/access/isolation/recovery-location GO checklist. Do not export live-store data unless every pre-export criterion passes. Any mismatch or contract breach is NO-GO.
+
+Do not modify/publish `main`, switch the canonical URL, perform production cutover or change D-016.
