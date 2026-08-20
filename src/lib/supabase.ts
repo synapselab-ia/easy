@@ -15,7 +15,10 @@ export interface EasySupabaseConfig {
 }
 
 export function readEasySupabaseConfig(
-    env: EasySupabaseEnv = import.meta.env,
+    env: EasySupabaseEnv = {
+        VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+        VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
 ): EasySupabaseConfig | null {
     const url = env.VITE_SUPABASE_URL?.trim();
     const publishableKey = env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
