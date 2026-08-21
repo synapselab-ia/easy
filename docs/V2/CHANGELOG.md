@@ -2,6 +2,21 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-21 — D-031 governance integrated; current action is PR #72 runtime integration
+
+PR #74 integrated the canonical sequencing correction into `develop` as `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`.
+
+Its exact merge ref `62a7b646ba2a2efa500fcc43c5e0df206a2dc0b1` passed D-019 in run `32497468087` / job `96819192500`: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+
+The canonical continuation state is now unambiguous:
+
+- I2-I2 trusted-PC backup/recovery proof is ON HOLD;
+- I2-I3 runtime-first Supabase candidate is current;
+- the immediate next action is to synchronize/revalidate/integrate PR #72 against current `develop`;
+- `main` remains unchanged at `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+
+---
+
 ## 2026-08-21 — D-031 authorizes runtime-first controlled early use; automated backup proof placed ON HOLD
 
 The operator explicitly changed P10-S3 sequencing after the remaining D-030 I2-I2 evidence proved operator-local and unavailable from the remote development environment.
