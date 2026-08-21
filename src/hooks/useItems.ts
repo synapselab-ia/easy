@@ -62,7 +62,7 @@ export function useUpdateItem() {
             assertRecoveryWriteAllowed();
 
             if (isEasySupabaseConfigured()) {
-                return updateCloudItem(id, changes);
+                return updateCloudItem(id, changes).then(() => 1);
             }
 
             return db.transaction('rw', db.categories, db.items, async () => {
@@ -106,7 +106,7 @@ function useSetItemActive(isActive: boolean) {
             assertRecoveryWriteAllowed();
 
             if (isEasySupabaseConfigured()) {
-                return setCloudItemActive(id, isActive);
+                return setCloudItemActive(id, isActive).then(() => 1);
             }
 
             if (!isActive) {
