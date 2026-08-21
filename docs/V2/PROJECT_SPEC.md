@@ -9,7 +9,7 @@
 
 Easy is a web application for reseller orders, payments/signals, balances, statements and operational analytics.
 
-Easy V2 evolves the existing application rather than rewriting it. The product must preserve the accepted financial/audit behavior while becoming safer, recoverable, durable and maintainable.
+Easy V2 evolves the existing application rather than rewriting it. The product must preserve accepted financial/audit behavior while becoming safer, recoverable, durable and maintainable.
 
 ## 2. Final architecture objective
 
@@ -29,11 +29,11 @@ D-029 remains the final architecture direction:
 
 On 2026-08-21 the operator explicitly authorized **runtime-first controlled early use** before the D-030 unattended off-site backup proof is completed.
 
-This changes sequencing only:
+Current state:
 
 - P10-S3-I2-I2 automated trusted-PC backup/recovery acceptance is **ON HOLD**;
-- P10-S3-I2-I3 Supabase/Auth/runtime candidate is authorized and in progress;
-- the current implementation is PR #72;
+- P10-S3-I2-I3 Supabase/Auth/runtime implementation is **DONE / INTEGRATED** through PR #72;
+- the current bounded action is P10-S3-I2-I3-C manual Vercel candidate publication and operator onboarding;
 - early use is clean-start rather than a migration of legacy real-store data;
 - `main` remains the stable historical reference;
 - Vercel publication remains candidate/manual, not definitive cutover.
@@ -42,7 +42,7 @@ D-030 is not declared passed or cancelled. Its durability objective remains a la
 
 ## 4. Early-use recovery posture
 
-The temporary D-031 early-use mode uses defense in depth appropriate to the explicitly accepted risk:
+The temporary D-031 early-use mode uses the following recovery boundary:
 
 1. Supabase/Postgres holds canonical business data.
 2. Supabase Auth/RLS protects access.
@@ -97,13 +97,13 @@ The cloud runtime must preserve:
 
 The D-030 private stable-v1 staging/import path remains accepted synthetically and available if later needed.
 
-For the current D-031 early-use plan, however:
+For the current D-031 early-use plan:
 
 - no legacy real-store import is required;
-- no historical stable dataset should be moved merely to start testing/using the new runtime;
+- no historical stable dataset should be moved merely to start using the new runtime;
 - the candidate begins clean and accumulates new data directly in Supabase.
 
-A later request to migrate legacy data would require a new explicit gate/re-authorization.
+A later request to migrate legacy data requires a new explicit gate/re-authorization.
 
 ## 9. Repository governance
 
@@ -133,6 +133,6 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 11. Current bounded goal
 
-Finish and integrate the PR #72 Supabase/Auth/runtime candidate into `develop`, then publish/configure a manual Vercel candidate for controlled clean-start early use with an approved operator and an initial manual JSON recovery checkpoint.
+Publish/configure the already accepted `develop` runtime as a **manual Vercel `easy-v2` candidate**, onboard the intended Supabase Auth user through the approved-operator boundary, prove unauthorized access is denied, create the first confirmed manual JSON recovery checkpoint, and begin controlled clean-start early use.
 
-This goal does not include `main` publication, legacy data migration or definitive cutover.
+This goal does **not** include resuming D-030 trusted-PC backup proof, `main` publication, legacy data migration, canonical URL switch or definitive cutover.

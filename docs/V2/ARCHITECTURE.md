@@ -1,155 +1,151 @@
-# Easy V2 — Architecture Baseline
+# Easy V2 — Architecture
 
-**Status:** D-031 runtime-first early-use candidate in progress; D-030 automated recovery proof ON HOLD  
-**Integration target:** `develop`  
+**Status:** canonical architecture reference  
 **Updated:** 2026-08-21
 
-## 1. Current integrated baseline
+## 1. Current accepted topology
 
-At the start of D-031, `develop` still contains the pre-runtime-switch React/TypeScript/Vite application with TanStack Query + Dexie/IndexedDB, plus the accepted Supabase foundation, staging/import compatibility and recovery tooling/migrations.
-
-The 2026-08-21 `develop` commit `c1fdf4b3140bb6e9b89e2cc8f36933a8c0c4a4f2` records a valid historical fail-closed remote preflight for D-030 I2-I2. That result remains true: the trusted-PC off-site/retention/restore proof was not completed.
-
-D-031 changes what happens next; it does not rewrite that evidence.
-
-## 2. Runtime-first candidate — PR #72
-
-Open PR #72 (`feat/p10-s3-i2-i3-runtime-first`) implements the early-use cloud runtime.
-
-When the browser-safe Supabase configuration is present:
+D-029 defines the final production direction and D-031 defines the current controlled early-use sequencing.
 
 ```text
-Browser / React + Vite
+Approved operator browser
         |
-        | publishable key + authenticated session
+        | Supabase Auth session
         v
-Supabase Auth
+RLS + public.easy_operators
         |
-        | approved operator check (`easy_operators`)
         v
 Supabase Postgres  <-- canonical business data
-   categories
-   items
-   resellers
-   transactions
         |
-        +--> financial create/reverse/correct through controlled RPCs
+        +--> controlled financial RPCs
+        +--> approved-operator atomic JSON restore
 
 Dexie / IndexedDB
-   read cache/mirror for existing reports/search compatibility
-   NOT canonical business persistence
+  read cache / compatibility mirror only
+
+Logical Easy JSON
+  independent portability/recovery checkpoint
+
+Vercel
+  manual candidate host during early use
 ```
 
-## 3. Authentication and authorization
+The runtime-first implementation is integrated in `develop` through PR #72.
 
-The candidate uses:
+## 2. Browser/runtime boundary
 
-- Supabase Auth session handling;
-- server-managed `easy_operators` allow-list;
-- RLS on exposed application tables;
-- browser project URL + publishable key only;
-- no `service_role`/database secret in the client.
+When `VITE_SUPABASE_URL` and the browser-safe publishable key are present:
 
-Auth state changes must not perform nested async Supabase calls directly inside the auth callback; the runtime schedules the authorization/cache refresh outside that callback boundary to avoid the documented deadlock class.
+- `CloudAuthGate` requires a Supabase Auth session;
+- `public.is_easy_operator()` must authorize the current user before business data renders;
+- canonical business data is fetched from Supabase and mirrored to Dexie for existing read/report/search paths;
+- connectivity/cloud failures do not create a competing offline-authoritative write mode;
+- category/item/reseller mutations write to Supabase under RLS;
+- financial create/reverse/correct operations use transactional PostgreSQL RPCs.
 
-## 4. Business writes
+When cloud configuration is absent, historical/local behavior remains available for development/reference, but that path is not the intended hosted early-use production topology.
 
-Categories/items/resellers write to Supabase when cloud mode is configured.
+## 3. Authorization and secrets
 
-Transactions retain D-012/D-013/D-026 semantics and use the existing database RPC boundary so multi-row correction/reversal remains atomic.
+Mandatory controls:
 
-Connectivity/server failure is fail-closed for writes; the first cloud transition does not introduce an offline-authoritative write queue.
+- RLS on exposed business tables;
+- approved-operator allow-list in `public.easy_operators`;
+- anonymous business access denied;
+- browser receives only project URL + publishable key;
+- no `service_role`, database password or privileged admin secret in browser/Git/public Vercel variables;
+- adding an approved operator occurs through a trusted admin/database boundary after the normal Auth account exists.
 
-## 5. Read/cache behavior
+## 4. Financial consistency
 
-Supabase is authoritative in cloud mode. Dexie may mirror the current cloud dataset so existing dashboard/search/report code can continue reading through the established local query layer during the transition.
+The architecture preserves accepted V2 invariants:
 
-The cache must never be treated as successful write authority when the server rejected or did not confirm a mutation.
+- destructive history deletion is not the correction model;
+- reversal preserves original rows and records audit reason/time;
+- correction creates a linked replacement atomically;
+- business occurrence time is distinct from registration/audit time;
+- statement/debt calculations preserve reversal-zero-effect semantics;
+- item/category transaction snapshots remain historical facts.
 
-## 6. JSON backup/export
+Cloud financial mutations must remain within the controlled server/database transactional boundary.
 
-D-017 logical Easy backup remains independent of the storage technology.
+## 5. Canonical cloud adapter
 
-In the runtime-first candidate:
+`src/services/cloudDataService.ts` is the application-facing bridge for cloud mode. It:
 
-- export reads the canonical Supabase dataset rather than stale local cache state;
-- the operator can download the JSON backup;
-- manual recovery freshness metadata remains local control state;
-- normal browser writes remain blocked when the accepted manual JSON recovery confirmation is older than 24 hours.
+- maps Supabase rows to existing domain objects;
+- fetches the canonical dataset;
+- refreshes Dexie as a read cache/mirror;
+- routes referential mutations to Supabase tables under RLS;
+- routes financial mutations to the accepted RPC boundary;
+- exposes approved-operator checks and recovery operations needed by the runtime.
 
-## 7. JSON restore
+Dexie is therefore no longer canonical persistence in the hosted candidate.
 
-The Supabase-backed restore path is server/database atomic for an approved operator.
+## 6. Logical backup/restore
 
-Flow:
+Logical Easy JSON remains the portable recovery/interchange format under D-017/D-018.
 
-1. validate/preflight the JSON envelope;
-2. download a checkpoint of current canonical data before destructive replacement;
-3. call the hardened restore RPC;
-4. refresh/read canonical data after restore;
-5. verify restored business data;
-6. distinguish a pre-apply failure from a post-apply verification failure so the UI never falsely claims the old database was preserved after a server restore actually committed.
+In cloud mode:
 
-## 8. D-031 early-use recovery boundary
+- export reads canonical Supabase business data;
+- restore performs validation/preflight;
+- a current canonical checkpoint is downloaded before replacement;
+- replacement is applied atomically through the approved server/database RPC boundary;
+- post-restore canonical data is fetched and logically reconciled;
+- post-apply verification failure must not falsely claim the prior database survived.
 
-D-030 implemented a stronger zero-cost durability architecture:
+## 7. Temporary D-031 recovery mode
 
-- unattended trusted-PC data-only dumps;
+For controlled early use before D-030 operator-local proof:
+
+- the browser manual JSON freshness guard remains fail-closed at the accepted exact 24-hour boundary;
+- the explicit server state permits automated D-030 recovery enforcement to remain disabled temporarily;
+- this is a sequencing exception, not final durability acceptance.
+
+The implemented D-030 recovery tooling remains available for later:
+
+- pinned trusted-PC Supabase CLI data-only dumps;
 - rclone off-site verification;
-- >=7 retained daily generations;
-- exact-24h + retention server write guard;
-- disposable restore drills.
+- >=7 UTC daily-generation retention;
+- server-visible recovery ledger/freshness guard;
+- disposable local/Docker restore fingerprint drill.
 
-The repository/database prerequisite remains implemented, but operator-local acceptance evidence is **ON HOLD**.
+Its real trusted-PC/off-site/seven-day/restore evidence is ON HOLD.
 
-For D-031 early use:
+## 8. Migration boundary
 
-- automated D-030 recovery-health enforcement is pending/disabled;
-- manual JSON backup + the browser exact-24h freshness guard is the active temporary recovery control;
-- this temporary posture is accepted only for controlled early use, not definitive production cutover.
+The accepted stable-v1 private staging/import pipeline remains dormant. The current candidate is clean-start:
 
-## 9. Data migration
+- no real legacy dataset is imported by default;
+- no historical payload belongs in GitHub/chat/CI evidence;
+- a later legacy migration requires explicit re-authorization.
 
-The private stable-v1 staging/import machinery remains available and synthetically accepted.
+## 9. Deployment boundary
 
-The current early-use plan is a **clean start**. No legacy real-store backup is imported merely to begin the candidate.
+- `develop` contains the accepted candidate runtime.
+- `main` remains untouched and is not the deployment target for this stage.
+- repository `vercel.json` disables automatic Git-triggered deployment.
+- Vercel candidate publication is manual.
+- canonical production URL switching/decommissioning is not authorized.
 
-## 10. Deployment topology
+## 10. Accepted runtime integration evidence
 
-- `main` remains the historical stable application and must stay untouched.
-- `develop` is the V2 integration branch.
-- Vercel project `easy-v2` remains the candidate host.
-- `vercel.json` disables Git-triggered deployments; deployment is manual.
-- D-031 does not switch the canonical production URL.
+PR #72:
 
-## 11. Supabase environment
+- synchronized head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
+- exact D-019 merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
+- validated merge-ref tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
+- D-019 run/job: `32502664982` / `96835725075`;
+- lint: 0 errors / 82 warnings;
+- Vitest: 57 files / 240 PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS;
+- squash-integrated `develop`: `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
+- integrated tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b` — exact equivalence PASS.
 
-Dedicated project:
+Stable `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`, tree `57243d004c5b550d0f27576f0179b0033044088e`.
 
-- name: `easy-v2`;
-- project ref: `hrmkkhqfyfoqucwbcszq`;
-- region: `sa-east-1`.
+## 11. Next architectural operation
 
-Security Advisor was 0 lints after the current Supabase hardening. Existing Performance Advisor notices are INFO-only unused-index findings on the empty/tiny homologation environment.
-
-## 12. D-019
-
-Repository integration still requires:
-
-```text
-npm run qa:critical
-= npm run lint
-+ npm run test:run
-+ npm run test:e2e
-+ npm run build
-```
-
-PR #72 previously passed this on merge ref `1e746bb2dd133f5bfcaac7818b27996f802476ed` (run `32492337376`, job `96802676149`): 0 lint errors / 82 warnings; 57 files / 240 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-
-Because `develop` subsequently advanced, the PR must be synchronized and D-019 repeated on the new exact merge ref before merge.
-
-## 13. Final target versus early-use exception
-
-D-029 remains the final topology. D-030 remains the accepted US$ 0 durability contract. D-031 only authorizes reaching and using the cloud runtime candidate earlier with manual JSON recovery.
-
-Definitive cutover still requires a later explicit decision/gate and may not be inferred from a successful Vercel candidate.
+The next action is operational, not a new architecture implementation: manually publish the accepted `develop` candidate to Vercel, configure browser-safe Supabase values, onboard/approve the intended operator, prove unauthorized denial and establish the first confirmed manual JSON recovery checkpoint. No definitive cutover is implied.
