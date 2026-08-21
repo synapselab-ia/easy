@@ -37,71 +37,78 @@ The detailed historical run ledger remains available in Git revisions and phase-
 
 This remains valid evidence that D-030 I2-I2 did **not** pass.
 
-D-031 subsequently changes sequencing: the missing operator-local proof is ON HOLD and no longer blocks beginning I2-I3 controlled early use.
+D-031 subsequently changes sequencing: the missing operator-local proof is ON HOLD and no longer blocks runtime-first controlled early use.
 
-## D-031 canonical governance integration — PASS
+## D-031 governance integration — PASS
 
-PR #74 (`docs(v2): authorize D-031 runtime-first early use`) changed only eight `docs/V2/` files and integrated the sequencing override into `develop`.
+PR #74 integrated the sequencing override into `develop`.
 
-Exact evidence:
+Accepted evidence:
 
-- PR #74 head: `eea49abf60dd7a40064e76117720db15d4630939`;
-- exact PR merge ref: `62a7b646ba2a2efa500fcc43c5e0df206a2dc0b1`;
-- Critical QA run: `32497468087`;
-- job: `96819192500`;
-- ESLint: 0 errors / 82 warnings;
-- Vitest: 56 files / 237 tests PASS;
-- Playwright: 17/17 PASS;
-- production build: PASS;
-- squash-integrated `develop` commit: `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`, tree `b6a6fe342470951cdf5455833e9af5dad8e4f9a8`;
-- `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9` / tree `57243d004c5b550d0f27576f0179b0033044088e`.
+- head `eea49abf60dd7a40064e76117720db15d4630939`;
+- exact merge ref `62a7b646ba2a2efa500fcc43c5e0df206a2dc0b1`;
+- run/job `32497468087` / `96819192500`;
+- 0 lint errors / 82 warnings;
+- 56 files / 237 Vitest PASS;
+- 17/17 Playwright PASS;
+- production build PASS;
+- integrated commit `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`.
 
-Result: canonical startup documentation now makes I2-I2 ON HOLD and I2-I3 current.
+A later documentation-only governance closure advanced `develop` to `1e396f3ce10a93f99c9bd47a312950943d1587ea` before PR #72 synchronization.
 
-## P10-S3-I2-I3 runtime-first PR #72 — PRE-INTEGRATION PASS, REVALIDATION REQUIRED
+## P10-S3-I2-I3 runtime-first PR #72 — FINAL PASS / INTEGRATED
 
 PR #72: `feat(v2): enable runtime-first Supabase candidate`.
 
-Previously validated state:
+### Synchronization
 
-- base at the time: `develop` `d4d428e35a45af0691e80331dd8c7888a914355f`;
-- head: `385e59b22ac83ff43097cefeeb4551d28f606dbf`;
-- exact PR merge ref: `1e746bb2dd133f5bfcaac7818b27996f802476ed`;
-- Critical QA run: `32492337376`;
-- job: `96802676149`;
-- ESLint: 0 errors / 82 warnings;
-- Vitest: 57 files / 240 tests PASS;
-- Playwright: 17/17 PASS;
-- production build: PASS.
+The feature branch was refreshed after `develop` advanced under D-031 governance.
 
-Additional implementation review during that run fixed:
+- current base used by the accepted merge ref: `develop` `1e396f3ce10a93f99c9bd47a312950943d1587ea`;
+- synchronized feature head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
+- exact generated PR merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
+- exact merge-ref tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`.
 
-- misleading restore messaging when server apply succeeded but post-restore verification failed;
-- auth callback structure that could trigger the documented Supabase `onAuthStateChange` nested-async deadlock class;
-- inconsistent cloud/local mutation return contracts that initially broke TypeScript production build;
-- stale E2E selectors after the recovery UI copy changed.
+GitHub Actions checkout evidence explicitly fetched and checked out `refs/remotes/pull/72/merge` at `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`.
 
-### Why PR #72 still requires another D-019
+### Final D-019
 
-`develop` advanced after the successful merge-ref above, including the remote-preflight documentation and D-031 governance integration. Therefore the earlier merge ref is no longer the exact tree that would be integrated.
+- Critical QA run: **`32502664982`**;
+- job: **`96835725075`**;
+- conclusion: **SUCCESS**;
+- ESLint: **0 errors / 82 warnings**;
+- Vitest: **57 files / 240 tests PASS**;
+- Playwright: **17/17 PASS**;
+- production build: **PASS** (`tsc -b && vite build`; Vite 8.0.8).
 
-Before merging PR #72:
+Known `act(...)`, mocked-select DOM, lint-warning, npm-audit, Actions Node deprecation and Vite chunk-size notices remained non-blocking because all objective D-019 commands passed.
 
-1. synchronize its branch with current `develop`;
-2. generate the new PR merge ref;
-3. run D-019 on that exact ref;
-4. require PASS before integration;
-5. verify squash-integrated tree equivalence and `main` unchanged.
+### Integration equivalence
+
+PR #72 was marked ready and squash-integrated into `develop` as:
+
+- commit **`8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`**;
+- integrated tree **`4ed336e4d05dc95df1abba7a9894d1b10abcd49b`**.
+
+The integrated tree exactly matches the D-019-validated merge-ref tree. **Final tree equivalence: PASS.**
+
+Stable `main` was independently rechecked after integration and remained:
+
+- commit **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**;
+- tree **`57243d004c5b550d0f27576f0179b0033044088e`**.
+
+**Result: PR #72 repository integration gate is CLOSED / PASS.**
 
 ## Supabase evidence relevant to runtime-first candidate
 
 - dedicated project: `easy-v2` / `hrmkkhqfyfoqucwbcszq` / `sa-east-1`;
 - RLS/approved-operator foundation accepted;
 - financial writes remain behind controlled RPCs;
-- runtime-first restore boundary is hardened through committed migrations in PR #72;
-- most recent advisor check during implementation: Security Advisor 0 lints; Performance Advisor INFO-only unused-index notices on empty/tiny homologation.
+- runtime-first restore boundary is hardened through committed migrations;
+- most recent implementation advisor evidence: Security Advisor 0 lints; Performance Advisor INFO-only unused-index notices on empty/tiny homologation;
+- no legacy real-store dataset was imported by PR #72.
 
-No legacy real-store dataset was imported by PR #72.
+The next operational slice must add live candidate evidence for Vercel publication, Auth/operator authorization, unauthorized denial and the first confirmed manual JSON checkpoint. That evidence does not yet exist and is deliberately outside the closed PR #72 integration gate.
 
 ## Known non-blocking debt
 
@@ -118,6 +125,7 @@ When objective D-019 commands pass, the following remain non-blocking unless lat
 ## Current QA status
 
 - D-031 governance/docs: **PASS / INTEGRATED**.
-- PR #72 runtime implementation: functionally D-019-passing on its prior merge ref, but **not integration-ready until revalidated against current `develop`**.
+- P10-S3-I2-I3 runtime repository integration: **PASS / INTEGRATED**.
+- P10-S3-I2-I3-C live Vercel/Auth/manual-checkpoint evidence: **NOT_STARTED / CURRENT NEXT ACTION**.
 - D-030 operator-local recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
