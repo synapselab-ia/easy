@@ -1,8 +1,8 @@
 # Easy V2 — QA Ledger
 
-**Updated:** 2026-08-20
+**Updated:** 2026-08-21
 
-D-019 remains the mandatory repository integration/publication gate:
+## Mandatory repository gate — D-019
 
 ```text
 npm run qa:critical
@@ -12,242 +12,93 @@ npm run qa:critical
 + npm run build
 ```
 
-Objective failures block integration. Supabase-bearing implementation gates additionally require database/policy tests and Supabase advisor review; repository D-019 remains necessary but is not sufficient by itself for cloud-production acceptance.
+Objective failures block integration. Supabase-bearing work additionally requires relevant database/security/policy/advisor evidence.
 
-## Accepted baseline through P9-S2
+## Accepted historical baseline
 
-- P1 validations: `32037965651`, `32038951903`, `32039763539`.
-- P2: `32041280504`, `32042373332`.
-- P3: `32052076684`, `32053837309`.
-- P5: `32058028793`, `32060729538`.
-- P6: `32064801009`, `32065331102`, `32065713920`.
-- P7 final: `32145620210`.
-- P8-S1/S2: `32149199373` / `95750510692`; `32158395391` / `95781056589`.
-- P9-S1: `32166330198` / `95806665221`.
-- P9-S2 accepted runtime: `32180250834` / `95851336506`.
+The detailed historical run ledger remains available in Git revisions and phase-specific execution records. Key accepted milestones:
 
-## P9-S3 accepted validation
+- P9 categories/correction/date work: integrated with D-019 passing evidence.
+- P10-S1 compatibility/rehearsal: accepted; synthetic stable-v1 round-trip proven; no real data moved.
+- D-029 architecture redirect: accepted/integrated.
+- P10-S3-I1 Supabase foundation: accepted synthetically; Security Advisor 0 lints; no real data retained.
+- P10-S3-I2 contract/D-030: accepted without moving real data.
+- P10-S3-I2-I1 staging/import compatibility: accepted synthetically with exact-cent reconciliation and rollback proof.
+- P10-S3-I2-I2 repository/database prerequisite: implementation passed; final canonical-tree run `32411404495` / job `96562427495`; 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; build PASS; feature tree integrated by PR #70 as `0103f9ac44d9ee10ace85fddb144352fd305a9ee`.
 
-- D-025 contract: `32185226251` / `95867186002`; PR #44.
-- I1 persistence/migration/backup: `32191707306` / `95887236403`; PR #45.
-- I2 lifecycle/classification/order snapshots: `32202876262` / `95920142630`; PR #46; closure #47.
-- I3 category reporting: `32262877105` / `96100129962`; 51 files / 210 Vitest PASS; 17/17 Playwright PASS; build PASS; PR #48.
+## 2026-08-21 I2-I2 remote preflight
 
-## P9-S4 accepted validation
+`develop` commit `c1fdf4b3140bb6e9b89e2cc8f36933a8c0c4a4f2` records a valid fail-closed result:
 
-- evidence/source gate: `32265612927` / `96109244644`; PR #50 integrated as `35a2e0d7495791dfda7f02e045067a85bad4aed9`.
-- D-026 decision gate: `32277770945` / `96149101495`; PR #52 integrated as `51f7ffae46432e0b82a696c1ebc07c275d733ed4`.
-- P9-S4-I1: PR #54 D-019 `32285620846` / `96174326588`; validated merge ref `4b51a5f35c2104d636903ce89eecbc995a0f3ce3`; 0 lint errors / 82 warnings; 52 files / 216 Vitest PASS; 17/17 Playwright PASS; build PASS; integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`, tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
+- trusted-PC credentials/configuration were not available in the remote environment;
+- actual off-site copy/check was not proven;
+- seven real daily generations were not accumulated;
+- actual trusted-PC Docker/local restore drill was not run.
 
-## P9-S5 occurrence-date usability — PASS / INTEGRATED
+This remains valid evidence that D-030 I2-I2 did **not** pass.
 
-Source verification established that the normal transaction form already defaults financial occurrence to browser-local today, exposes it in the primary entry block, permits pre-save editing and persists `occurredAt` independently from generated `createdAt`.
+D-031 subsequently changes sequencing: the missing operator-local proof is ON HOLD and no longer blocks beginning I2-I3 controlled early use.
 
-- PR #56 D-019 `32287018048` / `96178850066`.
-- validated merge ref `9459285920cfbd784a652e9db97cf40741977edf`.
-- 0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; build PASS.
-- integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`, tree `97a78d3e4d78a54ad117440c160920343513ba9f`.
-- canonical P9 closure integrated as `88224b9f4bc2f1df37ed5bbb999f5d260f3acd3a`.
+## P10-S3-I2-I3 runtime-first PR #72 — PRE-INTEGRATION PASS, REVALIDATION REQUIRED
 
-## P10-S1 pre-cutover contract — PASS / INTEGRATED
+PR #72: `feat(v2): enable runtime-first Supabase candidate`.
 
-D-027 established fail-closed non-production sequencing before any live-store data movement.
+Previously validated state:
 
-- PR #58 D-019 `32290159119` / `96188851730`.
-- validated merge ref `dbacda8893c6d1073ba130440ef5bcc6ab11af75`.
-- 0 lint errors / 82 warnings; 52 files / 217 Vitest PASS; 17/17 Playwright PASS; build PASS.
-- integrated as `5c7a5dc23af435711059deff75cf7862972662a1`, tree `6afb4e77eecb97d2092d209b12c054ce2b1952db`.
+- base at the time: `develop` `d4d428e35a45af0691e80331dd8c7888a914355f`;
+- head: `385e59b22ac83ff43097cefeeb4551d28f606dbf`;
+- exact PR merge ref: `1e746bb2dd133f5bfcaac7818b27996f802476ed`;
+- Critical QA run: `32492337376`;
+- job: `96802676149`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 57 files / 240 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS.
 
-## P10-S1-I1 backup/correction compatibility
+Additional implementation review during that run fixed:
 
-Initial D-019 `32292405631` / `96196002726` correctly failed one D-025 same-item historical category-snapshot regression after the first implementation over-relaxed correction-pair validation. The implementation was narrowed rather than weakening D-025.
+- misleading restore messaging when server apply succeeded but post-restore verification failed;
+- auth callback structure that could trigger the documented Supabase `onAuthStateChange` nested-async deadlock class;
+- inconsistent cloud/local mutation return contracts that initially broke TypeScript production build;
+- stale E2E selectors after the recovery UI copy changed.
 
-Authoritative acceptance:
+### Why PR #72 still requires another D-019
 
-- PR #60 D-019 `32292888925` / `96197514379`.
-- validated merge ref `d3165a79d98e4ecde08d894ec2bd6a2bab882b4d`.
-- validated head `666e4c86df7c6328289d489db7c8eebcb714aad1` over base `a549ce79925aad0cae9e964babd28879e8ad1c15`.
-- 0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; focused P10-S1 tests 5/5; existing category backup tests 8/8; 17/17 Playwright PASS; build PASS.
-- integrated as `71b939b4c938288efb0f3c51e300e5c5541ee8c3`, tree `06d1f8c4582b5dcabd02b633c8597852b1cedfa4`.
+`develop` advanced after the successful merge-ref above, including the remote-preflight documentation and now D-031 governance correction. Therefore the earlier merge ref is no longer the exact tree that would be integrated.
 
-No schema, backup-envelope or live-store-data change occurred.
+Before merging PR #72:
 
-## P10-S1-I2 synthetic migration/recovery rehearsal — PASS
+1. synchronize its branch with current `develop`;
+2. generate the new PR merge ref;
+3. run D-019 on that exact ref;
+4. require PASS before integration;
+5. verify squash-integrated tree equivalence and `main` unchanged.
 
-Candidate identity:
+## Supabase evidence relevant to runtime-first candidate
 
-- Vercel deployment `dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki` — READY;
-- Git SHA `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`;
-- tree `8d6479ce00caabce528c6971fbc1034bc1eabbcc`;
-- prior candidate closure D-019 `32294362895` / `96202149317`.
+- dedicated project: `easy-v2` / `hrmkkhqfyfoqucwbcszq` / `sa-east-1`;
+- RLS/approved-operator foundation accepted;
+- financial writes remain behind controlled RPCs;
+- runtime-first restore boundary is hardened through committed migrations in PR #72;
+- most recent advisor check during implementation: Security Advisor 0 lints; Performance Advisor INFO-only unused-index notices on empty/tiny homologation.
 
-Evidence-only PR #62 was deliberately closed without merge. Diagnostic runs `32297959050` / `96213645569` and `32298286885` / `96214717360` identified only access/harness issues and are non-authoritative.
-
-Authoritative run:
-
-- `32298906351` / `96216688953`;
-- exact PR merge ref `b99a11e586c05322c8f6665770135cb8d6047172`;
-- harness head `5e5eaea8fbc51bf52c3e5bfc927b6da178082bda` over candidate base `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`;
-- normal D-019 passed: 0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 repository Playwright PASS; build PASS;
-- remote synthetic candidate scenario then passed 1/1.
-
-Using synthetic stable-v1 data only, the scenario proved accepted v1→v2 normalization, no invented category history, restore/checkpoint, D-024 write blocking/setup, fresh backup/recovery verification, unclassified-item blocking, representative classification, order + D-026 correction, V2 export and fresh-context identical business-data round-trip.
-
-**Result:** evidence supported defining P10-S2 only; no actual store backup was used.
-
-P10-S1 canonical closure: PR #63 D-019 `32299844759` / `96219639912`, merge ref `ee08bf5a8682ad9ba06e52368f2ac422d401d080`; integrated as `816794694d0a9b6c92da273a81ee745c2f53ecdc`, tree `417dd4097144d9f69124161b34747b3e81244ae7`.
-
-## P10-S2 copied-live-data beta contract — PASS / ACCEPTED HISTORICALLY
-
-D-028 defined an isolated disposable IndexedDB beta with exact candidate identity, copied-data handling, structural/zero-cent-tolerance financial reconciliation, D-018/D-024 readiness, rollback baseline, minimum beta mutations, final fresh-context round-trip and 24-hour disposal.
-
-Authoritative contract proof before its QA-ledger evidence append:
-
-- PR #64 D-019 `32380195551` / `96461233352`.
-- validated merge ref `3945e8b2778b6233f6a5af0984bb06084ebfa6cd`.
-- validated branch head `13ef59181d2ca1ce916d43c564068e710de3d73f` over base `816794694d0a9b6c92da273a81ee745c2f53ecdc`.
-- 0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; build PASS.
-- final PR-head D-019 `32380528003` / `96462340384` passed.
-- integrated as `4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`, tree `2ab1e7b476ef620cf067faecd7c996fcf362c88a`.
-
-D-029 later supersedes resuming this IndexedDB real-data beta route; D-028 remains historical safety evidence.
-
-## P10-S2-I1 pre-export execution — FAIL-CLOSED NO-GO / LATER SUPERSEDED
-
-P10-S2-I1 executed only the D-028 pre-export gate. Candidate/deployment identity passed, but operator-local browser isolation and D-024 recovery-location proof remained unavailable remotely, so execution stopped before any live-store backup moved.
-
-Substantive documentation proof:
-
-- PR #65 D-019 `32382362960` / `96468435138`.
-- validated merge ref `b72bd60542fecc06fc28748aba8e216a55928029`.
-- validated branch head `2bd4d18cea9a8419749443bb1dadf5850706814d` over base `4fe31b4ca09a4b89a5cf76e3d31765c0d59abee3`.
-- 0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; build PASS.
-- final D-019 `32382928429` / `96470305608` passed on merge ref `af01a7f8ac280305f5ff86c06416127321580ec2`.
-- PR #65 integrated as `e06c659ecdb3aee79e2e451b00eb85d63c8b8612`, tree `4da05cdda530b1e7000d01460201dff1daf65910`.
-
-Data boundary:
-
-- live-store backup exported for beta: **NO**;
-- live-store backup imported into V2: **NO**;
-- copied real data entered GitHub/chat/CI/docs: **NO**;
-- real-data beta artifacts/IndexedDB created: **NO**;
-- D-028 24-hour disposal clock: **NOT STARTED / NOT APPLICABLE**.
-
-Detailed record: `docs/V2/P10_S2_I1_EXECUTION.md`.
-
-## D-029 / P10-S3 architecture redirect — PASS / INTEGRATED
-
-D-029 changes only the accepted **future persistence architecture**. It reopens/supersedes D-016 for final production persistence, selects Supabase/Postgres as canonical final datastore and Vercel as final frontend host, retains manual/logical Easy backup as independent secondary protection, and keeps the current stable/D-024 boundary in place until cloud cutover.
-
-The architecture gate also requires Auth + RLS, publishable-key-only client configuration, one server/database transaction boundary for D-013/D-026 correction/reversal, no first-pass offline multi-master writes, a dedicated Easy Supabase project and synthetic-only foundation proof before any real-data import.
-
-Authoritative substantive documentation proof **before this QA-ledger evidence-only append**:
-
-- PR **#66** D-019 run **`32385468857`**, job **`96478768306`**.
-- Exact validated PR merge ref **`a488e5f60ea975c360aff0fb72aa5be2a2e8f064`**.
-- Validated branch head **`041920af7453d124484b873ef172aaee573ffc0b`** over base **`e06c659ecdb3aee79e2e451b00eb85d63c8b8612`**.
-- ESLint: **0 errors / 82 warnings**.
-- Vitest: **53 files / 222 tests PASS**.
-- Playwright: **17/17 PASS**.
-- Production build: **PASS**.
-
-Scope proof:
-
-- substantive D-029 diff contained only canonical `docs/V2/` files;
-- no runtime, dependency, schema, workflow or deployment configuration changed;
-- no Supabase project/schema/client implementation was created by this architecture gate;
-- no real store data moved;
-- `main`, stable publication and canonical URL remained untouched;
-- P10-S2-I1 becomes `ABANDONED / SUPERSEDED BEFORE EXPORT` only because the final persistence route changed before data movement;
-- P10-S3-I1 synthetic Supabase foundation is the next bounded action and is not executed by D-029 acceptance itself.
-
-Final D-019 `32386064578` / `96480732008` passed on exact validated merge ref `2d6936cd8f74d2205f1c0b0a2f696287b66ae2dc`. PR #66 squash-integrated to `develop` as `0e054bc5e640c35ce567ccd710d9574cf1a93454`, tree `fe92fb0626449ba30456e85f37152e43f1faf864`. No real store data moved and `main` remained untouched.
-
-## P10-S3-I1 Supabase foundation — PASS / ACCEPTED
-
-P10-S3-I1 used synthetic data only against dedicated project `easy-v2` (`hrmkkhqfyfoqucwbcszq`) in `sa-east-1`. Live/repository migrations are `20260820154034_p10_s3_i1_foundation` and `20260820154402_harden_transaction_rpc_boundary`.
-
-Database/security proof:
-
-- RLS enabled on `easy_operators`, `categories`, `items`, `resellers`, `transactions`;
-- `anon` has no application-table grant; authenticated category/item/reseller CRUD requires approved-operator RLS; transaction direct DML is SELECT-only;
-- synthetic authorized UUID passed the allow-list predicate; unauthorized UUID saw no rows and could not call financial mutations;
-- public financial RPC wrappers are invoker functions; privileged implementations are confined to the non-exposed `private` schema with explicit operator assertion;
-- changed-item correction captured replacement-time snapshot; same-item correction preserved historical D-025 category snapshot;
-- intentionally invalid correction rolled back atomically with no partial reversal/link;
-- final Security Advisor: **0 lints**;
-- Performance Advisor: INFO-only `unused_index` notices expected on the empty/tiny synthetic dataset;
-- synthetic cleanup verified 0 rows in all five application/authorization tables.
-
-Repository validation:
-
-- diagnostic D-019 `32388839983` / `96489804473` correctly blocked TS2559 in the new Supabase env typing after lint (0/82), Vitest (54/225) and Playwright (17/17) had passed;
-- minimal explicit-env-boundary fix committed as `3f1f49c002c3c1a8531181ec66e995e7f753da8e`;
-- authoritative substantive D-019 **`32394126648`** / **`96506890991`** passed on exact PR merge ref **`c12a535b665eb25626a1b3bb0aa15cd034808e00`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-
-Data/cutover boundary: no real store data, real operator cutover, `main` publication, canonical URL switch or production cutover occurred. Current user-facing runtime remains Dexie. Detailed evidence: `docs/V2/P10_S3_I1_EXECUTION.md`.
-
-## P10-S3-I2 migration/durability contract — PASS / ACCEPTED
-
-Contract-definition evidence:
-
-- `develop` source baseline: `5e2decd337b7912f118801cd75cbb27e4e03cfc2`;
-- stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
-- stable source inspection confirms backup version 1 with `items`, `resellers`, `transactions` and Dexie V1 business shapes;
-- current V2 normalization inspection confirms legacy missing lifecycle -> active, missing transaction `occurredAt` -> `createdAt`, and no fabricated category history;
-- live `easy-v2` recheck: `ACTIVE_HEALTHY`, 0 Auth users and 0 rows in `easy_operators`, `categories`, `items`, `resellers`, `transactions`;
-- live item constraint recheck confirms `items_active_requires_category`, proving direct active-unclassified v1 item insertion is incompatible and must use the D-030 private staging/classification path;
-- live Supabase Security Advisor: 0 lints;
-- current Supabase documentation confirms paid automatic backups, Free-plan `db dump` + off-site recommendation, Free pausing behavior and supported logical dump/restore tooling;
-- no real store data or real operator identity was used.
-
-D-030 accepts the contract only. Authoritative closure D-019 **`32399725148`** / **`96524749660`** passed on exact PR merge ref **`f18f9b6c3d77b1b95284e92487be8819a9a48922`**: 0 lint errors / 82 warnings; 54 files / 225 Vitest PASS; 17/17 Playwright PASS; production build PASS. This run validates the complete canonical contract tree before its final evidence-line commit; the contract later integrated to `develop` as `6bb0f8d2a332f978b182b0f6e88c890c6d175898`.
-
-## P10-S3-I2-I1 legacy staging/import compatibility — PASS / ACCEPTED SYNTHETICALLY
-
-Database/import proof against dedicated `easy-v2` homologation remained synthetic-only:
-
-- private `legacy_v1_*` staging tables/functions are committed as reproducible migrations, RLS-enabled and denied to `anon`, `authenticated` and `service_role` DML/function execution;
-- exact stable-v1 surface is normalized through the existing `preflightBackupPayload`, with safe positive IDs and exact integer-cent money; missing normalized `occurredAt` fails closed;
-- invalid references, missing/incomplete classification and forced outer transaction failure all rolled back without partial staging/public state;
-- successful promotion preserved item IDs `10/25`, reseller IDs `7/42`, transaction IDs `100/250/900`, timestamps and null legacy category history;
-- exact integer-cent reconciliation passed: gross orders `2500`, payments `525`, signals `750`, net movement `1225`, aggregate positive debt `1975`, plus exact per-reseller balances;
-- identity repair used actual PostgreSQL metadata via `pg_get_serial_sequence` and all generated next IDs were verified above imported maxima;
-- Security Advisor: 0 lints; Performance Advisor: no staging `unindexed_foreign_keys`, INFO-only unused-index notices on empty/tiny data;
-- final homologation state: 0 Auth users, 0 `easy_operators`, 0 public business rows and 0 private staging/classification rows.
-
-Repository validation:
-
-- diagnostic PR #69 D-019 `32403226500` / `96536125014` correctly blocked TS18048 only at build after lint, 231/231 Vitest and 17/17 Playwright had passed;
-- fail-closed TypeScript narrowing fix committed as `f970aceea1589c3ec46f1c906ddd0007547c2f41`;
-- authoritative substantive D-019 `32403912177` / `96538355033` passed on exact merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b`: 0 lint errors / 82 warnings; 55 files / 231 Vitest PASS; 17/17 Playwright PASS; production build PASS.
-
-No unattended backup automation, real Auth operator, Supabase business-runtime switch, real store data, `main` publication, canonical URL switch or production cutover occurred. Exact final tree-equivalent D-019 belongs to PR #69 closure evidence before integration. Detailed record: `docs/V2/P10_S3_I2_I1_EXECUTION.md`.
-
-## P10-S3-I2-I2 zero-cost unattended backup/recovery — IMPLEMENTATION PASS / ACCEPTANCE BLOCKED
-
-Repository/database prerequisite proof:
-
-- trusted-PC tooling is committed for pinned Supabase CLI `2.111.0` data-only dumps, rclone `1.75.0` copy/check/list verification, UTC daily retention, Windows Task Scheduler and disposable restore fingerprinting;
-- private recovery-health migrations enforce freshness and retention on all canonical business writes;
-- missing evidence, stale evidence and fresh evidence with only six retained daily generations block writes;
-- exactly 24h remains fresh, while 24h + 1 microsecond is stale;
-- fresh evidence with retention >=7 reopens writes;
-- financial RPC writes pass through the same guard;
-- API-style `service_role` cannot bypass the durability guard, while direct no-JWT database execution remains the bounded restore/import maintenance path;
-- private recovery-health state is inaccessible to `anon`, `authenticated` and `service_role` for trusted mutation/read paths;
-- Security Advisor: **0 lints**;
-- Performance Advisor: INFO-only existing `unused_index` notices in the empty/tiny environment;
-- final homologation cleanup: 0 Auth users, 0 operators, 0 public business rows, 0 recovery rows and 0 legacy staging rows.
-
-Repository validation:
-
-- substantive PR #70 D-019 `32408393343` / `96552818604` passed on merge ref `6b83fe3e9b5939c788aa7a3640e7fc83607fd260`: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS;
-- final canonical-tree D-019 **`32411404495`** / **`96562427495`** passed on exact merge ref **`b8d01bcbe2b333f704f7ea75d1bc6c5813fabd5a`** with the same objective results;
-- validated feature tree `414ebfc01dd67c711ce94af90653696f42c13bf5` was squash-integrated by PR #70 as `0103f9ac44d9ee10ace85fddb144352fd305a9ee`, with the identical tree.
-
-**Acceptance remains BLOCKED:** the actual trusted-PC scheduled dump/off-site verification, at least seven real retained daily generations and disposable Docker/local restore drill have not yet been executed. I2-I3 remains unauthorized. Detailed record: `docs/V2/P10_S3_I2_I2_EXECUTION.md`.
+No legacy real-store dataset was imported by PR #72.
 
 ## Known non-blocking debt
 
-Existing mocked-select hydration warnings, React `act(...)` warnings, `set-state-in-effect` warnings, dependency audit findings, Actions/runtime deprecation notices, lint warning debt and Vite large-chunk warning remain visible and non-blocking only when the accepted D-019 objective commands pass.
+When objective D-019 commands pass, the following remain non-blocking unless later evidence elevates them:
+
+- React `act(...)` test warnings;
+- mocked-select DOM/hydration warnings;
+- `set-state-in-effect` lint warnings;
+- lint `any` warning debt;
+- dependency audit findings (last observed: 17 vulnerabilities — 2 low, 4 moderate, 11 high);
+- GitHub Actions Node deprecation notices;
+- Vite large-chunk warning.
+
+## Current QA status
+
+- D-031 governance/docs: must pass D-019 before integration to `develop`.
+- PR #72 runtime implementation: functionally D-019-passing on its prior merge ref, but **not integration-ready until revalidated against current `develop`**.
+- D-030 operator-local recovery acceptance: **ON HOLD / NOT PASSED**.
+- definitive production cutover: **NOT AUTHORIZED**.

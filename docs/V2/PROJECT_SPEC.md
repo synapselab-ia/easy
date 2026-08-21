@@ -3,204 +3,136 @@
 **Status:** canonical V2 product reference  
 **Repository:** `synapselab-ia/easy`  
 **Integration branch:** `develop`  
-**Created:** 2026-08-17  
-**Updated:** 2026-08-20
+**Updated:** 2026-08-21
 
 ## 1. Purpose
 
-Easy is a web application for managing reseller orders, payments/signals, balances, statements and operational analytics.
+Easy is a web application for reseller orders, payments/signals, balances, statements and operational analytics.
 
-Easy V2 is an evolution of the existing application, not a greenfield rewrite. The goal is to preserve useful behavior while making the financial core safer, recoverable, auditable and maintainable before adding new business modules.
+Easy V2 evolves the existing application rather than rewriting it. The product must preserve the accepted financial/audit behavior while becoming safer, recoverable, durable and maintainable.
 
-D-029 adds an explicit final-production objective: routine durability must not depend primarily on browser-local IndexedDB plus a person remembering to create/synchronize backups. The final V2 therefore targets Vercel hosting with Supabase/Postgres as canonical persistence while retaining an independent logical/manual Easy backup for portability and contingency.
+## 2. Final architecture objective
 
-## 2. Product baseline
+D-029 remains the final architecture direction:
 
-The application already provides:
+- React + TypeScript + Vite application;
+- Vercel frontend hosting;
+- Supabase/Postgres canonical business persistence;
+- Supabase Auth + RLS;
+- approved-operator authorization rather than generic authenticated access;
+- no privileged/service credential in browser code;
+- Dexie/IndexedDB only as transition/cache, not final source of truth;
+- atomic database/server boundaries for financial create/reverse/correct operations;
+- independent logical Easy JSON backup for portability and contingency.
 
-- item catalog with base prices;
-- reseller registration and reseller detail pages;
-- order, payment and signal transactions;
-- automatic reseller balance calculation;
-- dashboard totals and order volume;
-- debt-aging/risk visualization;
-- Pareto and debtor-ranking analytics;
-- PDF reseller statements with date filtering;
-- JSON backup import/export;
-- global command/search center;
-- responsive desktop/mobile layouts;
-- light/dark theme;
-- unit/integration tests and Playwright E2E coverage;
-- historical GitHub Pages deployment from `main`;
-- a separately deployed V2 Vercel candidate used during P10 rehearsal.
+## 3. Current sequencing — D-031
 
-The current **user-facing runtime** remains Dexie/IndexedDB. P10-S3-I1 established the Supabase/Postgres schema, RLS/authorization, transactional RPC and typed-client foundation; P10-S3-I2-I1 proved the private stable-v1 staging/import compatibility path with synthetic data; and P10-S3-I2-I2 implemented the unattended-dump/recovery-health/restore-drill prerequisite while remaining fail-closed pending trusted-PC evidence. None of these cloud layers is yet wired as the application source of truth. Dexie remains a transitional implementation state, not the accepted final production topology.
+On 2026-08-21 the operator explicitly authorized **runtime-first controlled early use** before the D-030 unattended off-site backup proof is completed.
 
-## 3. V2 objectives
+This changes sequencing only:
 
-The V2 must become:
+- P10-S3-I2-I2 automated trusted-PC backup/recovery acceptance is **ON HOLD**;
+- P10-S3-I2-I3 Supabase/Auth/runtime candidate is authorized and in progress;
+- the current implementation is PR #72;
+- early use is clean-start rather than a migration of legacy real-store data;
+- `main` remains the stable historical reference;
+- Vercel publication remains candidate/manual, not definitive cutover.
 
-1. **Correct** — balances and history must remain internally consistent.
-2. **Recoverable** — backup and restore must be validated, versioned and tested.
-3. **Durable without routine human intervention** — final canonical data must survive browser/device loss without relying on an operator to perform the primary backup action.
-4. **Auditable** — common human errors must be correctable without silently destroying history.
-5. **Consistent** — dashboard, reseller detail, search, PDF and analytics must tell the same financial story.
-6. **Usable** — routine operations should require few steps on desktop and mobile.
-7. **Secure** — cloud-backed business data must require explicit authentication/authorization and must not expose privileged credentials to the browser.
-8. **Testable** — critical regressions must be caught before publication.
-9. **Maintainable** — another conversation/AI instance must be able to reconstruct project state from repository documents.
-10. **Adequate to the store** — new modules must be driven by real operational requirements, not speculative feature accumulation.
-11. **Portable** — managed cloud durability must not remove the ability to produce an independent logical Easy backup/export.
+D-030 is not declared passed or cancelled. Its durability objective remains a later requirement for definitive production/canonical cutover unless a later accepted decision replaces it.
 
-## 4. Architecture scope after D-029
+## 4. Early-use recovery posture
 
-D-016 originally prevented speculative backend/auth/cloud work. That constraint was valid until an explicit final-production durability requirement was accepted.
+The temporary D-031 early-use mode uses defense in depth appropriate to the explicitly accepted risk:
 
-D-029 now selects this target:
+1. Supabase/Postgres holds canonical business data.
+2. Supabase Auth/RLS protects access.
+3. The application retains logical JSON export.
+4. JSON restore is checkpointed and server-atomic for the Supabase-backed path.
+5. Browser normal writes remain fail-closed when the last confirmed manual JSON recovery copy is beyond the accepted 24-hour freshness boundary.
+6. Automated D-030 server recovery-health enforcement is pending/disabled for this temporary mode.
+7. The existing unattended dump/rclone/retention/restore tooling is retained for later completion; it is not the current action.
 
-- React + TypeScript + Vite remains the application stack unless a later decision proves a rewrite necessary;
-- Vercel is the target frontend/application host;
-- Supabase/Postgres is the target canonical production datastore;
-- Supabase Auth and Row Level Security are required before production;
-- Dexie/IndexedDB may remain as migration substrate/cache, but not the final authoritative production datastore;
-- initial cloud writes are server-authoritative and fail closed when connectivity is unavailable;
-- offline multi-master synchronization is not part of the first migration;
-- logical `easy-backup` remains an independent portability/recovery contract;
-- managed database backup becomes the primary durability layer after cloud cutover.
+This mode is intentionally not described as final durability acceptance.
 
-## 5. Non-goals for the first Supabase transition
+## 5. Product objectives
 
-Do **not** assume the first cloud migration requires:
+The V2 must be:
 
-- a full rewrite;
-- Next.js;
-- reseller self-service accounts;
-- a broad employee role matrix;
-- Realtime subscriptions everywhere;
-- Edge Functions for logic that can safely remain in Postgres/RLS/client reads;
-- offline queued financial writes or multi-master synchronization;
-- inventory control;
-- complex ERP behavior;
-- broad visual redesign;
-- dozens of additional dashboards;
-- PITR before an explicit recovery-objective/cost decision.
+1. **Correct** — balances/history remain internally consistent.
+2. **Recoverable** — export/restore paths are validated and tested.
+3. **Auditable** — financial corrections preserve history.
+4. **Consistent** — dashboard, reseller detail, PDF, search and analytics tell the same story.
+5. **Secure** — cloud data requires authenticated, approved operator access.
+6. **Usable** — routine operations remain efficient on desktop/mobile.
+7. **Testable** — D-019 catches critical regressions before integration/publication.
+8. **Maintainable** — canonical docs reconstruct current state without relying on chat history.
+9. **Portable** — cloud persistence never removes independent logical export.
 
-These may be considered only when justified by later requirements.
+## 6. Critical business invariants
 
-## 6. Canonical work sequence
-
-The V2 roadmap is organized into these phases:
-
-- **P0 — State and governance**
-- **P1 — Referential integrity and safe deletions**
-- **P2 — Correction, reversal and audit trail**
-- **P3 — Dates, balances and financial statements**
-- **P4 — Persistence architecture decision: local vs cloud**
-- **P5 — Backup, restore and migration**
-- **P6 — Tests, CI and deployment safety**
-- **P7 — Incomplete UX flows and operational refinement**
-- **P8 — Store requirements discovery**
-- **P9 — Prioritized new modules**
-- **P10 — Controlled migration and cutover**
-  - P10-S1: local compatibility + synthetic rehearsal — completed;
-  - P10-S2: copied-live-data IndexedDB beta contract — accepted historically, execution abandoned before export;
-  - **P10-S3: Supabase canonical-persistence transition — I1 foundation accepted; D-030/I2 migration-durability contract accepted; I2-I1 staging/import compatibility accepted; I2-I2 implementation ready but blocked pending operator-local off-site/retention/restore proof.**
-
-Large new features should not outrun the persistence/security/cutover foundation.
-
-## 7. Critical invariants
-
-The final cloud migration must preserve previously accepted product behavior, including:
+The cloud runtime must preserve:
 
 - reversible reseller/item archival;
-- strict active references for new operations with preserved historical rows;
-- audited reversal rather than destructive financial deletion;
+- strict active references for new operations while historical rows remain preserved;
+- audited reversal rather than destructive financial-history deletion;
 - atomic linked replacement correction;
 - `occurredAt` distinct from registration/audit time;
-- opening → movements → closing statement semantics and accepted debt-aging logic;
+- accepted statement and FIFO debt-aging semantics;
 - immutable transaction-time item/category snapshots;
-- non-inventive legacy category migration;
-- full-field D-026 correction semantics;
-- exact stable-v1 normalization already proven synthetically;
-- independently exportable logical backup data.
+- non-inventive legacy category semantics;
+- D-026 full-field correction rules;
+- exact logical-backup validation.
 
-These are migration acceptance constraints, not optional refactors.
+## 7. Cloud security requirements
 
-## 8. Cloud security requirements
+- all exposed application tables use RLS;
+- anonymous business-data access is forbidden;
+- browser configuration contains only project URL + publishable key;
+- `service_role`, database passwords and other privileged secrets never enter browser bundles/Git/public Vercel variables;
+- authorization is based on the server-managed `easy_operators` allow-list;
+- financial multi-row operations cross one transactional PostgreSQL/server boundary;
+- schema/policies remain reproducible from committed migrations.
 
-Before any real store dataset is imported into Supabase:
+## 8. Data-migration posture
 
-1. every exposed application table must have RLS enabled;
-2. anonymous business-data access is forbidden;
-3. client configuration may contain only the Supabase project URL and publishable key;
-4. `service_role`/secret credentials must never be shipped to browser code or committed to Git;
-5. authorization must identify the actual allowed user/store access rather than treating every authenticated user as authorized;
-6. user-editable metadata must not control authorization;
-7. D-013/D-026 multi-row correction/reversal integrity must execute within one transactional server/database boundary;
-8. schema migrations and policy definitions must be reproducible from repository state;
-9. synthetic tests plus Supabase security/performance advisors must pass before a real-data migration gate can be proposed.
+The D-030 private stable-v1 staging/import path remains accepted synthetically and available if later needed.
 
-## 9. Backup/recovery intent
+For the current D-031 early-use plan, however:
 
-The project keeps defense in depth:
+- no legacy real-store import is required;
+- no historical stable dataset should be moved merely to start testing/using the new runtime;
+- the candidate begins clean and accumulates new data directly in Supabase.
 
-- on a paid posture, managed Supabase database backups are the intended primary durability mechanism; under D-030/US$ 0, the required primary recovery layer is instead a proven unattended off-site logical-dump process with freshness enforcement and restore drills;
-- logical/manual Easy backup/export remains available as independent contingency and portability;
-- PITR remains a later RPO/cost choice rather than an assumption.
+A later request to migrate legacy data would require a new explicit gate/re-authorization.
 
-D-024 remains mandatory for the current browser-local stable production system until cloud cutover. Its synchronized-folder/24-hour manual-export write block is transitional and is not the intended final durability policy after cloud recovery readiness is proven.
+## 9. Repository governance
 
-Current paid-infrastructure budget is **US$ 0**. D-030 resolves the architecture question conditionally: Supabase Free alone is not sufficient. P10-S3-I2-I2 has implemented the unattended dump/rclone path, >=7-generation retention rule, server-visible exact-24h/retention write guard and disposable restore-drill tooling, and the server-side guard has passed synthetic homologation proof. Production eligibility remains blocked until the committed process is actually exercised on the trusted operator PC, objective off-site arrival is proven, at least seven real successful daily generations are observed and the disposable restore drill reconciles exactly. Manual `easy-backup` remains secondary portability/contingency.
+Branch roles:
 
-## 10. Repository governance
+- `main` — stable historical reference; do not use for V2 experimentation.
+- `develop` — V2 integration.
+- isolated code/docs branches derive from `develop`.
 
-### Branch roles
+Integration pattern:
 
-- `main`: stable reference copied from the original Easy; not an experimentation branch.
-- `develop`: V2 integration branch.
-- isolated implementation/documentation branches derive from `develop`.
+`defined work -> isolated branch -> implementation/docs -> D-019 (+ cloud evidence when relevant) -> PR -> develop`
 
-### Integration rule
+## 10. Sources of truth
 
-A coherent change should follow:
-
-`defined work -> isolated branch -> implementation/docs -> validation/tests -> PR -> review -> develop`
-
-No V2 development should target the original `viniciuscasarin/easy` repository.
-
-## 11. Sources of truth
-
-For V2 work, use the following precedence:
+Precedence:
 
 1. `docs/V2/STATUS.md` — current state and `NEXT_ACTION`;
-2. `docs/V2/PROJECT_SPEC.md` — product intent and invariants;
-3. `docs/V2/ARCHITECTURE.md` — verified technical baseline and architectural decisions;
-4. `docs/V2/BACKLOG.md` — ordered work and phase gates;
-5. `docs/V2/DECISIONS.md` — accepted decisions and rationale;
-6. `docs/V2/QA_LEDGER.md` — known QA evidence/gaps;
-7. `docs/V2/CHANGELOG.md` — material project-state changes.
+2. `docs/V2/PROJECT_SPEC.md` — product intent;
+3. `docs/V2/ARCHITECTURE.md` — technical architecture;
+4. `docs/V2/BACKLOG.md` — ordered work;
+5. `docs/V2/DECISIONS.md` — accepted decisions;
+6. `docs/V2/QA_LEDGER.md` — validation evidence/gaps;
+7. `docs/V2/CHANGELOG.md` — material state changes.
 
-The historical `tasks/` directory is useful evidence of past intentions, but its checkbox state is **not** canonical project status.
+Historical `tasks/` checkboxes are not canonical status.
 
-## 12. Change discipline
+## 11. Current bounded goal
 
-Every completed phase should leave:
+Finish and integrate the PR #72 Supabase/Auth/runtime candidate into `develop`, then publish/configure a manual Vercel candidate for controlled clean-start early use with an approved operator and an initial manual JSON recovery checkpoint.
 
-- the code or decision completed;
-- corresponding validation/tests;
-- documentation updated;
-- a single explicit next action.
-
-Do not consider a phase complete solely because the UI appears to work.
-
-## 13. Evidence history for D-016 and D-029
-
-P8 direct-store discovery correctly kept D-016 at that time: no evidence then required concurrent multi-user state, cross-device live sharing or cloud persistence.
-
-P9-S2 therefore implemented D-024 as a bounded local-first durability improvement rather than prematurely adding backend/auth/cloud infrastructure.
-
-P10-S2-I1 later reached the point where using the real dataset would require another browser-local beta and another manual-recovery boundary. Before any real export occurred, an explicit final-product requirement was accepted: remove routine human backup execution as the primary durability dependency while retaining independent manual backup capability.
-
-That new requirement is the direct trigger that reopens D-016. D-029 therefore changes the **future final topology** without claiming that the earlier P4/P8 evidence was wrong.
-
-Authoritative D-029 contract: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
+This goal does not include `main` publication, legacy data migration or definitive cutover.
