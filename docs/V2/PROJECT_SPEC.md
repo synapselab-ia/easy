@@ -33,7 +33,8 @@ Current state:
 
 - P10-S3-I2-I2 automated trusted-PC backup/recovery acceptance is **ON HOLD**;
 - P10-S3-I2-I3 Supabase/Auth/runtime implementation is **DONE / INTEGRATED** through PR #72;
-- the current bounded action is P10-S3-I2-I3-C manual Vercel candidate publication and operator onboarding;
+- P10-S3-I2-I3-C manual Vercel candidate publication and operator onboarding was preflighted and is **BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED**;
+- I2-I3-C remains the sole current bounded action and has not been accepted;
 - early use is clean-start rather than a migration of legacy real-store data;
 - `main` remains the stable historical reference;
 - Vercel publication remains candidate/manual, not definitive cutover.
@@ -93,6 +94,8 @@ The cloud runtime must preserve:
 - financial multi-row operations cross one transactional PostgreSQL/server boundary;
 - schema/policies remain reproducible from committed migrations.
 
+The 2026-08-21 I2-I3-C preflight reconfirmed 0 Supabase Security Advisor lints and operator-bound RLS policies, but it did not substitute policy inspection for the required live non-approved-user proof.
+
 ## 8. Data-migration posture
 
 The D-030 private stable-v1 staging/import path remains accepted synthetically and available if later needed.
@@ -133,6 +136,17 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 11. Current bounded goal
 
-Publish/configure the already accepted `develop` runtime as a **manual Vercel `easy-v2` candidate**, onboard the intended Supabase Auth user through the approved-operator boundary, prove unauthorized access is denied, create the first confirmed manual JSON recovery checkpoint, and begin controlled clean-start early use.
+Complete the already-started P10-S3-I2-I3-C operator-local onboarding slice without changing its scope:
+
+- configure only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel `easy-v2`;
+- manually publish the accepted current `develop` revision, not `main`;
+- onboard the intended real Supabase Auth operator and add only that real UUID to the trusted allow-list;
+- prove a non-approved authenticated user is denied;
+- prove the approved operator can load the clean canonical dataset;
+- create/download/store and explicitly confirm the first manual JSON recovery checkpoint;
+- verify the exact-24h browser freshness guard is healthy;
+- then begin controlled clean-start early use.
+
+The live preflight is recorded in `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`. This goal remains **BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED** until those real-user/deployment/checkpoint steps are proven.
 
 This goal does **not** include resuming D-030 trusted-PC backup proof, `main` publication, legacy data migration, canonical URL switch or definitive cutover.
