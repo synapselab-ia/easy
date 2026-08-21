@@ -1,129 +1,177 @@
 # P10-S3-I2-I3 — Runtime-first Supabase execution
 
 **Date:** 2026-08-21  
-**Branch:** `feat/p10-s3-i2-i3-runtime-first`  
+**Implementation branch:** `feat/p10-s3-i2-i3-runtime-first`  
 **PR:** #72  
-**Base:** `develop` at `d4d428e35a45af0691e80331dd8c7888a914355f`
+**Final status:** `DONE / ACCEPTED / INTEGRATED`
 
-## Operator-authorized change of order
+## 1. Operator-authorized change of order
 
-The operator explicitly changed the prior sequencing on 2026-08-21 after confirming that the store will **not migrate/use the old stable-v1 historical dataset** for the new V2 start.
+D-031 authorized a controlled clean-start Supabase-backed candidate before completing D-030 trusted-PC unattended backup proof.
 
-The accepted runtime-first order is now:
+Accepted order:
 
-1. make V2 use the dedicated `easy-v2` Supabase project as the canonical data source;
-2. allow controlled clean-start use after Auth/operator approval and manual JSON recovery setup;
-3. keep manual `easy-backup` v2 JSON export/restore as the temporary independent recovery layer;
-4. complete the unattended off-site D-030 proof in parallel/later;
-5. re-enable the server automated-recovery freshness guard and only then classify the deployment as fully production-safe under D-030.
+1. make the candidate use the dedicated `easy-v2` Supabase project as canonical data source;
+2. allow controlled clean-start early use after Auth/operator approval and manual JSON recovery setup;
+3. keep Easy JSON export/restore as the temporary independent recovery layer;
+4. keep D-030 trusted-PC/off-site/seven-day proof on hold for later;
+5. require a later explicit durability/cutover gate before calling the deployment definitive production.
 
-This is a sequencing change, **not** a claim that manual JSON equals the accepted D-030 unattended durability posture.
+This is a sequencing change, not a claim that manual JSON equals D-030 unattended durability.
 
-## D-031 — Runtime-first controlled use may precede D-030 automated proof
+## 2. D-031 early-use boundary
 
-D-031 refines D-030 for the explicitly requested clean-start transition:
+- P10-S3-I2-I2 automated off-site proof remains incomplete and ON HOLD.
+- Supabase/Postgres may be canonical for controlled early use.
+- `private.recovery_enforcement_state.automated_guard_enabled = false` is explicit/server-visible for the temporary mode.
+- browser normal writes retain the exact-24h manual-JSON freshness guard.
+- JSON export in cloud mode reads canonical Supabase tables.
+- JSON restore is approved-operator-only, checkpointed, server-atomic and post-restore verified.
+- Dexie is a read cache/mirror, not authoritative persistence.
+- Auth + `easy_operators` authorization is mandatory.
+- old stable-v1 real data is not promoted/migrated for the clean start.
+- `main`, canonical URL switch and definitive cutover remain unauthorized.
 
-- P10-S3-I2-I2 automated off-site proof remains incomplete and required before final production-safety acceptance.
-- P10-S3-I2-I3 implementation and controlled use no longer wait for seven retained automated generations.
-- During this transition, `private.recovery_enforcement_state.automated_guard_enabled = false` is explicit and server-visible; it is not a hidden bypass.
-- The browser manual JSON health guard remains fail-closed: no new application write is allowed until a JSON has been exported and confirmed, and it blocks again once the local confirmation is at least 24 hours old.
-- JSON export in cloud mode reads the canonical Supabase tables, not Dexie.
-- JSON restore in cloud mode is an approved-operator atomic PostgreSQL operation and downloads a checkpoint of the current cloud dataset first.
-- Dexie may remain only as a local read cache/mirror for existing dashboard/search/report code. It is not authoritative and no offline write mode is introduced.
-- Auth + `easy_operators` authorization remains mandatory.
-- Old stable-v1 real data is not promoted or migrated for this start; `easy-v2` remains clean-start.
-- `main`, canonical publication and any claim of completed D-030 durability remain unauthorized until their own gates are explicitly closed.
+## 3. Supabase migrations implemented
 
-## Supabase migrations applied to homologation
+### `20260821132225_p10_s3_i2_i3_runtime_first_recovery_mode_and_json_restore`
 
-- `20260821132225_p10_s3_i2_i3_runtime_first_recovery_mode_and_json_restore`
-  - adds private explicit automated-guard state, initially `false` for runtime-first mode;
-  - preserves the exact D-030 guard function for the later enabled state;
-  - adds a narrow approved-operator logical-restore bypass so JSON recovery remains possible even if automated freshness is later stale;
-  - adds `public.restore_easy_backup(jsonb)` for atomic v2/schema5 replacement and identity-sequence repair.
-- `20260821132351_fix_runtime_first_restore_constraint_resolution`
-  - qualifies the deferrable self-reference constraint names under fixed `search_path = ''`.
-- `20260821133444_harden_runtime_first_restore_rpc_boundary`
-  - moves the privileged restore implementation to `private.restore_easy_backup_impl(jsonb)`;
-  - exposes only a `SECURITY INVOKER` public RPC wrapper;
-  - preserves explicit operator authorization inside the non-exposed privileged implementation.
+- adds explicit automated-guard state, initially disabled for runtime-first early use;
+- preserves D-030 guard logic for later re-enablement;
+- adds a narrow approved-operator logical-restore bypass;
+- adds atomic v2/schema5 logical restore and sequence repair.
 
-The first disposable restore drill exposed the unqualified-constraint defect before any persistent data changed. The second migration corrected it. Supabase Security Advisor then identified the directly exposed `SECURITY DEFINER` restore function; the third migration hardened that boundary and the final Security Advisor result is **0 lints**.
+### `20260821132351_fix_runtime_first_restore_constraint_resolution`
 
-Performance Advisor remains INFO-only on unused indexes in the empty homologation project; no performance index was removed merely because the synthetic/empty database has not exercised it yet.
+- fixes constraint qualification under fixed `search_path = ''`.
 
-## Synthetic SQL proof
+### `20260821133444_harden_runtime_first_restore_rpc_boundary`
 
-A transaction-local simulated authenticated operator was used only for synthetic validation and then rolled back.
+- moves privileged restore implementation to the private schema;
+- exposes only a `SECURITY INVOKER` public wrapper;
+- preserves explicit approved-operator authorization in the private implementation.
 
-Proven:
+Synthetic proof exposed the initial constraint-resolution defect before persistent data changed; it was corrected. Security Advisor then exposed the public `SECURITY DEFINER` boundary; it was hardened. Final implementation advisor evidence: **Security Advisor 0 lints**. Performance Advisor remained INFO-only on unused indexes in the empty/tiny homologation environment.
 
-- `private.automated_recovery_guard_enabled()` is `false` in the explicit transition state;
-- a normal business-table write is accepted while automated enforcement is pending;
-- `public.restore_easy_backup(...)` restored one category, one item, one reseller and one order atomically;
-- restored order total remained exactly `25` for quantity `2 × 12.5`;
-- the synthetic operator/data were rolled back;
-- final cloud cleanup after proof: `auth.users=0`, `easy_operators=0`, `categories=0`, `items=0`, `resellers=0`, `transactions=0`, `recovery_backup_generations=0`.
+## 4. Synthetic SQL proof
 
-## Application implementation in PR #72
+Using only transaction-local synthetic identity/data and rollback, proof covered:
+
+- explicit automated-recovery guard state disabled for temporary early use;
+- normal business-table write acceptance in that mode;
+- atomic logical restore of category/item/reseller/order;
+- exact restored financial total consistency;
+- rollback/cleanup of synthetic operator/data.
+
+After proof, homologation was clean: no real Auth user/operator or business dataset was retained.
+
+## 5. Application implementation
 
 ### Canonical cloud adapter
 
 `src/services/cloudDataService.ts`:
 
-- maps Supabase snake_case rows to the existing domain objects;
-- fetches all canonical business data;
-- replaces Dexie atomically as a read cache;
-- routes category/item/reseller mutations to Supabase tables under RLS;
-- routes create/reverse/correct financial mutations through the existing PostgreSQL RPC boundary;
-- refreshes the cache after successful cloud mutations;
-- exposes operator authorization and atomic JSON restore calls.
+- maps Supabase rows into existing domain objects;
+- fetches canonical business data;
+- refreshes Dexie atomically as a read cache/mirror;
+- routes category/item/reseller mutations to Supabase under RLS;
+- routes financial mutations through controlled PostgreSQL RPCs;
+- exposes authorization and atomic restore calls.
 
 ### Auth/session boundary
 
 `src/components/auth/CloudAuthGate.tsx`:
 
-- activates only when browser-safe Supabase env is present;
-- supports email/password sign-in and first-account signup;
+- activates with browser-safe Supabase configuration;
+- supports email/password sign-in/account creation;
 - requires `public.is_easy_operator()` before rendering store data;
-- synchronizes cloud data to Dexie before rendering the existing application;
-- blocks offline/local-authoritative use if the cloud cannot be reached;
-- shows a bounded waiting-for-authorization state for a newly created but not-yet-approved account;
-- defers authorization/cache API work until after `onAuthStateChange` returns, following current Supabase troubleshooting guidance for the documented async-callback deadlock in `supabase-js`.
+- synchronizes cloud data to the local read cache;
+- blocks offline-authoritative operation when cloud access fails;
+- includes the bounded waiting-for-authorization state;
+- defers async authorization/cache calls until after `onAuthStateChange` returns, avoiding the documented nested-client-call deadlock class.
 
-No Auth credentials, emails or real UUIDs are committed.
+No Auth credential or real operator UUID is committed.
 
 ### Manual JSON recovery in cloud mode
 
 `src/services/cloudBackupService.ts` and `ImportExport.tsx`:
 
-- `Exportar Backup v2` reads the canonical Supabase dataset and downloads a validated v2/schema5 JSON;
-- `Importar / Restaurar Backup` keeps the existing local preflight/preview contract;
-- before cloud restore, a current canonical checkpoint JSON is downloaded;
-- restore then calls the atomic server RPC;
-- the post-restore canonical cloud dataset is fetched and logically compared to the requested normalized target;
-- failure before the atomic RPC is applied reports that the previous database was preserved;
-- failure only after the server restore was applied **does not** falsely claim the old database survived; the UI tells the operator to stop writes and use the downloaded checkpoint;
-- `src/services/cloudBackupService.test.ts` covers rejected server restore, post-restore mismatch and exact successful reconciliation;
-- the UI explicitly states that this is the temporary manual layer while automated backup is still being homologated.
+- export reads canonical Supabase data and downloads validated v2/schema5 JSON;
+- import retains local preflight/preview validation;
+- a current canonical checkpoint is downloaded before cloud restore;
+- restore uses the atomic server RPC;
+- post-restore canonical data is fetched and logically compared with the requested normalized target;
+- pre-apply failure reports the old database preserved;
+- post-apply verification failure correctly instructs the operator to stop writes/use the downloaded checkpoint rather than falsely claiming the old database survived.
 
-## D-019 state for PR #72
+Tests cover rejected server restore, post-restore mismatch and exact successful reconciliation.
 
-D-019 remains required on the final exact PR merge-ref tree. An earlier run exposed only a stale recovery-message assertion and was corrected without changing business behavior. A later review found and corrected the cloud post-restore failure-message defect described above. Current Supabase documentation review also found the `onAuthStateChange` async-client-call deadlock condition and the auth gate was hardened before acceptance. The authoritative final run/job/merge-ref evidence must be recorded after the final PR tree passes; no earlier run is acceptance evidence for the final tree.
+## 6. Final synchronization and D-019
 
-## Remaining before Duda can operate the hosted candidate
+After D-031 governance advanced `develop`, PR #72 was refreshed and GitHub generated a new exact merge ref.
 
-1. D-019 must pass on the exact final PR merge-ref tree.
-2. The branch must be integrated to `develop` only after QA.
-3. A manual Vercel candidate deployment must receive only:
-   - `VITE_SUPABASE_URL=https://hrmkkhqfyfoqucwbcszq.supabase.co`
-   - the current browser-safe Supabase publishable key.
-4. Duda must create/sign into her Auth account.
-5. After that account exists, its UUID must be added server-side to `public.easy_operators`; credentials/email must not be copied into Git/docs/chat evidence.
-6. On first approved login, Duda must export an initial JSON and confirm that she stored it before the application permits business writes.
+Accepted identifiers:
 
-## Still pending after controlled use starts
+- base: `develop` `1e396f3ce10a93f99c9bd47a312950943d1587ea`;
+- synchronized feature head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
+- exact PR merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
+- exact merge-ref tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
+- Critical QA run: `32502664982`;
+- job: `96835725075`.
 
-P10-S3-I2-I2 remains incomplete until the trusted-PC unattended off-site backup proof satisfies all D-030 requirements, including >=7 retained successful UTC daily generations and the restore drill. When accepted, `private.recovery_enforcement_state.automated_guard_enabled` must be changed to `true` through a reproducible migration and the exact-24h server guard becomes mandatory again.
+GitHub Actions checkout evidence explicitly checked out the exact merge ref above.
 
-No statement in this execution record authorizes `main` publication or labels the runtime-first candidate as fully production-safe before that happens.
+D-019 result:
+
+- ESLint: **0 errors / 82 warnings**;
+- Vitest: **57 files / 240 tests PASS**;
+- Playwright: **17/17 PASS**;
+- production build: **PASS**.
+
+Known React `act(...)`, mocked-select DOM, lint-warning, npm-audit, GitHub Actions Node deprecation and Vite large-chunk warnings remained non-blocking under the accepted D-019 contract because every objective command passed.
+
+## 7. Integration closure
+
+PR #72 was marked ready and squash-integrated into `develop` as:
+
+- commit `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
+- tree `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`.
+
+The integrated tree is **exactly equal** to the D-019-validated merge-ref tree. Final tree-equivalence verification: **PASS**.
+
+Stable `main` was rechecked after integration and remains:
+
+- commit `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
+- tree `57243d004c5b550d0f27576f0179b0033044088e`.
+
+**P10-S3-I2-I3 repository implementation/integration is CLOSED / ACCEPTED.**
+
+## 8. What was not done
+
+This slice did not:
+
+- deploy the accepted candidate to Vercel;
+- configure live Vercel Supabase environment values;
+- create/approve the intended real operator account;
+- create the first real manual JSON recovery checkpoint;
+- import any legacy real-store dataset;
+- complete the trusted-PC D-030 backup/off-site/seven-day/restore proof;
+- modify/publish `main`;
+- switch the canonical production URL;
+- authorize definitive cutover.
+
+## 9. Next bounded action
+
+P10-S3-I2-I3-C is now the sole `NEXT_ACTION`:
+
+1. manually deploy the accepted `develop` candidate to the Vercel `easy-v2` project;
+2. configure only browser-safe Supabase URL + publishable key;
+3. create/sign in the intended Auth account through the normal flow;
+4. add only its UUID to `public.easy_operators` through a trusted admin/database boundary;
+5. prove unauthorized authenticated access is denied;
+6. confirm approved access to the clean canonical dataset;
+7. export/download and confirm storage of the first manual JSON recovery checkpoint;
+8. verify the browser manual-backup freshness guard is healthy;
+9. begin controlled clean-start early use.
+
+Do not resume I2-I2 as the current action and do not claim definitive production safety until the later durability/cutover gate closes.
