@@ -3,7 +3,7 @@ export const RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 export const RECOVERY_WARNING_AGE_MS = 20 * 60 * 60 * 1000;
 
 export const RECOVERY_WRITE_BLOCKED_MESSAGE =
-    'Cópia de recuperação ausente ou vencida. Vá para Backup & Restore, gere um novo backup e mantenha a cópia em uma pasta sincronizada.';
+    'Cópia manual ausente ou vencida. Vá para Backup & Restore, exporte um novo JSON e confirme que o arquivo foi guardado fora do Easy.';
 
 export type RecoveryHealthStatus = 'unknown' | 'due' | 'current' | 'warning' | 'overdue';
 
@@ -152,7 +152,7 @@ export function recordRecoveryExport(result: { filename: string; exportedAt: Dat
 export function confirmSynchronizedFolderSetup(now = new Date()) {
     const current = readMetadata();
     if (!current?.lastExportedAt || !parseDate(current.lastExportedAt)) {
-        throw new Error('Exporte um backup antes de confirmar a verificação da pasta sincronizada.');
+        throw new Error('Exporte um backup antes de confirmar que guardou a cópia manual.');
     }
 
     writeMetadata({
