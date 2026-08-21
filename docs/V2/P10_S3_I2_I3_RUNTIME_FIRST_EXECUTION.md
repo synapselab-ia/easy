@@ -43,8 +43,14 @@ D-031 refines D-030 for the explicitly requested clean-start transition:
   - adds `public.restore_easy_backup(jsonb)` for atomic v2/schema5 replacement and identity-sequence repair.
 - `20260821132351_fix_runtime_first_restore_constraint_resolution`
   - qualifies the deferrable self-reference constraint names under fixed `search_path = ''`.
+- `20260821133444_harden_runtime_first_restore_rpc_boundary`
+  - moves the privileged restore implementation to `private.restore_easy_backup_impl(jsonb)`;
+  - exposes only a `SECURITY INVOKER` public RPC wrapper;
+  - preserves explicit operator authorization inside the non-exposed privileged implementation.
 
-The first disposable restore drill exposed the unqualified-constraint defect before any persistent data changed. The second migration corrected it.
+The first disposable restore drill exposed the unqualified-constraint defect before any persistent data changed. The second migration corrected it. Supabase Security Advisor then identified the directly exposed `SECURITY DEFINER` restore function; the third migration hardened that boundary and the final Security Advisor result is **0 lints**.
+
+Performance Advisor remains INFO-only on unused indexes in the empty homologation project; no performance index was removed merely because the synthetic/empty database has not exercised it yet.
 
 ## Synthetic SQL proof
 
@@ -95,19 +101,25 @@ No Auth credentials, emails or real UUIDs are committed.
 - before cloud restore, a current canonical checkpoint JSON is downloaded;
 - restore then calls the atomic server RPC;
 - the post-restore canonical cloud dataset is fetched and logically compared to the requested normalized target;
+- failure before the atomic RPC is applied reports that the previous database was preserved;
+- failure only after the server restore was applied **does not** falsely claim the old database survived; the UI tells the operator to stop writes and use the downloaded checkpoint;
+- `src/services/cloudBackupService.test.ts` covers rejected server restore, post-restore mismatch and exact successful reconciliation;
 - the UI explicitly states that this is the temporary manual layer while automated backup is still being homologated.
+
+## D-019 state for PR #72
+
+D-019 remains required on the final exact PR merge-ref tree. An earlier run exposed only a stale recovery-message assertion and was corrected without changing business behavior. A later review found and corrected the cloud post-restore failure-message defect described above. The authoritative final run/job/merge-ref evidence must be recorded after the final PR tree passes; no earlier run is acceptance evidence for the final tree.
 
 ## Remaining before Duda can operate the hosted candidate
 
-1. D-019 must pass on the exact PR merge-ref tree.
-2. Supabase security/performance advisors must be rechecked after the new migrations.
-3. The branch must be integrated to `develop` only after QA.
-4. A manual Vercel candidate deployment must receive only:
+1. D-019 must pass on the exact final PR merge-ref tree.
+2. The branch must be integrated to `develop` only after QA.
+3. A manual Vercel candidate deployment must receive only:
    - `VITE_SUPABASE_URL=https://hrmkkhqfyfoqucwbcszq.supabase.co`
    - the current browser-safe Supabase publishable key.
-5. Duda must create/sign into her Auth account.
-6. After that account exists, its UUID must be added server-side to `public.easy_operators`; credentials/email must not be copied into Git/docs/chat evidence.
-7. On first approved login, Duda must export an initial JSON and confirm that she stored it before the application permits business writes.
+4. Duda must create/sign into her Auth account.
+5. After that account exists, its UUID must be added server-side to `public.easy_operators`; credentials/email must not be copied into Git/docs/chat evidence.
+6. On first approved login, Duda must export an initial JSON and confirm that she stored it before the application permits business writes.
 
 ## Still pending after controlled use starts
 
