@@ -130,6 +130,7 @@ export async function exportCloudData(): Promise<BackupExportResult> {
 
 export async function restorePreflightedCloudBackup(preflight: BackupPreflightResult) {
     let checkpointFilename: string | undefined;
+    let restoreApplied = false;
 
     try {
         const target = preflight.normalized.data;
@@ -160,6 +161,7 @@ export async function restorePreflightedCloudBackup(preflight: BackupPreflightRe
         downloadEnvelope(checkpoint, checkpointFilename);
 
         await restoreCloudBackup(targetEnvelope);
+        restoreApplied = true;
 
         const restored = await fetchCloudDataset();
         const restoredEnvelope = buildEnvelope(
@@ -191,7 +193,8 @@ export async function restorePreflightedCloudBackup(preflight: BackupPreflightRe
         return {
             status: 'failure' as const,
             ...(checkpointFilename ? { checkpointFilename } : {}),
-            previousDatabasePreserved: true as const,
+            previousDatabasePreserved: !restoreApplied,
+            restoreApplied,
             message: error instanceof Error ? error.message : 'Falha desconhecida durante a restauração online.',
         };
     }
