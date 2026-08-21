@@ -2,6 +2,7 @@
 
 **Status:** `ACCEPTED`  
 **Date:** 2026-08-21  
+**Canonical governance PR:** #74  
 **Scope:** sequencing and risk boundary for P10-S3-I2-I3 controlled early use
 
 ## 1. Why this decision exists
