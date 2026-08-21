@@ -2,6 +2,31 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-21 — P10-S3-I2-I3-C live preflight stopped fail-closed; operator-local completion remains current
+
+The D-031 candidate onboarding action was attempted against the real Vercel/Supabase candidate state and correctly stopped without fabricating credentials, deployment evidence or acceptance.
+
+Live findings:
+
+- Supabase `easy-v2` is healthy and remains empty: 0 Auth users, 0 approved operators and 0 business rows;
+- the temporary D-031 automated recovery guard remains explicitly disabled for manual-JSON early-use mode;
+- Supabase Security Advisor returned 0 lints;
+- business-table RLS remains bound to the approved-operator boundary;
+- Vercel `easy-v2` latest READY deployment is stale at `develop@d4d428e35a45af0691e80331dd8c7888a914355f`;
+- accepted pre-closure `develop@93500284f5b9105f0de7867a8676c31c7186d194` has not yet been proven as the published candidate;
+- the connected Vercel execution surface did not expose a safe project-env write for the two browser-safe Supabase variables, and its generic deploy action rejected the attempted invocation before creating any deployment;
+- no Vercel env variable, Supabase Auth user, allow-list row or business row was changed.
+
+Because the intended real Auth identity does not yet exist, the live non-approved-user denial proof, approved-user dataset load, first manual JSON checkpoint and exact-24h healthy-guard proof also remain incomplete.
+
+P10-S3-I2-I3-C is therefore now `BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED — CURRENT NEXT ACTION`. It does not advance to legacy migration or definitive cutover.
+
+Detailed execution record: `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`.
+
+I2-I2 remains ON HOLD, no legacy real-store data was imported, `main` remained unchanged, the canonical production URL was not switched and no D-030 durability acceptance was claimed.
+
+---
+
 ## 2026-08-21 — PR #72 runtime-first candidate validated and integrated; next action is manual candidate onboarding
 
 The D-031-authorized runtime implementation was synchronized with the current `develop`, revalidated and integrated.
@@ -20,7 +45,7 @@ Final evidence:
 - integrated tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`, exactly equal to the validated merge-ref tree;
 - stable `main` remained unchanged at `9574e3a4097ddd78ab1f75a13b9ea065287946e9` / tree `57243d004c5b550d0f27576f0179b0033044088e`.
 
-P10-S3-I2-I3 repository integration is therefore closed. The next bounded action is P10-S3-I2-I3-C: manually publish/configure the accepted `develop` candidate on Vercel, onboard/approve the intended Supabase Auth operator, prove unauthorized denial, create/confirm the first manual JSON recovery checkpoint and begin controlled clean-start early use.
+P10-S3-I2-I3 repository integration is therefore closed. The next bounded action became P10-S3-I2-I3-C: manually publish/configure the accepted `develop` candidate on Vercel, onboard/approve the intended Supabase Auth operator, prove unauthorized denial, create/confirm the first manual JSON recovery checkpoint and begin controlled clean-start early use.
 
 I2-I2 trusted-PC backup/recovery proof remains ON HOLD under D-031. No legacy real-store data was imported, `main` was not modified, the canonical production URL was not switched and no definitive D-030 durability/cutover claim was made.
 
@@ -28,7 +53,7 @@ I2-I2 trusted-PC backup/recovery proof remains ON HOLD under D-031. No legacy re
 
 ## 2026-08-21 — D-031 governance integrated; PR #72 became the runtime integration action
 
-PR #74 integrated the canonical sequencing correction into `develop` as `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`.
+PR #74 integrated the canonical sequencing override into `develop` as `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`.
 
 Its exact merge ref `62a7b646ba2a2efa500fcc43c5e0df206a2dc0b1` passed D-019 in run `32497468087` / job `96819192500`: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS.
 
