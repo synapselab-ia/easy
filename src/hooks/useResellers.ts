@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, type Reseller } from '../db/database';
+import { isEasySupabaseConfigured } from '../lib/supabase';
+import {
+    createCloudReseller,
+    deleteCloudReseller,
+    setCloudResellerActive,
+    updateCloudReseller,
+} from '../services/cloudDataService';
 import { assertRecoveryWriteAllowed } from '../services/recoveryHealth';
 
 export const RESELLER_WITH_HISTORY_DELETE_ERROR =
@@ -29,10 +36,16 @@ export function useCreateReseller() {
     return useMutation({
         mutationFn: (reseller: Omit<Reseller, 'id'>) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return createCloudReseller(reseller);
+            }
+
             return db.resellers.add({ ...reseller, isActive: reseller.isActive ?? true });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -42,11 +55,17 @@ export function useUpdateReseller() {
     return useMutation({
         mutationFn: ({ id, ...changes }: Partial<Reseller> & { id: number }) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return updateCloudReseller(id, changes).then(() => 1);
+            }
+
             return db.resellers.update(id, changes);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
             queryClient.invalidateQueries({ queryKey: ['resellers', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -56,6 +75,12 @@ function useSetResellerActiveState(isActive: boolean) {
     return useMutation({
         mutationFn: async (id: number) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                await setCloudResellerActive(id, isActive);
+                return;
+            }
+
             const updated = await db.resellers.update(id, {
                 isActive,
                 updatedAt: new Date(),
@@ -67,6 +92,7 @@ function useSetResellerActiveState(isActive: boolean) {
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
             queryClient.invalidateQueries({ queryKey: ['resellers', id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -84,6 +110,11 @@ export function useDeleteReseller() {
     return useMutation({
         mutationFn: (id: number) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return deleteCloudReseller(id);
+            }
+
             return db.transaction('rw', db.resellers, db.transactions, async () => {
                 const transactionCount = await db.transactions
                     .where('resellerId')
@@ -100,6 +131,7 @@ export function useDeleteReseller() {
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['resellers'] });
             queryClient.invalidateQueries({ queryKey: ['resellers', id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }

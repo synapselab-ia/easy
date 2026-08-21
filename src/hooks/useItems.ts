@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, isItemActive, type Item } from '../db/database';
+import { isEasySupabaseConfigured } from '../lib/supabase';
 import { requireActiveCategory } from '../services/categoryService';
+import {
+    createCloudItem,
+    deleteCloudItem,
+    setCloudItemActive,
+    updateCloudItem,
+} from '../services/cloudDataService';
 import { assertRecoveryWriteAllowed } from '../services/recoveryHealth';
 
 export function useItems() {
@@ -27,6 +34,11 @@ export function useCreateItem() {
     return useMutation({
         mutationFn: (item: Omit<Item, 'id'>) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return createCloudItem(item);
+            }
+
             return db.transaction('rw', db.categories, db.items, async () => {
                 const isActive = item.isActive !== false;
                 if (isActive || item.categoryId !== undefined) {
@@ -38,6 +50,7 @@ export function useCreateItem() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -47,6 +60,11 @@ export function useUpdateItem() {
     return useMutation({
         mutationFn: ({ id, ...changes }: Partial<Item> & { id: number }) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return updateCloudItem(id, changes).then(() => 1);
+            }
+
             return db.transaction('rw', db.categories, db.items, async () => {
                 const existing = await db.items.get(id);
                 if (!existing) {
@@ -76,6 +94,7 @@ export function useUpdateItem() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
             queryClient.invalidateQueries({ queryKey: ['items', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -85,6 +104,10 @@ function useSetItemActive(isActive: boolean) {
     return useMutation({
         mutationFn: (id: number) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return setCloudItemActive(id, isActive).then(() => 1);
+            }
 
             if (!isActive) {
                 return db.items.update(id, { isActive: false, updatedAt: new Date() });
@@ -103,6 +126,7 @@ function useSetItemActive(isActive: boolean) {
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
             queryClient.invalidateQueries({ queryKey: ['items', id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }
@@ -120,6 +144,11 @@ export function useDeleteItem() {
     return useMutation({
         mutationFn: (id: number) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return deleteCloudItem(id);
+            }
+
             return db.transaction('rw', db.items, db.transactions, async () => {
                 const referencedTransaction = await db.transactions
                     .filter(transaction => transaction.itemId === id)
@@ -135,6 +164,7 @@ export function useDeleteItem() {
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ['items'] });
             queryClient.invalidateQueries({ queryKey: ['items', id] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 }

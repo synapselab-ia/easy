@@ -8,7 +8,13 @@ import {
     type TransactionType,
 } from '../db/database';
 import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
+import { isEasySupabaseConfigured } from '../lib/supabase';
 import { requireActiveCategory } from '../services/categoryService';
+import {
+    correctCloudTransaction,
+    createCloudTransaction,
+    reverseCloudTransaction,
+} from '../services/cloudDataService';
 import { assertRecoveryWriteAllowed } from '../services/recoveryHealth';
 
 export const ORDER_ITEM_REQUIRED_ERROR = 'Pedidos novos devem referenciar um item do catálogo.';
@@ -173,6 +179,11 @@ export function useCreateTransaction() {
     return useMutation({
         mutationFn: (transaction: NewTransactionInput) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return createCloudTransaction(transaction);
+            }
+
             return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, () =>
                 addValidatedTransaction(transaction)
             );
@@ -189,6 +200,11 @@ export function useReverseTransaction() {
     return useMutation({
         mutationFn: ({ id, reason }: { id: number; reason: string }) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return reverseCloudTransaction(id, reason);
+            }
+
             return db.transaction('rw', db.transactions, async () => {
                 if (!isValidEntityId(id)) {
                     throw new Error(TRANSACTION_NOT_FOUND_ERROR);
@@ -241,6 +257,11 @@ export function useReplaceTransaction() {
             replacement: CorrectionReplacementInput;
         }) => {
             assertRecoveryWriteAllowed();
+
+            if (isEasySupabaseConfigured()) {
+                return correctCloudTransaction(originalId, reason, replacement);
+            }
+
             return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, async () => {
                 if (!isValidEntityId(originalId)) {
                     throw new Error(TRANSACTION_NOT_FOUND_ERROR);

@@ -4,6 +4,13 @@ import {
     isItemActive,
     type Category,
 } from '../db/database';
+import { isEasySupabaseConfigured } from '../lib/supabase';
+import {
+    createCloudCategory,
+    deleteCloudCategory,
+    renameCloudCategory,
+    setCloudCategoryActive,
+} from './cloudDataService';
 import { assertRecoveryWriteAllowed } from './recoveryHealth';
 
 export const CATEGORY_NAME_REQUIRED_ERROR = 'Informe o nome da categoria.';
@@ -57,6 +64,11 @@ export function requireActiveCategory(categoryId: unknown): Promise<Category> {
 export async function createCategory(name: string) {
     assertRecoveryWriteAllowed();
     const trimmedName = name.trim();
+    if (!trimmedName) throw new Error(CATEGORY_NAME_REQUIRED_ERROR);
+
+    if (isEasySupabaseConfigured()) {
+        return createCloudCategory(trimmedName);
+    }
 
     return db.transaction('rw', db.categories, async () => {
         await assertUniqueCategoryName(trimmedName);
@@ -73,6 +85,11 @@ export async function createCategory(name: string) {
 export async function renameCategory(id: number, name: string) {
     assertRecoveryWriteAllowed();
     const trimmedName = name.trim();
+    if (!trimmedName) throw new Error(CATEGORY_NAME_REQUIRED_ERROR);
+
+    if (isEasySupabaseConfigured()) {
+        return renameCloudCategory(id, trimmedName);
+    }
 
     return db.transaction('rw', db.categories, async () => {
         if (!isValidEntityId(id) || !(await db.categories.get(id))) {
@@ -89,6 +106,10 @@ export async function renameCategory(id: number, name: string) {
 
 export async function archiveCategory(id: number) {
     assertRecoveryWriteAllowed();
+
+    if (isEasySupabaseConfigured()) {
+        return setCloudCategoryActive(id, false);
+    }
 
     return db.transaction('rw', db.categories, db.items, async () => {
         if (!isValidEntityId(id)) {
@@ -118,6 +139,10 @@ export async function archiveCategory(id: number) {
 export async function reactivateCategory(id: number) {
     assertRecoveryWriteAllowed();
 
+    if (isEasySupabaseConfigured()) {
+        return setCloudCategoryActive(id, true);
+    }
+
     return db.transaction('rw', db.categories, async () => {
         if (!isValidEntityId(id) || !(await db.categories.get(id))) {
             throw new Error(CATEGORY_NOT_FOUND_ERROR);
@@ -132,6 +157,10 @@ export async function reactivateCategory(id: number) {
 
 export async function deleteCategory(id: number) {
     assertRecoveryWriteAllowed();
+
+    if (isEasySupabaseConfigured()) {
+        return deleteCloudCategory(id);
+    }
 
     return db.transaction('rw', db.categories, db.items, db.transactions, async () => {
         if (!isValidEntityId(id) || !(await db.categories.get(id))) {

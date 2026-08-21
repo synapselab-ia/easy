@@ -140,6 +140,7 @@ export type Database = {
         Returns: number
       }
       is_easy_operator: { Args: never; Returns: boolean }
+      restore_easy_backup: { Args: { p_payload: Json }; Returns: Json }
       reverse_transaction: { Args: { p_reason: string; p_transaction_id: number }; Returns: string }
     }
     Enums: { [_ in never]: never }

@@ -3,6 +3,7 @@ import {
     RECOVERY_HEALTH_STORAGE_KEY,
     RECOVERY_MAX_AGE_MS,
     RECOVERY_WARNING_AGE_MS,
+    RECOVERY_WRITE_BLOCKED_MESSAGE,
     assertRecoveryWriteAllowed,
     confirmSynchronizedFolderSetup,
     getRecoveryHealth,
@@ -22,7 +23,7 @@ describe('recovery health', () => {
             writeBlocked: true,
             setupVerified: false,
         });
-        expect(() => assertRecoveryWriteAllowed(BASE_TIME)).toThrow(/Cópia de recuperação/);
+        expect(() => assertRecoveryWriteAllowed(BASE_TIME)).toThrow(RECOVERY_WRITE_BLOCKED_MESSAGE);
     });
 
     it('records an export but keeps writes blocked until synchronized-folder verification', () => {
