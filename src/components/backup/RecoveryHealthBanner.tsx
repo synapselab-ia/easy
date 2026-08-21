@@ -17,17 +17,17 @@ export function RecoveryHealthBanner() {
     const message = (() => {
         switch (health.status) {
             case 'current':
-                return 'Cópia de recuperação em dia.';
+                return 'Cópia manual em dia.';
             case 'warning':
-                return 'A cópia de recuperação se aproxima do limite de 24 horas.';
+                return 'A cópia manual se aproxima do limite de 24 horas.';
             case 'overdue':
-                return 'Cópia de recuperação vencida. Alterações de dados estão bloqueadas até uma nova exportação.';
+                return 'Cópia manual vencida. Alterações estão bloqueadas até uma nova exportação.';
             case 'due':
                 return health.setupVerified
-                    ? 'Cópia de recuperação pendente. Gere uma nova exportação antes de alterar dados.'
-                    : 'Proteção externa ainda não verificada. Exporte e confirme a cópia na pasta sincronizada.';
+                    ? 'Cópia manual pendente. Exporte um novo JSON antes de alterar dados.'
+                    : 'Faça uma exportação e confirme que guardou o JSON antes de alterar dados.';
             case 'unknown':
-                return 'Estado da proteção de recuperação desconhecido. Configure o backup antes de alterar dados.';
+                return 'Nenhuma cópia manual confirmada. Exporte um JSON antes de alterar dados.';
         }
     })();
 
