@@ -107,13 +107,13 @@ Because `develop` advanced after that run, this evidence must be repeated on the
 
 ###### I2-I3-A — Canonical governance correction
 
-**Status:** `IN_PROGRESS` until the D-031 docs PR is merged to `develop`.
+**Status:** `DONE / INTEGRATED`.
 
-Exit: all seven startup docs agree that I2-I2 is ON HOLD and I2-I3 is current.
+PR #74 integrated D-031 into `develop` as `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`. The seven startup docs now agree that I2-I2 is ON HOLD and I2-I3 is current.
 
 ###### I2-I3-B — PR #72 integration
 
-**Status:** `NEXT` after I2-I3-A.
+**Status:** `IN_PROGRESS / CURRENT NEXT ACTION`.
 
 Steps:
 

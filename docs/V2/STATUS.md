@@ -77,7 +77,7 @@ Phase-specific evidence relevant now:
 
 ## Current technical baseline
 
-`develop` currently remains on the pre-runtime-switch application plus the 2026-08-21 remote I2-I2 NO-GO documentation commit. The open runtime implementation is PR #72 (`feat/p10-s3-i2-i3-runtime-first`).
+`develop` now includes the accepted D-031 governance correction. The runtime switch itself is still carried by open PR #72 (`feat/p10-s3-i2-i3-runtime-first`) and has not yet been integrated into `develop`.
 
 PR #72 implements, when browser-safe Supabase environment variables are configured:
 
@@ -95,13 +95,14 @@ The D-030 trusted-PC unattended dump/rclone/retention/restore tooling remains im
 
 ## Repository / evidence baseline
 
-- stable `main`: **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`** — must remain untouched.
-- `develop` before this governance correction: **`c1fdf4b3140bb6e9b89e2cc8f36933a8c0c4a4f2`**.
-- that `develop` commit records the historical 2026-08-21 remote I2-I2 fail-closed NO-GO; D-031 changes subsequent sequencing without falsifying that result.
-- PR #72 head: **`385e59b22ac83ff43097cefeeb4551d28f606dbf`**.
-- PR #72 final successful D-019 on its then-current merge ref: run **`32492337376`**, job **`96802676149`**, merge ref **`1e746bb2dd133f5bfcaac7818b27996f802476ed`**.
-- that run passed: **0 lint errors / 82 warnings; 57 files / 240 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-- because `develop` advanced after that merge-ref was generated, PR #72 must be synchronized with the new `develop` and D-019 must pass again on the new exact merge ref before integration.
+- stable `main`: **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**, tree **`57243d004c5b550d0f27576f0179b0033044088e`** — unchanged after D-031 docs integration.
+- D-031 canonical governance was integrated by PR #74 as `develop` commit **`4c3c42e6de805e171fb1e840adbfc596ecad8bc3`**, tree **`b6a6fe342470951cdf5455833e9af5dad8e4f9a8`**.
+- PR #74 exact validated merge ref: **`62a7b646ba2a2efa500fcc43c5e0df206a2dc0b1`**.
+- PR #74 D-019: run **`32497468087`**, job **`96819192500`** — **0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- earlier `develop` commit `c1fdf4b3140bb6e9b89e2cc8f36933a8c0c4a4f2` remains historical evidence of the valid I2-I2 remote fail-closed NO-GO; D-031 supersedes only its sequencing consequence.
+- PR #72 head before synchronization: **`385e59b22ac83ff43097cefeeb4551d28f606dbf`**.
+- PR #72 previously passed D-019 on its old merge ref: run **`32492337376`**, job **`96802676149`**, merge ref **`1e746bb2dd133f5bfcaac7818b27996f802476ed`** — **0 lint errors / 82 warnings; 57 files / 240 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
+- because `develop` advanced after that PR #72 merge ref, PR #72 must be synchronized with current `develop` and D-019 must pass again on the new exact merge ref before integration.
 
 Supabase homologation remains the dedicated `easy-v2` project `hrmkkhqfyfoqucwbcszq` in `sa-east-1`. No legacy store dataset has been imported by the runtime-first work.
 
@@ -115,4 +116,4 @@ D-019 remains mandatory for integration. Objective failures block merge.
 
 ## NEXT_ACTION
 
-**Continue only P10-S3-I2-I3. First integrate this D-031 canonical-governance correction into `develop` outside `main`. Then synchronize PR #72 (`feat/p10-s3-i2-i3-runtime-first`) with the updated `develop`, resolve only resulting integration conflicts without changing the accepted runtime-first scope, rerun the mandatory D-019 against the new exact PR merge ref, and if it passes mark PR #72 ready and squash-integrate it into `develop`, verifying final tree equivalence and confirming `main` is still unchanged. Do not execute the P10-S3-I2-I2 trusted-PC backup proof as the current action. Do not import legacy real-store data, publish/modify `main`, switch the canonical production URL or claim definitive production cutover. After PR #72 is integrated, the next bounded step is manual Vercel candidate publication/configuration, creation/approval of the intended Supabase Auth operator, first manual JSON recovery checkpoint and controlled clean-start early use.**
+**Continue only P10-S3-I2-I3 by synchronizing PR #72 (`feat/p10-s3-i2-i3-runtime-first`) with current `develop` after D-031, resolving only resulting integration conflicts without changing the accepted runtime-first scope, rerunning mandatory D-019 against the new exact PR merge ref, and — only if it passes — marking PR #72 ready and squash-integrating it into `develop`, then verifying final tree equivalence and confirming `main` is still unchanged. Do not execute the P10-S3-I2-I2 trusted-PC backup proof as the current action. Do not import legacy real-store data, publish/modify `main`, switch the canonical production URL or claim definitive production cutover. After PR #72 is integrated, the next bounded step is manual Vercel candidate publication/configuration, creation/approval of the intended Supabase Auth operator, first manual JSON recovery checkpoint and controlled clean-start early use.**

@@ -39,6 +39,25 @@ This remains valid evidence that D-030 I2-I2 did **not** pass.
 
 D-031 subsequently changes sequencing: the missing operator-local proof is ON HOLD and no longer blocks beginning I2-I3 controlled early use.
 
+## D-031 canonical governance integration — PASS
+
+PR #74 (`docs(v2): authorize D-031 runtime-first early use`) changed only eight `docs/V2/` files and integrated the sequencing override into `develop`.
+
+Exact evidence:
+
+- PR #74 head: `eea49abf60dd7a40064e76117720db15d4630939`;
+- exact PR merge ref: `62a7b646ba2a2efa500fcc43c5e0df206a2dc0b1`;
+- Critical QA run: `32497468087`;
+- job: `96819192500`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 56 files / 237 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS;
+- squash-integrated `develop` commit: `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`, tree `b6a6fe342470951cdf5455833e9af5dad8e4f9a8`;
+- `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9` / tree `57243d004c5b550d0f27576f0179b0033044088e`.
+
+Result: canonical startup documentation now makes I2-I2 ON HOLD and I2-I3 current.
+
 ## P10-S3-I2-I3 runtime-first PR #72 — PRE-INTEGRATION PASS, REVALIDATION REQUIRED
 
 PR #72: `feat(v2): enable runtime-first Supabase candidate`.
@@ -64,7 +83,7 @@ Additional implementation review during that run fixed:
 
 ### Why PR #72 still requires another D-019
 
-`develop` advanced after the successful merge-ref above, including the remote-preflight documentation and now D-031 governance correction. Therefore the earlier merge ref is no longer the exact tree that would be integrated.
+`develop` advanced after the successful merge-ref above, including the remote-preflight documentation and D-031 governance integration. Therefore the earlier merge ref is no longer the exact tree that would be integrated.
 
 Before merging PR #72:
 
@@ -98,7 +117,7 @@ When objective D-019 commands pass, the following remain non-blocking unless lat
 
 ## Current QA status
 
-- D-031 governance/docs: must pass D-019 before integration to `develop`.
+- D-031 governance/docs: **PASS / INTEGRATED**.
 - PR #72 runtime implementation: functionally D-019-passing on its prior merge ref, but **not integration-ready until revalidated against current `develop`**.
 - D-030 operator-local recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
