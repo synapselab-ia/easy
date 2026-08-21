@@ -88,7 +88,8 @@ Proven:
 - requires `public.is_easy_operator()` before rendering store data;
 - synchronizes cloud data to Dexie before rendering the existing application;
 - blocks offline/local-authoritative use if the cloud cannot be reached;
-- shows a bounded waiting-for-authorization state for a newly created but not-yet-approved account.
+- shows a bounded waiting-for-authorization state for a newly created but not-yet-approved account;
+- defers authorization/cache API work until after `onAuthStateChange` returns, following current Supabase troubleshooting guidance for the documented async-callback deadlock in `supabase-js`.
 
 No Auth credentials, emails or real UUIDs are committed.
 
@@ -108,7 +109,7 @@ No Auth credentials, emails or real UUIDs are committed.
 
 ## D-019 state for PR #72
 
-D-019 remains required on the final exact PR merge-ref tree. An earlier run exposed only a stale recovery-message assertion and was corrected without changing business behavior. A later review found and corrected the cloud post-restore failure-message defect described above. The authoritative final run/job/merge-ref evidence must be recorded after the final PR tree passes; no earlier run is acceptance evidence for the final tree.
+D-019 remains required on the final exact PR merge-ref tree. An earlier run exposed only a stale recovery-message assertion and was corrected without changing business behavior. A later review found and corrected the cloud post-restore failure-message defect described above. Current Supabase documentation review also found the `onAuthStateChange` async-client-call deadlock condition and the auth gate was hardened before acceptance. The authoritative final run/job/merge-ref evidence must be recorded after the final PR tree passes; no earlier run is acceptance evidence for the final tree.
 
 ## Remaining before Duda can operate the hosted candidate
 
