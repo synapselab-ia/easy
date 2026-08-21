@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from 'next-themes'
+import CloudAuthGate from './components/auth/CloudAuthGate'
 import { MainLayout } from './components/layout/MainLayout'
 import DashboardPage from './pages/DashboardPage'
 import ItemsPage from './pages/ItemsPage'
@@ -14,21 +15,23 @@ import { Toaster } from './components/ui/sonner'
 function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/items" element={<ItemsPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/category-report" element={<CategoryReportPage />} />
-            <Route path="/resellers" element={<ResellersPage />} />
-            <Route path="/resellers/:id" element={<ResellerDetailPage />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/backup" element={<BackupPage />} />
-          </Route>
-        </Routes>
-        <Toaster />
-      </BrowserRouter>
+      <CloudAuthGate>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <Routes>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/items" element={<ItemsPage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/category-report" element={<CategoryReportPage />} />
+              <Route path="/resellers" element={<ResellersPage />} />
+              <Route path="/resellers/:id" element={<ResellerDetailPage />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
+              <Route path="/backup" element={<BackupPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </CloudAuthGate>
+      <Toaster />
     </ThemeProvider>
   )
 }
