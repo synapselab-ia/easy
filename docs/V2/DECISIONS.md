@@ -152,7 +152,7 @@ The operator then explicitly chose to place those backup-dependent steps on hold
 ### Accepted sequencing exception
 
 1. **P10-S3-I2-I2 becomes `ON_HOLD`, not `CURRENT`.** Its missing evidence remains missing; D-030 is not declared passed.
-2. **P10-S3-I2-I3 is authorized immediately** as the current runtime-first early-use slice. Any older sentence saying I2-I3 is unauthorized until I2-I2 passes is superseded for sequencing.
+2. **P10-S3-I2-I3 is authorized immediately** as the runtime-first early-use slice. Any older sentence saying I2-I3 is unauthorized until I2-I2 passes is superseded for sequencing.
 3. Supabase/Postgres may become canonical business persistence in the early-use candidate when browser-safe configuration is present.
 4. Supabase Auth + RLS + `easy_operators` remain mandatory. No privileged key may enter the browser.
 5. During early use, the logical JSON backup is the active operator recovery mechanism. Normal browser writes remain fail-closed when the last confirmed manual JSON recovery copy exceeds the accepted exact 24-hour freshness boundary.
@@ -162,9 +162,18 @@ The operator then explicitly chose to place those backup-dependent steps on hold
 9. `main` remains untouched; Vercel deployment stays manual/candidate; no canonical URL/definitive cutover is implied.
 10. Definitive production/canonical cutover still requires a later explicit gate. Before that gate, D-030 durability must be completed or replaced by another explicitly accepted durability mechanism/decision.
 
-### Immediate consequence
+### Execution outcome
 
-PR #72 is the authorized implementation vehicle for I2-I3. It must be synchronized with current `develop` and pass D-019 on the new exact merge ref before integration.
+The repository implementation authorized by D-031 has now completed its integration gate:
+
+- PR #72 was synchronized to current `develop`;
+- D-019 passed on exact merge ref `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8` in run `32502664982` / job `96835725075`;
+- the validated merge-ref tree was `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
+- PR #72 was squash-integrated into `develop` as `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
+- the integrated tree is exactly `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`, proving tree equivalence;
+- `main` remained unchanged.
+
+D-031 therefore no longer points to PR synchronization as the current action. The current action is the bounded manual Vercel candidate/operator-onboarding step defined by `STATUS.md` and `BACKLOG.md`.
 
 ---
 
