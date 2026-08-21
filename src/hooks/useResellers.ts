@@ -57,7 +57,7 @@ export function useUpdateReseller() {
             assertRecoveryWriteAllowed();
 
             if (isEasySupabaseConfigured()) {
-                return updateCloudReseller(id, changes);
+                return updateCloudReseller(id, changes).then(() => 1);
             }
 
             return db.resellers.update(id, changes);
