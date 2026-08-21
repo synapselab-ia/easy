@@ -4,7 +4,9 @@ import {
     preflightBackupFile,
     type BackupPreflightResult,
 } from '@/services/backupService';
+import { exportCloudData, restorePreflightedCloudBackup } from '@/services/cloudBackupService';
 import { restorePreflightedBackup } from '@/services/restoreService';
+import { isEasySupabaseConfigured } from '@/lib/supabase';
 import {
     confirmSynchronizedFolderSetup,
     recordRecoveryExport,
@@ -29,6 +31,7 @@ export default function ImportExport() {
     const [isPreflighting, setIsPreflighting] = React.useState(false);
     const [isRestoring, setIsRestoring] = React.useState(false);
     const health = useRecoveryHealth();
+    const cloudMode = isEasySupabaseConfigured();
 
     const resetFileInput = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -36,7 +39,7 @@ export default function ImportExport() {
 
     const handleExport = async () => {
         try {
-            const result = await exportData();
+            const result = cloudMode ? await exportCloudData() : await exportData();
             recordRecoveryExport(result);
             toast.success(`Backup ${result.filename} gerado e download iniciado.`);
         } catch (error) {
@@ -48,7 +51,7 @@ export default function ImportExport() {
     const handleConfirmSetup = () => {
         try {
             confirmSynchronizedFolderSetup();
-            toast.success('Pasta sincronizada verificada nesta instalação.');
+            toast.success('Cópia manual confirmada nesta instalação.');
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Não foi possível confirmar a configuração.';
             toast.error(message);
@@ -83,7 +86,9 @@ export default function ImportExport() {
         if (!preflight || isRestoring) return;
 
         setIsRestoring(true);
-        const result = await restorePreflightedBackup(preflight);
+        const result = cloudMode
+            ? await restorePreflightedCloudBackup(preflight)
+            : await restorePreflightedBackup(preflight);
         setIsRestoring(false);
 
         if (result.status === 'success') {
@@ -104,24 +109,26 @@ export default function ImportExport() {
         <div className="flex flex-col gap-6">
             <section className="space-y-3 rounded-lg border p-4" aria-labelledby="recovery-setup-title">
                 <div>
-                    <h2 id="recovery-setup-title" className="font-semibold">Proteção de recuperação em até 24 horas</h2>
+                    <h2 id="recovery-setup-title" className="font-semibold">
+                        {cloudMode ? 'Cópia manual temporária do banco online' : 'Proteção de recuperação em até 24 horas'}
+                    </h2>
                     <p className="text-sm text-muted-foreground">
-                        O Easy mantém o banco no computador e usa o Backup v2 como cópia de recuperação. Configure o navegador
-                        para salvar estes backups em uma pasta local sincronizada pelo Google Drive para computador ou outro
-                        provedor aceito.
+                        {cloudMode
+                            ? 'Nesta fase, o Supabase é o banco principal. O arquivo JSON exportado abaixo é a cópia manual independente que deve ser guardada fora do Easy enquanto o backup automático ainda está sendo homologado.'
+                            : 'O Easy mantém o banco no computador e usa o Backup v2 como cópia de recuperação.'}
                     </p>
                 </div>
 
                 <ol className="list-decimal space-y-1 pl-5 text-sm">
-                    <li>Configure a pasta de download dos backups dentro da pasta sincronizada.</li>
                     <li>Exporte um Backup v2 pelo botão abaixo.</li>
-                    <li>Confirme no Drive, fora do contexto local do PC, que o arquivo exportado aparece lá.</li>
-                    <li>Somente depois dessa conferência, confirme a verificação nesta instalação.</li>
+                    <li>Guarde o arquivo fora do navegador, preferencialmente também no Google Drive.</li>
+                    <li>Confira que o arquivo realmente foi salvo antes de confirmar.</li>
+                    <li>Faça uma nova exportação sempre que quiser atualizar sua cópia de segurança.</li>
                 </ol>
 
                 <div className="rounded-md bg-muted/50 p-3 text-sm">
                     <div className="font-medium">
-                        {health.setupVerified ? 'Pasta sincronizada verificada' : 'Configuração externa pendente'}
+                        {health.setupVerified ? 'Cópia manual confirmada' : 'Cópia manual ainda não confirmada'}
                     </div>
                     <div className="text-muted-foreground">
                         Última exportação: {formatDate(health.lastExportedAt)}
@@ -136,13 +143,12 @@ export default function ImportExport() {
                         disabled={!health.lastExportedAt}
                         className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Confirmar que verifiquei a cópia no Drive
+                        Confirmar que guardei a cópia
                     </button>
                 )}
 
                 <p className="text-xs text-muted-foreground">
-                    O Easy confirma a geração validada e o início do download. Ele não consulta nem confirma o status de
-                    sincronização do Google Drive.
+                    O Easy confirma a geração do JSON e o início do download, mas não consegue verificar sozinho onde você guardou o arquivo.
                 </p>
             </section>
 
@@ -168,12 +174,11 @@ export default function ImportExport() {
                 aria-disabled={isPreflighting || isRestoring}
                 className="cursor-pointer inline-block px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 aria-disabled:opacity-50 aria-disabled:pointer-events-none"
             >
-                {isPreflighting ? 'Validando Backup...' : 'Validar Backup para Restauração'}
+                {isPreflighting ? 'Validando Backup...' : 'Importar / Restaurar Backup'}
             </label>
 
             <p className="text-sm text-muted-foreground">
-                A restauração continua disponível mesmo quando a proteção está pendente ou vencida. Ela só é liberada após o
-                preflight. Antes de qualquer substituição, o Easy baixa automaticamente um checkpoint v2 recuperável do banco atual.
+                O Easy primeiro valida e mostra a prévia. Antes de substituir os dados, ele baixa automaticamente um checkpoint do banco atual. No modo online, a substituição acontece em uma única operação no Supabase.
             </p>
 
             <BackupPreflightDialog
