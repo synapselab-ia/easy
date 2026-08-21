@@ -1,7 +1,7 @@
 # Easy V2 — P10-S3-I2-I2 zero-cost unattended backup/recovery execution
 
 **Status:** `BLOCKED / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF REQUIRED`  
-**Date:** 2026-08-20  
+**Date:** 2026-08-21  
 **Decision:** D-030  
 **Scope:** synthetic-only implementation/proof of the unattended logical-dump, recovery-health and restore-drill boundary
 
@@ -186,3 +186,20 @@ The code/database prerequisite is implemented and tested, but D-030 requires phy
 `NEXT_ACTION` therefore remains P10-S3-I2-I2 and is narrowed to executing the committed trusted-PC backup + off-site + seven-generation + restore-drill procedure and recording only sanitized objective evidence.
 
 Do not create/use the real production Auth operator, switch business runtime from Dexie to Supabase, export/import real store data, modify/publish `main`, switch the canonical URL or perform production cutover while this gate remains blocked.
+
+## 10. 2026-08-21 remote acceptance preflight — NO-GO remains correct
+
+A fresh remote preflight was executed against the dedicated synthetic-only `easy-v2` Supabase project before attempting any operator-local acceptance claim.
+
+Objective server-visible state:
+
+- `private.recovery_backup_generations`: **0 rows**;
+- latest `offsite_verified_at`: **null**;
+- maximum recorded retained-generation count: **0**;
+- `private.recovery_backup_is_fresh_at(clock_timestamp())`: **false**;
+- Security Advisor: **0 lints**;
+- Performance Advisor: only the already-known INFO `unused_index` notices in the empty/tiny homologation environment.
+
+This evidence confirms that no trusted-PC backup generation has been recorded and the D-030 server health predicate remains correctly fail-closed. It does **not** satisfy or replace the required operator-local Supabase CLI credential setup, real `rclone` off-site check, seven distinct retained UTC daily generations, Windows scheduled execution or disposable Docker/local restore drill.
+
+Therefore this 2026-08-21 attempt is recorded as a **remote preflight NO-GO**, not as acceptance. P10-S3-I2-I2 remains `BLOCKED / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF REQUIRED`; P10-S3-I2-I3 remains unauthorized; no real store data, real production Auth operator, runtime switch, `main` publication, canonical URL switch or cutover occurred.
