@@ -72,7 +72,7 @@ describe('P5-S2 ImportExport restore flow', () => {
         render(<ImportExport />);
 
         const file = new File(['{}'], 'legacy.json', { type: 'application/json' });
-        fireEvent.change(screen.getByLabelText('Validar Backup para Restauração'), {
+        fireEvent.change(screen.getByLabelText('Importar / Restaurar Backup'), {
             target: { files: [file] },
         });
 
@@ -93,7 +93,7 @@ describe('P5-S2 ImportExport restore flow', () => {
         render(<ImportExport />);
 
         const file = new File(['{}'], 'valid.json', { type: 'application/json' });
-        fireEvent.change(screen.getByLabelText('Validar Backup para Restauração'), {
+        fireEvent.change(screen.getByLabelText('Importar / Restaurar Backup'), {
             target: { files: [file] },
         });
 
@@ -117,7 +117,7 @@ describe('P5-S2 ImportExport restore flow', () => {
         render(<ImportExport />);
 
         const file = new File(['{}'], 'valid.json', { type: 'application/json' });
-        fireEvent.change(screen.getByLabelText('Validar Backup para Restauração'), {
+        fireEvent.change(screen.getByLabelText('Importar / Restaurar Backup'), {
             target: { files: [file] },
         });
 
@@ -133,7 +133,7 @@ describe('P5-S2 ImportExport restore flow', () => {
         render(<ImportExport />);
 
         const file = new File(['{}'], 'invalid.json', { type: 'application/json' });
-        fireEvent.change(screen.getByLabelText('Validar Backup para Restauração'), {
+        fireEvent.change(screen.getByLabelText('Importar / Restaurar Backup'), {
             target: { files: [file] },
         });
 
