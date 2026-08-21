@@ -49,6 +49,7 @@ export default function CloudAuthGate({ children }: CloudAuthGateProps) {
 
         const client = getEasySupabaseClient();
         let active = true;
+        const pendingAuthTimers = new Set<number>();
 
         client.auth.getSession().then(({ data, error }) => {
             if (!active) return;
@@ -62,11 +63,21 @@ export default function CloudAuthGate({ children }: CloudAuthGateProps) {
 
         const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
             if (!active) return;
-            void verifySession(nextSession);
+
+            // Supabase currently documents a deadlock when additional async client calls
+            // are started inside onAuthStateChange. Defer authorization/cache work until
+            // after the auth callback returns.
+            const timerId = window.setTimeout(() => {
+                pendingAuthTimers.delete(timerId);
+                if (active) void verifySession(nextSession);
+            }, 0);
+            pendingAuthTimers.add(timerId);
         });
 
         return () => {
             active = false;
+            pendingAuthTimers.forEach(timerId => window.clearTimeout(timerId));
+            pendingAuthTimers.clear();
             listener.subscription.unsubscribe();
         };
     }, [configured, verifySession]);
