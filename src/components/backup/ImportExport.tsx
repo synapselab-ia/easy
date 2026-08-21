@@ -102,7 +102,15 @@ export default function ImportExport() {
         const checkpoint = result.checkpointFilename
             ? ` Checkpoint disponível em ${result.checkpointFilename}.`
             : '';
-        toast.error(`Restauração falhou; o banco anterior foi preservado.${checkpoint} ${result.message}`.trim());
+
+        if (result.previousDatabasePreserved) {
+            toast.error(`Restauração falhou; o banco anterior foi preservado.${checkpoint} ${result.message}`.trim());
+            return;
+        }
+
+        toast.error(
+            `A restauração foi aplicada, mas a verificação posterior falhou. Não faça novas alterações; use o checkpoint para recuperação.${checkpoint} ${result.message}`.trim(),
+        );
     };
 
     return (
