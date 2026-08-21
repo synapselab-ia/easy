@@ -13,16 +13,16 @@ test('blocks normal writes when recovery health is unknown while keeping Backup/
     await page.getByLabel('Nome do Revendedor').fill('Bloqueado pelo recovery guard');
     await page.getByRole('button', { name: 'Salvar' }).click();
 
-    await expect(page.getByText(/Cópia de recuperação ausente ou vencida/)).toBeVisible();
+    await expect(page.getByText(/Cópia manual ausente ou vencida/)).toBeVisible();
     await page.getByRole('button', { name: 'Cancelar' }).click();
 
     await page.locator('[data-recovery-status] a').click();
     await expect(page.getByRole('heading', { name: 'Backup & Restore' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Exportar Backup v2' })).toBeEnabled();
-    await expect(page.getByText('Validar Backup para Restauração')).toBeVisible();
+    await expect(page.getByText('Importar / Restaurar Backup')).toBeVisible();
 });
 
-test('records export metadata and allows setup verification after the operator checks the synchronized copy', async ({ page }) => {
+test('records export metadata and allows manual-copy confirmation after the operator stores the JSON', async ({ page }) => {
     await page.goto('backup');
     await page.evaluate((key) => localStorage.removeItem(key), RECOVERY_KEY);
     await page.reload();
@@ -36,8 +36,8 @@ test('records export metadata and allows setup verification after the operator c
     await expect(page.locator('[data-recovery-status="due"]')).toBeVisible();
     await expect(recoverySetup.getByText(download.suggestedFilename(), { exact: false })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Confirmar que verifiquei a cópia no Drive' }).click();
+    await page.getByRole('button', { name: 'Confirmar que guardei a cópia' }).click();
 
     await expect(page.locator('[data-recovery-status="current"]')).toBeVisible();
-    await expect(recoverySetup.getByText('Pasta sincronizada verificada', { exact: true })).toBeVisible();
+    await expect(recoverySetup.getByText('Cópia manual confirmada', { exact: true })).toBeVisible();
 });
