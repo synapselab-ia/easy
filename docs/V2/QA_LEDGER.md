@@ -62,8 +62,6 @@ PR #72: `feat(v2): enable runtime-first Supabase candidate`.
 
 ### Synchronization
 
-The feature branch was refreshed after `develop` advanced under D-031 governance.
-
 - current base used by the accepted merge ref: `develop` `1e396f3ce10a93f99c9bd47a312950943d1587ea`;
 - synchronized feature head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
 - exact generated PR merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
@@ -99,16 +97,57 @@ Stable `main` was independently rechecked after integration and remained:
 
 **Result: PR #72 repository integration gate is CLOSED / PASS.**
 
-## Supabase evidence relevant to runtime-first candidate
+## P10-S3-I2-I3-C live candidate preflight — BLOCKED / VALID FAIL-CLOSED
 
-- dedicated project: `easy-v2` / `hrmkkhqfyfoqucwbcszq` / `sa-east-1`;
-- RLS/approved-operator foundation accepted;
-- financial writes remain behind controlled RPCs;
-- runtime-first restore boundary is hardened through committed migrations;
-- most recent implementation advisor evidence: Security Advisor 0 lints; Performance Advisor INFO-only unused-index notices on empty/tiny homologation;
-- no legacy real-store dataset was imported by PR #72.
+The current operational slice was attempted against the real `easy-v2` Supabase/Vercel candidate state. The attempt correctly stopped rather than fabricate a deployment, credentials or acceptance.
 
-The next operational slice must add live candidate evidence for Vercel publication, Auth/operator authorization, unauthorized denial and the first confirmed manual JSON checkpoint. That evidence does not yet exist and is deliberately outside the closed PR #72 integration gate.
+### Supabase live evidence
+
+Project: `easy-v2` / `hrmkkhqfyfoqucwbcszq` / `sa-east-1`.
+
+Observed:
+
+- project healthy;
+- current modern publishable key exists and is enabled;
+- temporary D-031 `automated_guard_enabled = false` state remains explicit;
+- Auth users: 0;
+- `easy_operators`: 0;
+- categories/items/resellers/transactions: 0 each;
+- Security Advisor: **0 lints**;
+- Performance Advisor: INFO-only unused-index notices expected on an empty/tiny homologation database;
+- RLS policies for categories/items/resellers use `is_easy_operator()` for authenticated CRUD/read;
+- transactions SELECT uses the same approved-operator boundary;
+- `easy_operators` SELECT exposes only the current user's own row.
+
+Policy inspection supports the designed authorization boundary but does **not** replace the required live non-approved authenticated-user denial proof.
+
+### Vercel live evidence
+
+Project: `easy-v2`.
+
+Observed:
+
+- latest READY deployment points to stale `develop@d4d428e35a45af0691e80331dd8c7888a914355f`;
+- accepted pre-closure `develop@93500284f5b9105f0de7867a8676c31c7186d194` has not been proven as published candidate;
+- the connected Vercel execution surface did not expose a safe project-environment write for `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`;
+- its generic deploy action rejected the attempted invocation before any deployment creation because required source-package fields are not safely exposed by the available schema;
+- no Vercel environment variable changed and no new deployment was created.
+
+### Missing acceptance evidence
+
+Because there is no intended real Auth user yet and no updated candidate publication:
+
+- intended real Auth account creation/sign-in: **NOT DONE**;
+- trusted `easy_operators` insertion: **NOT DONE**;
+- live non-approved authenticated-user denial proof: **NOT DONE**;
+- approved-operator clean-dataset load proof: **NOT DONE**;
+- first manual JSON checkpoint download/storage confirmation: **NOT DONE**;
+- exact-24h browser freshness healthy proof: **NOT DONE**;
+- controlled early use start: **NOT DONE**.
+
+**Result: valid fail-closed blocker. I2-I3-C remains CURRENT and is not accepted.**
+
+Detailed evidence: `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`.
 
 ## Known non-blocking debt
 
@@ -126,6 +165,6 @@ When objective D-019 commands pass, the following remain non-blocking unless lat
 
 - D-031 governance/docs: **PASS / INTEGRATED**.
 - P10-S3-I2-I3 runtime repository integration: **PASS / INTEGRATED**.
-- P10-S3-I2-I3-C live Vercel/Auth/manual-checkpoint evidence: **NOT_STARTED / CURRENT NEXT ACTION**.
+- P10-S3-I2-I3-C live Vercel/Auth/manual-checkpoint evidence: **BLOCKED / VALID FAIL-CLOSED — CURRENT NEXT ACTION**.
 - D-030 operator-local recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.

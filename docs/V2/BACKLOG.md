@@ -111,18 +111,33 @@ Evidence:
 
 ### P10-S3-I2-I3-C — Manual Vercel candidate + operator onboarding
 
-**Status:** `CURRENT / NOT_STARTED`
+**Status:** `CURRENT / BLOCKED — OPERATOR-LOCAL COMPLETION REQUIRED`
 
-Execute only:
+Preflight completed on 2026-08-21:
 
-1. manually deploy the accepted `develop` candidate to the Vercel `easy-v2` project;
-2. configure only browser-safe `VITE_SUPABASE_URL` and the current Supabase publishable key;
-3. create/sign in the intended Auth account through the normal application/Auth flow;
-4. add only that Auth user UUID to `public.easy_operators` through a trusted admin/database path;
+- Supabase `easy-v2` healthy;
+- current publishable key exists;
+- temporary D-031 automated recovery guard remains disabled as designed;
+- 0 Auth users / 0 approved operators / 0 business rows;
+- Security Advisor: 0 lints;
+- operator-bound RLS policies present;
+- latest Vercel `easy-v2` READY deployment is stale at `develop@d4d428e35a45af0691e80331dd8c7888a914355f`;
+- accepted `develop@93500284f5b9105f0de7867a8676c31c7186d194` was not published by this attempt;
+- no Vercel env variable or deployment was changed because the connected execution surface did not expose a safe env mutation/source-package deploy path;
+- no real Auth account was fabricated, so allow-list insertion, live unauthorized-user denial, approved-user load and initial manual JSON checkpoint remain pending.
+
+Evidence: `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`.
+
+Complete only the remaining steps:
+
+1. set only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel `easy-v2`;
+2. manually deploy the accepted current `develop` revision, not `main`;
+3. create/sign in the intended real Auth account through the normal application/Auth flow;
+4. add only that real Auth user UUID to `public.easy_operators` through a trusted admin/database path;
 5. prove a non-approved authenticated user cannot access business data;
 6. confirm the approved operator can load the clean canonical dataset;
-7. export/download the first logical JSON recovery checkpoint and explicitly confirm it is stored;
-8. verify the browser 24-hour manual-backup freshness guard becomes healthy for normal writes;
+7. export/download/store the first logical JSON recovery checkpoint and explicitly confirm it exists;
+8. verify the browser exact-24h manual-backup freshness guard becomes healthy for normal writes;
 9. begin controlled clean-start early use and collect operational feedback.
 
 Do not include in this slice:
@@ -147,4 +162,4 @@ A later explicit gate must settle durability (complete D-030 or accept a replace
 
 ## Current NEXT_ACTION
 
-**P10-S3-I2-I3-C only.** See `docs/V2/STATUS.md` for the exact bounded instruction.
+**P10-S3-I2-I3-C only — complete the operator-local publication/Auth/allow-list/denial/manual-JSON steps above.** See `docs/V2/STATUS.md` for the exact bounded instruction.
