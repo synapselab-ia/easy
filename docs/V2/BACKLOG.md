@@ -1,152 +1,150 @@
 # Easy V2 — Canonical Backlog
 
-**Status:** canonical ordered backlog  
 **Updated:** 2026-08-21
 
-`STATUS.md` determines active work. Legacy `tasks/` checkboxes are historical only.
+This backlog records current ordered work. Historical implementation detail remains in phase execution documents and Git history.
 
-Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `IN_REVIEW`, `BLOCKED`, `ON_HOLD`, `ABANDONED`, `DONE`.
+## P0–P9 — Accepted historical baseline
 
-## P0–P9
+P0 through P9 are accepted/integrated. Their major outcomes include:
 
-**Status:** `DONE / INTEGRATED`.
+- branch/governance and D-019 critical QA;
+- reversible reseller/item lifecycle;
+- audited financial reversal and linked replacement correction;
+- occurrence-date semantics;
+- statements and FIFO debt-aging;
+- backup/restore hardening;
+- local recovery safeguards;
+- category identity + transaction-time snapshots/reporting;
+- full-field audited correction.
 
-Completed program includes governance, referential lifecycle, audited correction/reversal, financial dates/statements/aging, local backup/restore, CI/deployment safety, UX refinement, direct store discovery, D-024 recovery guard, D-025 categories/reporting and D-026 full-field correction.
+Do not reopen these phases merely because legacy task files contain unchecked historical boxes.
 
-## P10 — Controlled migration and cutover
+## P10 — Controlled migration / cloud transition
 
-**Status:** `IN_PROGRESS`.
+**Status:** `IN_PROGRESS`
 
-P10 remains fail-closed: completion of one slice does not silently authorize real-data movement, `main` publication or canonical cutover.
+### P10-S1 — Stable-v1 compatibility/rehearsal
 
-### P10-S1 — Pre-cutover compatibility and synthetic rehearsal
+**Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`
 
-**Status:** `DONE / ACCEPTED`.
+Synthetic stable-v1 export/import/restore behavior was proven without moving real-store data.
 
-Stable-v1 normalization/recovery was proven synthetically. No real store data moved.
+### P10-S2 — Final persistence decision
 
-### P10-S2 — Historical copied-live-data IndexedDB beta
+**Status:** `DONE / ACCEPTED` — D-029
 
-**Status:** `ABANDONED / SUPERSEDED BEFORE EXPORT`.
+Final target: Supabase/Postgres canonical persistence + Vercel, with Auth/RLS/approved operators, controlled financial RPCs, Dexie as transition/cache and logical JSON as independent recovery/portability.
 
-D-028 remains historical evidence. No real beta dataset was created.
+### P10-S3-I1 — Supabase foundation
 
-### P10-S3 — Supabase canonical-persistence transition
+**Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`
 
-**Status:** `IN_PROGRESS — CURRENT PROGRAM`.
+Dedicated `easy-v2` Supabase project, schema, RLS, `easy_operators`, controlled financial RPC foundation and synthetic security/reconciliation evidence are accepted.
 
-#### P10-S3-I1 — Supabase foundation
+### P10-S3-I2 — Migration and durability contract
 
-**Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`.
+**Status:** `DONE / ACCEPTED CONTRACT` — D-030
 
-Dedicated Supabase project, schema, RLS, approved-operator authorization, financial RPCs, generated types and synthetic proof are accepted.
+D-030 requires objective durability beyond Supabase Free alone for definitive zero-cost cutover: unattended trusted-PC logical dumps, verified off-site copies, >=7 retained daily generations, exact-24h server freshness enforcement and restore drills.
 
-#### P10-S3-I2 — Migration/durability contract
+### P10-S3-I2-I1 — Legacy private staging/import compatibility
 
-**Status:** `DONE / ACCEPTED CONTRACT` — D-030.
+**Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`
 
-##### P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility
+Private stable-v1 staging/import/reconciliation/rollback compatibility is available but dormant for the current clean-start plan.
 
-**Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`.
+### P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof
 
-Private staging, explicit current classification, atomic promotion and exact reconciliation are implemented/proven with synthetic fixtures.
+**Status:** `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`
 
-##### P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof
+Implemented:
 
-**Status:** `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`.
+- pinned trusted-PC Supabase CLI dump tooling;
+- rclone off-site copy/check;
+- >=7-day retention logic;
+- server recovery-health ledger/guard;
+- disposable restore-drill/fingerprint tooling;
+- synthetic fail-closed proof and D-019.
 
-Implemented prerequisites remain available:
+Still missing for D-030 acceptance:
 
-- pinned trusted-PC Supabase CLI data-only dump;
-- rclone off-site copy/check/list verification;
-- >=7 UTC daily generation retention logic;
-- server-visible recovery ledger;
-- exact-24h + retention business-write guard;
-- disposable local/Docker restore fingerprint drill;
-- synthetic database security/guard proof.
+- actual trusted-PC unattended execution;
+- real configured off-site verification;
+- seven real retained UTC daily generations;
+- actual disposable trusted-PC/local restore drill.
 
-Still unproven:
+D-031 explicitly places this proof on hold. It is not the current action and it has not passed.
 
-- actual trusted-PC scheduled run;
-- actual off-site destination verification;
-- seven real retained daily generations;
-- actual trusted-PC restore drill.
+### P10-S3-I2-I3-A — Runtime-first implementation
 
-**D-031 explicitly places these operator-local items ON HOLD. They are not the current next action.**
+**Status:** `DONE / ACCEPTED`
 
-##### P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate
+PR #72 implemented:
 
-**Status:** `IN_PROGRESS / AUTHORIZED FOR EARLY USE` — D-031.
+- Supabase canonical cloud adapter;
+- Auth/session + approved-operator gate;
+- RLS-backed referential writes;
+- controlled financial RPC writes;
+- Dexie read-cache mirroring;
+- canonical cloud JSON export;
+- checkpointed atomic cloud JSON restore;
+- explicit temporary D-031 manual-JSON recovery mode.
 
-Current implementation: PR #72 `feat/p10-s3-i2-i3-runtime-first`.
+### P10-S3-I2-I3-B — Synchronize, revalidate and integrate PR #72
 
-Scope:
+**Status:** `DONE / INTEGRATED`
 
-1. Supabase becomes canonical business data source when configured.
-2. Supabase Auth + `easy_operators` gate application access.
-3. category/item/reseller mutations write to Supabase.
-4. financial mutations use controlled transactional RPCs.
-5. Dexie remains read cache/mirror, not source of truth.
-6. JSON export reads canonical Supabase data.
-7. approved-operator JSON restore is server-atomic and checkpointed.
-8. manual JSON recovery freshness remains fail-closed at 24h during early use.
-9. D-030 automated recovery enforcement remains pending/disabled in this temporary mode.
-10. early use begins clean; no legacy real-data migration.
+Evidence:
 
-Previously passing PR #72 evidence:
+- synchronized head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
+- exact merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
+- validated tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
+- D-019 run/job: `32502664982` / `96835725075`;
+- lint: 0 errors / 82 warnings;
+- Vitest: 57 files / 240 PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS;
+- squash-integrated `develop`: `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
+- integrated tree equals validated merge-ref tree: PASS;
+- `main` unchanged at `9574e3a4097ddd78ab1f75a13b9ea065287946e9` / tree `57243d004c5b550d0f27576f0179b0033044088e`.
 
-- head `385e59b22ac83ff43097cefeeb4551d28f606dbf`;
-- D-019 run `32492337376`, job `96802676149`;
-- then-current merge ref `1e746bb2dd133f5bfcaac7818b27996f802476ed`;
-- 0 lint errors / 82 warnings;
-- 57 files / 240 Vitest PASS;
-- 17/17 Playwright PASS;
-- production build PASS.
+### P10-S3-I2-I3-C — Manual Vercel candidate + operator onboarding
 
-Because `develop` advanced after that run, this evidence must be repeated on the newly generated exact merge ref before integration.
+**Status:** `CURRENT / NOT_STARTED`
 
-###### I2-I3-A — Canonical governance correction
+Execute only:
 
-**Status:** `DONE / INTEGRATED`.
+1. manually deploy the accepted `develop` candidate to the Vercel `easy-v2` project;
+2. configure only browser-safe `VITE_SUPABASE_URL` and the current Supabase publishable key;
+3. create/sign in the intended Auth account through the normal application/Auth flow;
+4. add only that Auth user UUID to `public.easy_operators` through a trusted admin/database path;
+5. prove a non-approved authenticated user cannot access business data;
+6. confirm the approved operator can load the clean canonical dataset;
+7. export/download the first logical JSON recovery checkpoint and explicitly confirm it is stored;
+8. verify the browser 24-hour manual-backup freshness guard becomes healthy for normal writes;
+9. begin controlled clean-start early use and collect operational feedback.
 
-PR #74 integrated D-031 into `develop` as `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`. The seven startup docs now agree that I2-I2 is ON HOLD and I2-I3 is current.
+Do not include in this slice:
 
-###### I2-I3-B — PR #72 integration
+- resuming I2-I2 trusted-PC/seven-day proof;
+- importing stable-v1 real-store data;
+- publishing/modifying `main`;
+- switching the canonical production URL;
+- declaring definitive production cutover or D-030 acceptance.
 
-**Status:** `IN_PROGRESS / CURRENT NEXT ACTION`.
+### P10-S3-I2-I4 — Legacy real-data migration
 
-Steps:
+**Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
 
-- synchronize PR #72 with updated `develop`;
-- resolve only integration conflicts;
-- rerun D-019 on exact new merge ref;
-- mark ready and squash merge if green;
-- verify integrated tree and `main` unchanged.
+Only revive if the operator explicitly decides historical stable data should be migrated.
 
-###### I2-I3-C — Manual Vercel candidate + operator onboarding
+### P10-S4 — Definitive cutover / durability closure
 
-**Status:** `NOT_STARTED / AUTHORIZED AFTER PR #72 INTEGRATES`.
+**Status:** `NOT_STARTED / NOT AUTHORIZED`
 
-Bounded steps:
+A later explicit gate must settle durability (complete D-030 or accept a replacement mechanism), canonical URL/publication, rollback and any stable-system decommission policy.
 
-- manual Vercel candidate deployment from accepted V2 tree;
-- configure only public Supabase URL/publishable key in browser environment;
-- create/login intended Supabase Auth account through normal Auth flow;
-- add only that user to `easy_operators` through trusted admin/database boundary;
-- prove unauthorized user cannot access business data;
-- create first manual JSON recovery checkpoint and confirm freshness;
-- begin controlled clean-start early use.
+## Current NEXT_ACTION
 
-##### P10-S3-I2-I4 — Real legacy migration/reconciliation
-
-**Status:** `ON_HOLD / NOT REQUIRED FOR CURRENT CLEAN-START EARLY USE`.
-
-The accepted staging/import path remains available if the operator later explicitly chooses to migrate historical stable data. Do not execute it by default.
-
-### Definitive cutover / later P10
-
-**Status:** `NOT_AUTHORIZED`.
-
-Still requires a later explicit gate covering final durability acceptance, stable/main publication strategy, canonical URL switch, rollback policy and decommissioning.
-
-D-031 does **not** make the early-use candidate equivalent to final cutover.
+**P10-S3-I2-I3-C only.** See `docs/V2/STATUS.md` for the exact bounded instruction.
