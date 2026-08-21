@@ -2,18 +2,44 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
-## 2026-08-21 — D-031 governance integrated; current action is PR #72 runtime integration
+## 2026-08-21 — PR #72 runtime-first candidate validated and integrated; next action is manual candidate onboarding
+
+The D-031-authorized runtime implementation was synchronized with the current `develop`, revalidated and integrated.
+
+Final evidence:
+
+- synchronized feature head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
+- exact PR merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
+- validated merge-ref tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
+- Critical QA run/job: `32502664982` / `96835725075`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 57 files / 240 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS;
+- PR #72 marked ready and squash-integrated to `develop` as `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
+- integrated tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`, exactly equal to the validated merge-ref tree;
+- stable `main` remained unchanged at `9574e3a4097ddd78ab1f75a13b9ea065287946e9` / tree `57243d004c5b550d0f27576f0179b0033044088e`.
+
+P10-S3-I2-I3 repository integration is therefore closed. The next bounded action is P10-S3-I2-I3-C: manually publish/configure the accepted `develop` candidate on Vercel, onboard/approve the intended Supabase Auth operator, prove unauthorized denial, create/confirm the first manual JSON recovery checkpoint and begin controlled clean-start early use.
+
+I2-I2 trusted-PC backup/recovery proof remains ON HOLD under D-031. No legacy real-store data was imported, `main` was not modified, the canonical production URL was not switched and no definitive D-030 durability/cutover claim was made.
+
+---
+
+## 2026-08-21 — D-031 governance integrated; PR #72 became the runtime integration action
 
 PR #74 integrated the canonical sequencing correction into `develop` as `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`.
 
 Its exact merge ref `62a7b646ba2a2efa500fcc43c5e0df206a2dc0b1` passed D-019 in run `32497468087` / job `96819192500`: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS.
 
-The canonical continuation state is now unambiguous:
+The canonical continuation state became:
 
-- I2-I2 trusted-PC backup/recovery proof is ON HOLD;
-- I2-I3 runtime-first Supabase candidate is current;
-- the immediate next action is to synchronize/revalidate/integrate PR #72 against current `develop`;
-- `main` remains unchanged at `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
+- I2-I2 trusted-PC backup/recovery proof ON HOLD;
+- I2-I3 runtime-first Supabase candidate current;
+- PR #72 required synchronization/revalidation/integration;
+- `main` unchanged.
+
+That action is now completed by the entry above.
 
 ---
 
@@ -23,17 +49,15 @@ The operator explicitly changed P10-S3 sequencing after the remaining D-030 I2-I
 
 The earlier 2026-08-21 remote preflight remains a valid fail-closed result: the trusted-PC scheduled dump, actual off-site verification, seven retained successful daily generations and disposable trusted-PC restore drill were not proven. Nothing in D-031 claims otherwise.
 
-D-031 changes the next action:
+D-031 changed sequencing:
 
-- P10-S3-I2-I2 is now `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`;
-- P10-S3-I2-I3 is `IN_PROGRESS / AUTHORIZED FOR EARLY-USE CANDIDATE`;
-- old sequencing text saying I2-I3 is unauthorized until I2-I2 passes is superseded;
+- P10-S3-I2-I2 became `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`;
+- P10-S3-I2-I3 became authorized for the early-use candidate;
+- old sequencing text saying I2-I3 was unauthorized until I2-I2 passes was superseded;
 - early use is a clean start with no legacy real-store migration;
 - manual logical JSON backup + browser exact-24h freshness blocking is the temporary recovery control;
 - stronger automated D-030 recovery-health acceptance remains pending for a later definitive cutover gate;
 - `main` remains untouched and Vercel deployment remains manual/candidate.
-
-PR #72 is the current runtime-first implementation. It previously passed D-019 on merge ref `1e746bb2dd133f5bfcaac7818b27996f802476ed` via run `32492337376` / job `96802676149`: 0 lint errors / 82 warnings; 57 files / 240 Vitest PASS; 17/17 Playwright PASS; production build PASS. Since `develop` advanced afterward, PR #72 must be synchronized and revalidated on the new exact merge ref before integration.
 
 Authoritative governance record: `docs/V2/P10_RUNTIME_FIRST_GOVERNANCE.md`.
 
