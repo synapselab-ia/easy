@@ -1,257 +1,152 @@
 # Easy V2 — Canonical Backlog
 
 **Status:** canonical ordered backlog  
-**Updated:** 2026-08-20
+**Updated:** 2026-08-21
 
 `STATUS.md` determines active work. Legacy `tasks/` checkboxes are historical only.
 
-Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `IN_REVIEW`, `BLOCKED`, `ABANDONED`, `DONE`.
+Status vocabulary: `NOT_STARTED`, `IN_PROGRESS`, `IN_REVIEW`, `BLOCKED`, `ON_HOLD`, `ABANDONED`, `DONE`.
 
----
-
-## P0–P8
-
-**Status:** `DONE`.
-
-P0 governance, P1 referential lifecycle, P2 audited correction/reversal, P3 financial dates/statements/aging, P4 original D-016 persistence decision, P5 backup/restore, P6 D-019 QA/deployment, P7 operational UX and P8 direct-store discovery are complete.
-
-D-016 was valid through P8/P9 and is retained as historical evidence, but D-029 later supersedes it for the final production persistence route.
-
----
-
-## P9 — Prioritized evidence-backed improvements
-
-**Priority:** High  
-**Status:** `DONE / INTEGRATED` — 2026-08-19.
-
-### P9-S1 — Evidence-backed prioritization
-
-**Status:** `DONE` — D-023 order: recovery durability 94/100; categories/reporting 83/100; correction microflows 70/100; occurrence-date usability 69/100.
-
-### P9-S2 — Recovery durability
-
-**Status:** `DONE` — D-024 implemented synchronized recovery-copy folder + exact 24-hour freshness guard while the system remained local-first.
-
-D-024 remains mandatory for the current browser-local stable production system until a later cloud cutover. Under D-029 it is no longer the intended final primary durability mechanism.
-
-### P9-S3 — Categories/classification/reporting
+## P0–P9
 
 **Status:** `DONE / INTEGRATED`.
 
-D-025 is fully implemented through persistence/migration/backup, lifecycle/classification/order snapshots and category reporting.
-
-### P9-S4 — Confirmed correction microflows
-
-**Status:** `DONE / INTEGRATED`.
-
-D-026 is fully implemented through audited full-field linked replacement while preserving D-012/D-013, D-024, D-025 and P1/D-011 boundaries.
-
-Final runtime proof: D-019 `32285620846` / `96174326588`; PR #54 integrated as `f1cfd126c18691da1256a1d3f918158d7aa9495a`; tree `5679693b5f588f58404050cfca8ffd17a9a49fb3`.
-
-### P9-S5 — Occurrence-date usability verification
-
-**Status:** `DONE / INTEGRATED`.
-
-No runtime usability gap was found. Transaction entry already defaults `Data da ocorrência` to browser-local today, permits editing before save and persists `occurredAt` independently from `createdAt`.
-
-Validation: D-019 `32287018048` / `96178850066`; PR #56 integrated as `88c70a20071bd97ef3a08285128756e2ce484a74`.
-
----
+Completed program includes governance, referential lifecycle, audited correction/reversal, financial dates/statements/aging, local backup/restore, CI/deployment safety, UX refinement, direct store discovery, D-024 recovery guard, D-025 categories/reporting and D-026 full-field correction.
 
 ## P10 — Controlled migration and cutover
 
-**Status:** `IN_PROGRESS` — 2026-08-20.
+**Status:** `IN_PROGRESS`.
 
-P10 is fail-closed. Completion/acceptance of one slice never authorizes the next data, persistence or publication boundary implicitly.
-
-Historical cutover plan: `docs/V2/P10_CUTOVER_PLAN.md`.  
-Current final persistence gate: `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
+P10 remains fail-closed: completion of one slice does not silently authorize real-data movement, `main` publication or canonical cutover.
 
 ### P10-S1 — Pre-cutover compatibility and synthetic rehearsal
 
-**Status:** `DONE / ACCEPTED` — 2026-08-19.
+**Status:** `DONE / ACCEPTED`.
 
-D-027 kept this slice non-production:
+Stable-v1 normalization/recovery was proven synthetically. No real store data moved.
 
-- `main` stayed untouched;
-- stable→V2 transfer was treated as explicit backup/preflight/restore;
-- no live-store backup was exported/imported;
-- P10-S1-I1 aligned backup validation with D-026;
-- P10-S1-I2 synthetically proved v1→v2 migration/recovery on the deployed Vercel candidate.
+### P10-S2 — Historical copied-live-data IndexedDB beta
 
-#### P10-S1-I1 — Backup/correction compatibility hardening
+**Status:** `ABANDONED / SUPERSEDED BEFORE EXPORT`.
 
-**Status:** `DONE / INTEGRATED`.
-
-Authoritative D-019 `32292888925` / `96197514379`: 0 lint errors / 82 warnings; 53 files / 222 Vitest PASS; 17/17 Playwright PASS; production build PASS. PR #60 integrated as `71b939b4c938288efb0f3c51e300e5c5541ee8c3`.
-
-#### P10-S1-I2 — Non-production migration/recovery rehearsal
-
-**Status:** `DONE / REHEARSED`.
-
-Candidate:
-
-- Vercel deployment `dpl_EPD3vYXKC7smebtn7GZ5syiYJ8ki` — READY;
-- Git SHA `2b6c1e5f4e58790c9c805fed8cadda3484acfa0e`;
-- tree `8d6479ce00caabce528c6971fbc1034bc1eabbcc`.
-
-Evidence-only PR #62 authoritative run `32298906351` / `96216688953` first passed normal D-019 and then remote synthetic rehearsal 1/1.
-
-The synthetic fixture proved accepted stable-v1 normalization, restore/checkpoint, D-024 blocking/setup, legacy unclassified-item gating, classification, order, D-026 correction, V2 export and fresh-context identical round-trip.
-
-No store data was used.
-
-### P10-S2 — Copied-live-data IndexedDB beta contract
-
-**Status:** `DONE / ACCEPTED HISTORICALLY` — D-028.
-
-Authoritative contract: `docs/V2/P10_S2_BETA_GATE.md`.
-
-D-028 defined how one point-in-time copy of the actual store dataset could be tested safely in an isolated IndexedDB beta with exact structural/financial reconciliation, D-018/D-024 proof, minimum beta mutation checks and 24-hour disposal.
-
-The contract itself moved no real store data.
-
-### P10-S2-I1 — Copied-live-data IndexedDB beta execution
-
-**Status:** `ABANDONED / SUPERSEDED BEFORE EXPORT` — 2026-08-20.
-
-Execution record: `docs/V2/P10_S2_I1_EXECUTION.md`.
-
-What happened:
-
-- candidate/deployment identity passed;
-- operator-local browser isolation/D-024 location proof could not be completed remotely;
-- fail-closed behavior stopped execution before any stable-v1 backup was exported;
-- PR #65 recorded that NO-GO and integrated as `e06c659ecdb3aee79e2e451b00eb85d63c8b8612`, tree `4da05cdda530b1e7000d01460201dff1daf65910`;
-- no real-data beta artifact was ever created and the D-028 disposal clock never started.
-
-D-029 then redirected final persistence to Supabase before the real dataset was moved twice. The old D-028 beta route must not resume by default.
+D-028 remains historical evidence. No real beta dataset was created.
 
 ### P10-S3 — Supabase canonical-persistence transition
 
-**Status:** `IN_PROGRESS` — **CURRENT PROGRAM**.  
-**Decision:** D-029.  
-**Authoritative architecture:** `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md`.
+**Status:** `IN_PROGRESS — CURRENT PROGRAM`.
 
-Accepted final direction:
+#### P10-S3-I1 — Supabase foundation
 
-- Vercel remains the target frontend host;
-- Supabase/Postgres becomes canonical production persistence;
-- Supabase Auth + RLS are mandatory;
-- service/secret keys stay out of browser/Git;
-- Dexie becomes transitional migration substrate/optional cache rather than source of truth;
-- first cloud migration does not include offline multi-master writes;
-- D-013/D-026 correction/reversal remains server/database-transaction atomic;
-- paid production uses managed database backup as primary durability; D-030/US$ 0 instead requires proven unattended off-site logical dumps + exact-24h freshness enforcement + restore drills before cutover;
-- logical/manual Easy backup remains independent secondary recovery/portability;
-- D-024 remains active on current browser-local stable until cutover;
-- no real store data may move until the synthetic Supabase foundation passes.
+**Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`.
 
-#### P10-S3-I1 — Supabase foundation with synthetic data only
+Dedicated Supabase project, schema, RLS, approved-operator authorization, financial RPCs, generated types and synthetic proof are accepted.
 
-**Status:** `DONE / ACCEPTED`.
-
-Accepted execution: `docs/V2/P10_S3_I1_EXECUTION.md`. Dedicated `easy-v2` Supabase project, reproducible migrations, RLS/allow-list authorization, transactional financial RPC boundary, typed `supabase-js` client foundation, advisor review and synthetic reconciliation all passed. All synthetic rows were disposed and no real store data moved.
-
-Completed work:
-
-1. explicitly select a Supabase organization and region, then create/select a **dedicated Easy project**;
-2. establish reproducible schema migrations for categories/items/resellers/transactions plus minimum authorization metadata;
-3. preserve existing IDs/snapshots and define the import-safe identity/sequence strategy;
-4. add database constraints/indexes that reinforce existing domain invariants without inventing new business semantics;
-5. enable RLS on every exposed application table;
-6. establish and test the initial one-operator Auth/authorization model;
-7. implement a transactional server/database correction/reversal operation preserving D-013/D-026 atomicity;
-8. wire React/Vite through `supabase-js` using only URL + publishable key;
-9. keep all real store data out and use synthetic fixtures only;
-10. run Supabase security/performance advisors and repository D-019;
-11. record exact evidence and define the next real-data migration/reconciliation gate.
-
-Exit criterion: a synthetic Supabase-backed foundation that objectively preserves the critical domain/security boundaries and is reproducible from repository migrations. **No real-data import or production publication.**
-
-#### P10-S3-I2 — Real-data migration/reconciliation + zero-cost durability contract
+#### P10-S3-I2 — Migration/durability contract
 
 **Status:** `DONE / ACCEPTED CONTRACT` — D-030.
-
-Authoritative contract: `docs/V2/P10_S3_I2_MIGRATION_GATE.md`.
-
-D-030 defines the exact source freeze/digest, private stable-v1 staging, deterministic normalization, current-item classification, atomic promotion, ID/sequence repair, structural/reference/financial reconciliation, private Auth onboarding evidence, candidate identity, rollback and zero-cost durability boundary. Supabase Free alone remains insufficient; production eligibility requires proven unattended off-site logical dumps, >=7 successful generations, exact-24h server-visible freshness enforcement and restore proof.
-
-No real store data moved in contract definition.
 
 ##### P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility
 
 **Status:** `DONE / ACCEPTED — SYNTHETIC ONLY`.
 
-Accepted execution: `docs/V2/P10_S3_I2_I1_EXECUTION.md`.
-
-Completed proof:
-
-1. committed non-exposed/private staging/import migrations;
-2. reused only the already-approved stable-v1 normalization and rejected unexplained source fields;
-3. preserved stable item/reseller/transaction IDs and timestamps;
-4. permitted legacy active-unclassified items only in private staging;
-5. required complete explicit current-item classification before public promotion;
-6. preserved null historical category snapshots for stable-v1 orders;
-7. promoted categories/items/resellers/transactions atomically with rollback proof;
-8. repaired identity sequences using `pg_get_serial_sequence` metadata rather than hard-coded names;
-9. reconciled exact structure, references and integer-cent financial totals with synthetic fixtures;
-10. denied staging DML/function execution to browser/API roles;
-11. cleaned all synthetic public/staging/Auth state back to zero and completed advisor + repository QA evidence.
-
-Substantive D-019 `32403912177` / `96538355033` passed on merge ref `9844a2f0095fa3443aed358892f9801f1c2bc64b`: 0 lint errors / 82 warnings; 55 files / 231 Vitest PASS; 17/17 Playwright PASS; production build PASS. Exact final PR-tree validation remains part of PR #69 closure.
-
-No unattended backup automation, real Auth, runtime switch or real data was introduced in this slice.
+Private staging, explicit current classification, atomic promotion and exact reconciliation are implemented/proven with synthetic fixtures.
 
 ##### P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof
 
-**Status:** `BLOCKED / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF REQUIRED` — **CURRENT NEXT ACTION / SYNTHETIC ONLY**.
+**Status:** `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`.
 
-Execution record: `docs/V2/P10_S3_I2_I2_EXECUTION.md`.
+Implemented prerequisites remain available:
 
-Implemented/proven remotely:
+- pinned trusted-PC Supabase CLI data-only dump;
+- rclone off-site copy/check/list verification;
+- >=7 UTC daily generation retention logic;
+- server-visible recovery ledger;
+- exact-24h + retention business-write guard;
+- disposable local/Docker restore fingerprint drill;
+- synthetic database security/guard proof.
 
-1. reproducible trusted-PC backup tooling using pinned Supabase CLI `2.111.0` and `supabase db dump --linked --data-only`;
-2. protected configuration contract outside browser/client/Git with scheduled-job rejection of injected database URLs/passwords;
-3. rclone `1.75.0` off-site path using `copyto` + `check --download --one-way` + remote listing verification;
-4. daily-generation rotation that refuses retention configuration below seven days;
-5. private server-visible latest-success/retention state;
-6. exact-24h business-write guard on categories/items/resellers/transactions and financial RPC paths;
-7. fail-closed proof for missing/stale evidence and for fresh evidence with only six retained daily generations;
-8. recovery after valid fresh evidence with retention >=7;
-9. API-style `service_role` cannot bypass the guard, while direct no-JWT database execution remains the narrow restore/import maintenance boundary;
-10. committed disposable local restore-drill/fingerprint implementation for exact structure/reference/integer-cent financial reconciliation;
-11. Security Advisor 0 lints and final synthetic homologation cleanup to zero rows;
-12. substantive PR #70 D-019 `32408393343` / `96552818604` passed on merge ref `6b83fe3e9b5939c788aa7a3640e7fc83607fd260`: 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+Still unproven:
 
-Still required before acceptance:
+- actual trusted-PC scheduled run;
+- actual off-site destination verification;
+- seven real retained daily generations;
+- actual trusted-PC restore drill.
 
-1. execute the committed scheduled dump on the actual trusted operator PC using its local Supabase credential boundary;
-2. objectively prove arrival/check success on the actual configured off-site rclone remote;
-3. accumulate and verify at least seven successful retained UTC daily generations in that destination;
-4. prove the server-side health becomes healthy only after the real freshness + retention conditions are met;
-5. execute the committed disposable Docker/local restore drill from an eligible synthetic artifact on the trusted PC;
-6. reconcile the restored synthetic structure/references/financial data exactly and clean the disposable recovery state;
-7. rerun advisors and final D-019 with sanitized evidence.
-
-Until those operator-local items pass, I2-I2 remains `BLOCKED`, I2-I3 is not authorized and Supabase Free remains production-ineligible under D-030.
-
-No real store data, real production Auth operator, Supabase-backed business-runtime switch, `main` publication, canonical URL switch or production cutover is authorized by I2-I2.
+**D-031 explicitly places these operator-local items ON HOLD. They are not the current next action.**
 
 ##### P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate
 
-**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I2 PASSES`.
+**Status:** `IN_PROGRESS / AUTHORIZED FOR EARLY USE` — D-031.
 
-Synthetic-only future slice: one-operator Auth/session UI, cloud-authoritative CRUD/financial RPC reads/writes, fail-closed connectivity, full app-level parity and exact Vercel candidate identity.
+Current implementation: PR #72 `feat/p10-s3-i2-i3-runtime-first`.
 
-##### P10-S3-I2-I4 — Real migration/reconciliation execution
+Scope:
 
-**Status:** `NOT_STARTED / NOT_AUTHORIZED UNTIL I2-I1/I2-I2/I2-I3 PASS`.
+1. Supabase becomes canonical business data source when configured.
+2. Supabase Auth + `easy_operators` gate application access.
+3. category/item/reseller mutations write to Supabase.
+4. financial mutations use controlled transactional RPCs.
+5. Dexie remains read cache/mirror, not source of truth.
+6. JSON export reads canonical Supabase data.
+7. approved-operator JSON restore is server-atomic and checkpointed.
+8. manual JSON recovery freshness remains fail-closed at 24h during early use.
+9. D-030 automated recovery enforcement remains pending/disabled in this temporary mode.
+10. early use begins clean; no legacy real-data migration.
 
-Future maintenance-window execution only: real source freeze/export digest, private real Auth onboarding, staging/promotion, exact parity and first real automated backup + local restore drill. Canonical URL switch still requires an explicit later gate.
+Previously passing PR #72 evidence:
 
-### Later P10 work
+- head `385e59b22ac83ff43097cefeeb4551d28f606dbf`;
+- D-019 run `32492337376`, job `96802676149`;
+- then-current merge ref `1e746bb2dd133f5bfcaac7818b27996f802476ed`;
+- 0 lint errors / 82 warnings;
+- 57 files / 240 Vitest PASS;
+- 17/17 Playwright PASS;
+- production build PASS.
+
+Because `develop` advanced after that run, this evidence must be repeated on the newly generated exact merge ref before integration.
+
+###### I2-I3-A — Canonical governance correction
+
+**Status:** `IN_PROGRESS` until the D-031 docs PR is merged to `develop`.
+
+Exit: all seven startup docs agree that I2-I2 is ON HOLD and I2-I3 is current.
+
+###### I2-I3-B — PR #72 integration
+
+**Status:** `NEXT` after I2-I3-A.
+
+Steps:
+
+- synchronize PR #72 with updated `develop`;
+- resolve only integration conflicts;
+- rerun D-019 on exact new merge ref;
+- mark ready and squash merge if green;
+- verify integrated tree and `main` unchanged.
+
+###### I2-I3-C — Manual Vercel candidate + operator onboarding
+
+**Status:** `NOT_STARTED / AUTHORIZED AFTER PR #72 INTEGRATES`.
+
+Bounded steps:
+
+- manual Vercel candidate deployment from accepted V2 tree;
+- configure only public Supabase URL/publishable key in browser environment;
+- create/login intended Supabase Auth account through normal Auth flow;
+- add only that user to `easy_operators` through trusted admin/database boundary;
+- prove unauthorized user cannot access business data;
+- create first manual JSON recovery checkpoint and confirm freshness;
+- begin controlled clean-start early use.
+
+##### P10-S3-I2-I4 — Real legacy migration/reconciliation
+
+**Status:** `ON_HOLD / NOT REQUIRED FOR CURRENT CLEAN-START EARLY USE`.
+
+The accepted staging/import path remains available if the operator later explicitly chooses to migrate historical stable data. Do not execute it by default.
+
+### Definitive cutover / later P10
 
 **Status:** `NOT_AUTHORIZED`.
 
-Final write freeze, stable publication, canonical URL switch, production traffic cutover, post-cutover rollback policy and decommissioning of the old browser-local stable application require later explicit gates.
+Still requires a later explicit gate covering final durability acceptance, stable/main publication strategy, canonical URL switch, rollback policy and decommissioning.
+
+D-031 does **not** make the early-use candidate equivalent to final cutover.
