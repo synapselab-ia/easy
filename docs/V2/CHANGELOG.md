@@ -2,6 +2,34 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-25 — P10-S3-I2-I3-C candidate onboarding accepted; controlled clean-start early use enabled
+
+The operator-local D-031 onboarding blocker was resolved without changing runtime/schema code or touching `main`.
+
+Accepted live evidence:
+
+- Vercel `easy-v2` deployment `dpl_FwpUedZ8gpMzCs5nLBjrv39V2FJs` is READY from `develop@768776e7da52da5051b7a69dec071d0481cd810d`;
+- only browser-safe `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` were configured;
+- the intended real operator account was created/confirmed through normal Supabase Auth, reached the fail-closed waiting state, and exactly one real Auth UUID was then added to the active `easy_operators` allow-list through the trusted DB boundary;
+- the approved operator successfully entered the candidate;
+- a separate authenticated non-approved account remained at `Conta aguardando liberação`;
+- a direct PostgreSQL/RLS probe using the non-approved Auth identity rejected a business-table insert and left 0 residual rows;
+- closure aggregate state was 3 Auth users, 1 active approved operator, 2 authenticated users outside the active allow-list, and 0 categories/items/resellers/transactions;
+- the approved operator exported the first Backup v2 JSON, confirmed the copy was stored outside the browser and clicked the same-installation confirmation action;
+- the accepted exact-24h recovery implementation therefore entered its healthy/current post-condition with normal writes enabled until the checkpoint reaches the exact 24-hour boundary.
+
+No user email, password, token, Auth UUID or recovery JSON content/path is stored in repository evidence.
+
+Supabase Security Advisor now reports the Auth-level `auth_leaked_password_protection` WARN. Current Supabase documentation states leaked-password protection is a Pro+ feature. Under the accepted US$0 / Free budget this is recorded explicitly as residual early-use risk; Auth + allow-list + RLS denial were independently proven and definitive cutover remains separately gated.
+
+P10-S3-I2-I3-C is now `DONE / ACCEPTED`. The bounded continuation becomes **P10-S3-I2-I3-D — controlled clean-start early-use observation**: use the accepted candidate, maintain a confirmed JSON recovery copy fresher than 24h, and collect concrete operational feedback before making further runtime changes.
+
+I2-I2 remains ON HOLD, no legacy real-store data was imported, `main` remains unchanged, the canonical final production URL was not switched and D-030 durability acceptance was not claimed.
+
+Detailed evidence: `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`.
+
+---
+
 ## 2026-08-21 — P10-S3-I2-I3-C live preflight stopped fail-closed; operator-local completion remains current
 
 The D-031 candidate onboarding action was attempted against the real Vercel/Supabase candidate state and correctly stopped without fabricating credentials, deployment evidence or acceptance.
@@ -19,11 +47,7 @@ Live findings:
 
 Because the intended real Auth identity does not yet exist, the live non-approved-user denial proof, approved-user dataset load, first manual JSON checkpoint and exact-24h healthy-guard proof also remain incomplete.
 
-P10-S3-I2-I3-C is therefore now `BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED — CURRENT NEXT ACTION`. It does not advance to legacy migration or definitive cutover.
-
-Detailed execution record: `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`.
-
-I2-I2 remains ON HOLD, no legacy real-store data was imported, `main` remained unchanged, the canonical production URL was not switched and no D-030 durability acceptance was claimed.
+P10-S3-I2-I3-C was therefore recorded as `BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED — CURRENT NEXT ACTION`. The 2026-08-25 entry above supersedes that blocker status while preserving the historical evidence.
 
 ---
 
@@ -116,7 +140,7 @@ Private staging/import compatibility was synthetically proven with stable IDs/ti
 
 ## 2026-08-20 — D-030 zero-cost migration/durability contract accepted
 
-D-030 defined the US$ 0 durability requirement: Supabase Free alone is insufficient; final zero-cost eligibility requires unattended off-site logical dumps, at least seven retained daily generations, exact-24h server-visible write blocking and restore drills. It also defines the private stable-v1 migration staging path.
+D-030 defined the US$0 durability requirement: Supabase Free alone is insufficient; final zero-cost eligibility requires unattended off-site logical dumps, at least seven retained daily generations, exact-24h server-visible write blocking and restore drills. It also defines the private stable-v1 migration staging path.
 
 D-031 later refines only the order of execution for controlled early use.
 

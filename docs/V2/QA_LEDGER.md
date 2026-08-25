@@ -1,6 +1,6 @@
 # Easy V2 — QA Ledger
 
-**Updated:** 2026-08-21
+**Updated:** 2026-08-25
 
 ## Mandatory repository gate — D-019
 
@@ -21,7 +21,7 @@ The detailed historical run ledger remains available in Git revisions and phase-
 - P9 categories/correction/date work: integrated with D-019 passing evidence.
 - P10-S1 compatibility/rehearsal: accepted; synthetic stable-v1 round-trip proven; no real data moved.
 - D-029 architecture redirect: accepted/integrated.
-- P10-S3-I1 Supabase foundation: accepted synthetically; Security Advisor 0 lints; no real data retained.
+- P10-S3-I1 Supabase foundation: accepted synthetically; no real data retained.
 - P10-S3-I2 contract/D-030: accepted without moving real data.
 - P10-S3-I2-I1 staging/import compatibility: accepted synthetically with exact-cent reconciliation and rollback proof.
 - P10-S3-I2-I2 repository/database prerequisite: implementation passed; final canonical-tree run `32411404495` / job `96562427495`; 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; build PASS; feature tree integrated by PR #70 as `0103f9ac44d9ee10ace85fddb144352fd305a9ee`.
@@ -54,100 +54,136 @@ Accepted evidence:
 - production build PASS;
 - integrated commit `4c3c42e6de805e171fb1e840adbfc596ecad8bc3`.
 
-A later documentation-only governance closure advanced `develop` to `1e396f3ce10a93f99c9bd47a312950943d1587ea` before PR #72 synchronization.
-
 ## P10-S3-I2-I3 runtime-first PR #72 — FINAL PASS / INTEGRATED
 
 PR #72: `feat(v2): enable runtime-first Supabase candidate`.
 
-### Synchronization
+Accepted repository evidence:
 
-- current base used by the accepted merge ref: `develop` `1e396f3ce10a93f99c9bd47a312950943d1587ea`;
 - synchronized feature head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
 - exact generated PR merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
-- exact merge-ref tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`.
+- exact merge-ref tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
+- Critical QA run/job: `32502664982` / `96835725075`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 57 files / 240 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS;
+- squash-integrated `develop`: `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
+- integrated tree equals validated merge-ref tree: PASS.
 
-GitHub Actions checkout evidence explicitly fetched and checked out `refs/remotes/pull/72/merge` at `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`.
+Stable `main` remained `9574e3a4097ddd78ab1f75a13b9ea065287946e9` / tree `57243d004c5b550d0f27576f0179b0033044088e`.
 
-### Final D-019
+## P10-S3-I2-I3-C initial preflight — VALID FAIL-CLOSED
 
-- Critical QA run: **`32502664982`**;
-- job: **`96835725075`**;
-- conclusion: **SUCCESS**;
-- ESLint: **0 errors / 82 warnings**;
-- Vitest: **57 files / 240 tests PASS**;
-- Playwright: **17/17 PASS**;
-- production build: **PASS** (`tsc -b && vite build`; Vite 8.0.8).
+The 2026-08-21 remote attempt correctly stopped because the accepted `develop` candidate had not yet been published with browser-safe Supabase config and the intended real operator identity did not yet exist.
 
-Known `act(...)`, mocked-select DOM, lint-warning, npm-audit, Actions Node deprecation and Vite chunk-size notices remained non-blocking because all objective D-019 commands passed.
+That historical blocker is preserved in `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md` and was later resolved by the operator-local completion below.
 
-### Integration equivalence
+## P10-S3-I2-I3-C operator-local completion — PASS
 
-PR #72 was marked ready and squash-integrated into `develop` as:
+### Candidate deployment
 
-- commit **`8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`**;
-- integrated tree **`4ed336e4d05dc95df1abba7a9894d1b10abcd49b`**.
+Vercel project `easy-v2` live evidence on 2026-08-25:
 
-The integrated tree exactly matches the D-019-validated merge-ref tree. **Final tree equivalence: PASS.**
+- deployment ID: `dpl_FwpUedZ8gpMzCs5nLBjrv39V2FJs`;
+- state: `READY`;
+- target: candidate `production` hosting under D-031;
+- Git ref: `develop`;
+- Git SHA: `768776e7da52da5051b7a69dec071d0481cd810d`;
+- candidate aliases include `easy-v2-tau.vercel.app` and the `develop` branch alias;
+- only browser-safe Supabase URL/publishable-key variables were configured.
 
-Stable `main` was independently rechecked after integration and remained:
+This is not a Git `main` publication and is not definitive cutover.
 
-- commit **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**;
-- tree **`57243d004c5b550d0f27576f0179b0033044088e`**.
+### Auth / allow-list / clean dataset
 
-**Result: PR #72 repository integration gate is CLOSED / PASS.**
+The intended real account was created/confirmed through the normal Supabase Auth flow and initially reached the expected fail-closed waiting state.
 
-## P10-S3-I2-I3-C live candidate preflight — BLOCKED / VALID FAIL-CLOSED
+Trusted database onboarding then produced this aggregate closure state:
 
-The current operational slice was attempted against the real `easy-v2` Supabase/Vercel candidate state. The attempt correctly stopped rather than fabricate a deployment, credentials or acceptance.
+- Auth users: 3;
+- active `easy_operators`: 1;
+- inactive `easy_operators`: 0;
+- authenticated users outside the active allow-list: 2;
+- categories: 0;
+- items: 0;
+- resellers: 0;
+- transactions: 0.
 
-### Supabase live evidence
+No email address, password, token or Auth UUID is stored in repository evidence.
 
-Project: `easy-v2` / `hrmkkhqfyfoqucwbcszq` / `sa-east-1`.
+The approved operator successfully rechecked authorization and entered the Easy candidate while the canonical business dataset remained clean/empty.
 
-Observed:
+### Real non-approved-user denial
 
-- project healthy;
-- current modern publishable key exists and is enabled;
-- temporary D-031 `automated_guard_enabled = false` state remains explicit;
-- Auth users: 0;
-- `easy_operators`: 0;
-- categories/items/resellers/transactions: 0 each;
-- Security Advisor: **0 lints**;
-- Performance Advisor: INFO-only unused-index notices expected on an empty/tiny homologation database;
-- RLS policies for categories/items/resellers use `is_easy_operator()` for authenticated CRUD/read;
-- transactions SELECT uses the same approved-operator boundary;
-- `easy_operators` SELECT exposes only the current user's own row.
+A separate confirmed Auth account was intentionally left outside `easy_operators` and the candidate UI kept it at `Conta aguardando liberação`.
 
-Policy inspection supports the designed authorization boundary but does **not** replace the required live non-approved authenticated-user denial proof.
+A second direct RLS proof used that non-approved Auth identity under PostgreSQL role `authenticated` and attempted a business write to `public.categories` inside a rollback probe.
 
-### Vercel live evidence
+Expected denial occurred. Final verification:
 
-Project: `easy-v2`.
+- `no_residual_write = true`;
+- categories after probe: 0.
 
-Observed:
+**Result: authenticated-but-not-approved business write denial = PASS.**
 
-- latest READY deployment points to stale `develop@d4d428e35a45af0691e80331dd8c7888a914355f`;
-- accepted pre-closure `develop@93500284f5b9105f0de7867a8676c31c7186d194` has not been proven as published candidate;
-- the connected Vercel execution surface did not expose a safe project-environment write for `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`;
-- its generic deploy action rejected the attempted invocation before any deployment creation because required source-package fields are not safely exposed by the available schema;
-- no Vercel environment variable changed and no new deployment was created.
+### First manual JSON checkpoint / exact-24h guard
 
-### Missing acceptance evidence
+The approved operator reported completing the required same-installation sequence:
 
-Because there is no intended real Auth user yet and no updated candidate publication:
+1. `Exportar Backup v2`;
+2. verify/store the downloaded JSON outside the browser;
+3. `Confirmar que guardei a cópia`.
 
-- intended real Auth account creation/sign-in: **NOT DONE**;
-- trusted `easy_operators` insertion: **NOT DONE**;
-- live non-approved authenticated-user denial proof: **NOT DONE**;
-- approved-operator clean-dataset load proof: **NOT DONE**;
-- first manual JSON checkpoint download/storage confirmation: **NOT DONE**;
-- exact-24h browser freshness healthy proof: **NOT DONE**;
-- controlled early use start: **NOT DONE**.
+The accepted implementation only enables confirmation after a recorded export and then writes `setupVerifiedAt` alongside the latest export timestamp.
 
-**Result: valid fail-closed blocker. I2-I3-C remains CURRENT and is not accepted.**
+`RECOVERY_MAX_AGE_MS` is exactly 24 hours. Immediately after export + confirmation:
 
-Detailed evidence: `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`.
+- setup is verified;
+- last export exists;
+- age is non-negative and `< 24h`;
+- `writeBlocked = false`;
+- state is `current` initially and can become `warning` after 20h;
+- at `age >= 24h`, state becomes `overdue` and writes fail closed.
+
+The local filesystem path/content is intentionally not uploaded to Git/chat/CI; operator confirmation is the required evidence that the independent recovery copy exists.
+
+**Result: first manual JSON checkpoint + exact-24h healthy post-condition = PASS.**
+
+### Supabase advisor state
+
+Performance Advisor: INFO-only unused-index notices on the empty/tiny candidate database.
+
+Security Advisor: one Auth-level WARN:
+
+- `auth_leaked_password_protection` — Leaked Password Protection Disabled.
+
+Official Supabase documentation states leaked-password protection is available on Pro Plan and above. Current accepted paid-infrastructure budget remains US$0 / Free. Therefore this warning is recorded as an explicit residual early-use Auth risk; it is not hidden or described as zero lints, and it does not invalidate the independently proven Auth + allow-list + RLS boundary.
+
+Reference: `https://supabase.com/docs/guides/auth/password-security`.
+
+Definitive cutover remains separately gated.
+
+## P10-S3-I2-I3-C documentation closure — PRE-FINAL D-019 PASS
+
+PR #78: `docs(v2): accept P10-S3-I2-I3-C operator onboarding`.
+
+The first closure tree passed D-019 on the exact GitHub-generated PR merge ref:
+
+- feature head: `e4f79f3e492aab758167c2f83d7f2cc19d96b1c0`;
+- exact merge ref checked out by Actions: `379b544b70fc07a7b78ccb7b71f2a0a5df26d260`;
+- Critical QA run: `32879740830`;
+- job: `97906074289`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 57 files / 240 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS.
+
+Checkout evidence explicitly fetched `379b544b70fc07a7b78ccb7b71f2a0a5df26d260` into `refs/remotes/pull/78/merge` and checked out that ref before `npm run qa:critical`.
+
+Known warnings/debt remained non-blocking: React `act(...)`, mocked-select hydration, existing lint warnings, 17 npm-audit findings, Actions Node deprecation and Vite chunk-size notice.
+
+This QA-ledger evidence commit necessarily changes the PR tree after run `32879740830`. Therefore that run is recorded as **PRE-FINAL PASS**, not used as the final integration gate. A new D-019 run on the newly generated exact PR merge ref is mandatory. No repository commit may be made after that final successful run before integration.
 
 ## Known non-blocking debt
 
@@ -157,14 +193,17 @@ When objective D-019 commands pass, the following remain non-blocking unless lat
 - mocked-select DOM/hydration warnings;
 - `set-state-in-effect` lint warnings;
 - lint `any` warning debt;
-- dependency audit findings (last observed: 17 vulnerabilities — 2 low, 4 moderate, 11 high);
+- dependency audit findings previously observed;
 - GitHub Actions Node deprecation notices;
-- Vite large-chunk warning.
+- Vite large-chunk warning;
+- Supabase Free Auth leaked-password-protection WARN described above during D-031 early use.
 
 ## Current QA status
 
 - D-031 governance/docs: **PASS / INTEGRATED**.
 - P10-S3-I2-I3 runtime repository integration: **PASS / INTEGRATED**.
-- P10-S3-I2-I3-C live Vercel/Auth/manual-checkpoint evidence: **BLOCKED / VALID FAIL-CLOSED — CURRENT NEXT ACTION**.
-- D-030 operator-local recovery acceptance: **ON HOLD / NOT PASSED**.
+- P10-S3-I2-I3-C live Vercel/Auth/RLS/manual-checkpoint evidence: **PASS / ACCEPTED**.
+- P10-S3-I2-I3-C repository documentation closure: **PRE-FINAL D-019 PASS — FINAL EXACT-TREE RERUN REQUIRED**.
+- P10-S3-I2-I3-D controlled early-use observation: **NEXT after closure integration**.
+- D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.

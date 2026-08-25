@@ -1,114 +1,186 @@
 # P10-S3-I2-I3-C — Candidate publication and operator onboarding
 
-**Date:** 2026-08-21  
-**Status:** `BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED`  
+**Date:** 2026-08-25  
+**Status:** `DONE / ACCEPTED — CONTROLLED EARLY USE ENABLED`  
 **Canonical action:** P10-S3-I2-I3-C only
 
 ## 1. Scope
 
-This execution attempt was limited to the D-031-authorized clean-start candidate onboarding slice:
+This slice was limited to the D-031-authorized clean-start candidate onboarding:
 
 1. publish/configure the accepted `develop` runtime as the manual Vercel `easy-v2` candidate;
 2. configure only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`;
 3. create/sign in the intended Supabase Auth account through the normal application/Auth flow;
-4. add only that real Auth UUID to `public.easy_operators` through a trusted admin/database boundary;
+4. add only that real Auth UUID to `public.easy_operators` through a trusted database boundary;
 5. prove an authenticated non-approved user cannot access business data;
-6. create/download/confirm the first logical JSON recovery checkpoint and make the browser exact-24h freshness guard healthy;
-7. begin controlled clean-start early use.
+6. prove the approved operator can load the clean canonical dataset;
+7. create/download/confirm the first logical JSON recovery checkpoint and make the browser exact-24h freshness guard healthy;
+8. authorize controlled clean-start early use.
 
-The attempt did not authorize I2-I2 trusted-PC backup proof, legacy real-data import, `main` publication, canonical URL switch, definitive cutover or D-030 acceptance.
+This slice did **not** authorize I2-I2 trusted-PC backup acceptance, legacy real-data import, `main` publication, canonical URL switch, definitive cutover or D-030 acceptance.
 
-## 2. Repository baseline inspected
+## 2. Repository / candidate baseline
 
-Accepted integration baseline at the start of this attempt:
+Repository state used by the accepted candidate:
 
-- `develop`: `93500284f5b9105f0de7867a8676c31c7186d194`;
-- tree: `4c510a9fb99fe29746ecaf209d4679dd55bbe946`;
+- `develop`: `768776e7da52da5051b7a69dec071d0481cd810d`;
+- tree: `2700203423adf7be1ac3ba290cf38ed0873beda5`;
 - stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
 - stable `main` tree: `57243d004c5b550d0f27576f0179b0033044088e`.
 
-No repository runtime/code change was required by the attempted onboarding work.
+No runtime/code change was required to complete the operator-local onboarding. Closure documentation is isolated on `ops/p10-s3-i2-i3-c-operator-onboarding` and must pass D-019 before integration.
 
-## 3. Supabase live preflight
+## 3. Vercel publication — PASS
 
-The dedicated `easy-v2` project `hrmkkhqfyfoqucwbcszq` in `sa-east-1` was inspected live.
+Project: `easy-v2`.
 
-Observed state:
+Live evidence on 2026-08-25:
 
-- project status healthy;
-- current browser-safe publishable key exists and is enabled;
-- temporary D-031 recovery mode remains explicit with `private.recovery_enforcement_state.automated_guard_enabled = false`;
-- `auth.users`: 0 rows;
-- `public.easy_operators`: 0 rows;
-- `public.categories`: 0 rows;
-- `public.items`: 0 rows;
-- `public.resellers`: 0 rows;
-- `public.transactions`: 0 rows;
-- Security Advisor: 0 lints;
-- Performance Advisor: INFO-only unused-index notices expected on an empty/tiny homologation database.
+- deployment `dpl_FwpUedZ8gpMzCs5nLBjrv39V2FJs` is `READY`;
+- deployment target: `production` candidate hosting;
+- Git source branch: `develop`;
+- Git source revision: `768776e7da52da5051b7a69dec071d0481cd810d`;
+- project framework: Vite;
+- candidate aliases include `easy-v2-tau.vercel.app` and the `develop` branch alias;
+- only browser-safe Supabase values were configured: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`;
+- no service-role/database secret was placed in browser configuration.
 
-RLS policy inspection confirmed that the exposed business tables authorize authenticated CRUD/read through the server-side `is_easy_operator()` boundary, while `easy_operators` only exposes the current user's own allow-list row. This supports the designed denial boundary but is not substituted for the required live non-approved-user proof.
+This Vercel `production` target is still a **candidate/early-use publication under D-031**. It does not mean Git `main` was published or that the canonical final production cutover occurred.
 
-No Auth user, allow-list row or business row was created by this attempt.
+## 4. Real operator onboarding — PASS
 
-## 4. Vercel live preflight
+The intended operator created and confirmed a real account through the normal Supabase Auth flow. The initial redirect misconfiguration was corrected by setting the Supabase Auth Site URL / redirect allow-list to the Vercel candidate.
 
-The existing Vercel project `easy-v2` was inspected.
+The account then reached the expected fail-closed `Conta aguardando liberação` state before approval.
 
-Observed state:
+Through the trusted database boundary:
 
-- latest candidate deployment is READY but stale;
-- it points to `develop@d4d428e35a45af0691e80331dd8c7888a914355f`, which predates PR #72 runtime-first integration and current accepted `develop`;
-- therefore the accepted `develop@93500284f5b9105f0de7867a8676c31c7186d194` runtime has not yet been proven as the published candidate;
-- repository `vercel.json` still keeps Git-triggered Vercel deployments disabled, preserving the manual-deploy policy.
+- exactly one intended real Auth UUID was added to `public.easy_operators`;
+- the row is active;
+- no password, token, service key, email address or Auth UUID is recorded in Git documentation;
+- after approval, the operator used `Verificar novamente` and successfully entered the Easy candidate.
 
-The connected Vercel surface available in this execution environment exposes project/deployment inspection but does not expose a safe project-environment mutation for the two required variables. Its generic deployment action also rejected the attempted invocation before any deployment was created because the connector requires source-package fields that are not safely exposed by the available action schema.
+Final aggregate live state at closure:
 
-Result: no Vercel environment variable was changed and no new Vercel deployment was created by this attempt.
+- Auth users: 3;
+- active approved operators: 1;
+- inactive approved operators: 0;
+- authenticated users not in the active allow-list: 2;
+- categories: 0;
+- items: 0;
+- resellers: 0;
+- transactions: 0.
 
-## 5. Identity / operator blocker
+The clean-start dataset therefore remained structurally empty at acceptance; no legacy or synthetic business payload was introduced.
 
-The required intended operator identity does not yet exist in Supabase Auth. Creating a real operator through the normal Auth flow requires the operator's actual account credentials and browser interaction.
+## 5. Non-approved authenticated-user denial — PASS
 
-This execution must not invent an email/password, create a synthetic account and misrepresent it as the intended operator, or place credentials/UUIDs in Git/chat evidence.
+A separate real Auth account was created/confirmed and intentionally **not** added to `public.easy_operators`.
 
-Because there is no real Auth user yet:
+Two independent observations prove the denial boundary:
 
-- no UUID can legitimately be added to `public.easy_operators`;
-- the required live non-approved authenticated-user denial proof cannot be completed as specified;
-- the approved-operator clean-dataset load cannot be proven;
-- the initial manual JSON checkpoint cannot be generated/confirmed through the real candidate session;
-- the exact-24h browser freshness guard cannot be proven healthy for real early use.
+1. the real candidate UI kept that authenticated account at `Conta aguardando liberação`;
+2. a trusted SQL probe set the PostgreSQL request identity to that non-allow-listed Auth UUID under role `authenticated` and attempted an insert into `public.categories`.
 
-## 6. Outcome
+The RLS boundary rejected the business write. The probe ran inside an explicit rollback path and final verification returned:
 
-**P10-S3-I2-I3-C is not accepted and does not advance.**
+- `no_residual_write = true`;
+- categories after probe: 0.
 
-The correct state is:
+No test business row survived.
 
-`BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED — CURRENT NEXT ACTION`
+## 6. Approved-operator clean-dataset load — PASS
 
-No acceptance was fabricated. The runtime implementation remains integrated and ready; only real candidate publication/onboarding evidence is missing.
+After allow-list insertion, the intended operator rechecked authorization and successfully entered the Easy runtime.
 
-## 7. Exact completion procedure
+At the same time, direct database aggregate verification showed all canonical business tables still at zero rows. This is the expected D-031 clean-start state.
 
-Resume only P10-S3-I2-I3-C and complete these remaining steps in order:
+No legacy stable-v1 data was imported.
 
-1. in Vercel project `easy-v2`, set only the browser-safe `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` values for the candidate environment;
-2. manually deploy the accepted current `develop` revision, not `main`, and verify the deployment metadata points to that accepted revision;
-3. open the candidate and create/sign in the intended real operator through the normal Supabase Auth flow;
-4. capture the resulting Auth UUID privately and add only that UUID to `public.easy_operators` through a trusted admin/database boundary;
-5. separately authenticate a non-allow-listed user and prove business-data access is denied;
-6. sign in as the approved operator and prove the clean canonical dataset loads;
-7. export/download the first logical JSON backup, store it outside the browser and explicitly confirm the copy exists;
-8. verify recovery health reports the manual checkpoint inside the exact 24-hour freshness boundary and normal writes are enabled;
-9. begin controlled clean-start early use and record only non-secret evidence.
+## 7. First manual JSON recovery checkpoint — PASS
 
-## 8. Preserved boundaries
+From the approved candidate session, the operator:
+
+1. opened `Backup & Restore`;
+2. executed `Exportar Backup v2`;
+3. confirmed that the downloaded JSON recovery copy was stored outside the browser;
+4. clicked `Confirmar que guardei a cópia` in the same browser installation.
+
+The file contents/path are intentionally not uploaded to Git/chat/CI. Operator confirmation is the required local evidence because the browser cannot independently prove the filesystem destination.
+
+The accepted implementation records the export timestamp/filename in browser-local recovery metadata and only enables the confirmation action after an export exists.
+
+## 8. Exact-24h browser freshness guard — PASS
+
+The accepted runtime implements:
+
+- `RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000`;
+- missing/unconfirmed checkpoint => `writeBlocked = true`;
+- age `< 24h` after setup confirmation => `status = current` or `warning`, `writeBlocked = false`;
+- age `>= 24h` => `status = overdue`, `writeBlocked = true`.
+
+Because the operator exported and immediately confirmed the checkpoint in the same installation on 2026-08-25, the deterministic post-condition is inside the exact 24-hour healthy interval with normal browser writes enabled.
+
+The operator must continue creating/confirming a fresh JSON copy before the exact 24-hour limit expires if normal writes are to remain enabled.
+
+## 9. Supabase security/advisor closure
+
+Business security controls remain in force:
+
+- Supabase Auth session gate;
+- active `easy_operators` allow-list;
+- RLS on exposed business tables;
+- controlled PostgreSQL financial RPC boundary;
+- browser configuration uses only URL + publishable key.
+
+Performance Advisor remains INFO-only for currently unused indexes on the empty/tiny candidate database.
+
+Security Advisor now reports one Auth-level warning: `auth_leaked_password_protection` / `Leaked Password Protection Disabled`.
+
+Current official Supabase documentation states that leaked-password protection is available on **Pro Plan and above**. The project remains on Free because the accepted paid-infrastructure budget is US$0. Therefore:
+
+- the warning cannot be eliminated within the current budget/plan;
+- it is recorded as a residual early-use Auth risk, not suppressed or represented as zero lints;
+- it does not indicate an RLS/allow-list bypass;
+- operators should use unique, strong passwords;
+- definitive cutover remains separately gated and may revisit the Auth/durability posture.
+
+Reference: `https://supabase.com/docs/guides/auth/password-security`.
+
+## 10. Outcome
+
+**P10-S3-I2-I3-C is DONE / ACCEPTED.**
+
+The D-031 candidate now has objective evidence for:
+
+- correct manual `develop` publication;
+- browser-safe Supabase configuration;
+- intended real operator Auth onboarding;
+- trusted allow-list approval;
+- authenticated non-approved-user denial;
+- approved-operator clean dataset access;
+- first manual JSON checkpoint confirmation;
+- exact-24h browser freshness healthy post-condition.
+
+Controlled clean-start early use is now authorized.
+
+## 11. Preserved boundaries
 
 - P10-S3-I2-I2 remains ON HOLD and not passed.
 - No legacy real-store data was imported.
 - `main` remains untouched.
-- No canonical production URL was switched.
+- No canonical final production URL was switched by this slice.
 - No definitive cutover was enabled.
 - D-030 durability acceptance remains pending.
+- Supabase Free alone is not reclassified as adequate final backup.
+
+## 12. Next bounded action
+
+Proceed only to **P10-S3-I2-I3-D — controlled clean-start early-use observation**:
+
+- use the accepted candidate for real clean-start workflow;
+- keep the manual JSON recovery checkpoint fresher than the exact 24-hour boundary before normal writes;
+- collect concrete operational feedback, workflow friction and defects;
+- create repository/runtime changes only in response to observed feedback or an explicit operator instruction.
+
+Do not automatically resume I2-I2, import legacy data, publish/modify `main`, switch the canonical final production URL or claim definitive D-030/cutover acceptance.
