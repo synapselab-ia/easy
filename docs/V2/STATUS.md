@@ -90,58 +90,74 @@ The prior operator-local blocker is resolved.
 
 Vercel `easy-v2` evidence:
 
-- current candidate deployment `dpl_FwpUedZ8gpMzCs5nLBjrv39V2FJs` is `READY`;
+- accepted candidate deployment is `READY`;
 - source branch is `develop`;
-- source revision is `768776e7da52da5051b7a69dec071d0481cd810d`;
-- candidate aliases include `easy-v2-tau.vercel.app` and the `develop` alias;
 - browser configuration uses only `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`;
 - no browser/admin secret exposure was introduced.
 
-Supabase `easy-v2` (`hrmkkhqfyfoqucwbcszq`) evidence:
+Supabase `easy-v2` evidence:
 
 - intended real operator account created/confirmed through the normal Auth flow;
-- exactly one active operator is present in `public.easy_operators`;
+- exactly one active operator was approved through `public.easy_operators`;
 - separate authenticated non-approved account remained outside the allow-list and saw the expected waiting gate;
 - a trusted SQL/RLS denial probe for that non-approved Auth identity rejected a business-table insert and left 0 residual rows;
-- aggregate closure state: 3 Auth users, 1 active approved operator, 2 authenticated users outside the active allow-list;
-- categories/items/resellers/transactions: 0 each;
 - approved operator successfully loaded the clean candidate;
-- no legacy/synthetic business payload entered the canonical tables.
+- no legacy/synthetic business payload entered the canonical tables during onboarding.
 
 Manual recovery evidence:
 
 - approved operator exported the first Backup v2 JSON;
 - operator explicitly confirmed the file was stored outside the browser;
 - operator clicked `Confirmar que guardei a cópia` in the same installation;
-- accepted implementation deterministically places that installation inside the exact-24h healthy interval (`writeBlocked = false`) immediately after export + confirmation;
-- writes will fail closed again at age `>= 24h` unless a fresh export is generated/confirmed.
+- the accepted implementation deterministically places that installation inside the exact-24h healthy interval immediately after export + confirmation;
+- writes fail closed again at age `>= 24h` unless a fresh export is generated/confirmed.
 
 Supabase advisor note:
 
 - Performance Advisor remains INFO-only unused-index notices on the empty/tiny candidate database;
-- Security Advisor now reports `auth_leaked_password_protection` because leaked-password protection is disabled;
+- Security Advisor reports `auth_leaked_password_protection` because leaked-password protection is disabled;
 - official Supabase documentation states this feature is available on Pro Plan and above;
-- current paid-infrastructure budget remains US$0 / Free, so this is recorded as a known residual early-use Auth risk rather than misreported as zero lints;
+- current paid-infrastructure budget remains US$0 / Free, so this is a known residual early-use Auth risk rather than a false zero-lint claim;
 - Auth + allow-list + RLS remain proven and definitive cutover is still not authorized.
 
 **Result: P10-S3-I2-I3-C is DONE / ACCEPTED. Controlled clean-start early use is authorized.**
 
+## P10-S3-I2-I3-D early-use evidence — reseller PDF grouping
+
+A concrete operator request during early use required the reseller PDF to match the operational account format used by the business.
+
+Requested/implemented behavior:
+
+- each catalog item remains an independent product; no parent/child relationship is invented between moldura, placa, cristo or any other item;
+- equal order launches are grouped only when stable item identity/snapshot name, unit price and valid/reversed status match;
+- grouped quantity and subtotal are summed;
+- each order observation — currently used operationally for text such as the written name on a plaque — is rendered immediately below the corresponding grouped item;
+- the same catalog item at different unit prices remains in separate rows;
+- reversed rows remain separate from valid rows and retain reversal/correction audit notes;
+- payments and signals are moved to their own section below all order items;
+- period filtering, opening/period/closing balance semantics and occurrence-date filtering remain unchanged.
+
+Scope is presentation/reporting only: no schema, persistence, Auth/RLS, financial RPC or backup behavior changed.
+
+Implementation branch: `feat/i3d-group-reseller-pdf-items`.  
+PR: `#79`.
+
+First exact PR merge-ref implementation validation passed D-019; `QA_LEDGER.md` records the evidence. Documentation integration still requires a fresh exact-tree D-019 before merge. After successful integration, **I3-D remains CURRENT** for further real-use observation rather than advancing P10 automatically.
+
 ## Repository / evidence baseline
 
-Before this documentation-only closure:
+Before this early-use PDF change:
 
-- accepted `develop`: **`768776e7da52da5051b7a69dec071d0481cd810d`**, tree **`2700203423adf7be1ac3ba290cf38ed0873beda5`**;
+- accepted `develop`: **`7f2ed0095eca7fad92d04258b9cc3c6852ad04de`**;
 - stable `main`: **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**, tree **`57243d004c5b550d0f27576f0179b0033044088e`** — unchanged;
-- closure branch: `ops/p10-s3-i2-i3-c-operator-onboarding`.
-
-No runtime/schema change is required by this closure. D-019 remains mandatory before documentation integration.
+- feature branch: `feat/i3d-group-reseller-pdf-items`.
 
 ## Authoritative decisions
 
-D-001 through D-031 remain accepted with supersession/refinement relationships respected. No new architecture/product decision was required to complete I2-I3-C.
+D-001 through D-031 remain accepted with supersession/refinement relationships respected. This PDF change is an explicit I3-D operator-driven presentation requirement and does not require a new architecture decision.
 
 D-031 continues to control early-use sequencing while leaving D-030 durability acceptance pending.
 
 ## NEXT_ACTION
 
-**Execute only P10-S3-I2-I3-D — controlled clean-start early-use observation. Use the accepted Vercel/Supabase candidate for real clean-start workflows, keep the operator-confirmed manual JSON recovery checkpoint fresher than the exact 24-hour boundary before normal writes, and collect concrete operational feedback, workflow friction or defects. Do not proactively resume P10-S3-I2-I2, import legacy real-store data, modify/publish `main`, switch the canonical final production URL, enable definitive cutover or claim D-030 durability acceptance. Repository/runtime changes in I3-D must be driven by observed early-use evidence or an explicit operator instruction.**
+**Continue only P10-S3-I2-I3-D — operate the accepted clean-start candidate, keep the operator-confirmed manual JSON recovery checkpoint fresher than the exact 24-hour boundary before normal writes, and collect concrete operational feedback, workflow friction or defects. Repository/runtime changes must continue to be driven by observed early-use evidence or an explicit operator instruction. Do not proactively resume P10-S3-I2-I2, import legacy real-store data, modify/publish `main`, switch the canonical final production URL, enable definitive cutover or claim D-030 durability acceptance.**
