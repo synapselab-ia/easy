@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Backlog
 
-**Updated:** 2026-08-21
+**Updated:** 2026-08-25
 
 This backlog records current ordered work. Historical implementation detail remains in phase execution documents and Git history.
 
@@ -95,57 +95,53 @@ PR #72 implemented:
 
 **Status:** `DONE / INTEGRATED`
 
-Evidence:
-
-- synchronized head: `6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`;
-- exact merge ref: `77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`;
-- validated tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
-- D-019 run/job: `32502664982` / `96835725075`;
-- lint: 0 errors / 82 warnings;
-- Vitest: 57 files / 240 PASS;
-- Playwright: 17/17 PASS;
-- production build: PASS;
-- squash-integrated `develop`: `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
-- integrated tree equals validated merge-ref tree: PASS;
-- `main` unchanged at `9574e3a4097ddd78ab1f75a13b9ea065287946e9` / tree `57243d004c5b550d0f27576f0179b0033044088e`.
+Accepted integration evidence remains in `QA_LEDGER.md` and the runtime execution record. Stable `main` remained untouched.
 
 ### P10-S3-I2-I3-C — Manual Vercel candidate + operator onboarding
 
-**Status:** `CURRENT / BLOCKED — OPERATOR-LOCAL COMPLETION REQUIRED`
+**Status:** `DONE / ACCEPTED`
 
-Preflight completed on 2026-08-21:
+Completed on 2026-08-25:
 
-- Supabase `easy-v2` healthy;
-- current publishable key exists;
-- temporary D-031 automated recovery guard remains disabled as designed;
-- 0 Auth users / 0 approved operators / 0 business rows;
-- Security Advisor: 0 lints;
-- operator-bound RLS policies present;
-- latest Vercel `easy-v2` READY deployment is stale at `develop@d4d428e35a45af0691e80331dd8c7888a914355f`;
-- accepted `develop@93500284f5b9105f0de7867a8676c31c7186d194` was not published by this attempt;
-- no Vercel env variable or deployment was changed because the connected execution surface did not expose a safe env mutation/source-package deploy path;
-- no real Auth account was fabricated, so allow-list insertion, live unauthorized-user denial, approved-user load and initial manual JSON checkpoint remain pending.
+- Vercel `easy-v2` manually published `develop@768776e7da52da5051b7a69dec071d0481cd810d` as a READY candidate;
+- only `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` were configured for the browser runtime;
+- intended real operator account created/confirmed through normal Supabase Auth;
+- exactly one real operator UUID added to the active `easy_operators` allow-list through the trusted DB boundary;
+- separate authenticated non-approved user remained at the waiting gate;
+- database/RLS denial probe rejected a business write from that non-allow-listed identity and left no residue;
+- approved operator loaded the clean canonical dataset;
+- categories/items/resellers/transactions remained 0 at acceptance;
+- first Backup v2 JSON was exported, stored outside the browser and explicitly confirmed by the operator;
+- exact-24h browser recovery guard entered the healthy/current interval for the same installation.
+
+Known plan-limited note:
+
+- Supabase Security Advisor now reports the Auth warning `auth_leaked_password_protection`;
+- official Supabase docs state leaked-password protection requires Pro or above;
+- current paid-infrastructure budget is US$0 / Free, so the warning is recorded as residual early-use risk rather than hidden or treated as D-030 acceptance.
 
 Evidence: `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md`.
 
-Complete only the remaining steps:
+### P10-S3-I2-I3-D — Controlled clean-start early-use observation
 
-1. set only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel `easy-v2`;
-2. manually deploy the accepted current `develop` revision, not `main`;
-3. create/sign in the intended real Auth account through the normal application/Auth flow;
-4. add only that real Auth user UUID to `public.easy_operators` through a trusted admin/database path;
-5. prove a non-approved authenticated user cannot access business data;
-6. confirm the approved operator can load the clean canonical dataset;
-7. export/download/store the first logical JSON recovery checkpoint and explicitly confirm it exists;
-8. verify the browser exact-24h manual-backup freshness guard becomes healthy for normal writes;
-9. begin controlled clean-start early use and collect operational feedback.
+**Status:** `CURRENT`
 
-Do not include in this slice:
+Use the accepted candidate for actual clean-start workflows and collect concrete operational evidence.
+
+Required operating boundary:
+
+1. keep the manual Backup v2 recovery copy fresher than the exact 24-hour boundary before normal writes;
+2. record concrete workflow friction, defects or missing behavior when observed;
+3. implement changes only in response to actual early-use evidence or an explicit operator instruction;
+4. keep Supabase/Postgres canonical and preserve Auth/RLS/allow-list + controlled financial RPC semantics;
+5. continue manual Vercel publication policy while this is candidate/early-use mode.
+
+Do not include in I3-D unless separately authorized:
 
 - resuming I2-I2 trusted-PC/seven-day proof;
 - importing stable-v1 real-store data;
 - publishing/modifying `main`;
-- switching the canonical production URL;
+- switching the canonical final production URL;
 - declaring definitive production cutover or D-030 acceptance.
 
 ### P10-S3-I2-I4 — Legacy real-data migration
@@ -162,4 +158,4 @@ A later explicit gate must settle durability (complete D-030 or accept a replace
 
 ## Current NEXT_ACTION
 
-**P10-S3-I2-I3-C only — complete the operator-local publication/Auth/allow-list/denial/manual-JSON steps above.** See `docs/V2/STATUS.md` for the exact bounded instruction.
+**P10-S3-I2-I3-D only — operate the accepted clean-start candidate, keep the confirmed JSON recovery checkpoint inside the exact 24-hour freshness boundary, and collect concrete early-use feedback. Repository/runtime work must be driven by observed evidence or explicit operator instruction.** See `docs/V2/STATUS.md` for the exact bounded instruction.
