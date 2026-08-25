@@ -164,13 +164,26 @@ Reference: `https://supabase.com/docs/guides/auth/password-security`.
 
 Definitive cutover remains separately gated.
 
-## P10-S3-I2-I3-C documentation closure — D-019 PENDING
+## P10-S3-I2-I3-C documentation closure — PRE-FINAL D-019 PASS
 
-Closure branch: `ops/p10-s3-i2-i3-c-operator-onboarding`.
+PR #78: `docs(v2): accept P10-S3-I2-I3-C operator onboarding`.
 
-This closure is documentation-only. It records operator-local evidence and advances the canonical `NEXT_ACTION` to controlled early-use observation.
+The first closure tree passed D-019 on the exact GitHub-generated PR merge ref:
 
-Before integration, the exact PR merge-ref tree must pass D-019. Objective failure blocks merge. Final run/job evidence is recorded in the PR closure and, if necessary, this ledger before integration.
+- feature head: `e4f79f3e492aab758167c2f83d7f2cc19d96b1c0`;
+- exact merge ref checked out by Actions: `379b544b70fc07a7b78ccb7b71f2a0a5df26d260`;
+- Critical QA run: `32879740830`;
+- job: `97906074289`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 57 files / 240 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS.
+
+Checkout evidence explicitly fetched `379b544b70fc07a7b78ccb7b71f2a0a5df26d260` into `refs/remotes/pull/78/merge` and checked out that ref before `npm run qa:critical`.
+
+Known warnings/debt remained non-blocking: React `act(...)`, mocked-select hydration, existing lint warnings, 17 npm-audit findings, Actions Node deprecation and Vite chunk-size notice.
+
+This QA-ledger evidence commit necessarily changes the PR tree after run `32879740830`. Therefore that run is recorded as **PRE-FINAL PASS**, not used as the final integration gate. A new D-019 run on the newly generated exact PR merge ref is mandatory. No repository commit may be made after that final successful run before integration.
 
 ## Known non-blocking debt
 
@@ -189,7 +202,8 @@ When objective D-019 commands pass, the following remain non-blocking unless lat
 
 - D-031 governance/docs: **PASS / INTEGRATED**.
 - P10-S3-I2-I3 runtime repository integration: **PASS / INTEGRATED**.
-- P10-S3-I2-I3-C live Vercel/Auth/RLS/manual-checkpoint evidence: **PASS / ACCEPTED — repository documentation closure awaiting D-019 integration gate**.
+- P10-S3-I2-I3-C live Vercel/Auth/RLS/manual-checkpoint evidence: **PASS / ACCEPTED**.
+- P10-S3-I2-I3-C repository documentation closure: **PRE-FINAL D-019 PASS — FINAL EXACT-TREE RERUN REQUIRED**.
 - P10-S3-I2-I3-D controlled early-use observation: **NEXT after closure integration**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
