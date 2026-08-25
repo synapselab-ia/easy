@@ -2,6 +2,8 @@ import React from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { getEasySupabaseClient, isEasySupabaseConfigured } from '@/lib/supabase';
 import { isCurrentUserApprovedOperator, refreshCloudCache } from '@/services/cloudDataService';
+import { refreshCloudRecoveryHealth } from '@/services/cloudRecoveryHealth';
+import { clearCloudRecoveryHealth } from '@/services/recoveryHealth';
 
 interface CloudAuthGateProps {
     children: React.ReactNode;
@@ -24,6 +26,7 @@ export default function CloudAuthGate({ children }: CloudAuthGateProps) {
         setMessage(undefined);
 
         if (!nextSession) {
+            clearCloudRecoveryHealth();
             setState('signed-out');
             return;
         }
@@ -32,13 +35,16 @@ export default function CloudAuthGate({ children }: CloudAuthGateProps) {
         try {
             const approved = await isCurrentUserApprovedOperator();
             if (!approved) {
+                clearCloudRecoveryHealth();
                 setState('denied');
                 return;
             }
 
             await refreshCloudCache();
+            await refreshCloudRecoveryHealth();
             setState('approved');
         } catch (error) {
+            clearCloudRecoveryHealth();
             setMessage(error instanceof Error ? error.message : 'Falha ao conectar ao banco online.');
             setState('error');
         }
@@ -54,6 +60,7 @@ export default function CloudAuthGate({ children }: CloudAuthGateProps) {
         client.auth.getSession().then(({ data, error }) => {
             if (!active) return;
             if (error) {
+                clearCloudRecoveryHealth();
                 setMessage(error.message);
                 setState('error');
                 return;
@@ -117,6 +124,7 @@ export default function CloudAuthGate({ children }: CloudAuthGateProps) {
     const handleLogout = async () => {
         setBusy(true);
         try {
+            clearCloudRecoveryHealth();
             await getEasySupabaseClient().auth.signOut();
         } finally {
             setBusy(false);
