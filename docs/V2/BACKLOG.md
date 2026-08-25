@@ -103,20 +103,19 @@ Accepted integration evidence remains in `QA_LEDGER.md` and the runtime executio
 
 Completed on 2026-08-25:
 
-- Vercel `easy-v2` manually published `develop@768776e7da52da5051b7a69dec071d0481cd810d` as a READY candidate;
+- Vercel `easy-v2` manually published the accepted `develop` candidate;
 - only `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` were configured for the browser runtime;
 - intended real operator account created/confirmed through normal Supabase Auth;
 - exactly one real operator UUID added to the active `easy_operators` allow-list through the trusted DB boundary;
 - separate authenticated non-approved user remained at the waiting gate;
 - database/RLS denial probe rejected a business write from that non-allow-listed identity and left no residue;
 - approved operator loaded the clean canonical dataset;
-- categories/items/resellers/transactions remained 0 at acceptance;
 - first Backup v2 JSON was exported, stored outside the browser and explicitly confirmed by the operator;
 - exact-24h browser recovery guard entered the healthy/current interval for the same installation.
 
 Known plan-limited note:
 
-- Supabase Security Advisor now reports the Auth warning `auth_leaked_password_protection`;
+- Supabase Security Advisor reports the Auth warning `auth_leaked_password_protection`;
 - official Supabase docs state leaked-password protection requires Pro or above;
 - current paid-infrastructure budget is US$0 / Free, so the warning is recorded as residual early-use risk rather than hidden or treated as D-030 acceptance.
 
@@ -135,6 +134,25 @@ Required operating boundary:
 3. implement changes only in response to actual early-use evidence or an explicit operator instruction;
 4. keep Supabase/Postgres canonical and preserve Auth/RLS/allow-list + controlled financial RPC semantics;
 5. continue manual Vercel publication policy while this is candidate/early-use mode.
+
+#### Early-use change #1 — reseller PDF grouped by product
+
+**Status:** `IMPLEMENTED / VALIDATED — PR #79 INTEGRATION GATE`
+
+Explicit operator instruction from real workflow usage:
+
+- group equal order launches into one product row;
+- sum quantity/subtotal;
+- print each order observation/name immediately below that product;
+- keep moldura, placa, cristo and every other catalog item independent;
+- do not merge same-item sales at different unit prices or valid rows with reversed rows;
+- keep reversal/correction audit notes visible;
+- place payments/signals in a separate section below all order items;
+- preserve existing period/balance/occurrence semantics.
+
+Implementation affects only PDF presentation/reporting. No schema, canonical persistence, Auth/RLS or financial RPC behavior changes.
+
+First exact merge-ref D-019 passed. Final documentation-tree D-019 remains mandatory before PR #79 integration. I3-D remains current after this change.
 
 Do not include in I3-D unless separately authorized:
 
@@ -158,4 +176,4 @@ A later explicit gate must settle durability (complete D-030 or accept a replace
 
 ## Current NEXT_ACTION
 
-**P10-S3-I2-I3-D only — operate the accepted clean-start candidate, keep the confirmed JSON recovery checkpoint inside the exact 24-hour freshness boundary, and collect concrete early-use feedback. Repository/runtime work must be driven by observed evidence or explicit operator instruction.** See `docs/V2/STATUS.md` for the exact bounded instruction.
+**P10-S3-I2-I3-D only — continue operating the accepted clean-start candidate, keep the confirmed JSON recovery checkpoint inside the exact 24-hour freshness boundary, and collect concrete early-use feedback. Repository/runtime work must remain driven by observed evidence or explicit operator instruction.** See `docs/V2/STATUS.md` for the exact bounded instruction.
