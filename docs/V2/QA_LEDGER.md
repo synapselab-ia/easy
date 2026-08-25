@@ -45,7 +45,7 @@ Final PR #79 evidence:
 
 No runtime/schema/Auth/recovery boundary changed in that PDF-only change.
 
-## P10-S3-I2-I3-D early-use change #2 — D-032 store-global manual recovery checkpoint
+## P10-S3-I2-I3-D early-use change #2 — D-032 store-global manual recovery checkpoint — FINAL PASS / INTEGRATED
 
 ### Database / policy proof — PASS
 
@@ -76,37 +76,35 @@ Transactional synthetic proof was run through the trusted database boundary and 
 Supabase advisors after DDL:
 
 - no new RLS/schema security finding from D-032;
-- existing `auth_leaked_password_protection` WARN remains because the Free plan does not provide that Pro+ protection;
+- existing `auth_leaked_password_protection` WARN remains a known Free-plan residual risk;
 - Performance Advisor reports only INFO unused-index notices, including the newly empty recovery table index.
-
-### Targeted implementation tests
-
-New/updated coverage includes:
-
-- cloud recovery service mapping of global health;
-- export event registration;
-- explicit confirmation event registration;
-- fail-closed behavior when cloud health cannot be loaded;
-- cloud-mode recoveryHealth routing without changing local-mode D-024 semantics;
-- UI wiring for cloud export/confirmation.
 
 ### Implementation-tree D-019 — PASS
 
-PR #80 implementation head before canonical-document updates:
+Before canonical-document closure:
 
 - feature head: `246947c673ec13b840cb073e8b1b9e5c5d0efb3a`;
-- exact GitHub-generated merge ref checked out by Actions: `06ecd1e6bde178486d38464d8277075cf866121c`;
-- Critical QA run/job: `32889131712` / `97936610378`;
+- exact merge ref: `06ecd1e6bde178486d38464d8277075cf866121c`;
+- run/job: `32889131712` / `97936610378`;
 - ESLint: 0 errors / 82 warnings;
 - Vitest: 59 files / 251 tests PASS;
 - Playwright: 17/17 PASS;
 - production build: PASS.
 
-This run validates the complete implementation before canonical-document closure. Because the documentation changes alter the PR tree, one fresh exact-tree D-019 is mandatory before PR #80 integration.
+### Final exact-tree PR #80 D-019 — PASS
 
-### Final exact-tree rule
+After the canonical implementation documents were frozen:
 
-The final PR #80 run identifiers are recorded in PR metadata after the last documentation commit. No repository commit may occur after that successful exact-tree validation before merge. On that condition, the D-032 repository integration is accepted.
+- final feature head: `410bafe792233731561ec2d3aa1d2b38f573fea1`;
+- exact GitHub-generated merge ref checked out by Actions: `cc0b740de4c419a73cfc0c1af6f8ab26729be3b2`;
+- validated tree: `4c1ee6e48af6365b5c96d74f6a5267f1fb3a830e`;
+- Critical QA run/job: `32891655554` / `97944738069`;
+- ESLint: 0 errors / 82 warnings;
+- Vitest: 59 files / 251 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS.
+
+No repository commit occurred on PR #80 after this exact-tree run. PR #80 was squash-integrated into `develop` as `dbcc2a25394aa09f63d9232e771c9e9278db1fd0`, whose tree is exactly `4c1ee6e48af6365b5c96d74f6a5267f1fb3a830e`. Tree equivalence: PASS.
 
 ## Known non-blocking debt
 
@@ -126,8 +124,8 @@ When objective D-019 commands pass, the following remain non-blocking unless lat
 - D-031 governance/runtime/onboarding: **PASS / INTEGRATED**.
 - I3-D grouped reseller PDF: **PASS / INTEGRATED**.
 - D-032 production database migration/policy proof: **PASS**.
-- D-032 implementation-tree repository QA: **PASS**.
-- D-032 canonical-document exact-tree QA: **REQUIRED ON FINAL PR #80 HEAD BEFORE MERGE**.
-- first **real** global checkpoint after updated Vercel publication: **OPERATOR-LOCAL ROLLOUT STEP — NOT TO BE FABRICATED FROM THE OLD PER-BROWSER CHECKPOINT**.
+- D-032 final exact-tree repository QA: **PASS**.
+- D-032 repository integration/tree equivalence: **PASS**.
+- first **real** global checkpoint after updated Vercel publication: **OPERATOR-LOCAL ROLLOUT STEP — PENDING / MUST NOT BE FABRICATED FROM THE OLD PER-BROWSER CHECKPOINT**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
