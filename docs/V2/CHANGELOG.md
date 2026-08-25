@@ -2,6 +2,31 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-25 — I3-D early-use feedback: reseller PDF grouped by product
+
+A concrete operator request from controlled early use changed the reseller PDF presentation without changing financial persistence or business-history semantics.
+
+Implemented behavior:
+
+- equal order launches are grouped only when stable item identity/snapshot name, unit price and valid/reversed status match;
+- grouped quantity and subtotal are summed;
+- each order observation — operationally used for text such as the written name on a plaque — is printed immediately below its grouped product;
+- catalog items remain independent: moldura, placa, cristo and any other item are never treated as parent/child products merely for report layout;
+- the same item sold at different unit prices remains in separate rows;
+- valid and reversed launches remain separate, with reversal/correction audit notes preserved;
+- payments and signals are moved to a dedicated section below all order items;
+- existing date-range filtering, `occurredAt` semantics and statement opening/movement/closing balances remain unchanged.
+
+The change is reporting/presentation only. It does not alter Supabase schema, canonical persistence, Auth/RLS, `easy_operators`, financial RPC behavior, JSON backup/restore or the D-031 recovery boundary.
+
+PR #79 carries the implementation and expanded PDF tests. Its first exact GitHub merge-ref validation passed D-019 on implementation head `4f31066fe3e4b962492a33ce058aed367dec34e0`, merge ref `45f93996be1c85c6457f95c523f39a30e204f748`, run/job `32884605838` / `97921988064`: 0 lint errors / 82 warnings; 57 files / 242 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+
+Canonical documentation was updated after that implementation-tree run, so a fresh exact-tree D-019 remains mandatory before PR #79 integration. P10-S3-I2-I3-D remains CURRENT after this bounded change; further runtime work must continue to be driven by concrete early-use evidence or explicit operator instruction.
+
+`main` remains untouched, no legacy real-store data is imported, D-030 unattended durability proof stays ON HOLD and no definitive production cutover is claimed.
+
+---
+
 ## 2026-08-25 — P10-S3-I2-I3-C candidate onboarding accepted; controlled clean-start early use enabled
 
 The operator-local D-031 onboarding blocker was resolved without changing runtime/schema code or touching `main`.
@@ -37,7 +62,7 @@ The D-031 candidate onboarding action was attempted against the real Vercel/Supa
 Live findings:
 
 - Supabase `easy-v2` is healthy and remains empty: 0 Auth users, 0 approved operators and 0 business rows;
-- the temporary D-031 automated recovery guard remains explicitly disabled for manual-JSON early-use mode;
+- the temporary D-031 automated recovery guard remains explicitly disabled as designed;
 - Supabase Security Advisor returned 0 lints;
 - business-table RLS remains bound to the approved-operator boundary;
 - Vercel `easy-v2` latest READY deployment is stale at `develop@d4d428e35a45af0691e80331dd8c7888a914355f`;
@@ -62,7 +87,7 @@ Final evidence:
 - validated merge-ref tree: `4ed336e4d05dc95df1abba7a9894d1b10abcd49b`;
 - Critical QA run/job: `32502664982` / `96835725075`;
 - ESLint: 0 errors / 82 warnings;
-- Vitest: 57 files / 240 tests PASS;
+- Vitest: 57 files / 240 PASS;
 - Playwright: 17/17 PASS;
 - production build: PASS;
 - PR #72 marked ready and squash-integrated to `develop` as `8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`;
