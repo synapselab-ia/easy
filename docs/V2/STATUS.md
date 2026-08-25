@@ -12,31 +12,31 @@
 
 Current P10-S3 state:
 
-- P10-S3-I1 — Supabase foundation with synthetic data only: `DONE / ACCEPTED`.
-- P10-S3-I2 — Migration/reconciliation + durability contract: `DONE / ACCEPTED CONTRACT` — D-030.
-- P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility: `DONE / ACCEPTED — SYNTHETIC ONLY`.
-- **P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof: `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`.**
-- **P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate: `DONE / INTEGRATED — AUTHORIZED FOR CONTROLLED EARLY USE` — D-031.**
-- **P10-S3-I2-I3-C — Manual Vercel candidate + operator onboarding: `DONE / ACCEPTED`.**
-- **P10-S3-I2-I3-D — Controlled clean-start early-use observation: `CURRENT`.**
-- P10-S3-I2-I4 — Legacy real-data migration/reconciliation: `ON_HOLD / NOT REQUIRED FOR THE CURRENT CLEAN-START EARLY-USE PATH`.
+- P10-S3-I1 — Supabase foundation: `DONE / ACCEPTED — SYNTHETIC FOUNDATION`.
+- P10-S3-I2 — migration/reconciliation + durability contract: `DONE / ACCEPTED CONTRACT` — D-030.
+- P10-S3-I2-I1 — legacy stable-v1 staging/import compatibility: `DONE / ACCEPTED — SYNTHETIC ONLY`.
+- **P10-S3-I2-I2 — zero-cost unattended backup/recovery proof: `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`.**
+- **P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate: `DONE / ACCEPTED — AUTHORIZED FOR CONTROLLED EARLY USE` — D-031.**
+- **P10-S3-I2-I3-C — manual Vercel candidate + operator onboarding: `DONE / ACCEPTED`.**
+- **P10-S3-I2-I3-D — controlled clean-start early-use observation: `CURRENT`.**
+  - change #1 grouped reseller PDF: `DONE / INTEGRATED` — PR #79;
+  - change #2 store-global manual recovery checkpoint: `DONE / ACCEPTED TARGET STATE` — D-032 / PR #80, conditional on the exact-tree D-019 recorded in PR metadata before integration.
+- P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
-## Critical governance override — D-031
+## Governing decisions
 
-D-031 authorizes a runtime-first controlled early-use candidate before the D-030 unattended off-site backup proof is completed. It changes sequencing only; it does not claim D-030 passed.
+D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 refines only the temporary manual JSON recovery control for the hosted cloud candidate:
 
-Therefore:
-
-1. P10-S3-I2-I2 stays pending but **ON HOLD** and is not the current action.
-2. Supabase/Postgres is canonical business persistence for the controlled candidate.
-3. Supabase Auth/RLS plus the server-managed `easy_operators` allow-list remain mandatory.
-4. During temporary early use, logical JSON backup is the active recovery path and normal browser writes remain fail-closed when the last confirmed JSON recovery copy reaches the exact 24-hour boundary.
-5. The automated D-030 server recovery-health acceptance proof remains pending/disabled for early-use mode; it is not silently accepted.
-6. Early use is **clean start**: no legacy real-store migration/import is required or authorized.
-7. `main` stays untouched. Vercel remains candidate hosting and deployment remains manual.
-8. Definitive production/canonical cutover remains a later explicit gate; D-030 durability must eventually be completed or replaced by a separately accepted durability decision.
-
-Authoritative governance record: `docs/V2/P10_RUNTIME_FIRST_GOVERNANCE.md`.
+1. Supabase/Postgres remains canonical business persistence.
+2. Supabase Auth + RLS + active `easy_operators` authorization remain mandatory.
+3. In hosted cloud mode, the accepted manual JSON recovery checkpoint is **store-global**, not per-browser.
+4. An approved operator export is recorded in Supabase with server time; a separate explicit confirmation is required after the operator verifies that the JSON was actually stored outside the Easy.
+5. Once the global manual mode has been initialized, the latest confirmed export is shared by all approved operators/devices and normal business writes are blocked at the exact age `>= 24h`.
+6. The database enforces that boundary in addition to the browser. A browser that cannot verify current global health fails closed for writes.
+7. The historical local/no-cloud path retains the existing D-024 local-storage behavior; D-032 does not convert local mode into shared state.
+8. This manual global checkpoint remains a temporary D-031 recovery mechanism. It does **not** prove off-site durability, retained generations or restore drills and therefore does not satisfy D-030.
+9. D-030 automated recovery enforcement, when later enabled, takes precedence over this temporary manual mechanism.
+10. `main` stays untouched; Vercel remains manual candidate hosting; definitive cutover remains a later explicit gate.
 
 ## Startup protocol for a new conversation
 
@@ -55,7 +55,7 @@ Then inspect only evidence required by `NEXT_ACTION`.
 Precedence when documents conflict:
 
 1. current `STATUS.md` and its `NEXT_ACTION`;
-2. accepted decisions in `DECISIONS.md`, especially the newest applicable decision;
+2. newest applicable accepted decision in `DECISIONS.md`;
 3. current `BACKLOG.md`;
 4. phase execution/history documents.
 
@@ -63,101 +63,88 @@ Phase-specific evidence relevant now:
 
 - `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md` — D-029 final architecture.
 - `docs/V2/P10_S3_I2_MIGRATION_GATE.md` — D-030 migration/durability contract.
-- `docs/V2/P10_S3_I2_I2_EXECUTION.md` — implemented automated-recovery prerequisite and historical blocker evidence; ON HOLD.
+- `docs/V2/P10_S3_I2_I2_EXECUTION.md` — automated-recovery prerequisite; operator-local proof ON HOLD.
 - `docs/V2/P10_RUNTIME_FIRST_GOVERNANCE.md` — D-031 sequencing/early-use authority.
-- `docs/V2/P10_S3_I2_I3_RUNTIME_FIRST_EXECUTION.md` — accepted runtime-first implementation/integration evidence.
-- `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md` — accepted live candidate/operator/checkpoint evidence.
+- `docs/V2/P10_S3_I2_I3_RUNTIME_FIRST_EXECUTION.md` — accepted runtime-first implementation.
+- `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md` — original per-installation onboarding checkpoint evidence; retained historically and refined for cloud operation by D-032.
+- `docs/V2/P10_S3_I2_I3_D_GLOBAL_RECOVERY_CHECKPOINT.md` — D-032 implementation/database proof and rollout boundary.
 
 ## Current technical baseline
 
-Accepted candidate runtime behavior:
+Hosted candidate behavior after D-032 integration:
 
-- Supabase/Postgres is canonical business persistence;
-- Supabase Auth session gate + `easy_operators` authorization check protects access;
-- category/item/reseller writes go to Supabase;
-- financial writes use the controlled PostgreSQL RPC boundary;
-- Dexie is a read cache/mirror for existing reports/search, not authoritative persistence;
+- canonical business data lives in Supabase/Postgres;
+- `CloudAuthGate` requires an authenticated approved operator;
+- category/item/reseller writes use RLS-protected Supabase tables;
+- financial writes stay inside controlled PostgreSQL RPC transactions;
+- Dexie is a read cache/mirror, not authoritative cloud persistence;
 - JSON export reads canonical Supabase data;
-- approved-operator JSON restore is server-atomic, checkpointed and post-restore verified;
-- early-use manual-JSON recovery mode keeps the browser exact-24h freshness guard;
-- no legacy real-data migration is part of this clean-start path.
+- approved-operator JSON restore remains database-atomic, checkpointed and post-restore verified;
+- `public.manual_recovery_events` stores append-only export/confirmation events shared by approved operators;
+- `public.get_manual_recovery_health()` exposes the current global confirmed checkpoint plus the current operator's pending export;
+- cloud clients hydrate/poll global recovery health and do not use per-browser state as the cloud authority;
+- the database business-write guard enforces the exact-24h global checkpoint after the manual mode is initialized;
+- no legacy real-data migration is part of the clean-start path.
 
-The D-030 trusted-PC unattended dump/rclone/retention/restore tooling remains implemented, but its operator-local acceptance proof is deferred under D-031.
+The D-030 trusted-PC dump/rclone/retention/restore tooling remains implemented but its real operator-local acceptance proof remains ON HOLD.
 
-## P10-S3-I2-I3-C acceptance — 2026-08-25
+## Accepted early-use evidence
 
-The prior operator-local blocker is resolved.
+### Candidate onboarding — I3-C
 
-Vercel `easy-v2` evidence:
+- manual Vercel candidate from `develop` was proven READY;
+- only browser-safe Supabase URL + publishable key were configured;
+- one intended operator was approved via `easy_operators`;
+- a separate authenticated non-approved user remained denied by UI/RLS;
+- approved operator loaded the clean canonical dataset;
+- first manual JSON copy was exported and explicitly confirmed outside the browser;
+- no legacy real-store data entered the canonical database.
 
-- accepted candidate deployment is `READY`;
-- source branch is `develop`;
-- browser configuration uses only `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`;
-- no browser/admin secret exposure was introduced.
+That first checkpoint was historically per installation. D-032 supersedes only that cloud-state topology for subsequent hosted operation.
 
-Supabase `easy-v2` evidence:
+### Early-use change #1 — reseller PDF grouping
 
-- intended real operator account created/confirmed through the normal Auth flow;
-- exactly one active operator was approved through `public.easy_operators`;
-- separate authenticated non-approved account remained outside the allow-list and saw the expected waiting gate;
-- a trusted SQL/RLS denial probe for that non-approved Auth identity rejected a business-table insert and left 0 residual rows;
-- approved operator successfully loaded the clean candidate;
-- no legacy/synthetic business payload entered the canonical tables during onboarding.
+PR #79 is integrated into `develop` as `3c0fe29c62dd72d6acdcd3fc217ba392d4f2aa04`.
 
-Manual recovery evidence:
+Final PR #79 evidence:
 
-- approved operator exported the first Backup v2 JSON;
-- operator explicitly confirmed the file was stored outside the browser;
-- operator clicked `Confirmar que guardei a cópia` in the same installation;
-- the accepted implementation deterministically places that installation inside the exact-24h healthy interval immediately after export + confirmation;
-- writes fail closed again at age `>= 24h` unless a fresh export is generated/confirmed.
+- final head `3d3cab2490f504d0464d722d08079dfb9fcdcb8c`;
+- exact merge ref `f74af101e2335e7ca3dd4c52d51e46c3118de791`;
+- run/job `32885324610` / `97924299040`;
+- ESLint 0 errors / 82 warnings;
+- Vitest 57 files / 242 tests PASS;
+- Playwright 17/17 PASS;
+- production build PASS.
 
-Supabase advisor note:
+### Early-use change #2 — store-global manual recovery checkpoint
 
-- Performance Advisor remains INFO-only unused-index notices on the empty/tiny candidate database;
-- Security Advisor reports `auth_leaked_password_protection` because leaked-password protection is disabled;
-- official Supabase documentation states this feature is available on Pro Plan and above;
-- current paid-infrastructure budget remains US$0 / Free, so this is a known residual early-use Auth risk rather than a false zero-lint claim;
-- Auth + allow-list + RLS remain proven and definitive cutover is still not authorized.
+Explicit operator instruction required one confirmed manual backup to protect all approved devices rather than each browser maintaining an independent 24-hour clock.
 
-**Result: P10-S3-I2-I3-C is DONE / ACCEPTED. Controlled clean-start early use is authorized.**
+Implemented/proven on PR #80:
 
-## P10-S3-I2-I3-D early-use evidence — reseller PDF grouping
+- production Supabase migration `20260825191150_global_manual_recovery_checkpoint` applied;
+- append-only recovery-event table has RLS enabled;
+- `anon` has no access; `authenticated` has only SELECT/INSERT subject to approved-operator policies; UPDATE/DELETE are not granted;
+- non-allow-listed authenticated identity was denied;
+- approved operator could not confirm before a pending export existed;
+- export + explicit confirmation returned shared global health;
+- fresh checkpoint allowed a business write in synthetic transactional proof;
+- at the exact 24-hour boundary the same write boundary returned SQLSTATE `55000` / blocked;
+- all synthetic events/business rows were rolled back and final counts returned to zero;
+- automated D-030 guard remains disabled under D-031 and is not claimed accepted;
+- Security Advisor introduced no new schema/RLS finding; the known Free-plan leaked-password warning remains;
+- implementation-tree D-019 run `32889131712` / job `97936610378` passed: 0 lint errors / 82 warnings; 59 files / 251 Vitest PASS; 17/17 Playwright PASS; production build PASS.
 
-A concrete operator request during early use required the reseller PDF to match the operational account format used by the business.
+PR #80 must still pass one exact-tree D-019 after these canonical-document changes. That final run is authoritative in PR metadata; no repository commit may occur afterward before integration.
 
-Requested/implemented behavior:
+## Repository baseline for PR #80
 
-- each catalog item remains an independent product; no parent/child relationship is invented between moldura, placa, cristo or any other item;
-- equal order launches are grouped only when stable item identity/snapshot name, unit price and valid/reversed status match;
-- grouped quantity and subtotal are summed;
-- each order observation — currently used operationally for text such as the written name on a plaque — is rendered immediately below the corresponding grouped item;
-- the same catalog item at different unit prices remains in separate rows;
-- reversed rows remain separate from valid rows and retain reversal/correction audit notes;
-- payments and signals are moved to their own section below all order items;
-- period filtering, opening/period/closing balance semantics and occurrence-date filtering remain unchanged.
-
-Scope is presentation/reporting only: no schema, persistence, Auth/RLS, financial RPC or backup behavior changed.
-
-Implementation branch: `feat/i3d-group-reseller-pdf-items`.  
-PR: `#79`.
-
-First exact PR merge-ref implementation validation passed D-019; `QA_LEDGER.md` records the evidence. Documentation integration still requires a fresh exact-tree D-019 before merge. After successful integration, **I3-D remains CURRENT** for further real-use observation rather than advancing P10 automatically.
-
-## Repository / evidence baseline
-
-Before this early-use PDF change:
-
-- accepted `develop`: **`7f2ed0095eca7fad92d04258b9cc3c6852ad04de`**;
-- stable `main`: **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**, tree **`57243d004c5b550d0f27576f0179b0033044088e`** — unchanged;
-- feature branch: `feat/i3d-group-reseller-pdf-items`.
-
-## Authoritative decisions
-
-D-001 through D-031 remain accepted with supersession/refinement relationships respected. This PDF change is an explicit I3-D operator-driven presentation requirement and does not require a new architecture decision.
-
-D-031 continues to control early-use sequencing while leaving D-030 durability acceptance pending.
+- base `develop`: `3c0fe29c62dd72d6acdcd3fc217ba392d4f2aa04`;
+- base tree: `983b214754f1a0283a8ebd96636c34a1bffa5b9c`;
+- stable `main`: `9574e3a4097ddd78ab1f75a13b9ea065287946e9`;
+- stable `main` tree: `57243d004c5b550d0f27576f0179b0033044088e` — unchanged;
+- integration vehicle: PR #80 / `feat/i3d-global-manual-recovery-checkpoint`.
 
 ## NEXT_ACTION
 
-**Continue only P10-S3-I2-I3-D — operate the accepted clean-start candidate, keep the operator-confirmed manual JSON recovery checkpoint fresher than the exact 24-hour boundary before normal writes, and collect concrete operational feedback, workflow friction or defects. Repository/runtime changes must continue to be driven by observed early-use evidence or an explicit operator instruction. Do not proactively resume P10-S3-I2-I2, import legacy real-store data, modify/publish `main`, switch the canonical final production URL, enable definitive cutover or claim D-030 durability acceptance.**
+**Complete only the D-032 rollout boundary: after PR #80 passes exact-tree D-019 and is integrated into `develop`, manually publish that accepted `develop` candidate to Vercel. Then, from an approved operator session on the updated candidate, perform one fresh real `Exportar Backup v2`, verify the JSON is stored outside the Easy, and click `Confirmar que guardei a cópia`. That first real global confirmation initializes the shared exact-24h cloud guard for every approved device. Afterward continue P10-S3-I2-I3-D observation only. Do not resume I2-I2, import legacy real-store data, modify/publish `main`, switch the final canonical URL, enable definitive cutover or claim D-030 durability acceptance.**
