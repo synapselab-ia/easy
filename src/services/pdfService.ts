@@ -10,6 +10,132 @@ import {
 
 export type DateRange = StatementRange;
 
+type OrderGroup = {
+    itemName: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    reversed: boolean;
+    transactions: Transaction[];
+};
+
+function formatMoney(value: number) {
+    return `R$ ${value.toFixed(2)}`;
+}
+
+function auditNotes(transaction: Transaction) {
+    return [
+        isTransactionReversed(transaction)
+            ? `Motivo do estorno: ${transaction.reversal?.reason}`
+            : undefined,
+        transaction.reversal?.replacementTransactionId
+            ? `Substituído pelo lançamento #${transaction.reversal.replacementTransactionId}`
+            : undefined,
+        transaction.correction?.replacesTransactionId
+            ? `Correção do lançamento #${transaction.correction.replacesTransactionId}`
+            : undefined,
+    ].filter((note): note is string => Boolean(note));
+}
+
+function groupOrders(transactions: Transaction[]) {
+    const groups = new Map<string, OrderGroup>();
+
+    transactions
+        .filter(transaction => transaction.type === 'order')
+        .forEach(transaction => {
+            const quantity = transaction.quantity ?? 1;
+            const unitPrice = transaction.unitPrice ?? (
+                quantity > 0 ? transaction.totalPrice / quantity : transaction.totalPrice
+            );
+            const itemName = transaction.itemName?.trim() || 'Item não informado';
+            const reversed = isTransactionReversed(transaction);
+            const key = [
+                transaction.itemId ?? 'legacy',
+                itemName.toLocaleLowerCase('pt-BR'),
+                unitPrice.toFixed(4),
+                reversed ? 'reversed' : 'valid',
+            ].join('|');
+
+            const current = groups.get(key);
+            if (current) {
+                current.quantity += quantity;
+                current.totalPrice += transaction.totalPrice;
+                current.transactions.push(transaction);
+                return;
+            }
+
+            groups.set(key, {
+                itemName,
+                quantity,
+                unitPrice,
+                totalPrice: transaction.totalPrice,
+                reversed,
+                transactions: [transaction],
+            });
+        });
+
+    return [...groups.values()];
+}
+
+function orderTableBody(transactions: Transaction[]) {
+    return groupOrders(transactions).flatMap(group => {
+        const textColor: [number, number, number] = group.reversed
+            ? [100, 100, 100]
+            : [0, 0, 0];
+        const valueColor: [number, number, number] = group.reversed
+            ? [100, 100, 100]
+            : [220, 38, 38];
+        const label = group.reversed ? `${group.itemName} — ESTORNADO` : group.itemName;
+
+        const rows = [[
+            { content: label, styles: { fontStyle: 'bold' as const, textColor } },
+            { content: group.quantity.toString(), styles: { fontStyle: 'bold' as const, textColor } },
+            { content: formatMoney(group.unitPrice), styles: { textColor } },
+            { content: formatMoney(group.totalPrice), styles: { fontStyle: 'bold' as const, textColor: valueColor } },
+        ]];
+
+        const details = group.transactions.flatMap(transaction => {
+            const observation = transaction.observation?.trim();
+            const lines = [
+                observation || undefined,
+                ...auditNotes(transaction),
+            ].filter((line): line is string => Boolean(line));
+
+            return lines.map(line => ([{
+                content: line,
+                colSpan: 4,
+                styles: {
+                    fontStyle: 'italic' as const,
+                    textColor: [90, 90, 90] as [number, number, number],
+                    cellPadding: { top: 1, right: 2, bottom: 1, left: 8 },
+                },
+            }]));
+        });
+
+        return [...rows, ...details];
+    });
+}
+
+function paymentTableBody(transactions: Transaction[]) {
+    return transactions
+        .filter(transaction => transaction.type !== 'order')
+        .map(transaction => {
+            const reversed = isTransactionReversed(transaction);
+            const notes = [
+                transaction.observation,
+                ...auditNotes(transaction),
+            ].filter(Boolean).join(' | ') || '-';
+
+            return [
+                transactionOccurredAt(transaction).toLocaleDateString(),
+                transaction.type === 'payment' ? 'Pagamento' : 'Sinal',
+                formatMoney(transaction.totalPrice),
+                reversed ? 'Estornado' : 'Válido',
+                notes,
+            ];
+        });
+}
+
 export function generateResellerExtract(
     reseller: Reseller,
     transactions: Transaction[],
@@ -74,51 +200,53 @@ export function generateResellerExtract(
             })
             : transactions;
 
-    const tableData = filtered.map(t => {
-        const reversed = isTransactionReversed(t);
-        const notes = [
-            t.observation,
-            reversed ? `Motivo do estorno: ${t.reversal?.reason}` : undefined,
-            t.reversal?.replacementTransactionId
-                ? `Substituído pelo lançamento #${t.reversal.replacementTransactionId}`
-                : undefined,
-            t.correction?.replacesTransactionId
-                ? `Correção do lançamento #${t.correction.replacesTransactionId}`
-                : undefined,
-        ].filter(Boolean).join(' | ') || '-';
-
-        return [
-            transactionOccurredAt(t).toLocaleDateString(),
-            t.type === 'order' ? 'Pedido' : t.type === 'payment' ? 'Pagamento' : 'Sinal',
-            t.itemName || '-',
-            t.quantity ? t.quantity.toString() : '-',
-            `R$ ${t.totalPrice.toFixed(2)}`,
-            reversed ? 'Estornado' : 'Válido',
-            notes,
-        ];
-    });
-
+    const itemRows = orderTableBody(filtered);
     autoTable(doc, {
         startY: tableStartY,
-        head: [['Data', 'Tipo', 'Item', 'Qtd', 'Valor', 'Status', 'Observação']],
-        body: tableData,
-        didParseCell: function (data) {
-            if (data.section !== 'body') return;
+        head: [
+            [{ content: 'Itens do pedido', colSpan: 4, styles: { halign: 'left' } }],
+            ['Descrição', 'Qtd.', 'Valor unitário', 'Subtotal'],
+        ],
+        body: itemRows,
+        theme: 'grid',
+        styles: { fontSize: 9, valign: 'middle' },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { halign: 'center', cellWidth: 18 },
+            2: { halign: 'right', cellWidth: 30 },
+            3: { halign: 'right', cellWidth: 30 },
+        },
+    });
 
-            const transaction = filtered[data.row.index];
-            if (isTransactionReversed(transaction)) {
-                data.cell.styles.textColor = [100, 100, 100];
-                return;
-            }
+    const docWithAutoTable = doc as jsPDF & { lastAutoTable?: { finalY: number } };
+    const paymentStartY = (docWithAutoTable.lastAutoTable?.finalY ?? tableStartY) + 10;
+    const settlements = filtered.filter(transaction => transaction.type !== 'order');
 
-            if (data.column.index === 4) {
-                if (transaction.type === 'order') {
-                    data.cell.styles.textColor = [220, 38, 38];
-                } else {
-                    data.cell.styles.textColor = [22, 163, 74];
-                }
-            }
-        }
+    autoTable(doc, {
+        startY: paymentStartY,
+        head: [
+            [{ content: 'Pagamentos e sinais', colSpan: 5, styles: { halign: 'left' } }],
+            ['Data', 'Tipo', 'Valor', 'Status', 'Observação'],
+        ],
+        body: paymentTableBody(filtered),
+        theme: 'grid',
+        styles: { fontSize: 9, valign: 'middle' },
+        columnStyles: {
+            0: { cellWidth: 25 },
+            1: { cellWidth: 24 },
+            2: { halign: 'right', cellWidth: 28 },
+            3: { cellWidth: 23 },
+            4: { cellWidth: 'auto' },
+        },
+        didParseCell: data => {
+            if (data.section !== 'body' || data.column.index !== 2) return;
+            const transaction = settlements[data.row.index];
+            if (!transaction) return;
+
+            data.cell.styles.textColor = isTransactionReversed(transaction)
+                ? [100, 100, 100]
+                : [22, 163, 74];
+        },
     });
 
     const safeName = reseller.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();

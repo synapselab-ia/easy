@@ -37,7 +37,7 @@ describe('P3-S1 PDF occurrence-date behavior', () => {
         vi.clearAllMocks();
     });
 
-    it('filters and renders rows by occurredAt even when createdAt belongs to another period', () => {
+    it('filters by occurredAt even when createdAt belongs to another period', () => {
         const insideOccurrence = new Date('2026-02-10T12:00:00');
         const outsideOccurrence = new Date('2026-03-10T12:00:00');
         const transactions: Transaction[] = [
@@ -64,12 +64,14 @@ describe('P3-S1 PDF occurrence-date behavior', () => {
             endDate: new Date('2026-02-28T23:59:59.999'),
         });
 
-        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
-        const body = callArgs.body as string[][];
+        const itemTable = vi.mocked(autoTable).mock.calls[0][1];
+        const settlementTable = vi.mocked(autoTable).mock.calls[1][1];
+        const body = settlementTable.body as string[][];
 
+        expect(itemTable.body).toEqual([]);
         expect(body).toHaveLength(1);
         expect(body[0][0]).toBe(insideOccurrence.toLocaleDateString());
         expect(body[0][1]).toBe('Pagamento');
-        expect(body[0][4]).toBe('R$ 40.00');
+        expect(body[0][2]).toBe('R$ 40.00');
     });
 });

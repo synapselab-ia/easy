@@ -48,21 +48,120 @@ const mockTransactions: Transaction[] = [
     { id: 3, resellerId: 1, type: 'order', totalPrice: 200, createdAt: mar20 },
 ];
 
+type PdfCell = string | { content: string };
+type PdfRow = PdfCell[];
+
+function tableOptions(index: number) {
+    return vi.mocked(autoTable).mock.calls[index][1];
+}
+
+function cellContent(cell: PdfCell) {
+    return typeof cell === 'string' ? cell : cell.content;
+}
+
 describe('pdfService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    it('generates PDF without errors (sem filtro — comportamento atual preservado)', () => {
+    it('generates the reseller PDF with item and settlement sections', () => {
         generateResellerExtract(mockReseller, mockTransactions, 100);
 
         expect(mockSave).toHaveBeenCalledWith('extrato_john_doe.pdf');
-        expect(autoTable).toHaveBeenCalled();
+        expect(autoTable).toHaveBeenCalledTimes(2);
         expect(mockText).toHaveBeenCalledWith('Nome: John Doe', 14, 40);
         expect(mockSetTextColor).toHaveBeenCalledWith(220, 38, 38);
+        expect(tableOptions(0).head?.[0]?.[0]).toMatchObject({ content: 'Itens do pedido' });
+        expect(tableOptions(1).head?.[0]?.[0]).toMatchObject({ content: 'Pagamentos e sinais' });
     });
 
-    it('gera PDF com dateRange — autoTable chamado apenas com transações do período', () => {
+    it('groups equal item/price/status orders and lists each written name underneath', () => {
+        const transactions: Transaction[] = [
+            {
+                id: 10,
+                resellerId: 1,
+                type: 'order',
+                itemId: 7,
+                itemName: 'Placa 3x8',
+                quantity: 1,
+                unitPrice: 50,
+                totalPrice: 50,
+                observation: 'Lucas',
+                createdAt: jan15,
+            },
+            {
+                id: 11,
+                resellerId: 1,
+                type: 'order',
+                itemId: 7,
+                itemName: 'Placa 3x8',
+                quantity: 1,
+                unitPrice: 50,
+                totalPrice: 50,
+                observation: 'Eduardo',
+                createdAt: feb10,
+            },
+            {
+                id: 12,
+                resellerId: 1,
+                type: 'order',
+                itemId: 8,
+                itemName: 'Moldura Flor Bronze',
+                quantity: 1,
+                unitPrice: 80,
+                totalPrice: 80,
+                createdAt: mar20,
+            },
+        ];
+
+        generateResellerExtract(mockReseller, transactions, 180);
+
+        const body = tableOptions(0).body as PdfRow[];
+        expect(body).toHaveLength(4);
+        expect(cellContent(body[0][0])).toBe('Placa 3x8');
+        expect(cellContent(body[0][1])).toBe('2');
+        expect(cellContent(body[0][2])).toBe('R$ 50.00');
+        expect(cellContent(body[0][3])).toBe('R$ 100.00');
+        expect(cellContent(body[1][0])).toBe('Lucas');
+        expect(cellContent(body[2][0])).toBe('Eduardo');
+        expect(cellContent(body[3][0])).toBe('Moldura Flor Bronze');
+    });
+
+    it('does not merge the same catalog item when the unit price differs', () => {
+        const transactions: Transaction[] = [
+            {
+                id: 20,
+                resellerId: 1,
+                type: 'order',
+                itemId: 7,
+                itemName: 'Placa 3x8',
+                quantity: 1,
+                unitPrice: 50,
+                totalPrice: 50,
+                observation: 'Lucas',
+                createdAt: jan15,
+            },
+            {
+                id: 21,
+                resellerId: 1,
+                type: 'order',
+                itemId: 7,
+                itemName: 'Placa 3x8',
+                quantity: 1,
+                unitPrice: 55,
+                totalPrice: 55,
+                observation: 'Eduardo',
+                createdAt: feb10,
+            },
+        ];
+
+        generateResellerExtract(mockReseller, transactions, 105);
+
+        const body = tableOptions(0).body as PdfRow[];
+        expect(body.filter(row => cellContent(row[0]) === 'Placa 3x8')).toHaveLength(2);
+    });
+
+    it('gera PDF com dateRange separando pedidos e pagamentos do período', () => {
         const dateRange = {
             startDate: new Date('2025-01-01T00:00:00'),
             endDate: new Date('2025-02-28T23:59:59'),
@@ -70,12 +169,11 @@ describe('pdfService', () => {
 
         generateResellerExtract(mockReseller, mockTransactions, 50, dateRange);
 
-        expect(autoTable).toHaveBeenCalled();
-        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
-        expect(callArgs.body).toHaveLength(2);
+        expect(tableOptions(0).body).toHaveLength(1);
+        expect(tableOptions(1).body).toHaveLength(1);
     });
 
-    it('includes reversed rows, visible status and mandatory audit reason in the PDF table', () => {
+    it('keeps reversed settlement rows visible with mandatory audit reason', () => {
         const reversed: Transaction = {
             id: 4,
             resellerId: 1,
@@ -91,16 +189,15 @@ describe('pdfService', () => {
 
         generateResellerExtract(mockReseller, [reversed], 0);
 
-        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
-        const row = callArgs.body?.[0] as string[];
-        expect(callArgs.head).toEqual([['Data', 'Tipo', 'Item', 'Qtd', 'Valor', 'Status', 'Observação']]);
-        expect(callArgs.body).toHaveLength(1);
-        expect(row[5]).toBe('Estornado');
-        expect(row[6]).toContain('PIX');
-        expect(row[6]).toContain('Motivo do estorno: Pagamento duplicado');
+        const row = (tableOptions(1).body?.[0] ?? []) as string[];
+        expect(tableOptions(1).head?.[1]).toEqual(['Data', 'Tipo', 'Valor', 'Status', 'Observação']);
+        expect(tableOptions(1).body).toHaveLength(1);
+        expect(row[3]).toBe('Estornado');
+        expect(row[4]).toContain('PIX');
+        expect(row[4]).toContain('Motivo do estorno: Pagamento duplicado');
     });
 
-    it('includes both directions of a linked correction in PDF audit notes', () => {
+    it('keeps both directions of a linked settlement correction in audit notes', () => {
         const original: Transaction = {
             id: 10,
             resellerId: 1,
@@ -126,14 +223,13 @@ describe('pdfService', () => {
 
         generateResellerExtract(mockReseller, [original, replacement], -500);
 
-        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
-        const originalRow = callArgs.body?.[0] as string[];
-        const replacementRow = callArgs.body?.[1] as string[];
+        const originalRow = tableOptions(1).body?.[0] as string[];
+        const replacementRow = tableOptions(1).body?.[1] as string[];
 
-        expect(originalRow[5]).toBe('Estornado');
-        expect(originalRow[6]).toContain('Substituído pelo lançamento #11');
-        expect(replacementRow[5]).toBe('Válido');
-        expect(replacementRow[6]).toContain('Correção do lançamento #10');
+        expect(originalRow[3]).toBe('Estornado');
+        expect(originalRow[4]).toContain('Substituído pelo lançamento #11');
+        expect(replacementRow[3]).toBe('Válido');
+        expect(replacementRow[4]).toContain('Correção do lançamento #10');
     });
 
     it('gera PDF com dateRange — nome do arquivo inclui as datas formatadas', () => {

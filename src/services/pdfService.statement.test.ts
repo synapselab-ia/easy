@@ -65,7 +65,7 @@ describe('P3-S2 PDF statement semantics', () => {
         vi.clearAllMocks();
     });
 
-    it('renders opening, period movement and closing balance from the shared statement object', () => {
+    it('renders opening, period movement and closing balance with orders above settlements', () => {
         const statement = buildStatementPeriod(transactions, {
             startDate: new Date('2026-01-01T00:00:00'),
             endDate: new Date('2026-01-31T23:59:59.999'),
@@ -77,13 +77,15 @@ describe('P3-S2 PDF statement semantics', () => {
         expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 30.00', 14, 84);
         expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 130.00', 14, 92);
 
-        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
-        expect(callArgs.startY).toBe(102);
-        expect(callArgs.body).toHaveLength(2);
-        expect((callArgs.body as string[][]).map(row => row[1])).toEqual(['Pagamento', 'Pedido']);
+        const itemTable = vi.mocked(autoTable).mock.calls[0][1];
+        const settlementTable = vi.mocked(autoTable).mock.calls[1][1];
+        expect(itemTable.startY).toBe(102);
+        expect(itemTable.body).toHaveLength(1);
+        expect(settlementTable.body).toHaveLength(1);
+        expect((settlementTable.body as string[][])[0][1]).toBe('Pagamento');
     });
 
-    it('renders an empty movement table without losing the opening/closing balance', () => {
+    it('renders empty item/settlement sections without losing the opening/closing balance', () => {
         const statement = buildStatementPeriod([transactions[0]], {
             startDate: new Date('2026-01-01T00:00:00'),
             endDate: new Date('2026-01-31T23:59:59.999'),
@@ -94,7 +96,7 @@ describe('P3-S2 PDF statement semantics', () => {
         expect(mockText).toHaveBeenCalledWith('Saldo inicial: R$ 100.00', 14, 76);
         expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 0.00', 14, 84);
         expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 100.00', 14, 92);
-        const callArgs = vi.mocked(autoTable).mock.calls[0][1];
-        expect(callArgs.body).toEqual([]);
+        expect(vi.mocked(autoTable).mock.calls[0][1].body).toEqual([]);
+        expect(vi.mocked(autoTable).mock.calls[1][1].body).toEqual([]);
     });
 });
