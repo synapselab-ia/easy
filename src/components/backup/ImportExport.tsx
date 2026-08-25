@@ -5,6 +5,10 @@ import {
     type BackupPreflightResult,
 } from '@/services/backupService';
 import { exportCloudData, restorePreflightedCloudBackup } from '@/services/cloudBackupService';
+import {
+    confirmCloudRecoveryCheckpoint,
+    recordCloudRecoveryExport,
+} from '@/services/cloudRecoveryHealth';
 import { restorePreflightedBackup } from '@/services/restoreService';
 import { isEasySupabaseConfigured } from '@/lib/supabase';
 import {
@@ -32,6 +36,7 @@ export default function ImportExport() {
     const [isRestoring, setIsRestoring] = React.useState(false);
     const health = useRecoveryHealth();
     const cloudMode = isEasySupabaseConfigured();
+    const confirmationAvailable = cloudMode ? Boolean(health.pendingExportAt) : !health.setupVerified;
 
     const resetFileInput = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -40,7 +45,11 @@ export default function ImportExport() {
     const handleExport = async () => {
         try {
             const result = cloudMode ? await exportCloudData() : await exportData();
-            recordRecoveryExport(result);
+            if (cloudMode) {
+                await recordCloudRecoveryExport(result.filename);
+            } else {
+                recordRecoveryExport(result);
+            }
             toast.success(`Backup ${result.filename} gerado e download iniciado.`);
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Falha ao exportar backup.';
@@ -48,10 +57,15 @@ export default function ImportExport() {
         }
     };
 
-    const handleConfirmSetup = () => {
+    const handleConfirmSetup = async () => {
         try {
-            confirmSynchronizedFolderSetup();
-            toast.success('Cópia manual confirmada nesta instalação.');
+            if (cloudMode) {
+                await confirmCloudRecoveryCheckpoint();
+                toast.success('Cópia manual confirmada para todos os dispositivos do Easy.');
+            } else {
+                confirmSynchronizedFolderSetup();
+                toast.success('Cópia manual confirmada nesta instalação.');
+            }
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Não foi possível confirmar a configuração.';
             toast.error(message);
@@ -118,11 +132,11 @@ export default function ImportExport() {
             <section className="space-y-3 rounded-lg border p-4" aria-labelledby="recovery-setup-title">
                 <div>
                     <h2 id="recovery-setup-title" className="font-semibold">
-                        {cloudMode ? 'Cópia manual temporária do banco online' : 'Proteção de recuperação em até 24 horas'}
+                        {cloudMode ? 'Cópia manual global do banco online' : 'Proteção de recuperação em até 24 horas'}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                         {cloudMode
-                            ? 'Nesta fase, o Supabase é o banco principal. O arquivo JSON exportado abaixo é a cópia manual independente que deve ser guardada fora do Easy enquanto o backup automático ainda está sendo homologado.'
+                            ? 'Nesta fase, o Supabase é o banco principal. Um Backup v2 confirmado por um operador vale para todos os dispositivos autorizados durante a mesma janela de 24 horas.'
                             : 'O Easy mantém o banco no computador e usa o Backup v2 como cópia de recuperação.'}
                     </p>
                 </div>
@@ -131,24 +145,32 @@ export default function ImportExport() {
                     <li>Exporte um Backup v2 pelo botão abaixo.</li>
                     <li>Guarde o arquivo fora do navegador, preferencialmente também no Google Drive.</li>
                     <li>Confira que o arquivo realmente foi salvo antes de confirmar.</li>
-                    <li>Faça uma nova exportação sempre que quiser atualizar sua cópia de segurança.</li>
+                    <li>{cloudMode ? 'A confirmação libera a mesma janela de 24 horas para todos os operadores e dispositivos autorizados.' : 'Faça uma nova exportação sempre que quiser atualizar sua cópia de segurança.'}</li>
                 </ol>
 
                 <div className="rounded-md bg-muted/50 p-3 text-sm">
                     <div className="font-medium">
-                        {health.setupVerified ? 'Cópia manual confirmada' : 'Cópia manual ainda não confirmada'}
+                        {health.setupVerified
+                            ? cloudMode ? 'Cópia manual global confirmada' : 'Cópia manual confirmada'
+                            : cloudMode ? 'Cópia manual global ainda não confirmada' : 'Cópia manual ainda não confirmada'}
                     </div>
                     <div className="text-muted-foreground">
-                        Última exportação: {formatDate(health.lastExportedAt)}
+                        Última cópia confirmada: {formatDate(health.lastExportedAt)}
                         {health.lastFilename ? ` — ${health.lastFilename}` : ''}
                     </div>
+                    {cloudMode && health.pendingExportAt && (
+                        <div className="mt-1 text-muted-foreground">
+                            Aguardando confirmação: {formatDate(health.pendingExportAt)}
+                            {health.pendingFilename ? ` — ${health.pendingFilename}` : ''}
+                        </div>
+                    )}
                 </div>
 
-                {!health.setupVerified && (
+                {confirmationAvailable && (
                     <button
                         type="button"
-                        onClick={handleConfirmSetup}
-                        disabled={!health.lastExportedAt}
+                        onClick={() => void handleConfirmSetup()}
+                        disabled={cloudMode ? !health.pendingExportAt : !health.lastExportedAt}
                         className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Confirmar que guardei a cópia
