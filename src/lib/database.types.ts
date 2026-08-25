@@ -36,6 +36,39 @@ export type Database = {
           referencedColumns: ["id"]
         }]
       }
+      manual_recovery_events: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          event_type: string
+          export_event_id: number | null
+          filename: string | null
+          id: number
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          event_type: string
+          export_event_id?: number | null
+          filename?: string | null
+          id?: number
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          event_type?: string
+          export_event_id?: number | null
+          filename?: string | null
+          id?: number
+        }
+        Relationships: [{
+          foreignKeyName: "manual_recovery_export_event_fk"
+          columns: ["export_event_id"]
+          isOneToOne: true
+          referencedRelation: "manual_recovery_events"
+          referencedColumns: ["id"]
+        }]
+      }
       resellers: {
         Row: { created_at: string; email: string | null; id: number; is_active: boolean; name: string; notes: string | null; phone: string | null; updated_at: string }
         Insert: { created_at?: string; email?: string | null; id?: number; is_active?: boolean; name: string; notes?: string | null; phone?: string | null; updated_at?: string }
@@ -138,6 +171,16 @@ export type Database = {
           p_unit_price?: number
         }
         Returns: number
+      }
+      get_manual_recovery_health: {
+        Args: never
+        Returns: {
+          confirmed_at: string | null
+          last_exported_at: string | null
+          last_filename: string | null
+          pending_export_at: string | null
+          pending_filename: string | null
+        }[]
       }
       is_easy_operator: { Args: never; Returns: boolean }
       restore_easy_backup: { Args: { p_payload: Json }; Returns: Json }

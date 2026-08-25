@@ -1,3 +1,5 @@
+import { isEasySupabaseConfigured } from '../lib/supabase';
+
 export const RECOVERY_HEALTH_STORAGE_KEY = 'easy.recoveryHealth.v1';
 export const RECOVERY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 export const RECOVERY_WARNING_AGE_MS = 20 * 60 * 60 * 1000;
@@ -14,16 +16,27 @@ export interface RecoveryHealthMetadata {
     lastFilename?: string;
 }
 
+export interface CloudRecoveryHealthMetadata {
+    lastExportedAt?: string;
+    lastFilename?: string;
+    confirmedAt?: string;
+    pendingExportAt?: string;
+    pendingFilename?: string;
+}
+
 export interface RecoveryHealthSnapshot {
     status: RecoveryHealthStatus;
     writeBlocked: boolean;
     setupVerified: boolean;
     lastExportedAt?: Date;
     lastFilename?: string;
+    pendingExportAt?: Date;
+    pendingFilename?: string;
     ageMs?: number;
 }
 
 const listeners = new Set<() => void>();
+let cloudMetadata: CloudRecoveryHealthMetadata | null = null;
 
 function notifyListeners() {
     listeners.forEach(listener => listener());
@@ -63,7 +76,39 @@ function writeMetadata(metadata: RecoveryHealthMetadata) {
     notifyListeners();
 }
 
-export function getRecoveryHealth(now = new Date()): RecoveryHealthSnapshot {
+function healthFromConfirmedExport(
+    lastExportedAt: Date,
+    lastFilename: string | undefined,
+    now: Date,
+    pendingExportAt?: Date,
+    pendingFilename?: string,
+): RecoveryHealthSnapshot {
+    const ageMs = now.getTime() - lastExportedAt.getTime();
+    const base = {
+        setupVerified: true,
+        lastExportedAt,
+        lastFilename,
+        pendingExportAt,
+        pendingFilename,
+        ageMs,
+    };
+
+    if (ageMs < 0) {
+        return { ...base, status: 'due', writeBlocked: true };
+    }
+
+    if (ageMs >= RECOVERY_MAX_AGE_MS) {
+        return { ...base, status: 'overdue', writeBlocked: true };
+    }
+
+    if (ageMs >= RECOVERY_WARNING_AGE_MS) {
+        return { ...base, status: 'warning', writeBlocked: false };
+    }
+
+    return { ...base, status: 'current', writeBlocked: false };
+}
+
+function getLocalRecoveryHealth(now: Date): RecoveryHealthSnapshot {
     const metadata = readMetadata();
     if (!metadata) {
         return {
@@ -95,48 +140,57 @@ export function getRecoveryHealth(now = new Date()): RecoveryHealthSnapshot {
         };
     }
 
-    const ageMs = now.getTime() - lastExportedAt.getTime();
-    if (ageMs < 0) {
+    return healthFromConfirmedExport(lastExportedAt, metadata.lastFilename, now);
+}
+
+function getCloudRecoveryHealth(now: Date): RecoveryHealthSnapshot {
+    if (!cloudMetadata) {
         return {
-            status: 'due',
+            status: 'unknown',
             writeBlocked: true,
-            setupVerified: true,
-            lastExportedAt,
-            lastFilename: metadata.lastFilename,
-            ageMs,
+            setupVerified: false,
         };
     }
 
-    if (ageMs >= RECOVERY_MAX_AGE_MS) {
+    const lastExportedAt = parseDate(cloudMetadata.lastExportedAt);
+    const confirmedAt = parseDate(cloudMetadata.confirmedAt);
+    const pendingExportAt = parseDate(cloudMetadata.pendingExportAt);
+
+    if (!lastExportedAt || !confirmedAt) {
         return {
-            status: 'overdue',
+            status: pendingExportAt ? 'due' : 'unknown',
             writeBlocked: true,
-            setupVerified: true,
-            lastExportedAt,
-            lastFilename: metadata.lastFilename,
-            ageMs,
+            setupVerified: false,
+            pendingExportAt,
+            pendingFilename: cloudMetadata.pendingFilename,
         };
     }
 
-    if (ageMs >= RECOVERY_WARNING_AGE_MS) {
-        return {
-            status: 'warning',
-            writeBlocked: false,
-            setupVerified: true,
-            lastExportedAt,
-            lastFilename: metadata.lastFilename,
-            ageMs,
-        };
-    }
-
-    return {
-        status: 'current',
-        writeBlocked: false,
-        setupVerified: true,
+    return healthFromConfirmedExport(
         lastExportedAt,
-        lastFilename: metadata.lastFilename,
-        ageMs,
-    };
+        cloudMetadata.lastFilename,
+        now,
+        pendingExportAt,
+        cloudMetadata.pendingFilename,
+    );
+}
+
+export function setCloudRecoveryHealth(metadata: CloudRecoveryHealthMetadata) {
+    cloudMetadata = { ...metadata };
+    notifyListeners();
+}
+
+export function clearCloudRecoveryHealth() {
+    cloudMetadata = null;
+    notifyListeners();
+}
+
+export function getRecoveryHealth(now = new Date()): RecoveryHealthSnapshot {
+    if (isEasySupabaseConfigured()) {
+        return getCloudRecoveryHealth(now);
+    }
+
+    return getLocalRecoveryHealth(now);
 }
 
 export function recordRecoveryExport(result: { filename: string; exportedAt: Date }) {
