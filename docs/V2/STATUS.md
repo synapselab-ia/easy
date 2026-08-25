@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Status
 
-**Updated:** 2026-08-21  
+**Updated:** 2026-08-25  
 **Repository:** `synapselab-ia/easy`  
 **Stable baseline:** `main`  
 **Integration branch:** `develop`
@@ -16,8 +16,9 @@ Current P10-S3 state:
 - P10-S3-I2 — Migration/reconciliation + durability contract: `DONE / ACCEPTED CONTRACT` — D-030.
 - P10-S3-I2-I1 — Legacy stable-v1 staging/import compatibility: `DONE / ACCEPTED — SYNTHETIC ONLY`.
 - **P10-S3-I2-I2 — Zero-cost unattended backup/recovery proof: `ON_HOLD / IMPLEMENTATION READY — OPERATOR-LOCAL PROOF DEFERRED`.**
-- **P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate: `DONE / INTEGRATED — AUTHORIZED FOR CONTROLLED EARLY USE` — D-031; PR #72.**
-- **P10-S3-I2-I3-C — Manual Vercel candidate + operator onboarding: `BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED — CURRENT NEXT ACTION`.**
+- **P10-S3-I2-I3 — Supabase-backed Auth/runtime candidate: `DONE / INTEGRATED — AUTHORIZED FOR CONTROLLED EARLY USE` — D-031.**
+- **P10-S3-I2-I3-C — Manual Vercel candidate + operator onboarding: `DONE / ACCEPTED`.**
+- **P10-S3-I2-I3-D — Controlled clean-start early-use observation: `CURRENT`.**
 - P10-S3-I2-I4 — Legacy real-data migration/reconciliation: `ON_HOLD / NOT REQUIRED FOR THE CURRENT CLEAN-START EARLY-USE PATH`.
 
 ## Critical governance override — D-031
@@ -27,14 +28,13 @@ D-031 authorizes a runtime-first controlled early-use candidate before the D-030
 Therefore:
 
 1. P10-S3-I2-I2 stays pending but **ON HOLD** and is not the current action.
-2. The Supabase/Auth/runtime implementation is integrated in `develop`.
-3. Supabase/Postgres is the intended canonical business datastore for the candidate when browser-safe Supabase environment variables are configured.
-4. Supabase Auth/RLS plus the server-managed `easy_operators` allow-list remain mandatory.
-5. During temporary early use, logical JSON backup is the active recovery path and normal browser writes remain fail-closed when the last confirmed JSON recovery copy is older than the accepted exact 24-hour boundary.
-6. The automated D-030 server recovery-health acceptance proof remains pending/disabled for early-use mode; it is not silently accepted.
-7. Early use is **clean start**: no legacy real-store migration/import is required or authorized.
-8. `main` stays untouched. Vercel remains candidate hosting and deployment remains manual.
-9. Definitive production/canonical cutover remains a later explicit gate; D-030 durability must eventually be completed or replaced by a separately accepted durability decision.
+2. Supabase/Postgres is canonical business persistence for the controlled candidate.
+3. Supabase Auth/RLS plus the server-managed `easy_operators` allow-list remain mandatory.
+4. During temporary early use, logical JSON backup is the active recovery path and normal browser writes remain fail-closed when the last confirmed JSON recovery copy reaches the exact 24-hour boundary.
+5. The automated D-030 server recovery-health acceptance proof remains pending/disabled for early-use mode; it is not silently accepted.
+6. Early use is **clean start**: no legacy real-store migration/import is required or authorized.
+7. `main` stays untouched. Vercel remains candidate hosting and deployment remains manual.
+8. Definitive production/canonical cutover remains a later explicit gate; D-030 durability must eventually be completed or replaced by a separately accepted durability decision.
 
 Authoritative governance record: `docs/V2/P10_RUNTIME_FIRST_GOVERNANCE.md`.
 
@@ -62,19 +62,15 @@ Precedence when documents conflict:
 Phase-specific evidence relevant now:
 
 - `docs/V2/P10_SUPABASE_ARCHITECTURE_GATE.md` — D-029 final architecture.
-- `docs/V2/P10_S3_I1_EXECUTION.md` — accepted synthetic Supabase foundation.
 - `docs/V2/P10_S3_I2_MIGRATION_GATE.md` — D-030 migration/durability contract.
-- `docs/V2/P10_S3_I2_I1_EXECUTION.md` — accepted synthetic staging/import proof.
-- `docs/V2/P10_S3_I2_I2_EXECUTION.md` — implemented automated-recovery prerequisite and historical blocker evidence; now ON HOLD.
+- `docs/V2/P10_S3_I2_I2_EXECUTION.md` — implemented automated-recovery prerequisite and historical blocker evidence; ON HOLD.
 - `docs/V2/P10_RUNTIME_FIRST_GOVERNANCE.md` — D-031 sequencing/early-use authority.
 - `docs/V2/P10_S3_I2_I3_RUNTIME_FIRST_EXECUTION.md` — accepted runtime-first implementation/integration evidence.
-- `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md` — current live preflight and operator-local blocker evidence.
+- `docs/V2/P10_S3_I2_I3_C_CANDIDATE_ONBOARDING.md` — accepted live candidate/operator/checkpoint evidence.
 
 ## Current technical baseline
 
-`develop` contains the D-031 runtime-first candidate from PR #72.
-
-Integrated behavior, when browser-safe Supabase environment variables are configured:
+Accepted candidate runtime behavior:
 
 - Supabase/Postgres is canonical business persistence;
 - Supabase Auth session gate + `easy_operators` authorization check protects access;
@@ -88,54 +84,64 @@ Integrated behavior, when browser-safe Supabase environment variables are config
 
 The D-030 trusted-PC unattended dump/rclone/retention/restore tooling remains implemented, but its operator-local acceptance proof is deferred under D-031.
 
-## P10-S3-I2-I3-C live preflight — 2026-08-21
+## P10-S3-I2-I3-C acceptance — 2026-08-25
 
-The current action was attempted and correctly stopped without fabricated acceptance.
+The prior operator-local blocker is resolved.
 
-Supabase `easy-v2` (`hrmkkhqfyfoqucwbcszq`, `sa-east-1`) live evidence:
+Vercel `easy-v2` evidence:
 
-- project healthy;
-- active browser-safe publishable key exists;
-- `private.recovery_enforcement_state.automated_guard_enabled = false`, as required by temporary D-031 early-use mode;
-- 0 Auth users;
-- 0 `easy_operators` rows;
-- 0 categories, items, resellers and transactions;
-- Security Advisor: 0 lints;
-- Performance Advisor: INFO-only unused-index notices on the empty/tiny homologation database;
-- business-table RLS policies remain bound to `is_easy_operator()` for authenticated access.
+- current candidate deployment `dpl_FwpUedZ8gpMzCs5nLBjrv39V2FJs` is `READY`;
+- source branch is `develop`;
+- source revision is `768776e7da52da5051b7a69dec071d0481cd810d`;
+- candidate aliases include `easy-v2-tau.vercel.app` and the `develop` alias;
+- browser configuration uses only `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`;
+- no browser/admin secret exposure was introduced.
 
-Vercel `easy-v2` live evidence:
+Supabase `easy-v2` (`hrmkkhqfyfoqucwbcszq`) evidence:
 
-- the latest READY candidate deployment is stale at `develop@d4d428e35a45af0691e80331dd8c7888a914355f`;
-- accepted `develop@93500284f5b9105f0de7867a8676c31c7186d194` was therefore not yet proven as the published candidate;
-- the connected execution surface did not expose a safe project-env mutation for the two required public variables;
-- the generic deployment attempt was rejected before deployment creation because the connected action requires source-package fields not safely exposed by its available schema;
-- no Vercel env variable was changed and no new deployment was created.
+- intended real operator account created/confirmed through the normal Auth flow;
+- exactly one active operator is present in `public.easy_operators`;
+- separate authenticated non-approved account remained outside the allow-list and saw the expected waiting gate;
+- a trusted SQL/RLS denial probe for that non-approved Auth identity rejected a business-table insert and left 0 residual rows;
+- aggregate closure state: 3 Auth users, 1 active approved operator, 2 authenticated users outside the active allow-list;
+- categories/items/resellers/transactions: 0 each;
+- approved operator successfully loaded the clean candidate;
+- no legacy/synthetic business payload entered the canonical tables.
 
-The intended real operator account also does not yet exist. The protocol forbids inventing credentials or creating a synthetic identity and representing it as the real operator. Therefore allow-list insertion, live unauthorized-user denial, approved-user load proof, first manual JSON checkpoint and exact-24h healthy-guard evidence remain incomplete.
+Manual recovery evidence:
 
-**Result: I2-I3-C remains the sole current action, now `BLOCKED / OPERATOR-LOCAL COMPLETION REQUIRED`.**
+- approved operator exported the first Backup v2 JSON;
+- operator explicitly confirmed the file was stored outside the browser;
+- operator clicked `Confirmar que guardei a cópia` in the same installation;
+- accepted implementation deterministically places that installation inside the exact-24h healthy interval (`writeBlocked = false`) immediately after export + confirmation;
+- writes will fail closed again at age `>= 24h` unless a fresh export is generated/confirmed.
+
+Supabase advisor note:
+
+- Performance Advisor remains INFO-only unused-index notices on the empty/tiny candidate database;
+- Security Advisor now reports `auth_leaked_password_protection` because leaked-password protection is disabled;
+- official Supabase documentation states this feature is available on Pro Plan and above;
+- current paid-infrastructure budget remains US$0 / Free, so this is recorded as a known residual early-use Auth risk rather than misreported as zero lints;
+- Auth + allow-list + RLS remain proven and definitive cutover is still not authorized.
+
+**Result: P10-S3-I2-I3-C is DONE / ACCEPTED. Controlled clean-start early use is authorized.**
 
 ## Repository / evidence baseline
 
-- stable `main`: **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**, tree **`57243d004c5b550d0f27576f0179b0033044088e`** — unchanged at pre-closure verification.
-- current accepted pre-closure `develop`: **`93500284f5b9105f0de7867a8676c31c7186d194`**, tree **`4c510a9fb99fe29746ecaf209d4679dd55bbe946`**.
-- PR #72 synchronized feature head: **`6db3fd2cc24c0d915d7aa98b5c549cccd3772aad`**.
-- PR #72 exact validated merge ref: **`77cef2b9125a204a1b564c44cfb4ebc0b9da55d8`**, tree **`4ed336e4d05dc95df1abba7a9894d1b10abcd49b`**.
-- PR #72 D-019: run **`32502664982`**, job **`96835725075`** — **0 lint errors / 82 warnings; 57 files / 240 Vitest PASS; 17/17 Playwright PASS; production build PASS**.
-- PR #72 squash-integrated `develop` commit: **`8650a178aa487058f6eceabbbd1e5dfde4bc3bc2`**, tree **`4ed336e4d05dc95df1abba7a9894d1b10abcd49b`**.
-- final tree equivalence for PR #72: **PASS**.
+Before this documentation-only closure:
 
-Repository `vercel.json` continues to disable Git-triggered Vercel deployments. Candidate publication is manual only.
+- accepted `develop`: **`768776e7da52da5051b7a69dec071d0481cd810d`**, tree **`2700203423adf7be1ac3ba290cf38ed0873beda5`**;
+- stable `main`: **`9574e3a4097ddd78ab1f75a13b9ea065287946e9`**, tree **`57243d004c5b550d0f27576f0179b0033044088e`** — unchanged;
+- closure branch: `ops/p10-s3-i2-i3-c-operator-onboarding`.
+
+No runtime/schema change is required by this closure. D-019 remains mandatory before documentation integration.
 
 ## Authoritative decisions
 
-D-001 through D-031 are accepted with supersession/refinement relationships respected. For current sequencing, **D-031 controls over the earlier D-030 order-of-operations restriction** while leaving D-030 durability acceptance pending.
+D-001 through D-031 remain accepted with supersession/refinement relationships respected. No new architecture/product decision was required to complete I2-I3-C.
 
-No new architecture/product decision was required by the I2-I3-C preflight blocker; `ARCHITECTURE.md` and accepted decisions remain unchanged.
-
-D-019 remains mandatory for repository integration. Objective failures block merge.
+D-031 continues to control early-use sequencing while leaving D-030 durability acceptance pending.
 
 ## NEXT_ACTION
 
-**Complete only the remaining operator-local P10-S3-I2-I3-C steps: in Vercel `easy-v2`, configure only browser-safe `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`, manually publish the accepted current `develop` revision (not `main`), create/sign in the intended real operator account through the normal Auth flow, add only that Auth UUID to `public.easy_operators` through a trusted admin/database boundary, separately prove an authenticated non-allow-listed user cannot access business data, prove the approved operator can load the clean canonical dataset, export/download/store and explicitly confirm the first manual JSON recovery checkpoint, verify the exact-24h browser freshness guard becomes healthy, and only then begin controlled clean-start early use. Do not resume P10-S3-I2-I2, import legacy real-store data, modify/publish `main`, switch the canonical production URL, enable definitive cutover, or claim D-030 durability acceptance.**
+**Execute only P10-S3-I2-I3-D — controlled clean-start early-use observation. Use the accepted Vercel/Supabase candidate for real clean-start workflows, keep the operator-confirmed manual JSON recovery checkpoint fresher than the exact 24-hour boundary before normal writes, and collect concrete operational feedback, workflow friction or defects. Do not proactively resume P10-S3-I2-I2, import legacy real-store data, modify/publish `main`, switch the canonical final production URL, enable definitive cutover or claim D-030 durability acceptance. Repository/runtime changes in I3-D must be driven by observed early-use evidence or an explicit operator instruction.**
