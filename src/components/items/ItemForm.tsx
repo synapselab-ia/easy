@@ -88,7 +88,8 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
             }
         }
 
-        if (subcategoryId) {
+        const classificationChanged = !isExistingItem || categoryChanged || subcategoryChanged;
+        if (subcategoryId && classificationChanged) {
             const selectedSubcategoryId = Number(subcategoryId);
             const selectedCategory = Number(categoryId);
             if (!activeSubcategories.some(subcategory =>
