@@ -109,6 +109,72 @@ Accepted correction:
 
 D-019 run/job `33005354591` / `98297566705`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub merge-ref tree `ae183953e9f9248cab7ebc107fae57723ccb8aa4` exactly equals squash-integrated `develop@430b36feb7563c3370a334eb4962edc7aafdc117` tree.
 
+### Operator-authorized usability/data-quality queue — one item at a time
+
+**Status:** `AUTHORIZED / ORDERED / BOUNDED`
+
+On 2026-08-26 the operator explicitly authorized the following early-use improvements to be evaluated and executed **one by one**, preserving the existing project safeguards.
+
+Queue governance:
+
+1. Only the single item identified by `STATUS.md -> NEXT_ACTION` is executable in a task/conversation.
+2. Every item starts by verifying the current implementation/runtime evidence. If the suspected issue is not reproducible, the benefit is no longer applicable, or the safe solution would cross the stated boundary, close that item as `NO_CHANGE / DEFERRED` with evidence rather than forcing a modification.
+3. Each executable item uses an isolated branch from current `develop`, receives proportionate tests, and executable integration requires D-019. Supabase-bearing scope additionally requires the relevant database/security evidence.
+4. Do not bundle the next queued item into the same implementation. After the current item is integrated/closed, update the canonical docs so exactly the next pending item becomes `NEXT_ACTION`, then stop.
+5. The queue does not authorize changes to accepted financial semantics, transaction history, recovery policy, Auth/RLS/operator authorization, deployment automation, `main`, legacy-data migration or definitive cutover unless an individual item explicitly says otherwise.
+6. Prefer presentation/read-model changes and existing fields/contracts. Do not introduce a database migration merely to satisfy a UX improvement when the accepted model already supports it.
+7. Any unexpected dependency that would materially broaden scope requires a new operator decision instead of silent expansion.
+
+#### Early-use change #6 — Dashboard performance-window labels
+**Status:** `CURRENT / AUTHORIZED`
+
+Verify the `Análise de Performance` period selector. If its selected trigger exposes internal values such as `90`, `180` or `360`, make the visible selected labels consistently Portuguese (`Últimos 90 dias`, `Últimos 180 dias`, `Último ano`) while preserving the existing `AnalysisPeriod` values and calculations. Presentation-only; no analytics, persistence or date-window semantic change.
+
+#### Early-use change #7 — consistent pt-BR monetary presentation
+**Status:** `QUEUED / NOT CURRENT`
+
+Audit existing operator-facing BRL values for raw decimal formatting such as `toFixed(2)` and standardize visible money to proper `pt-BR`/BRL formatting where needed. Preserve the exact numeric values, calculations, persistence and financial semantics. Do not alter PDF/report calculation logic merely for formatting.
+
+#### Early-use change #8 — catalog classification visibility at point of use
+**Status:** `QUEUED / NOT CURRENT`
+
+Expose current category and optional subcategory context where it helps choose/inspect an item, especially the item catalog and new-order item selector. Preserve D-025/D-033 immutable historical snapshots; this is current-catalog presentation only and must not rewrite history or classification.
+
+#### Early-use change #9 — practical item/reseller search and filters
+**Status:** `QUEUED / NOT CURRENT`
+
+Add bounded list ergonomics: item search plus category/subcategory/lifecycle filtering, and reseller search across useful existing identity/contact fields plus lifecycle filtering. No schema change, fuzzy identity inference or destructive bulk action is authorized.
+
+#### Early-use change #10 — observations on payment/signal entry
+**Status:** `QUEUED / NOT CURRENT`
+
+Verify the existing transaction/cloud contract supports `observation` for payment/signal creation and, if so, expose the optional observation field in the normal entry flow. Reuse the existing transaction field; no database migration or change to payment/signal financial effect is authorized.
+
+#### Early-use change #11 — actionable global item search result
+**Status:** `QUEUED / NOT CURRENT`
+
+Make selecting an item in global search land the operator in useful item context instead of an unfiltered generic catalog. Prefer a minimal stable filter/highlight/targeting mechanism over creating a new item-detail architecture.
+
+#### Early-use change #12 — non-blocking duplicate-data warnings
+**Status:** `QUEUED / NOT CURRENT`
+
+Add conservative warnings for likely duplicate reseller/item creation using existing fields and classification context. Warnings must remain non-destructive and operator-confirmed: no automatic merge, no silent rejection and no new hard uniqueness constraint is pre-authorized. Same-name legitimate records must remain possible.
+
+#### Early-use change #13 — product-level financial report analytics
+**Status:** `QUEUED / NOT CURRENT`
+
+Extend the canonical read-only `FinancialReport` model with product/item aggregation useful for answering what sold, using immutable transaction-time order facts and the existing screen/PDF parity rule. No database migration or independent second accounting calculation path is authorized.
+
+#### Early-use change #14 — Dashboard receipts-today card
+**Status:** `QUEUED / NOT CURRENT`
+
+Add a glance KPI for effective payments + signals occurring today, respecting D-014 occurrence time and reversal-zero-effect semantics. Read-only; no transaction behavior change.
+
+#### Early-use change #15 — future occurrence-date confirmation
+**Status:** `QUEUED / NOT CURRENT`
+
+For new transaction entry, warn/confirm when the selected financial occurrence date is in the future so accidental date entry is less likely. This must be a non-blocking confirmation, not a prohibition, and must preserve D-014 occurrence-date semantics.
+
 ### P10-S3-I2-I4 — Legacy real-data migration
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
 
@@ -117,4 +183,4 @@ D-019 run/job `33005354591` / `98297566705`: 0 lint errors / 83 warnings; 63 fil
 
 ## Current NEXT_ACTION
 
-**Continue ordinary P10-S3-I2-I3-D observation. D-033, D-034 and early-use change #5 are closed. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data. No further product change is queued as authorized work; start the next bounded change only from explicit operator instruction or observed early-use evidence.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #6: verify the Dashboard `Análise de Performance` period selector and, only if needed, correct the selected-value presentation so operator-facing labels remain Portuguese while internal `90/180/360` period values and analytics semantics stay unchanged. Work outside `main`, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #7, then stop. Do not start change #7 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
