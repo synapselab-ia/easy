@@ -5,7 +5,7 @@
 
 ## 1. Current accepted topology
 
-D-029 defines the cloud target, D-031 authorizes controlled runtime-first early use, D-032 defines the store-global manual recovery state, and D-033 extends catalog classification by one optional level.
+D-029 defines the cloud target, D-031 authorizes controlled runtime-first early use, D-032 defines the store-global manual recovery state, and D-033 adds one optional subcategory level.
 
 ```text
 Approved operator browser(s)
@@ -58,7 +58,7 @@ Mandatory controls:
 - anonymous business/recovery access denied;
 - browser receives only project URL + publishable key;
 - no service-role/database/admin secret in browser/Git/public Vercel variables;
-- financial/recovery SECURITY DEFINER RPCs are exposed only to `authenticated` and perform internal active-operator authorization.
+- financial/recovery SECURITY DEFINER RPCs are exposed only to `authenticated` and internally assert the active operator.
 
 The current advisor warns that authenticated users can execute the intentionally exposed SECURITY DEFINER transaction/restore RPCs. Explicit privilege proof confirms `anon`/`public` cannot execute them. Their operator assertion remains part of the accepted API boundary.
 
@@ -80,7 +80,7 @@ Canonical relations:
 - `subcategories(id, category_id, name, is_active, ...)`;
 - `items(category_id, subcategory_id nullable, ...)`.
 
-Database integrity requires a referenced subcategory to belong to the same category selected by the item. Active items may not use inactive classification. Archive/delete guards preserve current active-reference integrity.
+Database integrity requires a referenced subcategory to belong to the same category selected by the item. Active items may not use inactive classification. Archive/delete guards preserve active-reference integrity.
 
 Legacy items that predate classification are not assigned guessed category/subcategory values. A grandfathered active legacy item may retain that historical unclassified state during an ordinary edit, but new operational references stay strict.
 
@@ -95,7 +95,7 @@ Accepted V2 invariants remain:
 - statements/debt calculations preserve reversal-zero-effect semantics;
 - item/category/subcategory transaction snapshots are historical facts.
 
-For a new order, the server captures current valid item name, category id/name and optional subcategory id/name. A later catalog rename/reassignment does not rewrite the old transaction.
+For a new order, the server captures current valid item name, category id/name and optional subcategory id/name. Later catalog rename/reassignment does not rewrite the old transaction.
 
 For D-026 correction:
 
@@ -108,19 +108,11 @@ For D-026 correction:
 
 ## 7. Logical backup/restore
 
-D-017/D-018 remain the portable recovery/interchange contract. D-033 advances the current Backup v2 target schema to **schema 6**.
+D-017/D-018 remain the portable recovery/interchange contract. D-033 advances Backup v2 to **schema 6**.
 
-Schema 6 contains:
+Schema 6 contains categories, subcategories, item category/subcategory references, resellers and transactions including immutable classification snapshots. Supported older v2 schema 4/5 backups normalize in memory to schema 6 without inventing missing category/subcategory history.
 
-- categories;
-- subcategories;
-- item category/subcategory references;
-- resellers;
-- transactions including immutable category/subcategory snapshots.
-
-Supported older v2 schema 4/5 backups normalize in memory to schema 6 without inventing missing category/subcategory history.
-
-Cloud restore remains validation/preflight -> download current checkpoint -> atomic server replacement -> canonical post-restore reconciliation.
+Cloud restore remains validation/preflight -> current checkpoint export -> atomic server replacement -> canonical post-restore reconciliation.
 
 ## 8. D-032 global manual recovery
 
@@ -134,15 +126,13 @@ During D-031 controlled early use:
 6. all approved devices share that checkpoint;
 7. normal business writes require age `< 24h` and fail at `>= 24h`.
 
-The first real global checkpoint has been created and confirmed on the manually deployed D-032 candidate, so this mode is operationally initialized.
+A fresh real global checkpoint has been exported/stored/confirmed on the updated candidate, so this mode is operationally initialized.
 
 D-032 remains a temporary control and does not satisfy D-030 unattended off-site retention/restore-drill acceptance.
 
-## 9. Migration boundary
+## 9. Migration/deployment boundary
 
 The stable-v1 private staging/import pipeline remains dormant. Clean-start early use continues; no legacy real-store import is implicitly authorized.
-
-## 10. Deployment boundary
 
 - `develop` is candidate integration;
 - `main` remains untouched;
@@ -150,10 +140,12 @@ The stable-v1 private staging/import pipeline remains dormant. Clean-start early
 - candidate publication is manual;
 - canonical production URL/cutover remains separately gated.
 
-## 11. D-033 implementation boundary
+## 10. D-033 implementation closure
 
-PR #82 adds the subcategory table/model, lifecycle UI, item assignment, transaction snapshots, schema-6 backup/restore and associated tests. Production migration `20260826135708_i3d_subcategories` is additive and already applied.
+PR #82 added the subcategory table/model, lifecycle UI, item assignment, transaction snapshots, schema-6 backup/restore and associated tests. Production migration `20260826135708_i3d_subcategories` is applied.
 
-Implementation-tree D-019 passed on run/job `32983745854` / `98226501149`: 0 lint errors / 83 warnings; 61 files / 258 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+D-019 passed on run/job `32983745854` / `98226501149`: 0 lint errors / 83 warnings; 61 files / 258 Vitest PASS; 17/17 Playwright PASS; production build PASS. The validated merge-ref tree was `5127a5a558b990f587b6427a605c5207e6573b9e`.
 
-A final D-019 on the frozen canonical-document tree is still mandatory before PR #82 integration.
+PR #82 was squash-integrated into `develop` as `5a487b93d5c632f5990b8a261e4a62a6a196f186`, whose tree is exactly `5127a5a558b990f587b6427a605c5207e6573b9e`. Tree equivalence: PASS.
+
+The post-integration canonical closure is Markdown-only and introduces no executable/runtime delta.
