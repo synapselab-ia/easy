@@ -84,8 +84,15 @@ export function useUpdateItem() {
                 const nextActive = changes.isActive !== undefined ? changes.isActive : isItemActive(existing);
                 const nextCategoryId = categoryChanged ? changes.categoryId : existing.categoryId;
                 const nextSubcategoryId = subcategoryChanged ? changes.subcategoryId : existing.subcategoryId;
+                const preservesGrandfatheredLegacyClassification =
+                    isItemActive(existing)
+                    && existing.categoryId === undefined
+                    && existing.subcategoryId === undefined
+                    && nextActive
+                    && nextCategoryId === undefined
+                    && nextSubcategoryId === undefined;
 
-                if (nextActive || categoryChanged || subcategoryChanged) {
+                if (!preservesGrandfatheredLegacyClassification && (nextActive || categoryChanged || subcategoryChanged)) {
                     if (nextActive || nextCategoryId !== undefined || nextSubcategoryId !== undefined) {
                         await validateActiveClassification(nextCategoryId, nextSubcategoryId);
                     }
