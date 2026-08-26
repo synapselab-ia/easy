@@ -26,6 +26,7 @@ describe('ItemsPage Integration', () => {
     beforeEach(async () => {
         await db.transactions.clear();
         await db.items.clear();
+        await db.subcategories.clear();
         await db.categories.clear();
         categoryId = await db.categories.add({
             name: 'Porcelana',
@@ -55,7 +56,7 @@ describe('ItemsPage Integration', () => {
 
         const nameInput = screen.getByLabelText(/Nome do Item/i);
         const priceInput = screen.getByLabelText(/Preço Base/i);
-        const categoryInput = screen.getByLabelText(/Categoria/i);
+        const categoryInput = screen.getByLabelText(/^Categoria$/i);
 
         fireEvent.change(nameInput, { target: { value: 'Perfume Teste' } });
         fireEvent.change(priceInput, { target: { value: '150.50' } });
