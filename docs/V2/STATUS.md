@@ -22,7 +22,8 @@ Current P10-S3 state:
   - change #1 grouped reseller PDF: `DONE / INTEGRATED` — PR #79;
   - change #2 store-global manual recovery checkpoint: `DONE / ACCEPTED / INTEGRATED / OPERATIONALLY INITIALIZED` — D-032 / PR #80;
   - change #3 optional subcategories: `DONE / ACCEPTED / INTEGRATED` — D-033 / PR #82;
-  - **change #4 financial reports workspace + PDF: `DONE / ACCEPTED / INTEGRATED` — D-034 / PR #85.**
+  - change #4 financial reports workspace + PDF: `DONE / ACCEPTED / INTEGRATED` — D-034 / PR #85;
+  - **change #5 localized financial-report period labels: `DONE / INTEGRATED` — PR #87.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -98,6 +99,29 @@ Repository validation/integration evidence:
 
 The D-034 canonical closure is documentation-only. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` and was not modified.
 
+## Early-use change #5 — localized report period labels
+
+Early-use observation found that the Base UI period selector displayed internal preset identifiers such as `week` and `month` after selection, despite the menu options themselves being Portuguese.
+
+PR #87 keeps the internal preset identifiers unchanged but supplies the selector with an explicit value/label mapping so the operator-facing selected value is always `Hoje`, `Esta semana`, `Este mês`, `Mês passado`, `Este ano` or `Personalizado`.
+
+This is presentation-only: report date ranges, occurrence-time accounting semantics, database state, Auth/RLS, recovery behavior and deployment policy are unchanged.
+
+Validation/integration evidence:
+
+- feature head: `ae0ecee51e0296ab4b132892ec626abe64164204`;
+- GitHub Actions merge ref: `57ac8137673f3826cfe6a2b17a68795050d2e1b2`;
+- validated/integrated tree: `ae183953e9f9248cab7ebc107fae57723ccb8aa4`;
+- D-019 run/job: `33005354591` / `98297566705`;
+- ESLint: 0 errors / 83 warnings;
+- Vitest: 63 files / 268 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #87 squash-integrated `develop`: `430b36feb7563c3370a334eb4962edc7aafdc117`;
+- exact tree equivalence between validated merge ref and integrated commit: PASS.
+
+No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Startup protocol for a new conversation
 
 Read in this exact order:
@@ -121,4 +145,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**D-034 is closed. Continue P10-S3-I2-I3-D controlled early-use observation. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover. No further product change is pre-authorized; begin the next bounded change only from new operator instruction or observed early-use evidence.**
+**D-034 and early-use change #5 are closed. Continue P10-S3-I2-I3-D controlled early-use observation. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover. No further product change is pre-authorized; begin the next bounded change only from new operator instruction or observed early-use evidence.**

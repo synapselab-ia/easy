@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-26 — Report period selected labels localized
+
+Controlled early-use observation found a presentation defect in the financial-report period selector: menu choices were Portuguese, but after selection Base UI rendered the internal preset identifier (`week`, `month`, etc.) in the closed trigger.
+
+PR #87 keeps those stable internal identifiers but adds an explicit value/label mapping to the selector, so the visible selected values are now `Hoje`, `Esta semana`, `Este mês`, `Mês passado`, `Este ano` and `Personalizado`.
+
+This correction changes presentation only. Report ranges, occurrence-time accounting, database/Supabase state, Auth/RLS, recovery behavior and deployment policy are unchanged.
+
+Final D-019 on PR #87: head `ae0ecee51e0296ab4b132892ec626abe64164204`, merge ref `57ac8137673f3826cfe6a2b17a68795050d2e1b2`, run/job `33005354591` / `98297566705`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `ae183953e9f9248cab7ebc107fae57723ccb8aa4`.
+
+PR #87 was squash-integrated into `develop` as `430b36feb7563c3370a334eb4962edc7aafdc117`; its Git tree is also `ae183953e9f9248cab7ebc107fae57723ccb8aa4`. Exact tree equivalence: PASS. No automatic Vercel deployment occurred and `main` remains untouched.
+
+---
+
 ## 2026-08-26 — D-034 financial reports workspace integrated
 
 Controlled early-use feedback requested a report area that is useful for analysis and can produce a presentable financial PDF without creating a second accounting interpretation separate from the application.

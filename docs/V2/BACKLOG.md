@@ -94,6 +94,21 @@ Accepted result:
 
 D-019 run/job `33001910986` / `98285660448`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree `124767ee7afa23c0c07e7215513fa5b90d8177a5` exactly equals squash-integrated `develop@970cceaff9ce359f0ecb559648e38ab6cc7e1bd3`.
 
+#### Early-use change #5 — localized financial-report period labels
+**Status:** `DONE / INTEGRATED — PR #87`
+
+Observed early-use issue: the report period menu contained Portuguese options, but the selected trigger exposed Base UI's internal English identifiers such as `week` and `month`.
+
+Accepted correction:
+
+- internal preset identifiers remain unchanged;
+- the selector receives one explicit value/Portuguese-label mapping;
+- selected values display `Hoje`, `Esta semana`, `Este mês`, `Mês passado`, `Este ano` or `Personalizado`;
+- report range/accounting semantics are unchanged;
+- no database, Supabase/Auth/RLS, recovery or deployment behavior changed.
+
+D-019 run/job `33005354591` / `98297566705`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub merge-ref tree `ae183953e9f9248cab7ebc107fae57723ccb8aa4` exactly equals squash-integrated `develop@430b36feb7563c3370a334eb4962edc7aafdc117` tree.
+
 ### P10-S3-I2-I4 — Legacy real-data migration
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
 
@@ -102,4 +117,4 @@ D-019 run/job `33001910986` / `98285660448`: 0 lint errors / 83 warnings; 63 fil
 
 ## Current NEXT_ACTION
 
-**Continue ordinary P10-S3-I2-I3-D observation. D-033 and D-034 are closed. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data. No further product change is queued as authorized work; start the next bounded change only from explicit operator instruction or observed early-use evidence.** See `STATUS.md` for the authoritative instruction.
+**Continue ordinary P10-S3-I2-I3-D observation. D-033, D-034 and early-use change #5 are closed. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data. No further product change is queued as authorized work; start the next bounded change only from explicit operator instruction or observed early-use evidence.** See `STATUS.md` for the authoritative instruction.
