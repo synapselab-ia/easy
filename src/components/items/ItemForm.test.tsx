@@ -27,6 +27,7 @@ describe('ItemForm', () => {
         vi.restoreAllMocks();
         vi.clearAllMocks();
         await db.items.clear();
+        await db.subcategories.clear();
         await db.categories.clear();
         categoryId = await db.categories.add({
             name: 'Porcelana',
@@ -37,12 +38,34 @@ describe('ItemForm', () => {
         queryClient.clear();
     });
 
-    it('should render form fields', async () => {
+    it('should render category and optional subcategory fields', async () => {
         render(<ItemForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
         expect(screen.getByLabelText(/Nome do Item/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Preço Base/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Categoria/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Categoria$/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Subcategoria \(opcional\)$/i)).toBeInTheDocument();
         expect(await screen.findByRole('option', { name: 'Porcelana' })).toBeInTheDocument();
+    });
+
+    it('filters subcategories by the selected category', async () => {
+        const otherCategoryId = await db.categories.add({
+            name: 'Molduras',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        await db.subcategories.bulkAdd([
+            { categoryId, name: 'Placas', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+            { categoryId: otherCategoryId, name: 'Madeira', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+        ]);
+
+        render(<ItemForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
+        await screen.findByRole('option', { name: 'Porcelana' });
+
+        fireEvent.change(screen.getByLabelText(/^Categoria$/i), { target: { value: String(categoryId) } });
+
+        expect(await screen.findByRole('option', { name: 'Placas' })).toBeInTheDocument();
+        expect(screen.queryByRole('option', { name: 'Madeira' })).not.toBeInTheDocument();
     });
 
     it('should validate empty values', async () => {
@@ -64,7 +87,7 @@ describe('ItemForm', () => {
 
         fireEvent.change(nameInput, { target: { value: 'Produto Teste' } });
         fireEvent.change(priceInput, { target: { value: '-10' } });
-        fireEvent.change(screen.getByLabelText(/Categoria/i), { target: { value: String(categoryId) } });
+        fireEvent.change(screen.getByLabelText(/^Categoria$/i), { target: { value: String(categoryId) } });
 
         fireEvent.submit(screen.getByRole('button', { name: /Salvar/i }));
 
@@ -80,7 +103,7 @@ describe('ItemForm', () => {
 
         const nameInput = screen.getByLabelText(/Nome do Item/i);
         const priceInput = screen.getByLabelText(/Preço Base/i);
-        const categoryInput = screen.getByLabelText(/Categoria/i);
+        const categoryInput = screen.getByLabelText(/^Categoria$/i);
         fireEvent.change(nameInput, { target: { value: 'Produto para retry' } });
         fireEvent.change(priceInput, { target: { value: '149.90' } });
         fireEvent.change(categoryInput, { target: { value: String(categoryId) } });
@@ -123,7 +146,7 @@ describe('ItemForm', () => {
         expect(onSubmitSuccess).not.toHaveBeenCalled();
         expect(nameInput).toHaveValue('Produto Editado');
         expect(priceInput).toHaveValue(175.5);
-        expect(screen.getByLabelText(/Categoria/i)).toHaveValue('');
+        expect(screen.getByLabelText(/^Categoria$/i)).toHaveValue('');
         expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
     });
 });
