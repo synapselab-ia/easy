@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-26 — Dashboard performance-window selected labels localized
+
+Controlled early-use verification confirmed that the Dashboard `Análise de Performance` selector used internal `AnalysisPeriod` values (`90`, `180`, `360`) without the explicit Base UI value/label mapping already accepted for the Reports selector.
+
+PR #90 adds one shared option list and supplies it to the Select, so the closed trigger now resolves `Últimos 90 dias`, `Últimos 180 dias` and `Último ano` while the internal values and analysis-window calculations remain unchanged.
+
+This correction changes presentation only. Analytics semantics, database/Supabase state, Auth/RLS, recovery behavior and deployment policy are unchanged.
+
+Final D-019 on PR #90: head `34728fcdb0016dea1481ab795317de223b7c9a10`, merge ref `fdfd8771589e428f219afb1b6dd1597b8f2fb64d`, run/job `33009642945` / `98312276753`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `f872da2c6adf492a929bd5ef02ad7a1c695a4672`.
+
+PR #90 was squash-integrated into `develop` as `446987475bf8621ff7ec5803149c4c6b874d5e50`; its Git tree is also `f872da2c6adf492a929bd5ef02ad7a1c695a4672`. Exact tree equivalence: PASS. No automatic Vercel deployment occurred and `main` remains untouched.
+
+---
+
 ## 2026-08-26 — Report period selected labels localized
 
 Controlled early-use observation found a presentation defect in the financial-report period selector: menu choices were Portuguese, but after selection Base UI rendered the internal preset identifier (`week`, `month`, etc.) in the closed trigger.

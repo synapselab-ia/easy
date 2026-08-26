@@ -113,6 +113,35 @@ PR #87 was squash-integrated into `develop` as `430b36feb7563c3370a334eb4962edc7
 
 The post-integration change #5 closure is documentation-only. No failed executable gate was waived and no automatic Vercel publication occurred.
 
+## P10-S3-I2-I3-D early-use change #6 — localized Dashboard performance-window labels
+
+### Scope review — PRESENTATION ONLY
+
+PR #90 changes only `src/components/dashboard/PerformanceAnalysisSection.tsx`:
+
+- confirms the Dashboard selector lacked the Base UI value/label mapping already used by the accepted Reports fix;
+- defines one `90` / `180` / `360` option list with Portuguese labels;
+- supplies that list to Base UI `Select` so the closed trigger resolves the visible label;
+- reuses the same list for the menu entries;
+- leaves `AnalysisPeriod`, `usePerformanceAnalysis` and all window calculations unchanged.
+
+No database migration, Supabase function/policy, analytics calculation, recovery mechanism, Auth/RLS boundary or deployment workflow changed.
+
+### Final D-019 — PASS
+
+- feature head: `34728fcdb0016dea1481ab795317de223b7c9a10`;
+- exact GitHub-generated merge ref checked out by Actions: `fdfd8771589e428f219afb1b6dd1597b8f2fb64d`;
+- validated tree: `f872da2c6adf492a929bd5ef02ad7a1c695a4672`;
+- run/job: `33009642945` / `98312276753`;
+- ESLint: **0 errors / 83 warnings**;
+- Vitest: **63 files / 268 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #90 was squash-integrated into `develop` as `446987475bf8621ff7ec5803149c4c6b874d5e50`. Git object inspection confirms the integrated commit tree is `f872da2c6adf492a929bd5ef02ad7a1c695a4672`, exactly the same tree as the validated GitHub merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #6 closure is documentation-only. No failed executable gate was waived and no automatic Vercel publication occurred.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -139,5 +168,8 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #5 report period-label D-019: **PASS**.
 - PR #87 integrated-tree equivalence: **PASS**.
 - early-use change #5 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #6 Dashboard period-label D-019: **PASS**.
+- PR #90 integrated-tree equivalence: **PASS**.
+- early-use change #6 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
