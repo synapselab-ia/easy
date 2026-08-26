@@ -60,7 +60,7 @@ function schema5Payload() {
 }
 
 describe('P9-S3-I1 category-aware backup preflight', () => {
-    it('normalizes an existing v2/schema4 backup into the V5 logical target without inventing categories', () => {
+    it('normalizes an existing v2/schema4 backup into the schema6 logical target without inventing classification', () => {
         const result = preflightBackupPayload({
             format: BACKUP_FORMAT,
             version: BACKUP_VERSION,
@@ -101,42 +101,50 @@ describe('P9-S3-I1 category-aware backup preflight', () => {
             sourceVersion: 2,
             sourceSchemaVersion: 4,
             targetVersion: 2,
-            schemaVersion: 5,
+            schemaVersion: 6,
             migrated: true,
             counts: {
                 categories: 0,
+                subcategories: 0,
                 unclassifiedItems: 1,
                 legacyOrdersWithoutCategory: 1,
             },
         });
         expect(result.normalized.data.categories).toEqual([]);
+        expect(result.normalized.data.subcategories).toEqual([]);
         expect(result.normalized.data.items[0].categoryId).toBeUndefined();
         expect(result.normalized.data.transactions[0].categoryId).toBeUndefined();
         expect(result.normalized.data.transactions[0].categoryName).toBeUndefined();
-        expect(result.preview.warnings.join(' ')).toMatch(/schema4 normalizado para schema5/);
+        expect(result.preview.warnings.join(' ')).toMatch(/schema4 normalizado para schema6/);
     });
 
-    it('accepts a valid schema5 category graph and preserves transaction-time category label', () => {
+    it('accepts a valid schema5 category graph and normalizes it to schema6 without inventing subcategories', () => {
         const result = preflightBackupPayload(schema5Payload());
 
         expect(result.preview).toMatchObject({
             sourceSchemaVersion: 5,
-            schemaVersion: 5,
-            migrated: false,
+            schemaVersion: 6,
+            migrated: true,
             counts: {
                 categories: 1,
                 activeCategories: 1,
                 inactiveCategories: 0,
+                subcategories: 0,
                 unclassifiedItems: 0,
                 legacyOrdersWithoutCategory: 0,
             },
         });
+        expect(result.normalized.data.subcategories).toEqual([]);
         expect(result.normalized.data.categories[0]).toMatchObject({ id: 7, name: 'Bronze', isActive: true });
         expect(result.normalized.data.items[0].categoryId).toBe(7);
+        expect(result.normalized.data.items[0].subcategoryId).toBeUndefined();
         expect(result.normalized.data.transactions[0]).toMatchObject({
             categoryId: 7,
             categoryName: 'Bronze original',
         });
+        expect(result.normalized.data.transactions[0].subcategoryId).toBeUndefined();
+        expect(result.normalized.data.transactions[0].subcategoryName).toBeUndefined();
+        expect(result.preview.warnings.join(' ')).toMatch(/schema5 normalizado para schema6/);
     });
 
     it('rejects duplicate logical category names case-insensitively', () => {
@@ -234,6 +242,6 @@ describe('P9-S3-I1 category-aware backup preflight', () => {
             },
         ];
 
-        expect(() => preflightBackupPayload(payload)).toThrow(/preservar o snapshot de categoria original/);
+        expect(() => preflightBackupPayload(payload)).toThrow(/preservar os snapshots de categoria e subcategoria originais/);
     });
 });
