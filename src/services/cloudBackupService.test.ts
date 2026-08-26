@@ -12,6 +12,7 @@ const NOW = '2026-08-21T12:00:00.000Z';
 
 const emptyDataset: CloudDataset = {
     categories: [],
+    subcategories: [],
     items: [],
     resellers: [],
     transactions: [],
@@ -23,7 +24,7 @@ const targetEnvelope: BackupEnvelopeV2 = {
     exportedAt: NOW,
     source: {
         database: 'ResellerManagerDB',
-        schemaVersion: 5,
+        schemaVersion: 6,
     },
     data: {
         categories: [{
@@ -33,6 +34,7 @@ const targetEnvelope: BackupEnvelopeV2 = {
             createdAt: NOW,
             updatedAt: NOW,
         }],
+        subcategories: [],
         items: [{
             id: 1,
             name: 'Produto',
@@ -108,7 +110,7 @@ describe('cloud backup restore safety', () => {
         vi.mocked(fetchCloudDataset)
             .mockResolvedValueOnce(emptyDataset)
             .mockResolvedValueOnce(emptyDataset);
-        vi.mocked(restoreCloudBackup).mockResolvedValueOnce({ categories: 1, items: 1, resellers: 1, transactions: 1 });
+        vi.mocked(restoreCloudBackup).mockResolvedValueOnce({ categories: 1, subcategories: 0, items: 1, resellers: 1, transactions: 1 });
 
         const result = await restorePreflightedCloudBackup(preflight);
 
@@ -125,7 +127,7 @@ describe('cloud backup restore safety', () => {
         vi.mocked(fetchCloudDataset)
             .mockResolvedValueOnce(emptyDataset)
             .mockResolvedValueOnce(targetDataset);
-        vi.mocked(restoreCloudBackup).mockResolvedValueOnce({ categories: 1, items: 1, resellers: 1, transactions: 1 });
+        vi.mocked(restoreCloudBackup).mockResolvedValueOnce({ categories: 1, subcategories: 0, items: 1, resellers: 1, transactions: 1 });
 
         const result = await restorePreflightedCloudBackup(preflight);
 
