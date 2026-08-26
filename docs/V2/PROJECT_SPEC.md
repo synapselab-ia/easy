@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-Easy is a web application for reseller orders, payments/signals, balances, statements, operational analytics and portable recovery.
+Easy is a web application for reseller orders, payments/signals, balances, statements, operational analytics, financial reporting and portable recovery.
 
 Easy V2 evolves the existing application rather than rewriting it. It must preserve accepted financial/audit behavior while becoming safer, recoverable, durable and maintainable.
 
@@ -63,7 +63,7 @@ The V2 must be:
 1. **Correct** — balances/history remain internally consistent.
 2. **Recoverable** — export/restore paths are validated and tested.
 3. **Auditable** — financial corrections preserve history.
-4. **Consistent** — dashboard, reseller detail, PDF, search and analytics tell the same story.
+4. **Consistent** — dashboard, reseller detail, reports, PDF, search and analytics tell the same story.
 5. **Secure** — cloud data requires authenticated approved-operator access.
 6. **Usable** — routine operations remain efficient on desktop/mobile.
 7. **Testable** — D-019 catches critical regressions before integration/publication.
@@ -83,7 +83,8 @@ The hosted runtime must preserve:
 - immutable transaction-time item/category/subcategory snapshots;
 - non-inventive legacy classification semantics;
 - D-026 full-field correction rules;
-- exact logical-backup validation and recovery freshness enforcement.
+- exact logical-backup validation and recovery freshness enforcement;
+- centralized report calculations rather than separate screen/PDF accounting logic.
 
 ## 7. Catalog classification — D-033
 
@@ -95,7 +96,7 @@ Category -> optional Subcategory -> Item
 
 Rules:
 
-- there is exactly one optional subcategory level; recursive trees are out of scope;
+- exactly one optional subcategory level; recursive trees are out of scope;
 - every subcategory belongs to one category;
 - an item's subcategory, when present, must belong to the item's selected category;
 - active items cannot use inactive classification;
@@ -106,9 +107,37 @@ Rules:
 - Backup v2 schema 6 contains subcategories and related references/snapshots;
 - supported schema 4/5 backups normalize to schema 6 without inventing classification.
 
-D-033 is implemented and integrated through PR #82 / `develop@5a487b93d5c632f5990b8a261e4a62a6a196f186`.
+D-033 is implemented and integrated through PR #82.
 
-## 8. Cloud security requirements
+## 8. Financial reporting — D-034
+
+The accepted report product is a dedicated workspace, separate from the glance-oriented Dashboard.
+
+The report workspace must support:
+
+- common period presets and a custom date interval;
+- summary KPIs for sales, receipts, open debt at report end and orders;
+- comparison against the immediately preceding equal-length period;
+- sales/receipts timeline;
+- category -> subcategory analysis;
+- reseller performance;
+- downloadable financial PDF whose calculations come from the same canonical report model as the screen.
+
+Accounting semantics:
+
+1. Range inclusion uses financial occurrence time (`transactionOccurredAt`), not registration time.
+2. Reversed transactions remain historical/auditable but have zero effective report contribution.
+3. `Vendas` = effective order gross value inside the range.
+4. `Recebimentos` = effective payment + signal value inside the range.
+5. `Movimento líquido` = period sales minus period receipts.
+6. `Em aberto no fim` = sum of positive reseller balances reconstructed from all effective history through the selected end date; it is not the period net.
+7. Category/subcategory analytics use immutable transaction-time order snapshots and retain explicit legacy/unclassified groups rather than reclassifying history from current catalog data.
+8. Reseller rows may combine period activity with an as-of-end closing balance, and the UI/PDF must label this distinction clearly.
+9. PDF section selection changes presentation only; it does not create a second reporting calculation path.
+
+D-034 is intentionally read-only and does not add a persistence schema, mutation RPC, recovery exception or deployment exception.
+
+## 9. Cloud security requirements
 
 - exposed application tables use RLS;
 - anonymous business-data access is forbidden;
@@ -120,11 +149,11 @@ D-033 is implemented and integrated through PR #82 / `develop@5a487b93d5c632f599
 
 Intentional `SECURITY DEFINER` transaction/restore RPCs are executable by `authenticated` only and internally assert the active operator. `anon` and `public` execute privileges are explicitly absent.
 
-## 9. Data-migration posture
+## 10. Data-migration posture
 
 The private stable-v1 staging/import path remains available synthetically if later needed, but clean-start early use does not require or authorize real legacy import.
 
-## 10. Repository governance
+## 11. Repository governance
 
 Branch roles:
 
@@ -136,7 +165,7 @@ Integration pattern:
 
 `defined work -> isolated branch -> implementation/docs -> D-019 (+ cloud evidence when relevant) -> PR -> develop`
 
-## 11. Sources of truth
+## 12. Sources of truth
 
 Precedence:
 
@@ -150,10 +179,8 @@ Precedence:
 
 Historical `tasks/` checkboxes are not canonical status.
 
-## 12. Current bounded goal
+## 13. Current bounded goal
 
-D-033 / subcategories is **closed**. Continue controlled early-use observation only.
+D-033 / subcategories and D-034 / financial reports are **closed**. Continue controlled early-use observation only.
 
-The next already-requested product topic is a downloadable financial PDF/report in addition to on-site dashboards. It is intentionally separate from D-033 and must begin only as its own bounded design/implementation step when the operator asks to proceed.
-
-Current scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
+No additional product change is pre-authorized. Current scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
