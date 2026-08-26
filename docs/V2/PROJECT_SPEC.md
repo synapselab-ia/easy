@@ -101,7 +101,7 @@ Rules:
 - an item's subcategory, when present, must belong to the item's selected category;
 - active items cannot use inactive classification;
 - active references protect category/subcategory archival;
-- legacy unclassified data stays unclassified rather than receiving guessed values;
+- legacy unclassified records stays unclassified rather than receiving guessed values;
 - order history captures transaction-time category/subcategory snapshots;
 - later catalog edits do not rewrite prior transactions;
 - Backup v2 schema 6 contains subcategories and related references/snapshots;
@@ -181,6 +181,18 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories and D-034 / financial reports are **closed**. Continue controlled early-use observation only.
+D-033 / subcategories, D-034 / financial reports and early-use change #5 are **closed**. Controlled early-use observation remains active.
 
-No additional product change is pre-authorized. Current scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
+The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
+
+For each queue item:
+
+- verify the current evidence before changing code;
+- preserve the accepted financial/history/security/recovery architecture unless that item's scope explicitly requires otherwise;
+- close as `NO_CHANGE / DEFERRED` instead of forcing a change when the issue is absent or safe implementation would broaden scope;
+- use an isolated branch and D-019 for executable integration;
+- after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
+
+Current item: **early-use change #6 — Dashboard performance-window labels**.
+
+Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
