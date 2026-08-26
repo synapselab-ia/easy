@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useCreateItem, useUpdateItem } from "../../hooks/useItems";
 import { useCategories } from "../../hooks/useCategories";
+import { useSubcategories } from "../../hooks/useSubcategories";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { isCategoryActive, type Item } from "../../db/database";
+import { isCategoryActive, isSubcategoryActive, type Item } from "../../db/database";
 import { toast } from "sonner";
 
 interface ItemFormProps {
@@ -20,16 +21,34 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
         initialData?.basePrice !== undefined ? initialData.basePrice.toString() : ""
     );
     const [categoryId, setCategoryId] = useState(initialData?.categoryId?.toString() || "");
+    const [subcategoryId, setSubcategoryId] = useState(initialData?.subcategoryId?.toString() || "");
     const [categoryChanged, setCategoryChanged] = useState(false);
-    const [errors, setErrors] = useState<{ name?: string; basePrice?: string; categoryId?: string }>({});
+    const [subcategoryChanged, setSubcategoryChanged] = useState(false);
+    const [errors, setErrors] = useState<{
+        name?: string;
+        basePrice?: string;
+        categoryId?: string;
+        subcategoryId?: string;
+    }>({});
 
     const { data: categories = [] } = useCategories();
+    const { data: subcategories = [] } = useSubcategories();
     const activeCategories = useMemo(
         () => categories.filter(isCategoryActive),
         [categories],
     );
+    const selectedCategoryId = categoryId ? Number(categoryId) : undefined;
+    const activeSubcategories = useMemo(
+        () => subcategories.filter(subcategory =>
+            isSubcategoryActive(subcategory) && subcategory.categoryId === selectedCategoryId
+        ),
+        [selectedCategoryId, subcategories],
+    );
     const currentCategory = initialData?.categoryId
         ? categories.find(category => category.id === initialData.categoryId)
+        : undefined;
+    const currentSubcategory = initialData?.subcategoryId
+        ? subcategories.find(subcategory => subcategory.id === initialData.subcategoryId)
         : undefined;
 
     const createMutation = useCreateItem();
@@ -40,12 +59,19 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
         setName(initialData?.name || "");
         setBasePrice(initialData?.basePrice !== undefined ? initialData.basePrice.toString() : "");
         setCategoryId(initialData?.categoryId?.toString() || "");
+        setSubcategoryId(initialData?.subcategoryId?.toString() || "");
         setCategoryChanged(false);
+        setSubcategoryChanged(false);
         setErrors({});
     }, [initialData]);
 
     const validate = () => {
-        const newErrors: { name?: string; basePrice?: string; categoryId?: string } = {};
+        const newErrors: {
+            name?: string;
+            basePrice?: string;
+            categoryId?: string;
+            subcategoryId?: string;
+        } = {};
         if (!name.trim()) newErrors.name = "Nome é obrigatório";
 
         const priceNum = parseFloat(basePrice.replace(",", "."));
@@ -62,6 +88,16 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
             }
         }
 
+        if (subcategoryId) {
+            const selectedSubcategoryId = Number(subcategoryId);
+            const selectedCategory = Number(categoryId);
+            if (!activeSubcategories.some(subcategory =>
+                subcategory.id === selectedSubcategoryId && subcategory.categoryId === selectedCategory
+            )) {
+                newErrors.subcategoryId = "Selecione uma subcategoria ativa desta categoria";
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -72,13 +108,17 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
         if (!validate()) return;
 
         const priceNum = parseFloat(basePrice.replace(",", "."));
-        const categoryUpdate = categoryId && (!isExistingItem || categoryChanged)
-            ? { categoryId: Number(categoryId) }
+        const classificationChanged = !isExistingItem || categoryChanged || subcategoryChanged;
+        const classificationUpdate = classificationChanged
+            ? {
+                categoryId: categoryId ? Number(categoryId) : undefined,
+                subcategoryId: subcategoryId ? Number(subcategoryId) : undefined,
+            }
             : {};
         const data = {
             name: name.trim(),
             basePrice: priceNum,
-            ...categoryUpdate,
+            ...classificationUpdate,
             updatedAt: new Date()
         };
 
@@ -92,7 +132,9 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
             setName("");
             setBasePrice("");
             setCategoryId("");
+            setSubcategoryId("");
             setCategoryChanged(false);
+            setSubcategoryChanged(false);
         } catch (error) {
             const message = error instanceof Error ? error.message : "Falha ao salvar item.";
             toast.error(message);
@@ -107,7 +149,7 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ex: Perfume Malbec"
+                    placeholder="Ex: Placa 3x8"
                 />
                 {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
             </div>
@@ -120,6 +162,8 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
                     onChange={(event) => {
                         setCategoryId(event.target.value);
                         setCategoryChanged(true);
+                        setSubcategoryId("");
+                        setSubcategoryChanged(true);
                     }}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 >
@@ -148,6 +192,40 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
                     </p>
                 )}
                 {errors.categoryId && <p className="text-red-500 text-sm">{errors.categoryId}</p>}
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="subcategoryId">Subcategoria (opcional)</Label>
+                <select
+                    id="subcategoryId"
+                    value={subcategoryId}
+                    onChange={(event) => {
+                        setSubcategoryId(event.target.value);
+                        setSubcategoryChanged(true);
+                    }}
+                    disabled={!categoryId}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <option value="">Sem subcategoria</option>
+                    {currentSubcategory
+                        && currentSubcategory.categoryId === selectedCategoryId
+                        && !isSubcategoryActive(currentSubcategory) && (
+                        <option value={currentSubcategory.id?.toString()} disabled>
+                            {currentSubcategory.name} — arquivada
+                        </option>
+                    )}
+                    {activeSubcategories.map(subcategory => (
+                        <option key={subcategory.id} value={subcategory.id?.toString()}>
+                            {subcategory.name}
+                        </option>
+                    ))}
+                </select>
+                {categoryId && activeSubcategories.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                        Esta categoria ainda não possui subcategorias ativas. O item pode ficar somente na categoria.
+                    </p>
+                )}
+                {errors.subcategoryId && <p className="text-red-500 text-sm">{errors.subcategoryId}</p>}
             </div>
 
             <div className="space-y-2">
