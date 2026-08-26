@@ -1,6 +1,6 @@
 # Easy V2 — QA Ledger
 
-**Updated:** 2026-08-25
+**Updated:** 2026-08-26
 
 ## Mandatory repository gate — D-019
 
@@ -12,120 +12,90 @@ npm run qa:critical
 + npm run build
 ```
 
-Objective failures block integration. Supabase-bearing work additionally requires relevant database/security/policy/advisor evidence.
+Objective failures block executable integration. Supabase-bearing work additionally requires relevant database/security/policy/advisor evidence.
 
 ## Accepted historical baseline
 
-Detailed historical runs remain available in Git/PR history and phase-specific execution records. Key accepted milestones:
+Detailed historical runs remain available in Git/PR history and phase-specific execution records. Key accepted milestones include P9 category/correction/date work, P10-S1 rehearsal, D-029 architecture, P10-S3-I1 Supabase foundation, D-030 contract/tooling, D-031 runtime-first governance/runtime/onboarding, PR #79 grouped reseller PDF and PR #80 D-032 global recovery.
 
-- P9 categories/correction/date work: integrated with D-019 passing evidence.
-- P10-S1 compatibility/rehearsal: accepted synthetically; no real data moved.
-- D-029 architecture redirect: accepted/integrated.
-- P10-S3-I1 Supabase foundation: accepted synthetically.
-- P10-S3-I2 contract/D-030: accepted without moving real data.
-- P10-S3-I2-I1 staging/import compatibility: accepted synthetically with exact-cent reconciliation and rollback proof.
-- P10-S3-I2-I2 repository/database prerequisite: final run/job `32411404495` / `96562427495`; 0 lint errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; build PASS; integrated via PR #70. Actual operator-local D-030 proof remains ON HOLD.
-- D-031 governance PR #74: run/job `32497468087` / `96819192500`; 0 errors / 82 warnings; 56 files / 237 Vitest PASS; 17/17 Playwright PASS; build PASS.
-- Runtime-first PR #72: run/job `32502664982` / `96835725075`; 0 errors / 82 warnings; 57 files / 240 Vitest PASS; 17/17 Playwright PASS; build PASS; integrated `develop` tree exactly matched validated merge-ref tree.
-- I3-C onboarding closure PR #78: run/job `32880173053` / `97907448864`; 0 errors / 82 warnings; 57 files / 240 Vitest PASS; 17/17 Playwright PASS; build PASS; integrated tree equivalence PASS.
+D-030 real operator-local unattended/off-site/retention/restore acceptance remains ON HOLD.
 
-## P10-S3-I2-I3-D early-use change #1 — grouped reseller PDF — FINAL PASS / INTEGRATED
+## D-032 operational rollout — PASS
 
-Final PR #79 evidence:
+The accepted D-032-containing `develop` candidate was manually deployed to Vercel. A fresh real Backup v2 was exported on the updated candidate, stored outside Easy and explicitly confirmed. The production store-global exact-24h recovery checkpoint is therefore operational.
 
-- final head: `3d3cab2490f504d0464d722d08079dfb9fcdcb8c`;
-- exact GitHub-generated merge ref: `f74af101e2335e7ca3dd4c52d51e46c3118de791`;
-- Critical QA run/job: `32885324610` / `97924299040`;
-- ESLint: 0 errors / 82 warnings;
-- Vitest: 57 files / 242 tests PASS;
-- `src/services/pdfService.test.ts`: 7 tests PASS;
+This is early-use recovery evidence, not D-030 durability acceptance.
+
+## P10-S3-I2-I3-D early-use change #3 — D-033 optional subcategories
+
+### Production database migration — PASS
+
+Migration `20260826135708_i3d_subcategories` is applied.
+
+Material database behavior:
+
+- `public.subcategories` with RLS, stable identity, category parent and lifecycle;
+- optional `items.subcategory_id` constrained to the selected category;
+- optional transaction `subcategory_id/subcategory_name` snapshots for orders;
+- archive/reference guards for category/subcategory/item integrity;
+- transactional create/correct RPCs capture or preserve subcategory snapshots;
+- cloud backup restore supports schema 6 while retaining supported older backup compatibility.
+
+### Live synthetic database proof — PASS / ROLLED BACK
+
+A transactionally isolated synthetic proof under an approved operator context verified:
+
+1. cross-category item/subcategory pairing is rejected;
+2. valid classification can be created;
+3. `create_transaction` captures category and subcategory snapshots and server-calculated total;
+4. a subcategory referenced by an active item cannot be archived;
+5. rollback leaves zero synthetic category/subcategory/item/reseller/transaction residue.
+
+### Security/advisor review — REVIEWED
+
+The new subcategory table remains RLS-protected. Supabase Advisor also reports the known Free-plan leaked-password-protection warning and authenticated `SECURITY DEFINER` warnings for intentionally exposed operator-gated RPCs. Explicit privilege proof confirms `anon`/`public` cannot execute `create_transaction`, `correct_transaction` or `restore_easy_backup`; `authenticated` can, and each RPC retains internal active-operator authorization.
+
+### D-019 — PASS
+
+Implementation validation for PR #82:
+
+- validated feature head: `b8a6c947bad5d2ba7432f2ffa13b3df32cf44dcd`;
+- exact GitHub-generated merge ref checked out by Actions: `75fb65b3179549af0cb29618f282d9edc70e663a`;
+- validated tree: `5127a5a558b990f587b6427a605c5207e6573b9e`;
+- run/job: `32983745854` / `98226501149`;
+- ESLint: 0 errors / 83 warnings;
+- Vitest: 61 files / 258 tests PASS;
 - Playwright: 17/17 PASS;
-- production build: PASS;
-- squash-integrated `develop`: `3c0fe29c62dd72d6acdcd3fc217ba392d4f2aa04`.
+- TypeScript + production Vite build: PASS.
 
-No runtime/schema/Auth/recovery boundary changed in that PDF-only change.
+After separating canonical-document closure from executable implementation, the final PR #82 merge ref was `e9dc4cca9d6d1b843904d065ce7f9cf6289cdffd`. Its tree SHA was exactly `5127a5a558b990f587b6427a605c5207e6573b9e`, identical to the D-019-validated merge-ref tree. Exact-tree equivalence before integration: PASS.
 
-## P10-S3-I2-I3-D early-use change #2 — D-032 store-global manual recovery checkpoint — FINAL PASS / INTEGRATED
+PR #82 was squash-integrated into `develop` as `5a487b93d5c632f5990b8a261e4a62a6a196f186`. The integrated commit tree is exactly `5127a5a558b990f587b6427a605c5207e6573b9e`. Integrated-tree equivalence: PASS.
 
-### Database / policy proof — PASS
-
-Production Supabase migration:
-
-- version/name: `20260825191150_global_manual_recovery_checkpoint`.
-
-Schema/security properties verified:
-
-- `public.manual_recovery_events` exists with RLS enabled;
-- anonymous role has no SELECT/INSERT access;
-- authenticated role has SELECT/INSERT only, with RLS requiring an active Easy operator;
-- authenticated role has no UPDATE/DELETE grant;
-- event trigger overwrites/validates actor and server timestamp;
-- confirmation requires the current operator's pending unconfirmed export;
-- `public.get_manual_recovery_health()` is callable by authenticated clients but itself rejects non-operators;
-- D-030 `automated_guard_enabled` remained false under D-031 temporary early-use mode.
-
-Transactional synthetic proof was run through the trusted database boundary and rolled back:
-
-1. authenticated non-allow-listed identity could not insert a manual recovery event;
-2. approved operator could not confirm without a pending export;
-3. approved operator export + confirmation produced a shared global health row;
-4. with a fresh confirmed checkpoint, a synthetic business write passed;
-5. at the exact 24-hour boundary, the same business-write guard blocked with SQLSTATE `55000`;
-6. after rollback, `manual_recovery_events = 0` and categories/items/resellers/transactions all returned to zero.
-
-Supabase advisors after DDL:
-
-- no new RLS/schema security finding from D-032;
-- existing `auth_leaked_password_protection` WARN remains a known Free-plan residual risk;
-- Performance Advisor reports only INFO unused-index notices, including the newly empty recovery table index.
-
-### Implementation-tree D-019 — PASS
-
-Before canonical-document closure:
-
-- feature head: `246947c673ec13b840cb073e8b1b9e5c5d0efb3a`;
-- exact merge ref: `06ecd1e6bde178486d38464d8277075cf866121c`;
-- run/job: `32889131712` / `97936610378`;
-- ESLint: 0 errors / 82 warnings;
-- Vitest: 59 files / 251 tests PASS;
-- Playwright: 17/17 PASS;
-- production build: PASS.
-
-### Final exact-tree PR #80 D-019 — PASS
-
-After the canonical implementation documents were frozen:
-
-- final feature head: `410bafe792233731561ec2d3aa1d2b38f573fea1`;
-- exact GitHub-generated merge ref checked out by Actions: `cc0b740de4c419a73cfc0c1af6f8ab26729be3b2`;
-- validated tree: `4c1ee6e48af6365b5c96d74f6a5267f1fb3a830e`;
-- Critical QA run/job: `32891655554` / `97944738069`;
-- ESLint: 0 errors / 82 warnings;
-- Vitest: 59 files / 251 tests PASS;
-- Playwright: 17/17 PASS;
-- production build: PASS.
-
-No repository commit occurred on PR #80 after this exact-tree run. PR #80 was squash-integrated into `develop` as `dbcc2a25394aa09f63d9232e771c9e9278db1fd0`, whose tree is exactly `4c1ee6e48af6365b5c96d74f6a5267f1fb3a830e`. Tree equivalence: PASS.
+The post-integration canonical closure changes Markdown documentation only; no executable/runtime file differs from the D-019-validated integrated tree. No failed executable gate was waived.
 
 ## Known non-blocking debt
 
-When objective D-019 commands pass, the following remain non-blocking unless later evidence elevates them:
+When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
 
 - React `act(...)` test warnings;
 - mocked-select DOM/hydration warnings;
 - `set-state-in-effect` lint warnings;
 - lint `any` warning debt;
-- dependency audit findings previously observed;
+- npm audit findings observed by CI;
 - GitHub Actions Node deprecation notices;
 - Vite large-chunk warning;
-- Supabase Free Auth leaked-password-protection WARN during D-031 early use.
+- Supabase Free leaked-password-protection warning;
+- reviewed authenticated `SECURITY DEFINER` RPC advisor warnings for intentional operator-gated endpoints.
 
 ## Current QA status
 
 - D-031 governance/runtime/onboarding: **PASS / INTEGRATED**.
 - I3-D grouped reseller PDF: **PASS / INTEGRATED**.
-- D-032 production database migration/policy proof: **PASS**.
-- D-032 final exact-tree repository QA: **PASS**.
-- D-032 repository integration/tree equivalence: **PASS**.
-- first **real** global checkpoint after updated Vercel publication: **OPERATOR-LOCAL ROLLOUT STEP — PENDING / MUST NOT BE FABRICATED FROM THE OLD PER-BROWSER CHECKPOINT**.
+- D-032 repository/database + first real global checkpoint: **PASS / OPERATIONAL**.
+- D-033 database synthetic proof: **PASS / ROLLED BACK / ZERO RESIDUE**.
+- D-033 D-019: **PASS**.
+- D-033 PR #82 integrated-tree equivalence: **PASS**.
+- D-033 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
