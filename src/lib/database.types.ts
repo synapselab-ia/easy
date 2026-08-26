@@ -25,16 +25,25 @@ export type Database = {
         Relationships: []
       }
       items: {
-        Row: { base_price: number; category_id: number | null; created_at: string; id: number; is_active: boolean; name: string; updated_at: string }
-        Insert: { base_price: number; category_id?: number | null; created_at?: string; id?: number; is_active?: boolean; name: string; updated_at?: string }
-        Update: { base_price?: number; category_id?: number | null; created_at?: string; id?: number; is_active?: boolean; name?: string; updated_at?: string }
-        Relationships: [{
-          foreignKeyName: "items_category_id_fkey"
-          columns: ["category_id"]
-          isOneToOne: false
-          referencedRelation: "categories"
-          referencedColumns: ["id"]
-        }]
+        Row: { base_price: number; category_id: number | null; created_at: string; id: number; is_active: boolean; name: string; subcategory_id: number | null; updated_at: string }
+        Insert: { base_price: number; category_id?: number | null; created_at?: string; id?: number; is_active?: boolean; name: string; subcategory_id?: number | null; updated_at?: string }
+        Update: { base_price?: number; category_id?: number | null; created_at?: string; id?: number; is_active?: boolean; name?: string; subcategory_id?: number | null; updated_at?: string }
+        Relationships: [
+          {
+            foreignKeyName: "items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_subcategory_category_fk"
+            columns: ["subcategory_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "subcategories"
+            referencedColumns: ["id", "category_id"]
+          }
+        ]
       }
       manual_recovery_events: {
         Row: {
@@ -75,6 +84,39 @@ export type Database = {
         Update: { created_at?: string; email?: string | null; id?: number; is_active?: boolean; name?: string; notes?: string | null; phone?: string | null; updated_at?: string }
         Relationships: []
       }
+      subcategories: {
+        Row: {
+          category_id: number
+          created_at: string
+          id: number
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: number
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: number
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [{
+          foreignKeyName: "subcategories_category_id_fkey"
+          columns: ["category_id"]
+          isOneToOne: false
+          referencedRelation: "categories"
+          referencedColumns: ["id"]
+        }]
+      }
       transactions: {
         Row: {
           category_id: number | null
@@ -91,6 +133,8 @@ export type Database = {
           reseller_id: number
           reversal_reason: string | null
           reversed_at: string | null
+          subcategory_id: number | null
+          subcategory_name: string | null
           total_price: number
           type: string
           unit_price: number | null
@@ -110,6 +154,8 @@ export type Database = {
           reseller_id: number
           reversal_reason?: string | null
           reversed_at?: string | null
+          subcategory_id?: number | null
+          subcategory_name?: string | null
           total_price: number
           type: string
           unit_price?: number | null
@@ -129,6 +175,8 @@ export type Database = {
           reseller_id?: number
           reversal_reason?: string | null
           reversed_at?: string | null
+          subcategory_id?: number | null
+          subcategory_name?: string | null
           total_price?: number
           type?: string
           unit_price?: number | null
@@ -138,7 +186,8 @@ export type Database = {
           { foreignKeyName: "transactions_item_id_fkey"; columns: ["item_id"]; isOneToOne: false; referencedRelation: "items"; referencedColumns: ["id"] },
           { foreignKeyName: "transactions_replacement_transaction_fk"; columns: ["replacement_transaction_id"]; isOneToOne: true; referencedRelation: "transactions"; referencedColumns: ["id"] },
           { foreignKeyName: "transactions_replaces_transaction_fk"; columns: ["replaces_transaction_id"]; isOneToOne: true; referencedRelation: "transactions"; referencedColumns: ["id"] },
-          { foreignKeyName: "transactions_reseller_id_fkey"; columns: ["reseller_id"]; isOneToOne: false; referencedRelation: "resellers"; referencedColumns: ["id"] }
+          { foreignKeyName: "transactions_reseller_id_fkey"; columns: ["reseller_id"]; isOneToOne: false; referencedRelation: "resellers"; referencedColumns: ["id"] },
+          { foreignKeyName: "transactions_subcategory_id_fkey"; columns: ["subcategory_id"]; isOneToOne: false; referencedRelation: "subcategories"; referencedColumns: ["id"] }
         ]
       }
     }
