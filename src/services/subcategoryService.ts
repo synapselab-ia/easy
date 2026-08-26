@@ -61,13 +61,13 @@ export async function createSubcategory(categoryId: number, name: string) {
     assertRecoveryWriteAllowed();
     const trimmedName = name.trim();
     if (!trimmedName) throw new Error(SUBCATEGORY_NAME_REQUIRED_ERROR);
-    await requireActiveCategory(categoryId);
 
     if (isEasySupabaseConfigured()) {
         return createCloudSubcategory(categoryId, trimmedName);
     }
 
     return db.transaction('rw', db.categories, db.subcategories, async () => {
+        await requireActiveCategory(categoryId);
         await assertUniqueSubcategoryName(categoryId, trimmedName);
         const now = new Date();
         return db.subcategories.add({
