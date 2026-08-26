@@ -9,13 +9,13 @@ const legacyStores = {
     transactions: '++id, resellerId, type, createdAt, occurredAt',
 };
 
-describe('P9-S3-I1 Dexie V4 -> V5 category migration', () => {
+describe('P9-S3-I1 Dexie V4 -> current category migration', () => {
     afterEach(async () => {
         await db.delete();
         await db.open();
     });
 
-    it('adds an empty categories table without inventing item or historical order classification', async () => {
+    it('adds empty classification tables without inventing item or historical order classification', async () => {
         await db.delete();
 
         const legacyDb = new Dexie('ResellerManagerDB');
@@ -52,8 +52,9 @@ describe('P9-S3-I1 Dexie V4 -> V5 category migration', () => {
 
         await db.open();
 
-        expect(db.verno).toBe(5);
+        expect(db.verno).toBe(6);
         expect(await db.categories.count()).toBe(0);
+        expect(await db.subcategories.count()).toBe(0);
 
         const item = await db.items.get(itemId);
         expect(item).toMatchObject({
@@ -63,6 +64,7 @@ describe('P9-S3-I1 Dexie V4 -> V5 category migration', () => {
             isActive: true,
         });
         expect(item?.categoryId).toBeUndefined();
+        expect(item?.subcategoryId).toBeUndefined();
         expect(item?.createdAt).toEqual(createdAt);
         expect(item?.updatedAt).toEqual(createdAt);
 
@@ -79,6 +81,8 @@ describe('P9-S3-I1 Dexie V4 -> V5 category migration', () => {
         });
         expect(order?.categoryId).toBeUndefined();
         expect(order?.categoryName).toBeUndefined();
+        expect(order?.subcategoryId).toBeUndefined();
+        expect(order?.subcategoryName).toBeUndefined();
         expect(order?.occurredAt).toEqual(occurredAt);
         expect(order?.createdAt).toEqual(createdAt);
     });
