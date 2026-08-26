@@ -10,6 +10,7 @@ import {
 import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
 import { isEasySupabaseConfigured } from '../lib/supabase';
 import { requireActiveCategory } from '../services/categoryService';
+import { requireActiveSubcategory } from '../services/subcategoryService';
 import {
     correctCloudTransaction,
     createCloudTransaction,
@@ -30,7 +31,7 @@ export const OCCURRENCE_DATE_REQUIRED_ERROR = 'Informe uma data de ocorrência v
 
 export type NewTransactionInput = Omit<
     Transaction,
-    'id' | 'reversal' | 'correction' | 'createdAt' | 'categoryId' | 'categoryName'
+    'id' | 'reversal' | 'correction' | 'createdAt' | 'categoryId' | 'categoryName' | 'subcategoryId' | 'subcategoryName'
 >;
 
 // D-026 expands the replacement payload while keeping the legacy hook call shape valid.
@@ -39,7 +40,10 @@ export type NewTransactionInput = Omit<
 export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'occurredAt'>
     & Partial<Pick<NewTransactionInput, 'type' | 'occurredAt'>>;
 
-type PreservedOrderSnapshot = Pick<Transaction, 'itemName' | 'categoryId' | 'categoryName'>;
+type PreservedOrderSnapshot = Pick<
+    Transaction,
+    'itemName' | 'categoryId' | 'categoryName' | 'subcategoryId' | 'subcategoryName'
+>;
 
 function isValidEntityId(value: unknown): value is number {
     return typeof value === 'number' && Number.isInteger(value) && value > 0;
@@ -133,11 +137,18 @@ async function addValidatedTransaction(
 
     let categoryId = preservedOrderSnapshot?.categoryId;
     let categoryName = preservedOrderSnapshot?.categoryName;
+    let subcategoryId = preservedOrderSnapshot?.subcategoryId;
+    let subcategoryName = preservedOrderSnapshot?.subcategoryName;
 
     if (!preservedOrderSnapshot) {
         const category = await requireActiveCategory(item.categoryId);
         categoryId = category.id;
         categoryName = category.name;
+        if (item.subcategoryId !== undefined) {
+            const subcategory = await requireActiveSubcategory(item.subcategoryId, item.categoryId);
+            subcategoryId = subcategory.id;
+            subcategoryName = subcategory.name;
+        }
     }
 
     return db.transactions.add({
@@ -146,6 +157,8 @@ async function addValidatedTransaction(
         itemName: preservedOrderSnapshot?.itemName ?? item.name,
         ...(categoryId !== undefined ? { categoryId } : {}),
         ...(categoryName !== undefined ? { categoryName } : {}),
+        ...(subcategoryId !== undefined ? { subcategoryId } : {}),
+        ...(subcategoryName !== undefined ? { subcategoryName } : {}),
         ...correctionMetadata,
         createdAt: registrationTimestamp,
     });
@@ -184,7 +197,7 @@ export function useCreateTransaction() {
                 return createCloudTransaction(transaction);
             }
 
-            return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, () =>
+            return db.transaction('rw', db.categories, db.subcategories, db.resellers, db.items, db.transactions, () =>
                 addValidatedTransaction(transaction)
             );
         },
@@ -262,7 +275,7 @@ export function useReplaceTransaction() {
                 return correctCloudTransaction(originalId, reason, replacement);
             }
 
-            return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, async () => {
+            return db.transaction('rw', db.categories, db.subcategories, db.resellers, db.items, db.transactions, async () => {
                 if (!isValidEntityId(originalId)) {
                     throw new Error(TRANSACTION_NOT_FOUND_ERROR);
                 }
@@ -329,6 +342,8 @@ export function useReplaceTransaction() {
                             itemName: original.itemName,
                             categoryId: original.categoryId,
                             categoryName: original.categoryName,
+                            subcategoryId: original.subcategoryId,
+                            subcategoryName: original.subcategoryName,
                         };
                     }
                 } else {
