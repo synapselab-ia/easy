@@ -181,7 +181,7 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports and early-use change #5 are **closed**. Controlled early-use observation remains active.
+D-033 / subcategories, D-034 / financial reports and early-use changes #5–#6 are **closed**. Controlled early-use observation remains active.
 
 The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
 
@@ -193,6 +193,6 @@ For each queue item:
 - use an isolated branch and D-019 for executable integration;
 - after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
 
-Current item: **early-use change #6 — Dashboard performance-window labels**.
+Current item: **early-use change #7 — consistent pt-BR monetary presentation**.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
