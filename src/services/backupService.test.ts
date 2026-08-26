@@ -14,6 +14,7 @@ import { db } from '../db/database';
 vi.mock('../db/database', () => ({
     db: {
         categories: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
+        subcategories: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
         items: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
         resellers: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
         transactions: { toArray: vi.fn(), clear: vi.fn(), bulkAdd: vi.fn() },
@@ -51,6 +52,7 @@ function validV2Payload() {
         },
         data: {
             categories: [],
+            subcategories: [],
             items: [{
                 id: 1,
                 name: 'Item 1',
@@ -96,12 +98,13 @@ describe('P5-S1 backup contract', () => {
 
         expect(result.preview).toMatchObject({
             sourceVersion: 2,
-            sourceSchemaVersion: 5,
+            sourceSchemaVersion: 6,
             targetVersion: 2,
-            schemaVersion: 5,
+            schemaVersion: 6,
             migrated: false,
             counts: {
                 categories: 0,
+                subcategories: 0,
                 unclassifiedItems: 1,
                 legacyOrdersWithoutCategory: 1,
                 items: 1,
@@ -113,6 +116,7 @@ describe('P5-S1 backup contract', () => {
         expect(result.normalized.data.transactions[0].occurredAt).toEqual(new Date(transactionOccurredAt));
         expect(db.transaction).not.toHaveBeenCalled();
         expect(db.categories.clear).not.toHaveBeenCalled();
+        expect(db.subcategories.clear).not.toHaveBeenCalled();
         expect(db.items.clear).not.toHaveBeenCalled();
         expect(db.resellers.clear).not.toHaveBeenCalled();
         expect(db.transactions.clear).not.toHaveBeenCalled();
@@ -150,10 +154,11 @@ describe('P5-S1 backup contract', () => {
         const result = preflightBackupPayload(legacy);
 
         expect(result.preview.sourceVersion).toBe(1);
-        expect(result.preview.schemaVersion).toBe(5);
+        expect(result.preview.schemaVersion).toBe(6);
         expect(result.preview.migrated).toBe(true);
         expect(result.preview.warnings.length).toBeGreaterThanOrEqual(4);
         expect(result.normalized.data.categories).toEqual([]);
+        expect(result.normalized.data.subcategories).toEqual([]);
         expect(result.normalized.data.items[0].isActive).toBe(true);
         expect(result.normalized.data.resellers[0].isActive).toBe(true);
         expect(result.normalized.data.transactions[0].occurredAt).toEqual(new Date(transactionCreatedAt));
@@ -243,8 +248,9 @@ describe('P5-S1 backup contract', () => {
         expect(() => preflightBackupPayload(payload)).toThrow(/lançamento inexistente 999/);
     });
 
-    it('exports the current database through the versioned v2/schema5 contract', async () => {
+    it('exports the current database through the versioned v2/schema6 contract', async () => {
         (db.categories.toArray as any).mockResolvedValue([]);
+        (db.subcategories.toArray as any).mockResolvedValue([]);
         (db.items.toArray as any).mockResolvedValue([{
             id: 1,
             name: 'Item 1',
@@ -276,6 +282,7 @@ describe('P5-S1 backup contract', () => {
         await exportData();
 
         expect(db.categories.toArray).toHaveBeenCalled();
+        expect(db.subcategories.toArray).toHaveBeenCalled();
         expect(db.items.toArray).toHaveBeenCalled();
         expect(db.resellers.toArray).toHaveBeenCalled();
         expect(db.transactions.toArray).toHaveBeenCalled();

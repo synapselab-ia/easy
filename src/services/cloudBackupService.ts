@@ -1,4 +1,4 @@
-import type { Category, Item, Reseller, Transaction } from '@/db/database';
+import type { Category, Item, Reseller, Subcategory, Transaction } from '@/db/database';
 import {
     BACKUP_FORMAT,
     BACKUP_SCHEMA_VERSION,
@@ -20,6 +20,7 @@ function serializeDate(value: Date, path: string): string {
 
 function buildEnvelope(
     categories: Category[],
+    subcategories: Subcategory[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
@@ -41,12 +42,21 @@ function buildEnvelope(
                 createdAt: serializeDate(category.createdAt, `categories[${index}].createdAt`),
                 updatedAt: serializeDate(category.updatedAt, `categories[${index}].updatedAt`),
             })),
+            subcategories: subcategories.map((subcategory, index) => ({
+                id: subcategory.id as number,
+                categoryId: subcategory.categoryId,
+                name: subcategory.name,
+                isActive: subcategory.isActive,
+                createdAt: serializeDate(subcategory.createdAt, `subcategories[${index}].createdAt`),
+                updatedAt: serializeDate(subcategory.updatedAt, `subcategories[${index}].updatedAt`),
+            })),
             items: items.map((item, index) => ({
                 id: item.id as number,
                 name: item.name,
                 basePrice: item.basePrice,
                 isActive: item.isActive !== false,
                 categoryId: item.categoryId,
+                subcategoryId: item.subcategoryId,
                 createdAt: serializeDate(item.createdAt, `items[${index}].createdAt`),
                 updatedAt: serializeDate(item.updatedAt, `items[${index}].updatedAt`),
             })),
@@ -70,6 +80,8 @@ function buildEnvelope(
                 unitPrice: transaction.unitPrice,
                 categoryId: transaction.categoryId,
                 categoryName: transaction.categoryName,
+                subcategoryId: transaction.subcategoryId,
+                subcategoryName: transaction.subcategoryName,
                 totalPrice: transaction.totalPrice,
                 observation: transaction.observation,
                 reversal: transaction.reversal,
@@ -100,12 +112,14 @@ function sortById<T extends { id?: number }>(rows: T[]) {
 
 function logicalSnapshot(
     categories: Category[],
+    subcategories: Subcategory[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
 ) {
     return JSON.stringify(buildEnvelope(
         sortById(categories),
+        sortById(subcategories),
         sortById(items),
         sortById(resellers),
         sortById(transactions),
@@ -117,6 +131,7 @@ export async function exportCloudData(): Promise<BackupExportResult> {
     const dataset = await fetchCloudDataset();
     const envelope = buildEnvelope(
         dataset.categories,
+        dataset.subcategories,
         dataset.items,
         dataset.resellers,
         dataset.transactions,
@@ -136,6 +151,7 @@ export async function restorePreflightedCloudBackup(preflight: BackupPreflightRe
         const target = preflight.normalized.data;
         const targetEnvelope = buildEnvelope(
             target.categories,
+            target.subcategories,
             target.items,
             target.resellers,
             target.transactions,
@@ -144,6 +160,7 @@ export async function restorePreflightedCloudBackup(preflight: BackupPreflightRe
         const targetRevalidation = preflightBackupPayload(targetEnvelope);
         const expectedSnapshot = logicalSnapshot(
             target.categories,
+            target.subcategories,
             target.items,
             target.resellers,
             target.transactions,
@@ -152,6 +169,7 @@ export async function restorePreflightedCloudBackup(preflight: BackupPreflightRe
         const current = await fetchCloudDataset();
         const checkpoint = buildEnvelope(
             current.categories,
+            current.subcategories,
             current.items,
             current.resellers,
             current.transactions,
@@ -166,6 +184,7 @@ export async function restorePreflightedCloudBackup(preflight: BackupPreflightRe
         const restored = await fetchCloudDataset();
         const restoredEnvelope = buildEnvelope(
             restored.categories,
+            restored.subcategories,
             restored.items,
             restored.resellers,
             restored.transactions,
@@ -176,6 +195,7 @@ export async function restorePreflightedCloudBackup(preflight: BackupPreflightRe
         if (
             logicalSnapshot(
                 restored.categories,
+                restored.subcategories,
                 restored.items,
                 restored.resellers,
                 restored.transactions,

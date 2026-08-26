@@ -5,6 +5,7 @@ import {
     type Category,
     type Item,
     type Reseller,
+    type Subcategory,
     type Transaction,
     type TransactionType,
 } from '@/db/database';
@@ -12,6 +13,7 @@ import { transactionOccurredAt } from '@/domain/transactions';
 
 export interface CloudDataset {
     categories: Category[];
+    subcategories: Subcategory[];
     items: Item[];
     resellers: Reseller[];
     transactions: Transaction[];
@@ -58,12 +60,31 @@ function toCategory(row: {
     };
 }
 
+function toSubcategory(row: {
+    id: number;
+    category_id: number;
+    name: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}): Subcategory {
+    return {
+        id: row.id,
+        categoryId: row.category_id,
+        name: row.name,
+        isActive: row.is_active,
+        createdAt: asDate(row.created_at),
+        updatedAt: asDate(row.updated_at),
+    };
+}
+
 function toItem(row: {
     id: number;
     name: string;
     base_price: number;
     is_active: boolean;
     category_id: number | null;
+    subcategory_id: number | null;
     created_at: string;
     updated_at: string;
 }): Item {
@@ -73,6 +94,7 @@ function toItem(row: {
         basePrice: Number(row.base_price),
         isActive: row.is_active,
         ...(row.category_id !== null ? { categoryId: row.category_id } : {}),
+        ...(row.subcategory_id !== null ? { subcategoryId: row.subcategory_id } : {}),
         createdAt: asDate(row.created_at),
         updatedAt: asDate(row.updated_at),
     };
@@ -110,6 +132,8 @@ function toTransaction(row: {
     unit_price: number | null;
     category_id: number | null;
     category_name: string | null;
+    subcategory_id: number | null;
+    subcategory_name: string | null;
     total_price: number;
     observation: string | null;
     reversal_reason: string | null;
@@ -142,6 +166,8 @@ function toTransaction(row: {
         ...(row.unit_price !== null ? { unitPrice: Number(row.unit_price) } : {}),
         ...(row.category_id !== null ? { categoryId: row.category_id } : {}),
         ...(row.category_name !== null ? { categoryName: row.category_name } : {}),
+        ...(row.subcategory_id !== null ? { subcategoryId: row.subcategory_id } : {}),
+        ...(row.subcategory_name !== null ? { subcategoryName: row.subcategory_name } : {}),
         totalPrice: Number(row.total_price),
         ...(row.observation !== null ? { observation: row.observation } : {}),
         ...(reversal ? { reversal } : {}),
@@ -166,20 +192,23 @@ function throwCloudError(error: { message: string; code?: string } | null, fallb
 
 export async function fetchCloudDataset(): Promise<CloudDataset> {
     const client = getEasySupabaseClient();
-    const [categoriesResult, itemsResult, resellersResult, transactionsResult] = await Promise.all([
+    const [categoriesResult, subcategoriesResult, itemsResult, resellersResult, transactionsResult] = await Promise.all([
         client.from('categories').select('*').order('id'),
+        client.from('subcategories').select('*').order('id'),
         client.from('items').select('*').order('id'),
         client.from('resellers').select('*').order('id'),
         client.from('transactions').select('*').order('id'),
     ]);
 
     if (categoriesResult.error) throwCloudError(categoriesResult.error, 'Falha ao carregar categorias do banco online.');
+    if (subcategoriesResult.error) throwCloudError(subcategoriesResult.error, 'Falha ao carregar subcategorias do banco online.');
     if (itemsResult.error) throwCloudError(itemsResult.error, 'Falha ao carregar itens do banco online.');
     if (resellersResult.error) throwCloudError(resellersResult.error, 'Falha ao carregar revendedores do banco online.');
     if (transactionsResult.error) throwCloudError(transactionsResult.error, 'Falha ao carregar lançamentos do banco online.');
 
     return {
         categories: (categoriesResult.data ?? []).map(toCategory),
+        subcategories: (subcategoriesResult.data ?? []).map(toSubcategory),
         items: (itemsResult.data ?? []).map(toItem),
         resellers: (resellersResult.data ?? []).map(toReseller),
         transactions: (transactionsResult.data ?? []).map(toTransaction),
@@ -187,13 +216,15 @@ export async function fetchCloudDataset(): Promise<CloudDataset> {
 }
 
 export async function replaceDexieCache(dataset: CloudDataset) {
-    await db.transaction('rw', [db.categories, db.items, db.resellers, db.transactions], async () => {
+    await db.transaction('rw', [db.categories, db.subcategories, db.items, db.resellers, db.transactions], async () => {
         await db.transactions.clear();
         await db.items.clear();
         await db.resellers.clear();
+        await db.subcategories.clear();
         await db.categories.clear();
 
         if (dataset.categories.length) await db.categories.bulkPut(dataset.categories);
+        if (dataset.subcategories.length) await db.subcategories.bulkPut(dataset.subcategories);
         if (dataset.resellers.length) await db.resellers.bulkPut(dataset.resellers);
         if (dataset.items.length) await db.items.bulkPut(dataset.items);
         if (dataset.transactions.length) await db.transactions.bulkPut(dataset.transactions);
@@ -246,6 +277,39 @@ export async function deleteCloudCategory(id: number) {
     await refreshCloudCache();
 }
 
+export async function createCloudSubcategory(categoryId: number, name: string) {
+    const client = getEasySupabaseClient();
+    const { data, error } = await client
+        .from('subcategories')
+        .insert({ category_id: categoryId, name: name.trim(), is_active: true })
+        .select('id')
+        .single();
+    if (error || !data) throwCloudError(error, 'Falha ao criar subcategoria.');
+    await refreshCloudCache();
+    return data.id;
+}
+
+export async function renameCloudSubcategory(id: number, name: string) {
+    const client = getEasySupabaseClient();
+    const { error } = await client.from('subcategories').update({ name: name.trim() }).eq('id', id);
+    if (error) throwCloudError(error, 'Falha ao renomear subcategoria.');
+    await refreshCloudCache();
+}
+
+export async function setCloudSubcategoryActive(id: number, isActive: boolean) {
+    const client = getEasySupabaseClient();
+    const { error } = await client.from('subcategories').update({ is_active: isActive }).eq('id', id);
+    if (error) throwCloudError(error, 'Falha ao atualizar subcategoria.');
+    await refreshCloudCache();
+}
+
+export async function deleteCloudSubcategory(id: number) {
+    const client = getEasySupabaseClient();
+    const { error } = await client.from('subcategories').delete().eq('id', id);
+    if (error) throwCloudError(error, 'Falha ao excluir subcategoria.');
+    await refreshCloudCache();
+}
+
 export async function createCloudItem(item: Omit<Item, 'id'>) {
     const client = getEasySupabaseClient();
     const { data, error } = await client
@@ -255,6 +319,7 @@ export async function createCloudItem(item: Omit<Item, 'id'>) {
             base_price: item.basePrice,
             is_active: item.isActive !== false,
             category_id: item.categoryId ?? null,
+            subcategory_id: item.subcategoryId ?? null,
         })
         .select('id')
         .single();
@@ -269,6 +334,7 @@ export async function updateCloudItem(id: number, changes: Partial<Item>) {
         base_price?: number;
         is_active?: boolean;
         category_id?: number | null;
+        subcategory_id?: number | null;
     } = {};
 
     if (changes.name !== undefined) update.name = changes.name;
@@ -276,6 +342,9 @@ export async function updateCloudItem(id: number, changes: Partial<Item>) {
     if (changes.isActive !== undefined) update.is_active = changes.isActive;
     if (Object.prototype.hasOwnProperty.call(changes, 'categoryId')) {
         update.category_id = changes.categoryId ?? null;
+    }
+    if (Object.prototype.hasOwnProperty.call(changes, 'subcategoryId')) {
+        update.subcategory_id = changes.subcategoryId ?? null;
     }
 
     const client = getEasySupabaseClient();

@@ -2,6 +2,7 @@ import {
     db,
     isCategoryActive,
     isItemActive,
+    isSubcategoryActive,
     type Category,
 } from '../db/database';
 import { isEasySupabaseConfigured } from '../lib/supabase';
@@ -17,8 +18,8 @@ export const CATEGORY_NAME_REQUIRED_ERROR = 'Informe o nome da categoria.';
 export const CATEGORY_NAME_UNIQUE_ERROR = 'Já existe uma categoria com este nome.';
 export const CATEGORY_NOT_FOUND_ERROR = 'Categoria não encontrada.';
 export const CATEGORY_ACTIVE_REQUIRED_ERROR = 'Selecione uma categoria ativa.';
-export const CATEGORY_ARCHIVE_ACTIVE_ITEMS_ERROR = 'Categorias usadas por itens ativos não podem ser arquivadas.';
-export const CATEGORY_DELETE_REFERENCED_ERROR = 'Categorias com itens ou histórico de pedidos não podem ser excluídas permanentemente.';
+export const CATEGORY_ARCHIVE_ACTIVE_ITEMS_ERROR = 'Categorias com itens ou subcategorias ativos não podem ser arquivadas.';
+export const CATEGORY_DELETE_REFERENCED_ERROR = 'Categorias com subcategorias, itens ou histórico de pedidos não podem ser excluídas permanentemente.';
 
 function isValidEntityId(value: unknown): value is number {
     return typeof value === 'number' && Number.isInteger(value) && value > 0;
@@ -111,7 +112,7 @@ export async function archiveCategory(id: number) {
         return setCloudCategoryActive(id, false);
     }
 
-    return db.transaction('rw', db.categories, db.items, async () => {
+    return db.transaction('rw', db.categories, db.subcategories, db.items, async () => {
         if (!isValidEntityId(id)) {
             throw new Error(CATEGORY_NOT_FOUND_ERROR);
         }
@@ -121,11 +122,14 @@ export async function archiveCategory(id: number) {
             throw new Error(CATEGORY_NOT_FOUND_ERROR);
         }
 
-        const activeReference = await db.items
+        const activeItemReference = await db.items
             .filter(item => item.categoryId === id && isItemActive(item))
             .first();
+        const activeSubcategoryReference = await db.subcategories
+            .filter(subcategory => subcategory.categoryId === id && isSubcategoryActive(subcategory))
+            .first();
 
-        if (activeReference) {
+        if (activeItemReference || activeSubcategoryReference) {
             throw new Error(CATEGORY_ARCHIVE_ACTIVE_ITEMS_ERROR);
         }
 
@@ -162,11 +166,14 @@ export async function deleteCategory(id: number) {
         return deleteCloudCategory(id);
     }
 
-    return db.transaction('rw', db.categories, db.items, db.transactions, async () => {
+    return db.transaction('rw', db.categories, db.subcategories, db.items, db.transactions, async () => {
         if (!isValidEntityId(id) || !(await db.categories.get(id))) {
             throw new Error(CATEGORY_NOT_FOUND_ERROR);
         }
 
+        const subcategoryReference = await db.subcategories
+            .filter(subcategory => subcategory.categoryId === id)
+            .first();
         const itemReference = await db.items
             .filter(item => item.categoryId === id)
             .first();
@@ -174,7 +181,7 @@ export async function deleteCategory(id: number) {
             .filter(transaction => transaction.categoryId === id)
             .first();
 
-        if (itemReference || historicalReference) {
+        if (subcategoryReference || itemReference || historicalReference) {
             throw new Error(CATEGORY_DELETE_REFERENCED_ERROR);
         }
 

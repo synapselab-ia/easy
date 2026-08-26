@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, isItemActive, type Item } from '../db/database';
 import { isEasySupabaseConfigured } from '../lib/supabase';
 import { requireActiveCategory } from '../services/categoryService';
+import { requireActiveSubcategory } from '../services/subcategoryService';
 import {
     createCloudItem,
     deleteCloudItem,
@@ -29,6 +30,13 @@ export function useItem(id?: number) {
     });
 }
 
+async function validateActiveClassification(categoryId?: number, subcategoryId?: number) {
+    await requireActiveCategory(categoryId);
+    if (subcategoryId !== undefined) {
+        await requireActiveSubcategory(subcategoryId, categoryId);
+    }
+}
+
 export function useCreateItem() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -39,10 +47,10 @@ export function useCreateItem() {
                 return createCloudItem(item);
             }
 
-            return db.transaction('rw', db.categories, db.items, async () => {
+            return db.transaction('rw', db.categories, db.subcategories, db.items, async () => {
                 const isActive = item.isActive !== false;
-                if (isActive || item.categoryId !== undefined) {
-                    await requireActiveCategory(item.categoryId);
+                if (isActive || item.categoryId !== undefined || item.subcategoryId !== undefined) {
+                    await validateActiveClassification(item.categoryId, item.subcategoryId);
                 }
 
                 return db.items.add({ ...item, isActive });
@@ -65,27 +73,29 @@ export function useUpdateItem() {
                 return updateCloudItem(id, changes).then(() => 1);
             }
 
-            return db.transaction('rw', db.categories, db.items, async () => {
+            return db.transaction('rw', db.categories, db.subcategories, db.items, async () => {
                 const existing = await db.items.get(id);
                 if (!existing) {
                     throw new Error('Item não encontrado.');
                 }
 
                 const categoryChanged = Object.prototype.hasOwnProperty.call(changes, 'categoryId');
+                const subcategoryChanged = Object.prototype.hasOwnProperty.call(changes, 'subcategoryId');
                 const nextActive = changes.isActive !== undefined ? changes.isActive : isItemActive(existing);
+                const nextCategoryId = categoryChanged ? changes.categoryId : existing.categoryId;
+                const nextSubcategoryId = subcategoryChanged ? changes.subcategoryId : existing.subcategoryId;
+                const preservesGrandfatheredLegacyClassification =
+                    isItemActive(existing)
+                    && existing.categoryId === undefined
+                    && existing.subcategoryId === undefined
+                    && nextActive
+                    && nextCategoryId === undefined
+                    && nextSubcategoryId === undefined;
 
-                if (categoryChanged) {
-                    if (changes.categoryId === undefined) {
-                        if (nextActive) {
-                            await requireActiveCategory(undefined);
-                        }
-                    } else {
-                        await requireActiveCategory(changes.categoryId);
+                if (!preservesGrandfatheredLegacyClassification && (nextActive || categoryChanged || subcategoryChanged)) {
+                    if (nextActive || nextCategoryId !== undefined || nextSubcategoryId !== undefined) {
+                        await validateActiveClassification(nextCategoryId, nextSubcategoryId);
                     }
-                }
-
-                if (!isItemActive(existing) && changes.isActive === true) {
-                    await requireActiveCategory(categoryChanged ? changes.categoryId : existing.categoryId);
                 }
 
                 return db.items.update(id, changes);
@@ -113,13 +123,13 @@ function useSetItemActive(isActive: boolean) {
                 return db.items.update(id, { isActive: false, updatedAt: new Date() });
             }
 
-            return db.transaction('rw', db.categories, db.items, async () => {
+            return db.transaction('rw', db.categories, db.subcategories, db.items, async () => {
                 const item = await db.items.get(id);
                 if (!item) {
                     throw new Error('Item não encontrado.');
                 }
 
-                await requireActiveCategory(item.categoryId);
+                await validateActiveClassification(item.categoryId, item.subcategoryId);
                 return db.items.update(id, { isActive: true, updatedAt: new Date() });
             });
         },

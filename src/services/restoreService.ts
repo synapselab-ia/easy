@@ -1,4 +1,4 @@
-import { db, type Category, type Item, type Reseller, type Transaction } from '../db/database';
+import { db, type Category, type Item, type Reseller, type Subcategory, type Transaction } from '../db/database';
 import {
     BACKUP_FORMAT,
     BACKUP_SCHEMA_VERSION,
@@ -39,6 +39,7 @@ function serializeDate(value: Date, path: string): string {
 
 function buildEnvelope(
     categories: Category[],
+    subcategories: Subcategory[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
@@ -48,10 +49,7 @@ function buildEnvelope(
         format: BACKUP_FORMAT,
         version: BACKUP_VERSION,
         exportedAt: serializeDate(exportedAt, 'exportedAt'),
-        source: {
-            database: 'ResellerManagerDB',
-            schemaVersion: BACKUP_SCHEMA_VERSION,
-        },
+        source: { database: 'ResellerManagerDB', schemaVersion: BACKUP_SCHEMA_VERSION },
         data: {
             categories: categories.map((category, index) => ({
                 id: category.id as number,
@@ -60,12 +58,21 @@ function buildEnvelope(
                 createdAt: serializeDate(category.createdAt, `categories[${index}].createdAt`),
                 updatedAt: serializeDate(category.updatedAt, `categories[${index}].updatedAt`),
             })),
+            subcategories: subcategories.map((subcategory, index) => ({
+                id: subcategory.id as number,
+                categoryId: subcategory.categoryId,
+                name: subcategory.name,
+                isActive: subcategory.isActive,
+                createdAt: serializeDate(subcategory.createdAt, `subcategories[${index}].createdAt`),
+                updatedAt: serializeDate(subcategory.updatedAt, `subcategories[${index}].updatedAt`),
+            })),
             items: items.map((item, index) => ({
                 id: item.id as number,
                 name: item.name,
                 basePrice: item.basePrice,
                 isActive: item.isActive !== false,
                 categoryId: item.categoryId,
+                subcategoryId: item.subcategoryId,
                 createdAt: serializeDate(item.createdAt, `items[${index}].createdAt`),
                 updatedAt: serializeDate(item.updatedAt, `items[${index}].updatedAt`),
             })),
@@ -89,14 +96,13 @@ function buildEnvelope(
                 unitPrice: transaction.unitPrice,
                 categoryId: transaction.categoryId,
                 categoryName: transaction.categoryName,
+                subcategoryId: transaction.subcategoryId,
+                subcategoryName: transaction.subcategoryName,
                 totalPrice: transaction.totalPrice,
                 observation: transaction.observation,
                 reversal: transaction.reversal,
                 correction: transaction.correction,
-                occurredAt: serializeDate(
-                    transaction.occurredAt ?? transaction.createdAt,
-                    `transactions[${index}].occurredAt`,
-                ),
+                occurredAt: serializeDate(transaction.occurredAt ?? transaction.createdAt, `transactions[${index}].occurredAt`),
                 createdAt: serializeDate(transaction.createdAt, `transactions[${index}].createdAt`),
             })),
         },
@@ -109,12 +115,14 @@ function sortById<T extends { id?: number }>(rows: T[]) {
 
 function logicalSnapshot(
     categories: Category[],
+    subcategories: Subcategory[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
 ) {
     return JSON.stringify(buildEnvelope(
         sortById(categories),
+        sortById(subcategories),
         sortById(items),
         sortById(resellers),
         sortById(transactions),
@@ -137,23 +145,22 @@ function downloadEnvelope(envelope: BackupEnvelopeV2, filename: string) {
 }
 
 async function readCurrentDatabase() {
-    const [categories, items, resellers, transactions] = await Promise.all([
+    const [categories, subcategories, items, resellers, transactions] = await Promise.all([
         db.categories.toArray(),
+        db.subcategories.toArray(),
         db.items.toArray(),
         db.resellers.toArray(),
         db.transactions.toArray(),
     ]);
-    return { categories, items, resellers, transactions };
+    return { categories, subcategories, items, resellers, transactions };
 }
 
-/**
- * Creates a validated v2/schema5 checkpoint of the live database and downloads it before
- * any destructive restore transaction can begin.
- */
+/** Creates a validated v2/schema6 checkpoint before destructive local restore. */
 export async function createRestoreCheckpoint(): Promise<RestoreCheckpoint> {
     const current = await readCurrentDatabase();
     const envelope = buildEnvelope(
         current.categories,
+        current.subcategories,
         current.items,
         current.resellers,
         current.transactions,
@@ -169,11 +176,6 @@ function errorMessage(error: unknown) {
     return error instanceof Error ? error.message : 'Falha desconhecida durante a restauração.';
 }
 
-/**
- * Consumes only a validated preflight result. The normalized target is revalidated
- * before checkpoint creation so a mutated/stale in-memory object cannot bypass the contract.
- * All destructive writes and post-restore verification run inside one Dexie transaction.
- */
 export async function restorePreflightedBackup(
     preflight: BackupPreflightResult,
 ): Promise<BackupRestoreResult> {
@@ -183,6 +185,7 @@ export async function restorePreflightedBackup(
         const target = preflight.normalized.data;
         const targetEnvelope = buildEnvelope(
             target.categories,
+            target.subcategories,
             target.items,
             target.resellers,
             target.transactions,
@@ -191,6 +194,7 @@ export async function restorePreflightedBackup(
         const targetRevalidation = preflightBackupPayload(targetEnvelope);
         const expectedSnapshot = logicalSnapshot(
             target.categories,
+            target.subcategories,
             target.items,
             target.resellers,
             target.transactions,
@@ -198,36 +202,34 @@ export async function restorePreflightedBackup(
 
         checkpoint = await createRestoreCheckpoint();
 
-        await db.transaction('rw', [db.categories, db.items, db.resellers, db.transactions], async () => {
-            await Promise.all([
-                db.categories.clear(),
-                db.items.clear(),
-                db.resellers.clear(),
-                db.transactions.clear(),
-            ]);
+        await db.transaction('rw', [db.categories, db.subcategories, db.items, db.resellers, db.transactions], async () => {
+            await db.transactions.clear();
+            await db.items.clear();
+            await db.resellers.clear();
+            await db.subcategories.clear();
+            await db.categories.clear();
 
-            await Promise.all([
-                db.categories.bulkAdd(target.categories),
-                db.items.bulkAdd(target.items),
-                db.resellers.bulkAdd(target.resellers),
-                db.transactions.bulkAdd(target.transactions),
-            ]);
+            if (target.categories.length) await db.categories.bulkAdd(target.categories);
+            if (target.subcategories.length) await db.subcategories.bulkAdd(target.subcategories);
+            if (target.resellers.length) await db.resellers.bulkAdd(target.resellers);
+            if (target.items.length) await db.items.bulkAdd(target.items);
+            if (target.transactions.length) await db.transactions.bulkAdd(target.transactions);
 
             const restored = await readCurrentDatabase();
             const restoredEnvelope = buildEnvelope(
                 restored.categories,
+                restored.subcategories,
                 restored.items,
                 restored.resellers,
                 restored.transactions,
                 preflight.normalized.exportedAt,
             );
-
-            // Re-run every structural/reference/P1/P2/P3/D-025 invariant before commit.
             preflightBackupPayload(restoredEnvelope);
 
             if (
                 logicalSnapshot(
                     restored.categories,
+                    restored.subcategories,
                     restored.items,
                     restored.resellers,
                     restored.transactions,

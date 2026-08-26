@@ -10,6 +10,7 @@ import {
 import { isTransactionReversed, transactionOccurredAt } from '../domain/transactions';
 import { isEasySupabaseConfigured } from '../lib/supabase';
 import { requireActiveCategory } from '../services/categoryService';
+import { requireActiveSubcategory } from '../services/subcategoryService';
 import {
     correctCloudTransaction,
     createCloudTransaction,
@@ -30,7 +31,7 @@ export const OCCURRENCE_DATE_REQUIRED_ERROR = 'Informe uma data de ocorrência v
 
 export type NewTransactionInput = Omit<
     Transaction,
-    'id' | 'reversal' | 'correction' | 'createdAt' | 'categoryId' | 'categoryName'
+    'id' | 'reversal' | 'correction' | 'createdAt' | 'categoryId' | 'categoryName' | 'subcategoryId' | 'subcategoryName'
 >;
 
 // D-026 expands the replacement payload while keeping the legacy hook call shape valid.
@@ -39,7 +40,10 @@ export type NewTransactionInput = Omit<
 export type CorrectionReplacementInput = Omit<NewTransactionInput, 'type' | 'occurredAt'>
     & Partial<Pick<NewTransactionInput, 'type' | 'occurredAt'>>;
 
-type PreservedOrderSnapshot = Pick<Transaction, 'itemName' | 'categoryId' | 'categoryName'>;
+type PreservedOrderSnapshot = Pick<
+    Transaction,
+    'itemName' | 'categoryId' | 'categoryName' | 'subcategoryId' | 'subcategoryName'
+>;
 
 function isValidEntityId(value: unknown): value is number {
     return typeof value === 'number' && Number.isInteger(value) && value > 0;
@@ -133,11 +137,18 @@ async function addValidatedTransaction(
 
     let categoryId = preservedOrderSnapshot?.categoryId;
     let categoryName = preservedOrderSnapshot?.categoryName;
+    let subcategoryId = preservedOrderSnapshot?.subcategoryId;
+    let subcategoryName = preservedOrderSnapshot?.subcategoryName;
 
     if (!preservedOrderSnapshot) {
         const category = await requireActiveCategory(item.categoryId);
         categoryId = category.id;
         categoryName = category.name;
+        if (item.subcategoryId !== undefined) {
+            const subcategory = await requireActiveSubcategory(item.subcategoryId, item.categoryId);
+            subcategoryId = subcategory.id;
+            subcategoryName = subcategory.name;
+        }
     }
 
     return db.transactions.add({
@@ -146,6 +157,8 @@ async function addValidatedTransaction(
         itemName: preservedOrderSnapshot?.itemName ?? item.name,
         ...(categoryId !== undefined ? { categoryId } : {}),
         ...(categoryName !== undefined ? { categoryName } : {}),
+        ...(subcategoryId !== undefined ? { subcategoryId } : {}),
+        ...(subcategoryName !== undefined ? { subcategoryName } : {}),
         ...correctionMetadata,
         createdAt: registrationTimestamp,
     });
@@ -184,8 +197,10 @@ export function useCreateTransaction() {
                 return createCloudTransaction(transaction);
             }
 
-            return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, () =>
-                addValidatedTransaction(transaction)
+            return db.transaction(
+                'rw',
+                [db.categories, db.subcategories, db.resellers, db.items, db.transactions],
+                () => addValidatedTransaction(transaction),
             );
         },
         onSuccess: (_, variables) => {
@@ -262,119 +277,125 @@ export function useReplaceTransaction() {
                 return correctCloudTransaction(originalId, reason, replacement);
             }
 
-            return db.transaction('rw', db.categories, db.resellers, db.items, db.transactions, async () => {
-                if (!isValidEntityId(originalId)) {
-                    throw new Error(TRANSACTION_NOT_FOUND_ERROR);
-                }
-
-                const normalizedReason = reason.trim();
-                if (!normalizedReason) {
-                    throw new Error(REVERSAL_REASON_REQUIRED_ERROR);
-                }
-
-                const original = await db.transactions.get(originalId);
-                if (!original) {
-                    throw new Error(TRANSACTION_NOT_FOUND_ERROR);
-                }
-
-                if (isTransactionReversed(original)) {
-                    throw new Error(TRANSACTION_ALREADY_REVERSED_ERROR);
-                }
-
-                const usesExpandedCorrection = replacement.type !== undefined || replacement.occurredAt !== undefined;
-                const targetType = replacement.type === undefined ? original.type : replacement.type;
-                if (!isValidTransactionType(targetType)) {
-                    throw new Error(CORRECTION_TARGET_TYPE_ERROR);
-                }
-
-                const targetOccurredAt = replacement.occurredAt === undefined
-                    ? transactionOccurredAt(original)
-                    : replacement.occurredAt;
-                if (!isValidOccurrenceDate(targetOccurredAt)) {
-                    throw new Error(OCCURRENCE_DATE_REQUIRED_ERROR);
-                }
-
-                let normalizedReplacement: NewTransactionInput;
-                let preservedOrderSnapshot: PreservedOrderSnapshot | undefined;
-
-                if (targetType === 'order') {
-                    const targetItemId = !usesExpandedCorrection && original.type === 'order'
-                        ? (replacement.itemId ?? original.itemId)
-                        : replacement.itemId;
-
-                    if (!usesExpandedCorrection && original.type === 'order' && targetItemId !== original.itemId) {
-                        throw new Error(CORRECTION_ORDER_ITEM_PRESERVED_ERROR);
+            return db.transaction(
+                'rw',
+                [db.categories, db.subcategories, db.resellers, db.items, db.transactions],
+                async () => {
+                    if (!isValidEntityId(originalId)) {
+                        throw new Error(TRANSACTION_NOT_FOUND_ERROR);
                     }
 
-                    const quantity = replacement.quantity;
-                    const unitPrice = replacement.unitPrice;
-                    if (!Number.isInteger(quantity) || !quantity || quantity <= 0 || typeof unitPrice !== 'number' || !Number.isFinite(unitPrice) || unitPrice < 0) {
-                        throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                    const normalizedReason = reason.trim();
+                    if (!normalizedReason) {
+                        throw new Error(REVERSAL_REASON_REQUIRED_ERROR);
                     }
 
-                    normalizedReplacement = {
-                        resellerId: replacement.resellerId,
-                        type: targetType,
-                        occurredAt: targetOccurredAt,
-                        itemId: targetItemId,
-                        itemName: replacement.itemName,
-                        quantity,
-                        unitPrice,
-                        totalPrice: quantity * unitPrice,
-                        observation: usesExpandedCorrection ? replacement.observation : original.observation,
-                    };
+                    const original = await db.transactions.get(originalId);
+                    if (!original) {
+                        throw new Error(TRANSACTION_NOT_FOUND_ERROR);
+                    }
 
-                    if (original.type === 'order' && targetItemId === original.itemId) {
-                        preservedOrderSnapshot = {
-                            itemName: original.itemName,
-                            categoryId: original.categoryId,
-                            categoryName: original.categoryName,
+                    if (isTransactionReversed(original)) {
+                        throw new Error(TRANSACTION_ALREADY_REVERSED_ERROR);
+                    }
+
+                    const usesExpandedCorrection = replacement.type !== undefined || replacement.occurredAt !== undefined;
+                    const targetType = replacement.type === undefined ? original.type : replacement.type;
+                    if (!isValidTransactionType(targetType)) {
+                        throw new Error(CORRECTION_TARGET_TYPE_ERROR);
+                    }
+
+                    const targetOccurredAt = replacement.occurredAt === undefined
+                        ? transactionOccurredAt(original)
+                        : replacement.occurredAt;
+                    if (!isValidOccurrenceDate(targetOccurredAt)) {
+                        throw new Error(OCCURRENCE_DATE_REQUIRED_ERROR);
+                    }
+
+                    let normalizedReplacement: NewTransactionInput;
+                    let preservedOrderSnapshot: PreservedOrderSnapshot | undefined;
+
+                    if (targetType === 'order') {
+                        const targetItemId = !usesExpandedCorrection && original.type === 'order'
+                            ? (replacement.itemId ?? original.itemId)
+                            : replacement.itemId;
+
+                        if (!usesExpandedCorrection && original.type === 'order' && targetItemId !== original.itemId) {
+                            throw new Error(CORRECTION_ORDER_ITEM_PRESERVED_ERROR);
+                        }
+
+                        const quantity = replacement.quantity;
+                        const unitPrice = replacement.unitPrice;
+                        if (!Number.isInteger(quantity) || !quantity || quantity <= 0 || typeof unitPrice !== 'number' || !Number.isFinite(unitPrice) || unitPrice < 0) {
+                            throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                        }
+
+                        normalizedReplacement = {
+                            resellerId: replacement.resellerId,
+                            type: targetType,
+                            occurredAt: targetOccurredAt,
+                            itemId: targetItemId,
+                            itemName: replacement.itemName,
+                            quantity,
+                            unitPrice,
+                            totalPrice: quantity * unitPrice,
+                            observation: usesExpandedCorrection ? replacement.observation : original.observation,
+                        };
+
+                        if (original.type === 'order' && targetItemId === original.itemId) {
+                            preservedOrderSnapshot = {
+                                itemName: original.itemName,
+                                categoryId: original.categoryId,
+                                categoryName: original.categoryName,
+                                subcategoryId: original.subcategoryId,
+                                subcategoryName: original.subcategoryName,
+                            };
+                        }
+                    } else {
+                        if (usesExpandedCorrection && hasOrderShapeFields(replacement)) {
+                            throw new Error(CORRECTION_NON_ORDER_SHAPE_ERROR);
+                        }
+
+                        if (typeof replacement.totalPrice !== 'number' || !Number.isFinite(replacement.totalPrice) || replacement.totalPrice <= 0) {
+                            throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
+                        }
+
+                        normalizedReplacement = {
+                            resellerId: replacement.resellerId,
+                            type: targetType,
+                            occurredAt: targetOccurredAt,
+                            itemId: undefined,
+                            itemName: undefined,
+                            quantity: undefined,
+                            unitPrice: undefined,
+                            totalPrice: replacement.totalPrice,
+                            observation: usesExpandedCorrection ? replacement.observation : original.observation,
                         };
                     }
-                } else {
-                    if (usesExpandedCorrection && hasOrderShapeFields(replacement)) {
-                        throw new Error(CORRECTION_NON_ORDER_SHAPE_ERROR);
-                    }
 
-                    if (typeof replacement.totalPrice !== 'number' || !Number.isFinite(replacement.totalPrice) || replacement.totalPrice <= 0) {
-                        throw new Error(CORRECTION_VALUE_REQUIRED_ERROR);
-                    }
+                    const replacementTransactionId = await addValidatedTransaction(
+                        normalizedReplacement,
+                        { replacesTransactionId: originalId },
+                        preservedOrderSnapshot,
+                    ) as number;
 
-                    normalizedReplacement = {
-                        resellerId: replacement.resellerId,
-                        type: targetType,
-                        occurredAt: targetOccurredAt,
-                        itemId: undefined,
-                        itemName: undefined,
-                        quantity: undefined,
-                        unitPrice: undefined,
-                        totalPrice: replacement.totalPrice,
-                        observation: usesExpandedCorrection ? replacement.observation : original.observation,
+                    const reversal = {
+                        reason: normalizedReason,
+                        reversedAt: new Date().toISOString(),
+                        replacementTransactionId,
                     };
-                }
 
-                const replacementTransactionId = await addValidatedTransaction(
-                    normalizedReplacement,
-                    { replacesTransactionId: originalId },
-                    preservedOrderSnapshot,
-                ) as number;
+                    await db.transactions.update(originalId, { reversal });
 
-                const reversal = {
-                    reason: normalizedReason,
-                    reversedAt: new Date().toISOString(),
-                    replacementTransactionId,
-                };
-
-                await db.transactions.update(originalId, { reversal });
-
-                return {
-                    originalResellerId: original.resellerId,
-                    replacementResellerId: normalizedReplacement.resellerId,
-                    originalId,
-                    replacementTransactionId,
-                    reversal,
-                };
-            });
+                    return {
+                        originalResellerId: original.resellerId,
+                        replacementResellerId: normalizedReplacement.resellerId,
+                        originalId,
+                        replacementTransactionId,
+                        reversal,
+                    };
+                },
+            );
         },
         onSuccess: ({ originalResellerId, replacementResellerId }) => {
             invalidateTransactionConsumers(

@@ -22,12 +22,13 @@ const entityCreatedAt = new Date('2026-01-01T12:00:00.000Z');
 const occurredAt = new Date('2026-08-10T12:00:00.000Z');
 
 async function clearDatabase() {
-    await db.transaction('rw', [db.categories, db.items, db.resellers, db.transactions], async () => {
+    await db.transaction('rw', [db.categories, db.subcategories, db.items, db.resellers, db.transactions], async () => {
         await Promise.all([
-            db.categories.clear(),
+            db.transactions.clear(),
             db.items.clear(),
             db.resellers.clear(),
-            db.transactions.clear(),
+            db.subcategories.clear(),
+            db.categories.clear(),
         ]);
     });
 }
@@ -73,14 +74,16 @@ async function seedDataset(categoryId: number, itemId: number, resellerId: numbe
 }
 
 async function snapshotIds() {
-    const [categories, items, resellers, transactions] = await Promise.all([
+    const [categories, subcategories, items, resellers, transactions] = await Promise.all([
         db.categories.toArray(),
+        db.subcategories.toArray(),
         db.items.toArray(),
         db.resellers.toArray(),
         db.transactions.toArray(),
     ]);
     return {
         categories: categories.map(row => row.id),
+        subcategories: subcategories.map(row => row.id),
         items: items.map(row => row.id),
         resellers: resellers.map(row => row.id),
         transactions: transactions.map(row => row.id),
@@ -105,7 +108,7 @@ describe('P9-S3-I1 category backup/restore round-trip', () => {
         anchorClick.mockRestore();
     });
 
-    it('round-trips schema5 categories, references and historical snapshots and checkpoints all four tables', async () => {
+    it('round-trips schema6 categories, references and historical snapshots and checkpoints all business tables', async () => {
         await seedDataset(5, 15, 25, 35, 'Bronze');
 
         await exportData();
@@ -113,6 +116,7 @@ describe('P9-S3-I1 category backup/restore round-trip', () => {
         const exportedPreflight = preflightBackupText(await downloadedBlobs[0].text());
         expect(exportedPreflight.preview.counts).toMatchObject({
             categories: 1,
+            subcategories: 0,
             unclassifiedItems: 0,
             legacyOrdersWithoutCategory: 0,
         });
@@ -129,9 +133,10 @@ describe('P9-S3-I1 category backup/restore round-trip', () => {
 
         const checkpoint = JSON.parse(await downloadedBlobs[1].text()) as {
             source: { schemaVersion: number };
-            data: { categories: Array<{ id: number; name: string }> };
+            data: { categories: Array<{ id: number; name: string }>; subcategories: unknown[] };
         };
-        expect(checkpoint.source.schemaVersion).toBe(5);
+        expect(checkpoint.source.schemaVersion).toBe(6);
+        expect(checkpoint.data.subcategories).toEqual([]);
         expect(checkpoint.data.categories).toEqual([
             expect.objectContaining({ id: 9, name: 'Porcelana atual antes do restore' }),
         ]);
@@ -193,6 +198,7 @@ describe('P9-S3-I1 category backup/restore round-trip', () => {
         const result = await restorePreflightedBackup(preflight);
         expect(result.status).toBe('success');
         expect(await db.categories.count()).toBe(0);
+        expect(await db.subcategories.count()).toBe(0);
         expect((await db.items.get(101))?.categoryId).toBeUndefined();
         expect((await db.transactions.get(301))?.categoryId).toBeUndefined();
         expect((await db.transactions.get(301))?.categoryName).toBeUndefined();
