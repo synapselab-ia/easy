@@ -11,6 +11,7 @@ import { db, type Category, type Item, type Reseller, type Transaction } from '.
 vi.mock('../db/database', () => ({
     db: {
         categories: { toArray: vi.fn() },
+        subcategories: { toArray: vi.fn() },
         items: { toArray: vi.fn() },
         resellers: { toArray: vi.fn() },
         transactions: { toArray: vi.fn() },
@@ -92,7 +93,7 @@ function envelope(transactions: unknown[]) {
             database: 'ResellerManagerDB',
             schemaVersion: BACKUP_SCHEMA_VERSION,
         },
-        data: { categories, items, resellers, transactions },
+        data: { categories, subcategories: [], items, resellers, transactions },
     };
 }
 
@@ -258,6 +259,7 @@ describe('P10-S1-I1 backup compatibility with D-026', () => {
         ];
 
         vi.mocked(db.categories.toArray).mockResolvedValue(persistedCategories);
+        vi.mocked(db.subcategories.toArray).mockResolvedValue([]);
         vi.mocked(db.items.toArray).mockResolvedValue(persistedItems);
         vi.mocked(db.resellers.toArray).mockResolvedValue(persistedResellers);
         vi.mocked(db.transactions.toArray).mockResolvedValue(persistedTransactions);
