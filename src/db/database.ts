@@ -12,12 +12,26 @@ export function isCategoryActive(category: Pick<Category, 'isActive'>) {
     return category.isActive !== false;
 }
 
+export interface Subcategory {
+    id?: number;
+    categoryId: number;
+    name: string;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export function isSubcategoryActive(subcategory: Pick<Subcategory, 'isActive'>) {
+    return subcategory.isActive !== false;
+}
+
 export interface Item {
     id?: number;
     name: string;
     basePrice: number;
     isActive?: boolean;
     categoryId?: number;
+    subcategoryId?: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -62,9 +76,11 @@ export interface Transaction {
     itemName?: string;
     quantity?: number;
     unitPrice?: number;
-    // Snapshot histórico opcional de categoria. Ausente em pedidos legados V4.
+    // Snapshots históricos opcionais de classificação. Ausentes em pedidos legados.
     categoryId?: number;
     categoryName?: string;
+    subcategoryId?: number;
+    subcategoryName?: string;
     totalPrice: number;
     observation?: string;
     // Auditoria de correção. Ausente significa lançamento efetivo.
@@ -79,6 +95,7 @@ export interface Transaction {
 
 class AppDatabase extends Dexie {
     categories!: EntityTable<Category, 'id'>;
+    subcategories!: EntityTable<Subcategory, 'id'>;
     items!: EntityTable<Item, 'id'>;
     resellers!: EntityTable<Reseller, 'id'>;
     transactions!: EntityTable<Transaction, 'id'>;
@@ -134,6 +151,16 @@ class AppDatabase extends Dexie {
             items: '++id, name, categoryId',
             resellers: '++id, name',
             transactions: '++id, resellerId, type, createdAt, occurredAt, categoryId'
+        });
+
+        // I3-D subcategories: additive only. Existing category/item/order history remains
+        // untouched; no subcategory classification is fabricated during upgrade.
+        this.version(6).stores({
+            categories: '++id, name, isActive',
+            subcategories: '++id, categoryId, name, isActive',
+            items: '++id, name, categoryId, subcategoryId',
+            resellers: '++id, name',
+            transactions: '++id, resellerId, type, createdAt, occurredAt, categoryId, subcategoryId'
         });
     }
 }
