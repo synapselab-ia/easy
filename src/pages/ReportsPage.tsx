@@ -202,7 +202,7 @@ function FinancialTimeline({ report }: { report: FinancialReport }) {
                                     width={72}
                                 />
                                 <Tooltip
-                                    formatter={(value: number | string, name: string) => [
+                                    formatter={(value, name) => [
                                         currencyFormatter.format(Number(value)),
                                         name,
                                     ]}
