@@ -2,6 +2,32 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-26 — D-034 financial reports workspace integrated
+
+Controlled early-use feedback requested a report area that is useful for analysis and can produce a presentable financial PDF without creating a second accounting interpretation separate from the application.
+
+D-034 / PR #85 delivered:
+
+- dedicated `Relatórios` navigation/workspace;
+- period presets (`Hoje`, `Esta semana`, `Este mês`, `Mês passado`, `Este ano`) plus custom interval;
+- sales, receipts, report-end open-debt and order KPIs;
+- comparison with the immediately preceding equal-length period;
+- sales/receipts timeline by financial occurrence date;
+- `Resumo`, `Produtos e categorias` and `Revendedores` report views;
+- category -> subcategory drilldown using immutable transaction-time classification snapshots;
+- reseller period activity combined with closing open debt as of the report end date;
+- configurable financial PDF generated from the same canonical `FinancialReport` object used by the screen.
+
+The report domain explicitly distinguishes period movement from closing debt: sales and receipts describe the selected interval, while `Em aberto no fim` reconstructs all effective reseller history through the selected end date and sums positive balances. Reversed transactions retain audit history but contribute zero to effective report totals.
+
+D-034 is read-only and introduced no database migration, Supabase write/API change, recovery-boundary change, Auth/RLS change or deployment automation.
+
+Final D-019 on PR #85: head `0ad69e0a8e8eeb9e92c56cb39ec4b8489bb97fd1`, merge ref `897ca59793342b29300cee0d57be92fdba1ebd68`, run/job `33001910986` / `98285660448`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `124767ee7afa23c0c07e7215513fa5b90d8177a5`.
+
+PR #85 was squash-integrated into `develop` as `970cceaff9ce359f0ecb559648e38ab6cc7e1bd3`, also with tree `124767ee7afa23c0c07e7215513fa5b90d8177a5`. Exact tree equivalence: PASS. Canonical closure is documentation-only. `main` remains untouched and no automatic Vercel deployment occurred.
+
+---
+
 ## 2026-08-26 — D-033 optional subcategories integrated
 
 Controlled early-use feedback produced an explicit catalog requirement: categories such as `Porcelana` need one optional subdivision so distinct product groups can be organized without creating an arbitrarily deep hierarchy.
@@ -30,7 +56,7 @@ D-019 passed on head `b8a6c947bad5d2ba7432f2ffa13b3df32cf44dcd`, merge ref `75fb
 
 Before integration, final PR #82 merge ref `e9dc4cca9d6d1b843904d065ce7f9cf6289cdffd` had that exact same tree. PR #82 was squash-integrated into `develop` as `5a487b93d5c632f5990b8a261e4a62a6a196f186`, also with tree `5127a5a558b990f587b6427a605c5207e6573b9e`. Exact tree equivalence: PASS.
 
-Canonical closure is documentation-only. The separately requested financial PDF/report was not included in D-033.
+Canonical closure is documentation-only.
 
 ---
 

@@ -55,7 +55,7 @@ Use `synapselab-ia/easy` for V2 work.
 **Status:** ACCEPTED HISTORICALLY / SUPERSEDED FOR FINAL PRODUCTION BY D-029.
 
 ## D-017 — Logical Easy backup is the canonical interchange/portable recovery contract
-**Status:** ACCEPTED / RETAINED BY D-029, D-031, D-032 AND D-033.
+**Status:** ACCEPTED / RETAINED BY D-029, D-031, D-032, D-033 AND D-034.
 
 ## D-018 — Restore requires validation, checkpoint and verified atomic replacement
 **Status:** ACCEPTED.
@@ -87,7 +87,7 @@ Objective failure blocks executable integration. Supabase-bearing changes additi
 D-032 refines hosted-cloud manual-checkpoint state; D-024 local/no-cloud behavior remains retained.
 
 ## D-025 — Category classification uses stable identity + transaction-time snapshots; legacy history is not invented
-**Status:** ACCEPTED / IMPLEMENTED / EXTENDED BY D-033.
+**Status:** ACCEPTED / IMPLEMENTED / EXTENDED BY D-033 AND CONSUMED BY D-034 REPORTING.
 
 ## D-026 — Effective transaction business fields are correctable through audited linked replacement
 **Status:** ACCEPTED / IMPLEMENTED / EXTENDED BY D-033.
@@ -168,34 +168,54 @@ The updated Vercel candidate has been manually published and a fresh real global
 **Status:** ACCEPTED / IMPLEMENTED / INTEGRATED  
 **Date:** 2026-08-26
 
+Accepted contract:
+
+1. `category -> optional subcategory -> item`; recursive subcategories are out of scope.
+2. A subcategory belongs to exactly one category and has stable identity/lifecycle.
+3. An item may reference one optional subcategory.
+4. Referenced subcategory must belong to the item's selected category.
+5. Active items cannot use inactive classification; invalid archival is protected.
+6. Legacy records without classification remain unclassified rather than receiving guessed values.
+7. New orders store category id/name and optional subcategory id/name as immutable historical facts.
+8. Current catalog edits do not mutate prior transaction snapshots.
+9. Same-item correction preserves historical classification; changing item captures the target item's current valid classification.
+10. Backup v2 schema 6 includes subcategories and related references/snapshots; supported schema 4/5 imports do not invent them.
+11. Supabase is canonical in hosted mode and Dexie mirrors the logical shape.
+12. D-033 does not weaken security, recovery, deployment or `main` boundaries.
+
+Acceptance evidence: migration `20260826135708_i3d_subcategories` applied; synthetic database proof passed and rolled back with zero residue; D-019 run/job `32983745854` / `98226501149` passed; PR #82 integrated with exact tree equivalence.
+
+## D-034 — Financial reports use one canonical read-only model for screen and PDF
+**Status:** ACCEPTED / IMPLEMENTED / INTEGRATED  
+**Date:** 2026-08-26
+
 ### Trigger
 
-During controlled early use, the operator requested the ability to divide products inside an existing category, e.g. separate `Placas` from other product groups inside `Porcelana`, without creating an arbitrarily deep hierarchy.
+During controlled early use, the operator requested useful and presentable financial reporting in addition to the glance-oriented Dashboard, including downloadable PDF and product/category/subcategory analysis.
 
 ### Accepted contract
 
-1. **Exactly two classification levels.** `category -> optional subcategory -> item`; recursive subcategories are out of scope.
-2. **Stable parent identity.** A subcategory belongs to exactly one category and has its own stable identity/lifecycle.
-3. **Optional item assignment.** An item may reference one subcategory; that subcategory is optional.
-4. **Parent consistency.** A referenced subcategory must belong to the item's selected category; cross-category combinations fail closed.
-5. **Active-reference integrity.** Active items cannot use inactive classification; referenced subcategories/categories are protected from invalid archival.
-6. **Non-inventive legacy behavior.** Legacy records without classification remain unclassified rather than receiving guessed values.
-7. **Transaction-time snapshots.** New orders store category id/name and optional subcategory id/name as immutable historical facts.
-8. **Catalog edits do not rewrite history.** Renaming/reassigning current classification does not mutate prior transaction snapshots.
-9. **D-026 correction semantics.** Same-item correction preserves the historical classification snapshot; changing item captures the target item's current valid classification.
-10. **Backup contract.** Backup v2 schema 6 includes subcategories, item `subcategoryId` and transaction subcategory snapshots. Supported schema 4/5 backups normalize without inventing subcategory data.
-11. **Cloud/local parity.** Supabase/Postgres is canonical in hosted mode; Dexie schema 6 mirrors the same logical shape for cache/local compatibility.
-12. **Security/deployment unchanged.** D-033 does not weaken RLS/approved-operator authorization, D-032 recovery enforcement, manual Vercel governance, D-030 status or the untouched `main` boundary.
+1. **Dedicated workspace.** Financial reporting lives in a `Relatórios` workspace rather than overloading the Dashboard.
+2. **Single calculation model.** `src/domain/financialReporting.ts` builds the canonical `FinancialReport`; the interactive screen and PDF both consume that same object.
+3. **Occurrence-time range.** Report periods use D-014 financial occurrence time (`transactionOccurredAt`), not registration time.
+4. **Reversal semantics.** Reversed transactions remain audit history but contribute zero to effective report values.
+5. **Sales.** `Vendas` is the gross value of effective orders whose occurrence is inside the selected interval.
+6. **Receipts.** `Recebimentos` is the effective sum of payments and signals whose occurrence is inside the selected interval.
+7. **Period net.** `Movimento líquido` is sales minus receipts for the interval and is not synonymous with outstanding debt.
+8. **Open debt as-of end.** `Em aberto no fim` is the sum of positive reseller balances reconstructed from all effective history through the report end date. Prior-period debt therefore carries into the report-end balance even when it was not created inside the selected interval.
+9. **Comparison.** KPI comparison uses the immediately preceding interval with equal calendar length.
+10. **Historical classification.** Product/category/subcategory analysis uses transaction-time order snapshots; current catalog rename/reassignment cannot rewrite historical reporting. Missing legacy classification stays explicit rather than guessed.
+11. **Reseller semantics.** Reseller reporting combines interval sales/receipts/order counts with closing balance/open debt as of the interval end and must communicate that distinction.
+12. **PDF parity.** PDF section options affect presentation only. The PDF may not recalculate money independently from `FinancialReport`.
+13. **Read-only boundary.** D-034 introduces no database migration, financial mutation, Auth/RLS change, recovery exception, automatic Vercel deployment or `main` publication.
 
 ### Acceptance evidence
 
-Production migration `20260826135708_i3d_subcategories` is applied and additive/retrocompatible. A live synthetic transaction proof verified valid snapshot capture, invalid parent/subcategory rejection and active-reference archive protection; the proof rolled back with zero synthetic residue.
+PR #85 feature head `0ad69e0a8e8eeb9e92c56cb39ec4b8489bb97fd1` passed D-019 on GitHub Actions merge ref `897ca59793342b29300cee0d57be92fdba1ebd68`, run/job `33001910986` / `98285660448`: ESLint 0 errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; TypeScript + production Vite build PASS.
 
-D-019 passed on PR #82 run/job `32983745854` / `98226501149`: 0 lint errors / 83 warnings; 61 files / 258 Vitest PASS; 17/17 Playwright PASS; production build PASS. The validated merge-ref tree was `5127a5a558b990f587b6427a605c5207e6573b9e`.
+The validated merge-ref tree was `124767ee7afa23c0c07e7215513fa5b90d8177a5`. PR #85 was squash-integrated into `develop` as `970cceaff9ce359f0ecb559648e38ab6cc7e1bd3`, whose tree is exactly `124767ee7afa23c0c07e7215513fa5b90d8177a5`. Exact tree equivalence: PASS.
 
-Before integration, PR #82 merge ref `e9dc4cca9d6d1b843904d065ce7f9cf6289cdffd` had that exact same tree. PR #82 was squash-integrated into `develop` as `5a487b93d5c632f5990b8a261e4a62a6a196f186`, also with tree `5127a5a558b990f587b6427a605c5207e6573b9e`. Exact tree equivalence: PASS.
-
-The post-integration canonical closure is documentation-only and introduces no executable/runtime delta.
+The post-integration D-034 canonical closure is documentation-only.
 
 ---
 
