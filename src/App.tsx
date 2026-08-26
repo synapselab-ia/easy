@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage'
 import ItemsPage from './pages/ItemsPage'
 import CategoriesPage from './pages/CategoriesPage'
 import CategoryReportPage from './pages/CategoryReportPage'
+import ReportsPage from './pages/ReportsPage'
 import ResellersPage from './pages/ResellersPage'
 import ResellerDetailPage from './pages/ResellerDetailPage'
 import TransactionsPage from './pages/TransactionsPage'
@@ -23,6 +24,7 @@ function App() {
               <Route path="/items" element={<ItemsPage />} />
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/category-report" element={<CategoryReportPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
               <Route path="/resellers" element={<ResellersPage />} />
               <Route path="/resellers/:id" element={<ResellerDetailPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />
