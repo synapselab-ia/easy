@@ -31,7 +31,7 @@ describe('App Integration Tests', () => {
 
         fireEvent.click(screen.getAllByRole('link', { name: 'Relatórios' })[0])
         expect(await screen.findByRole('heading', { name: 'Relatórios' })).toBeInTheDocument()
-        expect(screen.getByText('Produtos e categorias')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Produtos e categorias' })).toBeInTheDocument()
         expect(screen.getByRole('button', { name: /Gerar relatório PDF/i })).toBeInTheDocument()
     })
 })
