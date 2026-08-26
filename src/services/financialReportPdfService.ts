@@ -37,12 +37,21 @@ function lastTableY(doc: jsPDF, fallback: number) {
     return (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? fallback;
 }
 
-function sectionTitle(doc: jsPDF, title: string, y: number) {
+function ensureSectionSpace(doc: jsPDF, y: number) {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    if (y <= pageHeight - 28) return y;
+    doc.addPage();
+    return 18;
+}
+
+function sectionTitle(doc: jsPDF, index: number, title: string, y: number) {
+    const sectionY = ensureSectionSpace(doc, y);
     doc.setFontSize(12);
     doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
-    doc.text(title, 14, y);
+    doc.text(`${String(index).padStart(2, '0')}  ${title}`, 14, sectionY);
     doc.setFont('helvetica', 'normal');
+    return sectionY;
 }
 
 export function generateFinancialReportPdf(
@@ -52,6 +61,7 @@ export function generateFinancialReportPdf(
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     let cursorY = 20;
+    let sectionIndex = 0;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
@@ -78,8 +88,7 @@ export function generateFinancialReportPdf(
     cursorY += 10;
 
     if (options.includeSummary) {
-        sectionTitle(doc, '01  RESUMO DO PERÍODO', cursorY);
-        cursorY += 5;
+        cursorY = sectionTitle(doc, ++sectionIndex, 'RESUMO DO PERÍODO', cursorY) + 5;
         autoTable(doc, {
             startY: cursorY,
             head: [['Vendas', 'Recebimentos', 'Em aberto no fim', 'Pedidos']],
@@ -97,8 +106,7 @@ export function generateFinancialReportPdf(
     }
 
     if (options.includeTimeline && report.timeline.length > 0) {
-        sectionTitle(doc, '02  MOVIMENTO NO PERÍODO', cursorY);
-        cursorY += 5;
+        cursorY = sectionTitle(doc, ++sectionIndex, 'MOVIMENTO NO PERÍODO', cursorY) + 5;
         autoTable(doc, {
             startY: cursorY,
             head: [['Período', 'Vendas', 'Recebimentos', 'Movimento líquido']],
@@ -120,8 +128,7 @@ export function generateFinancialReportPdf(
     }
 
     if (options.includeCategories && report.categories.length > 0) {
-        sectionTitle(doc, '03  PRODUTOS E CATEGORIAS', cursorY);
-        cursorY += 5;
+        cursorY = sectionTitle(doc, ++sectionIndex, 'PRODUTOS E CATEGORIAS', cursorY) + 5;
         const categoryRows = report.categories.flatMap(category => [
             [
                 category.label,
@@ -152,8 +159,7 @@ export function generateFinancialReportPdf(
     }
 
     if (options.includeResellers && report.resellers.length > 0) {
-        sectionTitle(doc, '04  REVENDEDORES', cursorY);
-        cursorY += 5;
+        cursorY = sectionTitle(doc, ++sectionIndex, 'REVENDEDORES', cursorY) + 5;
         autoTable(doc, {
             startY: cursorY,
             head: [['Revendedor', 'Pedidos', 'Vendas', 'Recebido', 'Em aberto']],
