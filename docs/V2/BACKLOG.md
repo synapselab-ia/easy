@@ -126,12 +126,14 @@ Queue governance:
 7. Any unexpected dependency that would materially broaden scope requires a new operator decision instead of silent expansion.
 
 #### Early-use change #6 — Dashboard performance-window labels
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #90`
 
-Verify the `Análise de Performance` period selector. If its selected trigger exposes internal values such as `90`, `180` or `360`, make the visible selected labels consistently Portuguese (`Últimos 90 dias`, `Últimos 180 dias`, `Último ano`) while preserving the existing `AnalysisPeriod` values and calculations. Presentation-only; no analytics, persistence or date-window semantic change.
+Verification confirmed the Dashboard Base UI Select lacked the explicit value/label mapping used by the accepted report selector fix. PR #90 added one shared mapping for `90`, `180` and `360`, so selected values render `Últimos 90 dias`, `Últimos 180 dias` and `Último ano` while existing `AnalysisPeriod` values and calculations remain unchanged.
+
+D-019 run/job `33009642945` / `98312276753`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub merge-ref tree `f872da2c6adf492a929bd5ef02ad7a1c695a4672` exactly equals squash-integrated `develop@446987475bf8621ff7ec5803149c4c6b874d5e50` tree. No automatic deployment occurred and `main` remained untouched.
 
 #### Early-use change #7 — consistent pt-BR monetary presentation
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Audit existing operator-facing BRL values for raw decimal formatting such as `toFixed(2)` and standardize visible money to proper `pt-BR`/BRL formatting where needed. Preserve the exact numeric values, calculations, persistence and financial semantics. Do not alter PDF/report calculation logic merely for formatting.
 
@@ -183,4 +185,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #6: verify the Dashboard `Análise de Performance` period selector and, only if needed, correct the selected-value presentation so operator-facing labels remain Portuguese while internal `90/180/360` period values and analytics semantics stay unchanged. Work outside `main`, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #7, then stop. Do not start change #7 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #7: audit operator-facing BRL values for raw decimal presentation such as `toFixed(2)` and standardize only visible money formatting where needed to proper `pt-BR`/BRL presentation. Preserve exact numeric values, calculations, persistence and financial semantics, and do not alter PDF/report calculation logic merely for formatting. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #8, then stop. Do not start change #8 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
