@@ -23,7 +23,9 @@ Current P10-S3 state:
   - change #2 store-global manual recovery checkpoint: `DONE / ACCEPTED / INTEGRATED / OPERATIONALLY INITIALIZED` — D-032 / PR #80;
   - change #3 optional subcategories: `DONE / ACCEPTED / INTEGRATED` — D-033 / PR #82;
   - change #4 financial reports workspace + PDF: `DONE / ACCEPTED / INTEGRATED` — D-034 / PR #85;
-  - **change #5 localized financial-report period labels: `DONE / INTEGRATED` — PR #87.**
+  - change #5 localized financial-report period labels: `DONE / INTEGRATED` — PR #87;
+  - **change #6 Dashboard performance-window labels: `CURRENT / AUTHORIZED`;**
+  - changes #7–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -122,6 +124,34 @@ Validation/integration evidence:
 
 No automatic Vercel publication occurred and `main` remains untouched.
 
+## Operator-authorized usability/data-quality queue
+
+On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This authorization is sequencing/backlog scope, not a new architecture decision and does not supersede D-029 through D-034.
+
+Canonical execution lock:
+
+- only the item named in `NEXT_ACTION` is current;
+- later queue items remain `QUEUED / NOT CURRENT` and must not be bundled into the current task;
+- each item begins with verification and may close `NO_CHANGE / DEFERRED` rather than forcing a modification;
+- executable changes still require isolated work outside `main` and D-019 before integration;
+- after one item is integrated/closed, canonical docs promote exactly the next pending item and the task stops;
+- no queue item implicitly authorizes database/schema changes, financial-semantic changes, recovery/Auth/RLS weakening, automatic deploy, `main` publication, legacy import or definitive cutover.
+
+Ordered queue:
+
+1. **#6 CURRENT** — verify/fix Portuguese selected labels in Dashboard `Análise de Performance` period window without changing `90/180/360` semantics.
+2. **#7 QUEUED** — consistent operator-facing pt-BR/BRL monetary formatting without numeric/accounting changes.
+3. **#8 QUEUED** — show category/subcategory context in catalog and order item selection without rewriting historical snapshots.
+4. **#9 QUEUED** — practical item/reseller search and lifecycle/classification filters using existing data.
+5. **#10 QUEUED** — optional observation on payment/signal creation if the existing transaction contract supports it; no migration.
+6. **#11 QUEUED** — make global item search selection land in useful item context.
+7. **#12 QUEUED** — conservative non-blocking duplicate-data warnings; no automatic merge or hard uniqueness rule.
+8. **#13 QUEUED** — product-level analytics inside the canonical read-only financial report model.
+9. **#14 QUEUED** — Dashboard receipts-today KPI using occurrence time and reversal-zero-effect semantics.
+10. **#15 QUEUED** — non-blocking confirmation for future occurrence dates in new transaction entry.
+
+Detailed scope and stop conditions for each queue item are canonical in `docs/V2/BACKLOG.md`.
+
 ## Startup protocol for a new conversation
 
 Read in this exact order:
@@ -145,4 +175,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**D-034 and early-use change #5 are closed. Continue P10-S3-I2-I3-D controlled early-use observation. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover. No further product change is pre-authorized; begin the next bounded change only from new operator instruction or observed early-use evidence.**
+**Execute only early-use change #6. Verify the Dashboard `Análise de Performance` period selector and determine whether its selected trigger exposes internal `90`, `180` or `360` values instead of Portuguese labels. If reproduced, correct only the selected-value presentation so the visible choices remain `Últimos 90 dias`, `Últimos 180 dias` and `Último ano`, while preserving existing `AnalysisPeriod` values, date-window calculations and analytics semantics. If not reproduced, close #6 as `NO_CHANGE` with evidence. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #7 becomes current, then stop. Do not start #7 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
