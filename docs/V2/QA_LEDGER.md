@@ -16,7 +16,7 @@ Objective failures block executable integration. Supabase-bearing work additiona
 
 ## Accepted historical baseline
 
-Detailed historical runs remain available in Git/PR history and phase-specific execution records. Key accepted milestones include P9 category/correction/date work, P10-S1 rehearsal, D-029 architecture, P10-S3-I1 Supabase foundation, D-030 contract/tooling, D-031 runtime-first governance/runtime/onboarding, PR #79 grouped reseller PDF and PR #80 D-032 global recovery.
+Detailed historical runs remain available in Git/PR history and phase-specific execution records. Key accepted milestones include P9 category/correction/date work, P10-S1 rehearsal, D-029 architecture, P10-S3-I1 Supabase foundation, D-030 contract/tooling, D-031 runtime-first governance/runtime/onboarding, PR #79 grouped reseller PDF, PR #80 D-032 global recovery and PR #82 D-033 subcategories.
 
 D-030 real operator-local unattended/off-site/retention/restore acceptance remains ON HOLD.
 
@@ -26,53 +26,64 @@ The accepted D-032-containing `develop` candidate was manually deployed to Verce
 
 This is early-use recovery evidence, not D-030 durability acceptance.
 
-## P10-S3-I2-I3-D early-use change #3 — D-033 optional subcategories
+## D-033 optional subcategories — PASS / INTEGRATED
 
-### Production database migration — PASS
+Production migration `20260826135708_i3d_subcategories` is applied. Live synthetic database proof verified category/subcategory consistency, immutable order snapshot capture and archive protection, then rolled back with zero synthetic residue.
 
-Migration `20260826135708_i3d_subcategories` is applied.
+D-019 run/job `32983745854` / `98226501149`: 0 lint errors / 83 warnings; 61 files / 258 Vitest PASS; 17/17 Playwright PASS; production build PASS. PR #82 integrated with exact tree equivalence. Canonical closure was documentation-only.
 
-Material database behavior:
+## P10-S3-I2-I3-D early-use change #4 — D-034 financial reports
 
-- `public.subcategories` with RLS, stable identity, category parent and lifecycle;
-- optional `items.subcategory_id` constrained to the selected category;
-- optional transaction `subcategory_id/subcategory_name` snapshots for orders;
-- archive/reference guards for category/subcategory/item integrity;
-- transactional create/correct RPCs capture or preserve subcategory snapshots;
-- cloud backup restore supports schema 6 while retaining supported older backup compatibility.
+### Scope review — READ-ONLY
 
-### Live synthetic database proof — PASS / ROLLED BACK
+PR #85 changes only application/reporting code and tests:
 
-A transactionally isolated synthetic proof under an approved operator context verified:
+- dedicated `/reports` route/menu;
+- shared `FinancialReport` calculation model;
+- report screen/presets/KPIs/timeline/tabs;
+- category -> subcategory and reseller reporting;
+- configurable PDF adapter over the same report model;
+- unit/integration coverage.
 
-1. cross-category item/subcategory pairing is rejected;
-2. valid classification can be created;
-3. `create_transaction` captures category and subcategory snapshots and server-calculated total;
-4. a subcategory referenced by an active item cannot be archived;
-5. rollback leaves zero synthetic category/subcategory/item/reseller/transaction residue.
+No database migration, Supabase function/policy, business mutation, recovery mechanism or deployment workflow changed.
 
-### Security/advisor review — REVIEWED
+### Domain/reporting tests — PASS
 
-The new subcategory table remains RLS-protected. Supabase Advisor also reports the known Free-plan leaked-password-protection warning and authenticated `SECURITY DEFINER` warnings for intentionally exposed operator-gated RPCs. Explicit privilege proof confirms `anon`/`public` cannot execute `create_transaction`, `correct_transaction` or `restore_easy_backup`; `authenticated` can, and each RPC retains internal active-operator authorization.
+New coverage verifies:
 
-### D-019 — PASS
+1. period sales/receipts/order/item aggregation uses effective occurrence-time movements;
+2. reversed movements contribute zero;
+3. previous-period comparison uses the immediately preceding equal calendar-length range;
+4. report-end open debt includes earlier outstanding history rather than confusing it with period net;
+5. category/subcategory groups respect immutable transaction snapshots and explicit no-subcategory/legacy behavior;
+6. timeline fills the selected short range coherently;
+7. financial PDF consumes report sections and supports presentation-only section selection;
+8. generated PDF filename includes the selected range;
+9. application navigation exposes the Reports workspace.
 
-Implementation validation for PR #82:
+### D-019 iterations
 
-- validated feature head: `b8a6c947bad5d2ba7432f2ffa13b3df32cf44dcd`;
-- exact GitHub-generated merge ref checked out by Actions: `75fb65b3179549af0cb29618f282d9edc70e663a`;
-- validated tree: `5127a5a558b990f587b6427a605c5207e6573b9e`;
-- run/job: `32983745854` / `98226501149`;
-- ESLint: 0 errors / 83 warnings;
-- Vitest: 61 files / 258 tests PASS;
-- Playwright: 17/17 PASS;
-- TypeScript + production Vite build: PASS.
+Initial objective failures were not waived:
 
-After separating canonical-document closure from executable implementation, the final PR #82 merge ref was `e9dc4cca9d6d1b843904d065ce7f9cf6289cdffd`. Its tree SHA was exactly `5127a5a558b990f587b6427a605c5207e6573b9e`, identical to the D-019-validated merge-ref tree. Exact-tree equivalence before integration: PASS.
+- first runs exposed only report-navigation test assumptions;
+- after those were corrected, Vitest reached 268/268 and Playwright 17/17 but TypeScript caught an overly narrow Recharts tooltip formatter type;
+- that build error was corrected using Recharts contextual formatter types;
+- the final frozen merge-ref then passed every objective command.
 
-PR #82 was squash-integrated into `develop` as `5a487b93d5c632f5990b8a261e4a62a6a196f186`. The integrated commit tree is exactly `5127a5a558b990f587b6427a605c5207e6573b9e`. Integrated-tree equivalence: PASS.
+### Final D-019 — PASS
 
-The post-integration canonical closure changes Markdown documentation only; no executable/runtime file differs from the D-019-validated integrated tree. No failed executable gate was waived.
+- feature head: `0ad69e0a8e8eeb9e92c56cb39ec4b8489bb97fd1`;
+- exact GitHub-generated merge ref checked out by Actions: `897ca59793342b29300cee0d57be92fdba1ebd68`;
+- validated tree: `124767ee7afa23c0c07e7215513fa5b90d8177a5`;
+- run/job: `33001910986` / `98285660448`;
+- ESLint: **0 errors / 83 warnings**;
+- Vitest: **63 files / 268 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #85 was squash-integrated into `develop` as `970cceaff9ce359f0ecb559648e38ab6cc7e1bd3`. The integrated commit tree is exactly `124767ee7afa23c0c07e7215513fa5b90d8177a5`, identical to the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration D-034 closure changes Markdown documentation only; no executable/runtime file differs from the validated integrated tree. No failed executable gate was waived.
 
 ## Known non-blocking debt
 
@@ -93,9 +104,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-031 governance/runtime/onboarding: **PASS / INTEGRATED**.
 - I3-D grouped reseller PDF: **PASS / INTEGRATED**.
 - D-032 repository/database + first real global checkpoint: **PASS / OPERATIONAL**.
-- D-033 database synthetic proof: **PASS / ROLLED BACK / ZERO RESIDUE**.
-- D-033 D-019: **PASS**.
-- D-033 PR #82 integrated-tree equivalence: **PASS**.
-- D-033 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-033 database synthetic proof + D-019 + tree equivalence: **PASS / INTEGRATED**.
+- D-034 reporting D-019: **PASS**.
+- D-034 PR #85 integrated-tree equivalence: **PASS**.
+- D-034 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
