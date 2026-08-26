@@ -3,6 +3,7 @@ import {
     type Category,
     type Item,
     type Reseller,
+    type Subcategory,
     type Transaction,
     type TransactionType,
 } from '../db/database';
@@ -10,11 +11,24 @@ import {
 export const BACKUP_FORMAT = 'easy-backup';
 export const BACKUP_VERSION = 2 as const;
 export const LEGACY_BACKUP_SCHEMA_VERSION = 4 as const;
-export const BACKUP_SCHEMA_VERSION = 5 as const;
-export type SupportedBackupSchemaVersion = typeof LEGACY_BACKUP_SCHEMA_VERSION | typeof BACKUP_SCHEMA_VERSION;
+export const CATEGORY_BACKUP_SCHEMA_VERSION = 5 as const;
+export const BACKUP_SCHEMA_VERSION = 6 as const;
+export type SupportedBackupSchemaVersion =
+    | typeof LEGACY_BACKUP_SCHEMA_VERSION
+    | typeof CATEGORY_BACKUP_SCHEMA_VERSION
+    | typeof BACKUP_SCHEMA_VERSION;
 
 interface BackupCategoryV2 {
     id: number;
+    name: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface BackupSubcategoryV2 {
+    id: number;
+    categoryId: number;
     name: string;
     isActive: boolean;
     createdAt: string;
@@ -27,6 +41,7 @@ interface BackupItemV2 {
     basePrice: number;
     isActive: boolean;
     categoryId?: number;
+    subcategoryId?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -52,6 +67,8 @@ interface BackupTransactionV2 {
     unitPrice?: number;
     categoryId?: number;
     categoryName?: string;
+    subcategoryId?: number;
+    subcategoryName?: string;
     totalPrice: number;
     observation?: string;
     reversal?: {
@@ -76,6 +93,7 @@ export interface BackupEnvelopeV2 {
     };
     data: {
         categories: BackupCategoryV2[];
+        subcategories: BackupSubcategoryV2[];
         items: BackupItemV2[];
         resellers: BackupResellerV2[];
         transactions: BackupTransactionV2[];
@@ -88,6 +106,7 @@ export interface NormalizedBackupData {
     exportedAt: Date;
     data: {
         categories: Category[];
+        subcategories: Subcategory[];
         items: Item[];
         resellers: Reseller[];
         transactions: Transaction[];
@@ -105,8 +124,13 @@ export interface BackupPreview {
         categories: number;
         activeCategories: number;
         inactiveCategories: number;
+        subcategories: number;
+        activeSubcategories: number;
+        inactiveSubcategories: number;
         unclassifiedItems: number;
+        itemsWithoutSubcategory: number;
         legacyOrdersWithoutCategory: number;
+        ordersWithoutSubcategory: number;
         items: number;
         activeItems: number;
         inactiveItems: number;
@@ -225,11 +249,7 @@ function normalizedActive(
     return true;
 }
 
-function normalizeCategory(
-    value: unknown,
-    index: number,
-    errors: string[],
-): Category | undefined {
+function normalizeCategory(value: unknown, index: number, errors: string[]): Category | undefined {
     const path = `data.categories[${index}]`;
     if (!isRecord(value)) {
         pathError(errors, path, 'deve ser um objeto');
@@ -243,15 +263,29 @@ function normalizeCategory(
     const isActive = typeof value.isActive === 'boolean' ? value.isActive : undefined;
     if (isActive === undefined) pathError(errors, `${path}.isActive`, 'deve ser booleano');
 
-    if (id === undefined || name === undefined || isActive === undefined || !createdAt || !updatedAt) {
+    if (id === undefined || name === undefined || isActive === undefined || !createdAt || !updatedAt) return undefined;
+    if (updatedAt.getTime() < createdAt.getTime()) pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
+    return { id, name, isActive, createdAt, updatedAt };
+}
+
+function normalizeSubcategory(value: unknown, index: number, errors: string[]): Subcategory | undefined {
+    const path = `data.subcategories[${index}]`;
+    if (!isRecord(value)) {
+        pathError(errors, path, 'deve ser um objeto');
         return undefined;
     }
 
-    if (updatedAt.getTime() < createdAt.getTime()) {
-        pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
-    }
+    const id = positiveInteger(value.id, `${path}.id`, errors);
+    const categoryId = positiveInteger(value.categoryId, `${path}.categoryId`, errors);
+    const name = requiredTrimmedString(value.name, `${path}.name`, errors);
+    const createdAt = validDate(value.createdAt, `${path}.createdAt`, errors);
+    const updatedAt = validDate(value.updatedAt, `${path}.updatedAt`, errors);
+    const isActive = typeof value.isActive === 'boolean' ? value.isActive : undefined;
+    if (isActive === undefined) pathError(errors, `${path}.isActive`, 'deve ser booleano');
 
-    return { id, name, isActive, createdAt, updatedAt };
+    if (id === undefined || categoryId === undefined || name === undefined || isActive === undefined || !createdAt || !updatedAt) return undefined;
+    if (updatedAt.getTime() < createdAt.getTime()) pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
+    return { id, categoryId, name, isActive, createdAt, updatedAt };
 }
 
 function normalizeItem(
@@ -259,6 +293,7 @@ function normalizeItem(
     index: number,
     sourceVersion: 1 | 2,
     usesCategorySchema: boolean,
+    usesSubcategorySchema: boolean,
     errors: string[],
     warnings: string[],
 ): Item | undefined {
@@ -275,17 +310,12 @@ function normalizeItem(
     const updatedAt = validDate(value.updatedAt, `${path}.updatedAt`, errors);
     const isActive = normalizedActive(value, path, sourceVersion, errors, warnings);
     let categoryId: number | undefined;
-    if (usesCategorySchema && value.categoryId !== undefined) {
-        categoryId = positiveInteger(value.categoryId, `${path}.categoryId`, errors);
-    }
+    let subcategoryId: number | undefined;
+    if (usesCategorySchema && value.categoryId !== undefined) categoryId = positiveInteger(value.categoryId, `${path}.categoryId`, errors);
+    if (usesSubcategorySchema && value.subcategoryId !== undefined) subcategoryId = positiveInteger(value.subcategoryId, `${path}.subcategoryId`, errors);
 
-    if (id === undefined || name === undefined || basePrice === undefined || !createdAt || !updatedAt) {
-        return undefined;
-    }
-
-    if (updatedAt.getTime() < createdAt.getTime()) {
-        pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
-    }
+    if (id === undefined || name === undefined || basePrice === undefined || !createdAt || !updatedAt) return undefined;
+    if (updatedAt.getTime() < createdAt.getTime()) pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
 
     return {
         id,
@@ -293,6 +323,7 @@ function normalizeItem(
         basePrice,
         isActive,
         ...(categoryId !== undefined ? { categoryId } : {}),
+        ...(subcategoryId !== undefined ? { subcategoryId } : {}),
         createdAt,
         updatedAt,
     };
@@ -321,11 +352,7 @@ function normalizeReseller(
     const isActive = normalizedActive(value, path, sourceVersion, errors, warnings);
 
     if (id === undefined || name === undefined || !createdAt || !updatedAt) return undefined;
-
-    if (updatedAt.getTime() < createdAt.getTime()) {
-        pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
-    }
-
+    if (updatedAt.getTime() < createdAt.getTime()) pathError(errors, `${path}.updatedAt`, 'não pode ser anterior a createdAt');
     return { id, name, phone, email, notes, isActive, createdAt, updatedAt };
 }
 
@@ -340,23 +367,16 @@ function normalizeReversal(
         pathError(errors, path, 'deve ser um objeto');
         return undefined;
     }
-
     const reason = requiredString(value.reason, `${path}.reason`, errors);
     const reversedAtDate = validDate(value.reversedAt, `${path}.reversedAt`, errors);
     let replacementTransactionId: number | undefined;
     if (value.replacementTransactionId !== undefined) {
-        replacementTransactionId = positiveInteger(
-            value.replacementTransactionId,
-            `${path}.replacementTransactionId`,
-            errors,
-        );
+        replacementTransactionId = positiveInteger(value.replacementTransactionId, `${path}.replacementTransactionId`, errors);
     }
-
     if (!reason || !reversedAtDate) return undefined;
     if (createdAt && reversedAtDate.getTime() < createdAt.getTime()) {
         pathError(errors, `${path}.reversedAt`, 'não pode ser anterior ao createdAt do lançamento');
     }
-
     return {
         reason,
         reversedAt: reversedAtDate.toISOString(),
@@ -379,6 +399,7 @@ function normalizeTransaction(
     index: number,
     sourceVersion: 1 | 2,
     usesCategorySchema: boolean,
+    usesSubcategorySchema: boolean,
     errors: string[],
     warnings: string[],
 ): Transaction | undefined {
@@ -392,11 +413,8 @@ function normalizeTransaction(
     const resellerId = positiveInteger(value.resellerId, `${path}.resellerId`, errors);
     const createdAt = validDate(value.createdAt, `${path}.createdAt`, errors);
     const totalPrice = finitePositiveNumber(value.totalPrice, `${path}.totalPrice`, errors);
-
     const type = value.type;
-    if (type !== 'order' && type !== 'payment' && type !== 'signal') {
-        pathError(errors, `${path}.type`, 'deve ser order, payment ou signal');
-    }
+    if (type !== 'order' && type !== 'payment' && type !== 'signal') pathError(errors, `${path}.type`, 'deve ser order, payment ou signal');
 
     let occurredAt: Date | undefined;
     if (value.occurredAt === undefined && sourceVersion === 1 && createdAt) {
@@ -410,7 +428,6 @@ function normalizeTransaction(
     if (value.itemId !== undefined) itemId = positiveInteger(value.itemId, `${path}.itemId`, errors);
     const itemName = optionalString(value.itemName, `${path}.itemName`, errors);
     const observation = optionalString(value.observation, `${path}.observation`, errors);
-
     let quantity: number | undefined;
     if (value.quantity !== undefined) quantity = finitePositiveNumber(value.quantity, `${path}.quantity`, errors);
     let unitPrice: number | undefined;
@@ -418,18 +435,28 @@ function normalizeTransaction(
 
     let categoryId: number | undefined;
     let categoryName: string | undefined;
+    let subcategoryId: number | undefined;
+    let subcategoryName: string | undefined;
     const hasCategoryId = usesCategorySchema && value.categoryId !== undefined;
     const hasCategoryName = usesCategorySchema && value.categoryName !== undefined;
+    const hasSubcategoryId = usesSubcategorySchema && value.subcategoryId !== undefined;
+    const hasSubcategoryName = usesSubcategorySchema && value.subcategoryName !== undefined;
 
     if (usesCategorySchema && type === 'order') {
-        if (hasCategoryId !== hasCategoryName) {
-            pathError(errors, path, 'categoryId e categoryName devem ser informados juntos no snapshot de categoria');
-        }
+        if (hasCategoryId !== hasCategoryName) pathError(errors, path, 'categoryId e categoryName devem ser informados juntos no snapshot de categoria');
         if (hasCategoryId) categoryId = positiveInteger(value.categoryId, `${path}.categoryId`, errors);
         if (hasCategoryName) categoryName = requiredTrimmedString(value.categoryName, `${path}.categoryName`, errors);
+        if (usesSubcategorySchema) {
+            if (hasSubcategoryId !== hasSubcategoryName) pathError(errors, path, 'subcategoryId e subcategoryName devem ser informados juntos no snapshot de subcategoria');
+            if ((hasSubcategoryId || hasSubcategoryName) && (!hasCategoryId || !hasCategoryName)) {
+                pathError(errors, path, 'snapshot de subcategoria exige snapshot de categoria');
+            }
+            if (hasSubcategoryId) subcategoryId = positiveInteger(value.subcategoryId, `${path}.subcategoryId`, errors);
+            if (hasSubcategoryName) subcategoryName = requiredTrimmedString(value.subcategoryName, `${path}.subcategoryName`, errors);
+        }
     } else if (usesCategorySchema && (type === 'payment' || type === 'signal')) {
-        if (hasCategoryId || hasCategoryName) {
-            pathError(errors, path, 'pagamentos/sinais não podem conter campos de categoria');
+        if (hasCategoryId || hasCategoryName || hasSubcategoryId || hasSubcategoryName) {
+            pathError(errors, path, 'pagamentos/sinais não podem conter campos de categoria ou subcategoria');
         }
     }
 
@@ -450,9 +477,7 @@ function normalizeTransaction(
     if (
         id === undefined || resellerId === undefined || totalPrice === undefined ||
         (type !== 'order' && type !== 'payment' && type !== 'signal') || !createdAt || !occurredAt
-    ) {
-        return undefined;
-    }
+    ) return undefined;
 
     return {
         id,
@@ -464,6 +489,8 @@ function normalizeTransaction(
         unitPrice,
         ...(categoryId !== undefined ? { categoryId } : {}),
         ...(categoryName !== undefined ? { categoryName } : {}),
+        ...(subcategoryId !== undefined ? { subcategoryId } : {}),
+        ...(subcategoryName !== undefined ? { subcategoryName } : {}),
         totalPrice,
         observation,
         reversal,
@@ -488,11 +515,20 @@ function validateCategoryNames(categories: Category[], errors: string[]) {
         const key = category.name.trim().toLowerCase();
         const previousIndex = seen.get(key);
         if (previousIndex !== undefined) {
-            pathError(
-                errors,
-                `data.categories[${index}].name`,
-                `duplica o nome lógico de data.categories[${previousIndex}].name`,
-            );
+            pathError(errors, `data.categories[${index}].name`, `duplica o nome lógico de data.categories[${previousIndex}].name`);
+            return;
+        }
+        seen.set(key, index);
+    });
+}
+
+function validateSubcategoryNames(subcategories: Subcategory[], errors: string[]) {
+    const seen = new Map<string, number>();
+    subcategories.forEach((subcategory, index) => {
+        const key = `${subcategory.categoryId}:${subcategory.name.trim().toLowerCase()}`;
+        const previousIndex = seen.get(key);
+        if (previousIndex !== undefined) {
+            pathError(errors, `data.subcategories[${index}].name`, `duplica o nome lógico de data.subcategories[${previousIndex}].name dentro da mesma categoria`);
             return;
         }
         seen.set(key, index);
@@ -501,84 +537,84 @@ function validateCategoryNames(categories: Category[], errors: string[]) {
 
 function validateReferences(
     categories: Category[],
+    subcategories: Subcategory[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
     errors: string[],
 ) {
-    const categoryById = new Map(categories.flatMap(category =>
-        category.id === undefined ? [] : [[category.id, category] as const]
-    ));
+    const categoryById = new Map(categories.flatMap(category => category.id === undefined ? [] : [[category.id, category] as const]));
+    const subcategoryById = new Map(subcategories.flatMap(subcategory => subcategory.id === undefined ? [] : [[subcategory.id, subcategory] as const]));
     const itemIds = new Set(items.flatMap(item => item.id === undefined ? [] : [item.id]));
     const resellerIds = new Set(resellers.flatMap(reseller => reseller.id === undefined ? [] : [reseller.id]));
-    const transactionById = new Map(transactions.flatMap(transaction =>
-        transaction.id === undefined ? [] : [[transaction.id, transaction] as const]
-    ));
+    const transactionById = new Map(transactions.flatMap(transaction => transaction.id === undefined ? [] : [[transaction.id, transaction] as const]));
+
+    subcategories.forEach((subcategory, index) => {
+        const category = categoryById.get(subcategory.categoryId);
+        const path = `data.subcategories[${index}].categoryId`;
+        if (!category) pathError(errors, path, `referencia categoria inexistente ${subcategory.categoryId}`);
+        else if (subcategory.isActive !== false && category.isActive === false) pathError(errors, path, 'subcategoria ativa não pode pertencer a categoria inativa');
+    });
 
     items.forEach((item, index) => {
-        if (item.categoryId === undefined) return;
-        const category = categoryById.get(item.categoryId);
-        const path = `data.items[${index}].categoryId`;
-        if (!category) {
-            pathError(errors, path, `referencia categoria inexistente ${item.categoryId}`);
-            return;
+        if (item.categoryId !== undefined) {
+            const category = categoryById.get(item.categoryId);
+            const path = `data.items[${index}].categoryId`;
+            if (!category) pathError(errors, path, `referencia categoria inexistente ${item.categoryId}`);
+            else if (item.isActive !== false && category.isActive === false) pathError(errors, path, 'item ativo não pode referenciar categoria inativa');
         }
-        if (item.isActive !== false && category.isActive === false) {
-            pathError(errors, path, 'item ativo não pode referenciar categoria inativa');
+        if (item.subcategoryId !== undefined) {
+            const subcategory = subcategoryById.get(item.subcategoryId);
+            const path = `data.items[${index}].subcategoryId`;
+            if (!subcategory) pathError(errors, path, `referencia subcategoria inexistente ${item.subcategoryId}`);
+            else {
+                if (item.categoryId !== subcategory.categoryId) pathError(errors, path, 'subcategoria não pertence à categoria do item');
+                if (item.isActive !== false && subcategory.isActive === false) pathError(errors, path, 'item ativo não pode referenciar subcategoria inativa');
+            }
         }
     });
 
     transactions.forEach((transaction, index) => {
         const path = `data.transactions[${index}]`;
-        if (!resellerIds.has(transaction.resellerId)) {
-            pathError(errors, `${path}.resellerId`, `referencia revendedor inexistente ${transaction.resellerId}`);
-        }
-        if (transaction.itemId !== undefined && !itemIds.has(transaction.itemId)) {
-            pathError(errors, `${path}.itemId`, `referencia item inexistente ${transaction.itemId}`);
-        }
-        if (transaction.categoryId !== undefined && !categoryById.has(transaction.categoryId)) {
-            pathError(errors, `${path}.categoryId`, `referencia categoria inexistente ${transaction.categoryId}`);
+        if (!resellerIds.has(transaction.resellerId)) pathError(errors, `${path}.resellerId`, `referencia revendedor inexistente ${transaction.resellerId}`);
+        if (transaction.itemId !== undefined && !itemIds.has(transaction.itemId)) pathError(errors, `${path}.itemId`, `referencia item inexistente ${transaction.itemId}`);
+        if (transaction.categoryId !== undefined && !categoryById.has(transaction.categoryId)) pathError(errors, `${path}.categoryId`, `referencia categoria inexistente ${transaction.categoryId}`);
+        if (transaction.subcategoryId !== undefined) {
+            const subcategory = subcategoryById.get(transaction.subcategoryId);
+            if (!subcategory) pathError(errors, `${path}.subcategoryId`, `referencia subcategoria inexistente ${transaction.subcategoryId}`);
+            else if (transaction.categoryId !== subcategory.categoryId) pathError(errors, `${path}.subcategoryId`, 'snapshot de subcategoria não pertence à categoria registrada');
         }
 
         if (transaction.id === undefined) return;
-
         const replacementId = transaction.reversal?.replacementTransactionId;
         if (replacementId !== undefined) {
-            if (replacementId === transaction.id) {
-                pathError(errors, `${path}.reversal.replacementTransactionId`, 'não pode apontar para o próprio lançamento');
-            }
+            if (replacementId === transaction.id) pathError(errors, `${path}.reversal.replacementTransactionId`, 'não pode apontar para o próprio lançamento');
             const replacement = transactionById.get(replacementId);
             if (!replacement) {
                 pathError(errors, `${path}.reversal.replacementTransactionId`, `referencia lançamento inexistente ${replacementId}`);
             } else {
-                if (replacement.correction?.replacesTransactionId !== transaction.id) {
-                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'não possui vínculo de correção bidirecional correspondente');
-                }
+                if (replacement.correction?.replacesTransactionId !== transaction.id) pathError(errors, `${path}.reversal.replacementTransactionId`, 'não possui vínculo de correção bidirecional correspondente');
                 if (
-                    transaction.type === 'order' &&
-                    replacement.type === 'order' &&
-                    replacement.itemId === transaction.itemId &&
-                    (replacement.categoryId !== transaction.categoryId || replacement.categoryName !== transaction.categoryName)
+                    transaction.type === 'order' && replacement.type === 'order' && replacement.itemId === transaction.itemId &&
+                    (
+                        replacement.categoryId !== transaction.categoryId
+                        || replacement.categoryName !== transaction.categoryName
+                        || replacement.subcategoryId !== transaction.subcategoryId
+                        || replacement.subcategoryName !== transaction.subcategoryName
+                    )
                 ) {
-                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição do mesmo item deve preservar o snapshot de categoria original');
+                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição do mesmo item deve preservar os snapshots de categoria e subcategoria originais');
                 }
-                if (replacement.createdAt.getTime() < transaction.createdAt.getTime()) {
-                    pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição não pode ser registrada antes do lançamento original');
-                }
+                if (replacement.createdAt.getTime() < transaction.createdAt.getTime()) pathError(errors, `${path}.reversal.replacementTransactionId`, 'a substituição não pode ser registrada antes do lançamento original');
             }
         }
 
         const originalId = transaction.correction?.replacesTransactionId;
         if (originalId !== undefined) {
-            if (originalId === transaction.id) {
-                pathError(errors, `${path}.correction.replacesTransactionId`, 'não pode apontar para o próprio lançamento');
-            }
+            if (originalId === transaction.id) pathError(errors, `${path}.correction.replacesTransactionId`, 'não pode apontar para o próprio lançamento');
             const original = transactionById.get(originalId);
-            if (!original) {
-                pathError(errors, `${path}.correction.replacesTransactionId`, `referencia lançamento inexistente ${originalId}`);
-            } else if (original.reversal?.replacementTransactionId !== transaction.id) {
-                pathError(errors, `${path}.correction.replacesTransactionId`, 'não possui vínculo de reversão bidirecional correspondente');
-            }
+            if (!original) pathError(errors, `${path}.correction.replacesTransactionId`, `referencia lançamento inexistente ${originalId}`);
+            else if (original.reversal?.replacementTransactionId !== transaction.id) pathError(errors, `${path}.correction.replacesTransactionId`, 'não possui vínculo de reversão bidirecional correspondente');
         }
     });
 }
@@ -592,6 +628,7 @@ function serializeDate(value: Date, path: string): string {
 
 function currentEnvelope(
     categories: Category[],
+    subcategories: Subcategory[],
     items: Item[],
     resellers: Reseller[],
     transactions: Transaction[],
@@ -609,12 +646,21 @@ function currentEnvelope(
                 createdAt: serializeDate(category.createdAt, `categories[${index}].createdAt`),
                 updatedAt: serializeDate(category.updatedAt, `categories[${index}].updatedAt`),
             })),
+            subcategories: subcategories.map((subcategory, index) => ({
+                id: subcategory.id as number,
+                categoryId: subcategory.categoryId,
+                name: subcategory.name,
+                isActive: subcategory.isActive,
+                createdAt: serializeDate(subcategory.createdAt, `subcategories[${index}].createdAt`),
+                updatedAt: serializeDate(subcategory.updatedAt, `subcategories[${index}].updatedAt`),
+            })),
             items: items.map((item, index) => ({
                 id: item.id as number,
                 name: item.name,
                 basePrice: item.basePrice,
                 isActive: item.isActive !== false,
                 categoryId: item.categoryId,
+                subcategoryId: item.subcategoryId,
                 createdAt: serializeDate(item.createdAt, `items[${index}].createdAt`),
                 updatedAt: serializeDate(item.updatedAt, `items[${index}].updatedAt`),
             })),
@@ -638,6 +684,8 @@ function currentEnvelope(
                 unitPrice: transaction.unitPrice,
                 categoryId: transaction.categoryId,
                 categoryName: transaction.categoryName,
+                subcategoryId: transaction.subcategoryId,
+                subcategoryName: transaction.subcategoryName,
                 totalPrice: transaction.totalPrice,
                 observation: transaction.observation,
                 reversal: transaction.reversal,
@@ -652,7 +700,6 @@ function currentEnvelope(
 export function preflightBackupPayload(payload: unknown): BackupPreflightResult {
     const errors: string[] = [];
     const warnings: string[] = [];
-
     if (!isRecord(payload)) throw new BackupValidationError(['raiz: deve ser um objeto JSON']);
 
     const sourceVersion = payload.version;
@@ -666,18 +713,13 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         if (!isRecord(payload.source)) {
             pathError(errors, 'source', 'deve ser um objeto');
         } else {
-            if (payload.source.database !== 'ResellerManagerDB') {
-                pathError(errors, 'source.database', 'deve identificar ResellerManagerDB');
-            }
+            if (payload.source.database !== 'ResellerManagerDB') pathError(errors, 'source.database', 'deve identificar ResellerManagerDB');
             if (
-                payload.source.schemaVersion !== LEGACY_BACKUP_SCHEMA_VERSION &&
-                payload.source.schemaVersion !== BACKUP_SCHEMA_VERSION
+                payload.source.schemaVersion !== LEGACY_BACKUP_SCHEMA_VERSION
+                && payload.source.schemaVersion !== CATEGORY_BACKUP_SCHEMA_VERSION
+                && payload.source.schemaVersion !== BACKUP_SCHEMA_VERSION
             ) {
-                pathError(
-                    errors,
-                    'source.schemaVersion',
-                    `deve ser ${LEGACY_BACKUP_SCHEMA_VERSION} ou ${BACKUP_SCHEMA_VERSION}`,
-                );
+                pathError(errors, 'source.schemaVersion', `deve ser ${LEGACY_BACKUP_SCHEMA_VERSION}, ${CATEGORY_BACKUP_SCHEMA_VERSION} ou ${BACKUP_SCHEMA_VERSION}`);
             } else {
                 sourceSchemaVersion = payload.source.schemaVersion;
             }
@@ -690,40 +732,49 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         throw new BackupValidationError(errors);
     }
 
-    const usesCategorySchema = sourceVersion === BACKUP_VERSION && sourceSchemaVersion === BACKUP_SCHEMA_VERSION;
+    const usesCategorySchema = sourceVersion === BACKUP_VERSION
+        && (sourceSchemaVersion === CATEGORY_BACKUP_SCHEMA_VERSION || sourceSchemaVersion === BACKUP_SCHEMA_VERSION);
+    const usesSubcategorySchema = sourceVersion === BACKUP_VERSION && sourceSchemaVersion === BACKUP_SCHEMA_VERSION;
     const rawCategoriesValue = payload.data.categories;
+    const rawSubcategoriesValue = payload.data.subcategories;
     const rawItems = payload.data.items;
     const rawResellers = payload.data.resellers;
     const rawTransactions = payload.data.transactions;
 
     if (usesCategorySchema && !Array.isArray(rawCategoriesValue)) pathError(errors, 'data.categories', 'deve ser um array');
+    if (usesSubcategorySchema && !Array.isArray(rawSubcategoriesValue)) pathError(errors, 'data.subcategories', 'deve ser um array');
     if (!Array.isArray(rawItems)) pathError(errors, 'data.items', 'deve ser um array');
     if (!Array.isArray(rawResellers)) pathError(errors, 'data.resellers', 'deve ser um array');
     if (!Array.isArray(rawTransactions)) pathError(errors, 'data.transactions', 'deve ser um array');
     if (
-        (usesCategorySchema && !Array.isArray(rawCategoriesValue)) ||
-        !Array.isArray(rawItems) || !Array.isArray(rawResellers) || !Array.isArray(rawTransactions) || !exportedAt
-    ) {
-        throw new BackupValidationError(errors);
-    }
+        (usesCategorySchema && !Array.isArray(rawCategoriesValue))
+        || (usesSubcategorySchema && !Array.isArray(rawSubcategoriesValue))
+        || !Array.isArray(rawItems) || !Array.isArray(rawResellers) || !Array.isArray(rawTransactions) || !exportedAt
+    ) throw new BackupValidationError(errors);
 
-    const rawCategories: unknown[] = usesCategorySchema && Array.isArray(rawCategoriesValue)
-        ? rawCategoriesValue
-        : [];
+    const rawCategories: unknown[] = usesCategorySchema && Array.isArray(rawCategoriesValue) ? rawCategoriesValue : [];
+    const rawSubcategories: unknown[] = usesSubcategorySchema && Array.isArray(rawSubcategoriesValue) ? rawSubcategoriesValue : [];
 
     if (sourceVersion === BACKUP_VERSION && sourceSchemaVersion === LEGACY_BACKUP_SCHEMA_VERSION) {
-        warnings.push('Backup v2/schema4 normalizado para schema5 sem inventar categorias ou classificação histórica.');
+        warnings.push('Backup v2/schema4 normalizado para schema6 sem inventar categorias, subcategorias ou classificação histórica.');
+    }
+    if (sourceVersion === BACKUP_VERSION && sourceSchemaVersion === CATEGORY_BACKUP_SCHEMA_VERSION) {
+        warnings.push('Backup v2/schema5 normalizado para schema6 sem inventar subcategorias ou classificação histórica de subcategoria.');
     }
     if (sourceVersion === 1) {
-        warnings.push('Backup v1 normalizado para schema5 sem inventar categorias ou classificação histórica.');
+        warnings.push('Backup v1 normalizado para schema6 sem inventar categorias, subcategorias ou classificação histórica.');
     }
 
-    const categories: Category[] = rawCategories.flatMap((value, index) => {
+    const categories = rawCategories.flatMap((value, index) => {
         const category = normalizeCategory(value, index, errors);
         return category ? [category] : [];
     });
+    const subcategories = rawSubcategories.flatMap((value, index) => {
+        const subcategory = normalizeSubcategory(value, index, errors);
+        return subcategory ? [subcategory] : [];
+    });
     const items = rawItems.flatMap((value, index) => {
-        const item = normalizeItem(value, index, sourceVersion, usesCategorySchema, errors, warnings);
+        const item = normalizeItem(value, index, sourceVersion, usesCategorySchema, usesSubcategorySchema, errors, warnings);
         return item ? [item] : [];
     });
     const resellers = rawResellers.flatMap((value, index) => {
@@ -731,26 +782,28 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         return reseller ? [reseller] : [];
     });
     const transactions = rawTransactions.flatMap((value, index) => {
-        const transaction = normalizeTransaction(value, index, sourceVersion, usesCategorySchema, errors, warnings);
+        const transaction = normalizeTransaction(value, index, sourceVersion, usesCategorySchema, usesSubcategorySchema, errors, warnings);
         return transaction ? [transaction] : [];
     });
 
     duplicateIds(categories, 'data.categories', errors);
+    duplicateIds(subcategories, 'data.subcategories', errors);
     duplicateIds(items, 'data.items', errors);
     duplicateIds(resellers, 'data.resellers', errors);
     duplicateIds(transactions, 'data.transactions', errors);
     validateCategoryNames(categories, errors);
-    validateReferences(categories, items, resellers, transactions, errors);
-
+    validateSubcategoryNames(subcategories, errors);
+    validateReferences(categories, subcategories, items, resellers, transactions, errors);
     if (errors.length) throw new BackupValidationError(errors);
 
     const normalized: NormalizedBackupData = {
         sourceVersion,
         ...(sourceSchemaVersion !== undefined ? { sourceSchemaVersion } : {}),
         exportedAt,
-        data: { categories, items, resellers, transactions },
+        data: { categories, subcategories, items, resellers, transactions },
     };
 
+    const orders = transactions.filter(transaction => transaction.type === 'order');
     const preview: BackupPreview = {
         sourceVersion,
         ...(sourceSchemaVersion !== undefined ? { sourceSchemaVersion } : {}),
@@ -762,10 +815,13 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
             categories: categories.length,
             activeCategories: categories.filter(category => category.isActive !== false).length,
             inactiveCategories: categories.filter(category => category.isActive === false).length,
+            subcategories: subcategories.length,
+            activeSubcategories: subcategories.filter(subcategory => subcategory.isActive !== false).length,
+            inactiveSubcategories: subcategories.filter(subcategory => subcategory.isActive === false).length,
             unclassifiedItems: items.filter(item => item.categoryId === undefined).length,
-            legacyOrdersWithoutCategory: transactions.filter(
-                transaction => transaction.type === 'order' && transaction.categoryId === undefined,
-            ).length,
+            itemsWithoutSubcategory: items.filter(item => item.subcategoryId === undefined).length,
+            legacyOrdersWithoutCategory: orders.filter(transaction => transaction.categoryId === undefined).length,
+            ordersWithoutSubcategory: orders.filter(transaction => transaction.subcategoryId === undefined).length,
             items: items.length,
             activeItems: items.filter(item => item.isActive !== false).length,
             inactiveItems: items.filter(item => item.isActive === false).length,
@@ -773,7 +829,7 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
             activeResellers: resellers.filter(reseller => reseller.isActive !== false).length,
             inactiveResellers: resellers.filter(reseller => reseller.isActive === false).length,
             transactions: transactions.length,
-            orders: transactions.filter(transaction => transaction.type === 'order').length,
+            orders: orders.length,
             payments: transactions.filter(transaction => transaction.type === 'payment').length,
             signals: transactions.filter(transaction => transaction.type === 'signal').length,
             reversedTransactions: transactions.filter(transaction => transaction.reversal !== undefined).length,
@@ -799,16 +855,17 @@ export async function preflightBackupFile(file: Pick<File, 'text'>): Promise<Bac
     return preflightBackupText(await file.text());
 }
 
-/** Exporta um envelope lógico v2/schema5. O próprio dataset é validado antes do download. */
+/** Exporta um envelope lógico v2/schema6. O próprio dataset é validado antes do download. */
 export async function exportData(): Promise<BackupExportResult> {
-    const [categories, items, resellers, transactions] = await Promise.all([
+    const [categories, subcategories, items, resellers, transactions] = await Promise.all([
         db.categories.toArray(),
+        db.subcategories.toArray(),
         db.items.toArray(),
         db.resellers.toArray(),
         db.transactions.toArray(),
     ]);
 
-    const backup = currentEnvelope(categories, items, resellers, transactions);
+    const backup = currentEnvelope(categories, subcategories, items, resellers, transactions);
     preflightBackupPayload(backup);
 
     const json = JSON.stringify(backup, null, 2);
