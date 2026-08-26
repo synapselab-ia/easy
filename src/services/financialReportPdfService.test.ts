@@ -8,15 +8,22 @@ const mockText = vi.fn();
 const mockSetFontSize = vi.fn();
 const mockSetFont = vi.fn();
 const mockSetTextColor = vi.fn();
+const mockAddPage = vi.fn();
 
 vi.mock('jspdf', () => ({
     default: class {
-        internal = { pageSize: { getWidth: vi.fn().mockReturnValue(210) } };
+        internal = {
+            pageSize: {
+                getWidth: vi.fn().mockReturnValue(210),
+                getHeight: vi.fn().mockReturnValue(297),
+            },
+        };
         save = mockSave;
         text = mockText;
         setFontSize = mockSetFontSize;
         setFont = mockSetFont;
         setTextColor = mockSetTextColor;
+        addPage = mockAddPage;
     },
 }));
 
