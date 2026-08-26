@@ -106,6 +106,8 @@ Rules:
 - Backup v2 schema 6 contains subcategories and related references/snapshots;
 - supported schema 4/5 backups normalize to schema 6 without inventing classification.
 
+D-033 is implemented and integrated through PR #82 / `develop@5a487b93d5c632f5990b8a261e4a62a6a196f186`.
+
 ## 8. Cloud security requirements
 
 - exposed application tables use RLS;
@@ -150,15 +152,8 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 12. Current bounded goal
 
-Close D-033 / PR #82 only:
+D-033 / subcategories is **closed**. Continue controlled early-use observation only.
 
-- one optional subcategory level;
-- database/UI/cache/backup/transaction snapshot parity;
-- live synthetic integrity proof with rollback;
-- final exact-tree D-019 after canonical documentation;
-- integration to `develop` only if every objective gate passes;
-- post-integration canonical closure and tree-equivalence proof.
+The next already-requested product topic is a downloadable financial PDF/report in addition to on-site dashboards. It is intentionally separate from D-033 and must begin only as its own bounded design/implementation step when the operator asks to proceed.
 
-The separately requested downloadable financial PDF/report is explicitly **not part of D-033** and must begin only after this classification change is fully closed.
-
-This goal does not include automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
+Current scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
