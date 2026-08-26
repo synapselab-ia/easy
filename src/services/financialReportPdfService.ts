@@ -1,0 +1,180 @@
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import type { FinancialReport } from '../domain/financialReporting';
+
+export interface FinancialReportPdfOptions {
+    includeSummary: boolean;
+    includeTimeline: boolean;
+    includeCategories: boolean;
+    includeResellers: boolean;
+}
+
+export const DEFAULT_FINANCIAL_REPORT_PDF_OPTIONS: FinancialReportPdfOptions = {
+    includeSummary: true,
+    includeTimeline: true,
+    includeCategories: true,
+    includeResellers: true,
+};
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+});
+
+function money(value: number) {
+    return currencyFormatter.format(value);
+}
+
+function formatDate(date: Date) {
+    return date.toLocaleDateString('pt-BR');
+}
+
+function safeFilenameDate(date: Date) {
+    return formatDate(date).replace(/\//g, '-');
+}
+
+function lastTableY(doc: jsPDF, fallback: number) {
+    return (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? fallback;
+}
+
+function sectionTitle(doc: jsPDF, title: string, y: number) {
+    doc.setFontSize(12);
+    doc.setTextColor(30, 30, 30);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 14, y);
+    doc.setFont('helvetica', 'normal');
+}
+
+export function generateFinancialReportPdf(
+    report: FinancialReport,
+    options: FinancialReportPdfOptions = DEFAULT_FINANCIAL_REPORT_PDF_OPTIONS,
+) {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let cursorY = 20;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(20, 20, 20);
+    doc.text('Relatório Financeiro', pageWidth / 2, cursorY, { align: 'center' });
+
+    cursorY += 9;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(
+        `${formatDate(report.range.startDate)} a ${formatDate(report.range.endDate)}`,
+        pageWidth / 2,
+        cursorY,
+        { align: 'center' },
+    );
+    cursorY += 6;
+    doc.text(
+        `Gerado em ${new Date().toLocaleString('pt-BR')}`,
+        pageWidth / 2,
+        cursorY,
+        { align: 'center' },
+    );
+    cursorY += 10;
+
+    if (options.includeSummary) {
+        sectionTitle(doc, '01  RESUMO DO PERÍODO', cursorY);
+        cursorY += 5;
+        autoTable(doc, {
+            startY: cursorY,
+            head: [['Vendas', 'Recebimentos', 'Em aberto no fim', 'Pedidos']],
+            body: [[
+                money(report.summary.sales),
+                money(report.summary.receipts),
+                money(report.summary.openDebt),
+                report.summary.orderCount.toString(),
+            ]],
+            theme: 'grid',
+            styles: { fontSize: 10, halign: 'center', cellPadding: 4 },
+            headStyles: { fontStyle: 'bold' },
+        });
+        cursorY = lastTableY(doc, cursorY) + 10;
+    }
+
+    if (options.includeTimeline && report.timeline.length > 0) {
+        sectionTitle(doc, '02  MOVIMENTO NO PERÍODO', cursorY);
+        cursorY += 5;
+        autoTable(doc, {
+            startY: cursorY,
+            head: [['Período', 'Vendas', 'Recebimentos', 'Movimento líquido']],
+            body: report.timeline.map(point => [
+                point.label,
+                money(point.sales),
+                money(point.receipts),
+                money(point.sales - point.receipts),
+            ]),
+            theme: 'striped',
+            styles: { fontSize: 8 },
+            columnStyles: {
+                1: { halign: 'right' },
+                2: { halign: 'right' },
+                3: { halign: 'right' },
+            },
+        });
+        cursorY = lastTableY(doc, cursorY) + 10;
+    }
+
+    if (options.includeCategories && report.categories.length > 0) {
+        sectionTitle(doc, '03  PRODUTOS E CATEGORIAS', cursorY);
+        cursorY += 5;
+        const categoryRows = report.categories.flatMap(category => [
+            [
+                category.label,
+                category.orderCount.toString(),
+                category.quantity.toString(),
+                money(category.grossValue),
+            ],
+            ...category.subcategories.map(subcategory => [
+                `   ↳ ${subcategory.label}`,
+                subcategory.orderCount.toString(),
+                subcategory.quantity.toString(),
+                money(subcategory.grossValue),
+            ]),
+        ]);
+        autoTable(doc, {
+            startY: cursorY,
+            head: [['Categoria / subcategoria', 'Pedidos', 'Itens', 'Vendas']],
+            body: categoryRows,
+            theme: 'striped',
+            styles: { fontSize: 8.5 },
+            columnStyles: {
+                1: { halign: 'right', cellWidth: 22 },
+                2: { halign: 'right', cellWidth: 20 },
+                3: { halign: 'right', cellWidth: 34 },
+            },
+        });
+        cursorY = lastTableY(doc, cursorY) + 10;
+    }
+
+    if (options.includeResellers && report.resellers.length > 0) {
+        sectionTitle(doc, '04  REVENDEDORES', cursorY);
+        cursorY += 5;
+        autoTable(doc, {
+            startY: cursorY,
+            head: [['Revendedor', 'Pedidos', 'Vendas', 'Recebido', 'Em aberto']],
+            body: report.resellers.map(reseller => [
+                reseller.name,
+                reseller.orderCount.toString(),
+                money(reseller.sales),
+                money(reseller.receipts),
+                money(reseller.openDebt),
+            ]),
+            theme: 'striped',
+            styles: { fontSize: 8.5 },
+            columnStyles: {
+                1: { halign: 'right', cellWidth: 18 },
+                2: { halign: 'right', cellWidth: 31 },
+                3: { halign: 'right', cellWidth: 31 },
+                4: { halign: 'right', cellWidth: 31 },
+            },
+        });
+    }
+
+    const filename = `relatorio_financeiro_${safeFilenameDate(report.range.startDate)}_a_${safeFilenameDate(report.range.endDate)}.pdf`;
+    doc.save(filename);
+}
