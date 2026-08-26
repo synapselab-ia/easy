@@ -24,8 +24,9 @@ Current P10-S3 state:
   - change #3 optional subcategories: `DONE / ACCEPTED / INTEGRATED` — D-033 / PR #82;
   - change #4 financial reports workspace + PDF: `DONE / ACCEPTED / INTEGRATED` — D-034 / PR #85;
   - change #5 localized financial-report period labels: `DONE / INTEGRATED` — PR #87;
-  - **change #6 Dashboard performance-window labels: `CURRENT / AUTHORIZED`;**
-  - changes #7–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #6 Dashboard performance-window labels: `DONE / INTEGRATED` — PR #90;
+  - **change #7 consistent pt-BR monetary presentation: `CURRENT / AUTHORIZED`;**
+  - changes #8–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -124,6 +125,27 @@ Validation/integration evidence:
 
 No automatic Vercel publication occurred and `main` remains untouched.
 
+## Early-use change #6 — localized Dashboard performance-window labels
+
+Verification confirmed that `PerformanceAnalysisSection` used Base UI `Select` with internal `AnalysisPeriod` values `90`, `180` and `360` but without the explicit value/label mapping already accepted for the Reports selector. PR #90 adds one shared option list, supplies it to the Select and reuses it for the menu entries.
+
+The visible selected values now resolve to `Últimos 90 dias`, `Últimos 180 dias` and `Último ano`, while the internal values and all `usePerformanceAnalysis` period calculations remain unchanged. No persistence, Supabase/Auth/RLS, recovery or deployment behavior changed.
+
+Validation/integration evidence:
+
+- feature head: `34728fcdb0016dea1481ab795317de223b7c9a10`;
+- GitHub Actions merge ref: `fdfd8771589e428f219afb1b6dd1597b8f2fb64d`;
+- validated tree: `f872da2c6adf492a929bd5ef02ad7a1c695a4672`;
+- D-019 run/job: `33009642945` / `98312276753`;
+- ESLint: 0 errors / 83 warnings;
+- Vitest: 63 files / 268 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #90 squash-integrated `develop`: `446987475bf8621ff7ec5803149c4c6b874d5e50`;
+- integrated tree: `f872da2c6adf492a929bd5ef02ad7a1c695a4672` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This authorization is sequencing/backlog scope, not a new architecture decision and does not supersede D-029 through D-034.
@@ -139,8 +161,8 @@ Canonical execution lock:
 
 Ordered queue:
 
-1. **#6 CURRENT** — verify/fix Portuguese selected labels in Dashboard `Análise de Performance` period window without changing `90/180/360` semantics.
-2. **#7 QUEUED** — consistent operator-facing pt-BR/BRL monetary formatting without numeric/accounting changes.
+1. **#6 DONE / INTEGRATED — PR #90** — Dashboard selected performance-window labels are localized without changing `90/180/360` semantics.
+2. **#7 CURRENT** — consistent operator-facing pt-BR/BRL monetary formatting without numeric/accounting changes.
 3. **#8 QUEUED** — show category/subcategory context in catalog and order item selection without rewriting historical snapshots.
 4. **#9 QUEUED** — practical item/reseller search and lifecycle/classification filters using existing data.
 5. **#10 QUEUED** — optional observation on payment/signal creation if the existing transaction contract supports it; no migration.
@@ -175,4 +197,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #6. Verify the Dashboard `Análise de Performance` period selector and determine whether its selected trigger exposes internal `90`, `180` or `360` values instead of Portuguese labels. If reproduced, correct only the selected-value presentation so the visible choices remain `Últimos 90 dias`, `Últimos 180 dias` and `Último ano`, while preserving existing `AnalysisPeriod` values, date-window calculations and analytics semantics. If not reproduced, close #6 as `NO_CHANGE` with evidence. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #7 becomes current, then stop. Do not start #7 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #7. Audit operator-facing BRL values for raw decimal presentation such as `toFixed(2)` and standardize only visible money formatting where needed to proper `pt-BR`/BRL presentation. Preserve the exact numeric values, calculations, persistence and all accepted financial semantics; do not change report/PDF calculation logic merely for formatting. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #8 becomes current, then stop. Do not start #8 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
