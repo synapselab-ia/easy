@@ -7,6 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionHeader } from "./SectionHeader";
 import { AlertCircle, Users } from "lucide-react";
 
+const ANALYSIS_PERIOD_OPTIONS = [
+    { value: '90', label: 'Últimos 90 dias' },
+    { value: '180', label: 'Últimos 180 dias' },
+    { value: '360', label: 'Último ano' },
+];
+
 const formatBRL = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -53,6 +59,7 @@ export function PerformanceAnalysisSection() {
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Janela:</span>
                     <Select
+                        items={ANALYSIS_PERIOD_OPTIONS}
                         value={days.toString()}
                         onValueChange={(val) => setDays(parseInt(val || "0") as AnalysisPeriod)}
                     >
@@ -60,9 +67,9 @@ export function PerformanceAnalysisSection() {
                             <SelectValue placeholder="Selecione o período" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="90">Últimos 90 dias</SelectItem>
-                            <SelectItem value="180">Últimos 180 dias</SelectItem>
-                            <SelectItem value="360">Último ano</SelectItem>
+                            {ANALYSIS_PERIOD_OPTIONS.map(option => (
+                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
