@@ -65,23 +65,34 @@ Accepted result:
 - classification is `category -> optional subcategory -> item`;
 - no recursive subcategory tree;
 - subcategory belongs to one category and has stable identity/lifecycle;
-- item subcategory is optional but, when present, must belong to the item's selected category;
-- active-reference and archive/delete integrity are enforced;
+- item subcategory is optional and category-consistent;
+- active-reference/archive integrity is enforced;
 - legacy unclassified records remain non-inventive;
 - orders snapshot category and optional subcategory id/name at transaction time;
-- D-026 corrections preserve the historical snapshot when keeping the item and capture the target item's current classification when changing item;
+- D-026 correction preserves/captures classification according to target item semantics;
 - Backup v2 schema 6 contains subcategories and related snapshots;
-- schema 4/5 backups remain accepted and normalize to schema 6 without inventing subcategories;
-- Supabase migration `20260826135708_i3d_subcategories` is additive/retrocompatible and applied.
+- schema 4/5 backups remain accepted without invented subcategory data.
 
-D-019 implementation evidence: run/job `32983745854` / `98226501149`; 0 lint errors / 83 warnings; 61 files / 258 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree `5127a5a558b990f587b6427a605c5207e6573b9e` exactly equals the final PR #82 merge-ref tree and squash-integrated `develop` tree at `5a487b93d5c632f5990b8a261e4a62a6a196f186`.
+PR #82 passed D-019 and exact-tree integration. Production migration `20260826135708_i3d_subcategories` is applied.
 
-Live synthetic Supabase proof passed under rollback with zero residue for valid snapshot capture, invalid category/subcategory rejection and archive protection.
+#### Early-use change #4 — financial reports workspace + PDF
+**Status:** `DONE / ACCEPTED / INTEGRATED — D-034 / PR #85`
 
-#### Next requested topic — financial PDF/report
-**Status:** `REQUESTED / NOT_STARTED`
+Accepted result:
 
-The operator requested downloadable financial PDF/reporting in addition to on-site dashboards. It is intentionally separate from D-033 and should begin only as its own bounded change when the operator asks to proceed.
+- dedicated `Relatórios` page rather than duplicating the glance-oriented Dashboard;
+- presets plus custom period;
+- KPIs for sales, receipts, report-end open debt and orders;
+- equal-length previous-period comparison;
+- sales/receipts timeline;
+- `Resumo`, `Produtos e categorias` and `Revendedores` views;
+- category -> subcategory drilldown from immutable transaction snapshots;
+- reseller interval activity plus closing debt as of the selected end date;
+- configurable financial PDF using the same canonical `FinancialReport` model as the screen;
+- report inclusion by occurrence date and zero effective contribution from reversed transactions;
+- no DB migration, mutation-path, recovery, Auth/RLS or deployment-boundary change.
+
+D-019 run/job `33001910986` / `98285660448`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree `124767ee7afa23c0c07e7215513fa5b90d8177a5` exactly equals squash-integrated `develop@970cceaff9ce359f0ecb559648e38ab6cc7e1bd3`.
 
 ### P10-S3-I2-I4 — Legacy real-data migration
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
@@ -91,4 +102,4 @@ The operator requested downloadable financial PDF/reporting in addition to on-si
 
 ## Current NEXT_ACTION
 
-**Continue ordinary P10-S3-I2-I3-D observation. D-033 is closed. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data. The next queued operator-requested product topic is the financial PDF/report, to be started only as a separate bounded change when requested.** See `STATUS.md` for the authoritative instruction.
+**Continue ordinary P10-S3-I2-I3-D observation. D-033 and D-034 are closed. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data. No further product change is queued as authorized work; start the next bounded change only from explicit operator instruction or observed early-use evidence.** See `STATUS.md` for the authoritative instruction.
