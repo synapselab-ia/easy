@@ -2,11 +2,11 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
-## 2026-08-26 — D-033 adds one optional subcategory level
+## 2026-08-26 — D-033 optional subcategories integrated
 
 Controlled early-use feedback produced an explicit catalog requirement: categories such as `Porcelana` need one optional subdivision so distinct product groups can be organized without creating an arbitrarily deep hierarchy.
 
-D-033 was accepted and PR #82 implements:
+D-033 / PR #82 delivered:
 
 - `category -> optional subcategory -> item` as the bounded classification model;
 - `public.subcategories` with stable identity, category parent, lifecycle, RLS and recovery-write guard;
@@ -14,21 +14,23 @@ D-033 was accepted and PR #82 implements:
 - active-reference/archive integrity for category/subcategory/item relationships;
 - expandable subcategory management in the category UI;
 - category plus filtered optional subcategory selection in the item form;
-- transaction-time subcategory id/name snapshots alongside existing category snapshots;
+- transaction-time subcategory id/name snapshots alongside category snapshots;
 - D-026 correction semantics extended to preserve same-item historical snapshots and capture target-item classification when the item changes;
 - Dexie schema 6/cache parity;
-- Backup v2 schema 6 including subcategories and subcategory references/snapshots;
+- Backup v2 schema 6 including subcategories and related references/snapshots;
 - schema 4/5 import compatibility without invented subcategory data.
 
-Production migration `20260826135708_i3d_subcategories` is additive/retrocompatible and is applied.
+Production migration `20260826135708_i3d_subcategories` is applied and additive/retrocompatible.
 
-A live synthetic Supabase transaction proof verified valid order snapshot capture, invalid category/subcategory-pair rejection and prevention of archiving a subcategory referenced by an active item. The proof ran inside a transaction and rolled back; all synthetic category/subcategory/item/reseller/transaction residue returned to zero.
+A live synthetic Supabase transaction proof verified valid order snapshot capture, invalid category/subcategory-pair rejection and prevention of archiving a subcategory referenced by an active item. The proof rolled back; all synthetic category/subcategory/item/reseller/transaction residue returned to zero.
 
-Security review confirmed the new subcategory table remains RLS-protected. Supabase Advisor also reports authenticated `SECURITY DEFINER` warnings for the intentionally exposed transaction/restore RPCs. Explicit privilege proof confirms `anon`/`public` cannot execute those RPCs while `authenticated` can and each RPC retains active-operator authorization.
+Security review confirmed the new subcategory table remains RLS-protected. Supabase Advisor also reports authenticated `SECURITY DEFINER` warnings for intentionally exposed transaction/restore RPCs; explicit privilege proof confirms `anon`/`public` cannot execute them while authenticated approved operators remain internally enforced.
 
-Implementation-tree D-019 before canonical-document closure passed on head `b8a6c947bad5d2ba7432f2ffa13b3df32cf44dcd`, merge ref `75fb65b3179549af0cb29618f282d9edc70e663a`, run/job `32983745854` / `98226501149`: 0 lint errors / 83 warnings; 61 files / 258 Vitest PASS; 17/17 Playwright PASS; production build PASS.
+D-019 passed on head `b8a6c947bad5d2ba7432f2ffa13b3df32cf44dcd`, merge ref `75fb65b3179549af0cb29618f282d9edc70e663a`, run/job `32983745854` / `98226501149`: 0 lint errors / 83 warnings; 61 files / 258 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `5127a5a558b990f587b6427a605c5207e6573b9e`.
 
-Final exact-tree D-019 after canonical documentation remains mandatory before integration. The separately requested financial PDF/report is not included in PR #82.
+Before integration, final PR #82 merge ref `e9dc4cca9d6d1b843904d065ce7f9cf6289cdffd` had that exact same tree. PR #82 was squash-integrated into `develop` as `5a487b93d5c632f5990b8a261e4a62a6a196f186`, also with tree `5127a5a558b990f587b6427a605c5207e6573b9e`. Exact tree equivalence: PASS.
+
+Canonical closure is documentation-only. The separately requested financial PDF/report was not included in D-033.
 
 ---
 
