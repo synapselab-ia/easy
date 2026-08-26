@@ -85,6 +85,34 @@ PR #85 was squash-integrated into `develop` as `970cceaff9ce359f0ecb559648e38ab6
 
 The post-integration D-034 closure changes Markdown documentation only; no executable/runtime file differs from the validated integrated tree. No failed executable gate was waived.
 
+## P10-S3-I2-I3-D early-use change #5 — localized report period labels
+
+### Scope review — PRESENTATION ONLY
+
+PR #87 changes only `src/pages/ReportsPage.tsx`:
+
+- defines one canonical period-preset value/label list;
+- supplies that list to Base UI `Select` so selected values resolve to Portuguese labels;
+- reuses the same list for menu entries;
+- leaves internal preset identifiers and all period-range calculations unchanged.
+
+No database migration, Supabase function/policy, financial/reporting calculation, recovery mechanism, Auth/RLS boundary or deployment workflow changed.
+
+### Final D-019 — PASS
+
+- feature head: `ae0ecee51e0296ab4b132892ec626abe64164204`;
+- exact GitHub-generated merge ref checked out by Actions: `57ac8137673f3826cfe6a2b17a68795050d2e1b2`;
+- validated tree: `ae183953e9f9248cab7ebc107fae57723ccb8aa4`;
+- run/job: `33005354591` / `98297566705`;
+- ESLint: **0 errors / 83 warnings**;
+- Vitest: **63 files / 268 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #87 was squash-integrated into `develop` as `430b36feb7563c3370a334eb4962edc7aafdc117`. Git object inspection confirms the integrated commit tree is `ae183953e9f9248cab7ebc107fae57723ccb8aa4`, exactly the same tree as the validated GitHub merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #5 closure is documentation-only. No failed executable gate was waived and no automatic Vercel publication occurred.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -108,5 +136,8 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-034 reporting D-019: **PASS**.
 - D-034 PR #85 integrated-tree equivalence: **PASS**.
 - D-034 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #5 report period-label D-019: **PASS**.
+- PR #87 integrated-tree equivalence: **PASS**.
+- early-use change #5 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
