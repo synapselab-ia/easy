@@ -41,7 +41,7 @@ describe('P3-S1 occurrence-date migration', () => {
         await db.open();
         const migrated = await db.transactions.get(transactionId);
 
-        expect(db.verno).toBe(5);
+        expect(db.verno).toBe(6);
         expect(migrated?.createdAt).toEqual(createdAt);
         expect(migrated?.occurredAt).toEqual(createdAt);
         expect(migrated?.reversal).toEqual({
