@@ -63,6 +63,15 @@ const compactCurrencyFormatter = new Intl.NumberFormat('pt-BR', {
 type ReportTab = 'summary' | 'categories' | 'resellers';
 type PeriodPreset = 'today' | 'week' | 'month' | 'previous-month' | 'year' | 'custom';
 
+const PERIOD_PRESET_OPTIONS: Array<{ value: PeriodPreset; label: string }> = [
+    { value: 'today', label: 'Hoje' },
+    { value: 'week', label: 'Esta semana' },
+    { value: 'month', label: 'Este mês' },
+    { value: 'previous-month', label: 'Mês passado' },
+    { value: 'year', label: 'Este ano' },
+    { value: 'custom', label: 'Personalizado' },
+];
+
 function inputDate(date: Date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -570,17 +579,20 @@ export default function ReportsPage() {
                     <div className="grid gap-4 lg:grid-cols-[220px_1fr_1fr] lg:items-end">
                         <div className="space-y-1.5">
                             <Label>Período</Label>
-                            <Select value={preset} onValueChange={value => applyPreset((value || 'month') as PeriodPreset)}>
+                            <Select
+                                items={PERIOD_PRESET_OPTIONS}
+                                value={preset}
+                                onValueChange={value => applyPreset((value || 'month') as PeriodPreset)}
+                            >
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Selecione o período" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="today">Hoje</SelectItem>
-                                    <SelectItem value="week">Esta semana</SelectItem>
-                                    <SelectItem value="month">Este mês</SelectItem>
-                                    <SelectItem value="previous-month">Mês passado</SelectItem>
-                                    <SelectItem value="year">Este ano</SelectItem>
-                                    <SelectItem value="custom">Personalizado</SelectItem>
+                                    {PERIOD_PRESET_OPTIONS.map(option => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
