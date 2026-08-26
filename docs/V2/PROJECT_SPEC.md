@@ -101,7 +101,7 @@ Rules:
 - an item's subcategory, when present, must belong to the item's selected category;
 - active items cannot use inactive classification;
 - active references protect category/subcategory archival;
-- legacy unclassified records stays unclassified rather than receiving guessed values;
+- legacy unclassified data stays unclassified rather than receiving guessed values;
 - order history captures transaction-time category/subcategory snapshots;
 - later catalog edits do not rewrite prior transactions;
 - Backup v2 schema 6 contains subcategories and related references/snapshots;
