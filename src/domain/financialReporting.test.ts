@@ -119,6 +119,80 @@ describe('buildFinancialReport', () => {
         expect(report.summary.openDebt).toBe(170);
     });
 
+    it('aggregates product analytics from immutable order snapshots and excludes reversals', () => {
+        const report = buildFinancialReport(
+            [
+                ...transactions,
+                {
+                    id: 7,
+                    resellerId: 2,
+                    type: 'order',
+                    itemId: 1,
+                    itemName: 'Placa A',
+                    categoryId: 1,
+                    categoryName: 'Porcelana antiga',
+                    subcategoryId: 10,
+                    subcategoryName: 'Placas antigas',
+                    quantity: 1,
+                    unitPrice: 60,
+                    totalPrice: 60,
+                    occurredAt: at(5),
+                    createdAt: at(5),
+                },
+                {
+                    id: 8,
+                    resellerId: 2,
+                    type: 'order',
+                    itemId: 1,
+                    itemName: 'Placa A renomeada',
+                    categoryId: 1,
+                    categoryName: 'Porcelana antiga',
+                    subcategoryId: 10,
+                    subcategoryName: 'Placas antigas',
+                    quantity: 1,
+                    unitPrice: 70,
+                    totalPrice: 70,
+                    occurredAt: at(5),
+                    createdAt: at(5),
+                },
+            ],
+            resellers,
+            categories,
+            subcategories,
+            { startDate: at(1), endDate: at(5) },
+        );
+
+        expect(report.products).toEqual([
+            expect.objectContaining({
+                itemId: 1,
+                label: 'Placa A',
+                categoryLabel: 'Porcelana antiga',
+                subcategoryLabel: 'Placas antigas',
+                orderCount: 2,
+                quantity: 3,
+                grossValue: 160,
+            }),
+            expect.objectContaining({
+                itemId: 2,
+                label: 'Peça sem subcategoria',
+                categoryLabel: 'Porcelana',
+                orderCount: 1,
+                quantity: 1,
+                grossValue: 80,
+            }),
+            expect.objectContaining({
+                itemId: 1,
+                label: 'Placa A renomeada',
+                categoryLabel: 'Porcelana antiga',
+                subcategoryLabel: 'Placas antigas',
+                orderCount: 1,
+                quantity: 1,
+                grossValue: 70,
+            }),
+        ]);
+        expect(report.products.some(product => product.label === 'Estornado')).toBe(false);
+    });
+
     it('groups products by stable category/subcategory identity and keeps no-subcategory explicit', () => {
         const report = buildFinancialReport(
             transactions,

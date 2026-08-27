@@ -50,6 +50,16 @@ export interface FinancialTimelinePoint {
     receipts: number;
 }
 
+export interface FinancialProductPerformance {
+    itemId?: number;
+    label: string;
+    categoryLabel: string;
+    subcategoryLabel?: string;
+    orderCount: number;
+    quantity: number;
+    grossValue: number;
+}
+
 export interface FinancialSubcategoryPerformance {
     subcategoryId?: number;
     label: string;
@@ -82,6 +92,7 @@ export interface FinancialReport {
     summary: FinancialReportSummary;
     comparison: FinancialReportComparison;
     timeline: FinancialTimelinePoint[];
+    products: FinancialProductPerformance[];
     categories: FinancialCategoryPerformance[];
     resellers: FinancialResellerPerformance[];
 }
@@ -220,6 +231,70 @@ function buildTimeline(transactions: Transaction[], range: FinancialReportRange)
         else point.receipts += transaction.totalPrice;
     });
     return Array.from(points.values());
+}
+
+function historicalCategoryLabel(transaction: Transaction) {
+    if (transaction.categoryName) return transaction.categoryName;
+    if (transaction.categoryId !== undefined) return `Categoria #${transaction.categoryId}`;
+    return 'Sem categoria — histórico legado';
+}
+
+function historicalSubcategoryLabel(transaction: Transaction) {
+    if (transaction.subcategoryName) return transaction.subcategoryName;
+    if (transaction.subcategoryId !== undefined) return `Subcategoria #${transaction.subcategoryId}`;
+    return undefined;
+}
+
+function productSnapshotKey(transaction: Transaction, label: string) {
+    return JSON.stringify([
+        transaction.itemId ?? null,
+        label,
+        transaction.categoryId ?? null,
+        transaction.categoryName ?? null,
+        transaction.subcategoryId ?? null,
+        transaction.subcategoryName ?? null,
+    ]);
+}
+
+function buildProductPerformance(
+    transactions: Transaction[],
+    range: FinancialReportRange,
+): FinancialProductPerformance[] {
+    const groups = new Map<string, FinancialProductPerformance>();
+
+    effectiveInRange(transactions, range)
+        .filter(transaction => transaction.type === 'order')
+        .forEach(transaction => {
+            const label = transaction.itemName?.trim()
+                || (transaction.itemId !== undefined
+                    ? `Item #${transaction.itemId}`
+                    : 'Produto sem identificação — histórico legado');
+            const key = productSnapshotKey(transaction, label);
+            const product = groups.get(key) ?? {
+                ...(transaction.itemId !== undefined ? { itemId: transaction.itemId } : {}),
+                label,
+                categoryLabel: historicalCategoryLabel(transaction),
+                ...(historicalSubcategoryLabel(transaction)
+                    ? { subcategoryLabel: historicalSubcategoryLabel(transaction) }
+                    : {}),
+                orderCount: 0,
+                quantity: 0,
+                grossValue: 0,
+            };
+
+            product.orderCount += 1;
+            product.quantity += transaction.quantity ?? 0;
+            product.grossValue += transaction.totalPrice;
+            groups.set(key, product);
+        });
+
+    return Array.from(groups.values()).sort((left, right) => {
+        const valueDelta = right.grossValue - left.grossValue;
+        if (valueDelta !== 0) return valueDelta;
+        const quantityDelta = right.quantity - left.quantity;
+        if (quantityDelta !== 0) return quantityDelta;
+        return left.label.localeCompare(right.label, 'pt-BR');
+    });
 }
 
 function buildCategoryPerformance(
@@ -384,6 +459,7 @@ export function buildFinancialReport(
             openDebtChangePercent: percentageChange(openDebt, previousOpenDebt),
         },
         timeline: buildTimeline(transactions, range),
+        products: buildProductPerformance(transactions, range),
         categories: buildCategoryPerformance(transactions, range, categories, subcategories),
         resellers: buildResellerPerformance(transactions, range, resellers),
     };

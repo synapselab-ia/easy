@@ -54,6 +54,20 @@ function sectionTitle(doc: jsPDF, index: number, title: string, y: number) {
     return sectionY;
 }
 
+function subsectionTitle(doc: jsPDF, title: string, y: number) {
+    const sectionY = ensureSectionSpace(doc, y);
+    doc.setFontSize(9);
+    doc.setTextColor(70, 70, 70);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 14, sectionY);
+    doc.setFont('helvetica', 'normal');
+    return sectionY;
+}
+
+function productClassification(categoryLabel: string, subcategoryLabel?: string) {
+    return subcategoryLabel ? `${categoryLabel} > ${subcategoryLabel}` : categoryLabel;
+}
+
 export function generateFinancialReportPdf(
     report: FinancialReport,
     options: FinancialReportPdfOptions = DEFAULT_FINANCIAL_REPORT_PDF_OPTIONS,
@@ -127,35 +141,62 @@ export function generateFinancialReportPdf(
         cursorY = lastTableY(doc, cursorY) + 10;
     }
 
-    if (options.includeCategories && report.categories.length > 0) {
+    if (options.includeCategories && (report.products.length > 0 || report.categories.length > 0)) {
         cursorY = sectionTitle(doc, ++sectionIndex, 'PRODUTOS E CATEGORIAS', cursorY) + 5;
-        const categoryRows = report.categories.flatMap(category => [
-            [
-                category.label,
-                category.orderCount.toString(),
-                category.quantity.toString(),
-                money(category.grossValue),
-            ],
-            ...category.subcategories.map(subcategory => [
-                `   ↳ ${subcategory.label}`,
-                subcategory.orderCount.toString(),
-                subcategory.quantity.toString(),
-                money(subcategory.grossValue),
-            ]),
-        ]);
-        autoTable(doc, {
-            startY: cursorY,
-            head: [['Categoria / subcategoria', 'Pedidos', 'Itens', 'Vendas']],
-            body: categoryRows,
-            theme: 'striped',
-            styles: { fontSize: 8.5 },
-            columnStyles: {
-                1: { halign: 'right', cellWidth: 22 },
-                2: { halign: 'right', cellWidth: 20 },
-                3: { halign: 'right', cellWidth: 34 },
-            },
-        });
-        cursorY = lastTableY(doc, cursorY) + 10;
+
+        if (report.products.length > 0) {
+            cursorY = subsectionTitle(doc, 'Produtos vendidos', cursorY) + 4;
+            autoTable(doc, {
+                startY: cursorY,
+                head: [['Produto', 'Classificação', 'Pedidos', 'Itens', 'Vendas']],
+                body: report.products.map(product => [
+                    product.label,
+                    productClassification(product.categoryLabel, product.subcategoryLabel),
+                    product.orderCount.toString(),
+                    product.quantity.toString(),
+                    money(product.grossValue),
+                ]),
+                theme: 'striped',
+                styles: { fontSize: 8 },
+                columnStyles: {
+                    2: { halign: 'right', cellWidth: 18 },
+                    3: { halign: 'right', cellWidth: 16 },
+                    4: { halign: 'right', cellWidth: 31 },
+                },
+            });
+            cursorY = lastTableY(doc, cursorY) + 8;
+        }
+
+        if (report.categories.length > 0) {
+            cursorY = subsectionTitle(doc, 'Categorias e subcategorias', cursorY) + 4;
+            const categoryRows = report.categories.flatMap(category => [
+                [
+                    category.label,
+                    category.orderCount.toString(),
+                    category.quantity.toString(),
+                    money(category.grossValue),
+                ],
+                ...category.subcategories.map(subcategory => [
+                    `   ↳ ${subcategory.label}`,
+                    subcategory.orderCount.toString(),
+                    subcategory.quantity.toString(),
+                    money(subcategory.grossValue),
+                ]),
+            ]);
+            autoTable(doc, {
+                startY: cursorY,
+                head: [['Categoria / subcategoria', 'Pedidos', 'Itens', 'Vendas']],
+                body: categoryRows,
+                theme: 'striped',
+                styles: { fontSize: 8.5 },
+                columnStyles: {
+                    1: { halign: 'right', cellWidth: 22 },
+                    2: { halign: 'right', cellWidth: 20 },
+                    3: { halign: 'right', cellWidth: 34 },
+                },
+            });
+            cursorY = lastTableY(doc, cursorY) + 10;
+        }
     }
 
     if (options.includeResellers && report.resellers.length > 0) {
