@@ -1,6 +1,6 @@
 # Easy V2 — QA Ledger
 
-**Updated:** 2026-08-26
+**Updated:** 2026-08-27
 
 ## Mandatory repository gate — D-019
 
@@ -142,6 +142,46 @@ PR #90 was squash-integrated into `develop` as `446987475bf8621ff7ec5803149c4c6b
 
 The post-integration change #6 closure is documentation-only. No failed executable gate was waived and no automatic Vercel publication occurred.
 
+## P10-S3-I2-I3-D early-use change #7 — consistent pt-BR monetary presentation
+
+### Scope review — PRESENTATION ONLY
+
+PR #92 standardizes only operator-facing money strings in the bounded points already identified for #7:
+
+- reseller current and selected-period balances;
+- catalog prices and the read-only calculated order total in transaction entry;
+- current/replacement monetary totals in the transaction-correction dialog;
+- reseller statement PDF monetary values and statement balances;
+- tests for those visible outputs.
+
+The accepted simplified formatter is a literal `R$ ` prefix plus the numeric portion formatted with `toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })`. This avoids currency-style NBSP/Unicode spacing while preserving ordinary visible strings such as `R$ 150,00`, `R$ 1.200,50` and `R$ 10.000,00`.
+
+Editable numeric inputs, parsing, numeric values, calculations, rounding, persistence, database/Supabase, Auth/RLS, financial/report semantics, historical correction/occurrence semantics and deployment behavior are unchanged.
+
+### D-019 diagnosis — objective failure corrected, not waived
+
+The first D-019 after the simplified implementation, run/job `33070308804` / `98510536125`, stopped in Vitest. GitHub Actions job logs identified exactly two stale test expectations:
+
+- `src/pages/ResellerDetailPage.statement.test.tsx` still expected `R$ 100.00`, `R$ 30.00` and `R$ 130.00`;
+- `src/services/pdfService.occurrence.test.ts` still expected `R$ 40.00`.
+
+The product was already rendering the intended comma-decimal values. Only those obsolete assertions were updated to the accepted visible pt-BR presentation. No monetary-formatting behavior was reverted to make CI pass.
+
+### Final D-019 — PASS
+
+- feature head: `7aea7fca077e552d66bf8bc018f3fa4b49eea423`;
+- exact GitHub-generated merge ref checked out by Actions: `a094ba30b968b9b5658809503803440b8cf27736`;
+- validated tree: `f973d83aa8116fef7254dd056a5c5e99debbf063`;
+- run/job: `33070649544` / `98511710752`;
+- ESLint: **0 errors / 83 warnings**;
+- Vitest: **63 files / 268 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #92 was squash-integrated into `develop` as `3f9bafca186951f363c20e990a791a771a4cf35d`. Git object inspection confirms the integrated commit tree is `f973d83aa8116fef7254dd056a5c5e99debbf063`, exactly the same tree as the D-019-validated merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #7 closure changes Markdown documentation only; no executable/runtime file differs from the validated integrated tree. No failed executable gate was waived, no automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -171,5 +211,8 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #6 Dashboard period-label D-019: **PASS**.
 - PR #90 integrated-tree equivalence: **PASS**.
 - early-use change #6 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #7 pt-BR monetary-presentation D-019: **PASS**.
+- PR #92 integrated-tree equivalence: **PASS**.
+- early-use change #7 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.

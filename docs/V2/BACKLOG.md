@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Backlog
 
-**Updated:** 2026-08-26
+**Updated:** 2026-08-27
 
 This backlog records current ordered work. Historical implementation detail remains in phase execution documents and Git/PR history.
 
@@ -133,12 +133,23 @@ Verification confirmed the Dashboard Base UI Select lacked the explicit value/la
 D-019 run/job `33009642945` / `98312276753`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub merge-ref tree `f872da2c6adf492a929bd5ef02ad7a1c695a4672` exactly equals squash-integrated `develop@446987475bf8621ff7ec5803149c4c6b874d5e50` tree. No automatic deployment occurred and `main` remained untouched.
 
 #### Early-use change #7 — consistent pt-BR monetary presentation
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #92`
 
-Audit existing operator-facing BRL values for raw decimal formatting such as `toFixed(2)` and standardize visible money to proper `pt-BR`/BRL formatting where needed. Preserve the exact numeric values, calculations, persistence and financial semantics. Do not alter PDF/report calculation logic merely for formatting.
+Accepted result:
+
+- visible monetary values use a literal `R$ ` prefix plus pt-BR numeric separators with exactly two decimals;
+- examples include `R$ 150,00`, `R$ 1.200,50` and `R$ 10.000,00`;
+- reseller current/period balances, new-order catalog prices/read-only calculated total, correction-dialog monetary totals and reseller statement PDF values were aligned;
+- editable numeric inputs remain suitable for numeric editing;
+- parsing, calculations, rounding, persisted numbers, transaction/history semantics and financial/report accounting semantics are unchanged;
+- no database/Supabase/Auth/RLS/recovery/deployment change was introduced.
+
+The first D-019 after the simplified implementation exposed only two stale tests that still expected dot-decimal presentation. Those expectations were updated to the accepted visible pt-BR strings without reverting the product behavior.
+
+Final D-019 run/job `33070649544` / `98511710752`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `a094ba30b968b9b5658809503803440b8cf27736`; validated tree `f973d83aa8116fef7254dd056a5c5e99debbf063` exactly equals squash-integrated `develop@3f9bafca186951f363c20e990a791a771a4cf35d` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #8 — catalog classification visibility at point of use
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Expose current category and optional subcategory context where it helps choose/inspect an item, especially the item catalog and new-order item selector. Preserve D-025/D-033 immutable historical snapshots; this is current-catalog presentation only and must not rewrite history or classification.
 
@@ -185,4 +196,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #7: audit operator-facing BRL values for raw decimal presentation such as `toFixed(2)` and standardize only visible money formatting where needed to proper `pt-BR`/BRL presentation. Preserve exact numeric values, calculations, persistence and financial semantics, and do not alter PDF/report calculation logic merely for formatting. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #8, then stop. Do not start change #8 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #8: verify where current category and optional subcategory context is missing at the catalog and new-order item-selection point of use, then expose existing current-catalog classification context only where it materially helps choose or inspect an item. Preserve D-025/D-033 immutable historical snapshots and do not rewrite historical classification. Prefer a bounded presentation/read-model delta using existing data; this item does not authorize a database/schema migration. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #9, then stop. Do not start change #9 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
