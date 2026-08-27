@@ -328,12 +328,12 @@ export function TransactionForm({
             )}
 
             <div className="space-y-2">
-                <Label htmlFor="observation">Observação (opcional)</Label>
+                <Label htmlFor="observation">Observação</Label>
                 <Input
                     id="observation"
                     value={observation}
                     onChange={(e) => setObservation(e.target.value)}
-                    placeholder="Ex.: referência ou contexto da movimentação"
+                    placeholder={type === "order" ? "Ex: Nome na placa" : "Ex.: referência ou contexto da movimentação"}
                 />
             </div>
 
