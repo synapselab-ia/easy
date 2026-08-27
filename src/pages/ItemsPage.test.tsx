@@ -39,6 +39,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('ItemsPage Integration', () => {
     let categoryId: number;
+    let subcategoryId: number;
 
     beforeEach(async () => {
         await db.transactions.clear();
@@ -47,6 +48,13 @@ describe('ItemsPage Integration', () => {
         await db.categories.clear();
         categoryId = await db.categories.add({
             name: 'Porcelana',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        subcategoryId = await db.subcategories.add({
+            categoryId,
+            name: 'Canecas',
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -67,7 +75,7 @@ describe('ItemsPage Integration', () => {
 
         expect(await screen.findByText(/Nenhum item cadastrado/i)).toBeInTheDocument();
 
-        // 1. Create with required category classification.
+        // 1. Create with category + optional subcategory classification.
         fireEvent.click(screen.getByRole('button', { name: /Novo Item/i }));
         expect(await screen.findByText('Novo Item', { selector: 'h2' })).toBeInTheDocument();
 
@@ -78,19 +86,24 @@ describe('ItemsPage Integration', () => {
         fireEvent.change(nameInput, { target: { value: 'Perfume Teste' } });
         fireEvent.change(priceInput, { target: { value: '150.50' } });
         fireEvent.change(categoryInput, { target: { value: String(categoryId) } });
+
+        const subcategoryInput = screen.getByLabelText(/Subcategoria/i);
+        fireEvent.change(subcategoryInput, { target: { value: String(subcategoryId) } });
         fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
         await waitFor(() => {
             expect(screen.queryByText('Salvar')).not.toBeInTheDocument();
         });
 
-        // 2. List as active.
+        // 2. List as active and expose current catalog classification at point of use.
         expect(await screen.findByText('Perfume Teste')).toBeInTheDocument();
+        expect(screen.getByText('Porcelana › Canecas')).toBeInTheDocument();
         expect(screen.getByText(/150,50/)).toBeInTheDocument();
         expect(screen.getByText('Ativo')).toBeInTheDocument();
         expect((await db.items.toArray())[0].categoryId).toBe(categoryId);
+        expect((await db.items.toArray())[0].subcategoryId).toBe(subcategoryId);
 
-        // 3. Edit without changing category.
+        // 3. Edit without changing classification.
         fireEvent.click(screen.getByRole('button', { name: /Editar/i }));
         expect(await screen.findByText('Editar Item', { selector: 'h2' })).toBeInTheDocument();
 
@@ -103,7 +116,9 @@ describe('ItemsPage Integration', () => {
         });
 
         expect(await screen.findByText(/160,00/)).toBeInTheDocument();
+        expect(screen.getByText('Porcelana › Canecas')).toBeInTheDocument();
         expect((await db.items.toArray())[0].categoryId).toBe(categoryId);
+        expect((await db.items.toArray())[0].subcategoryId).toBe(subcategoryId);
 
         // 4. Archive instead of deleting.
         fireEvent.click(screen.getByRole('button', { name: 'Arquivar' }));
