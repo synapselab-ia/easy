@@ -47,14 +47,24 @@ export default function ItemsPage() {
 
     useEffect(() => {
         const nameParam = searchParams.get("name");
+        const searchParam = searchParams.get("search");
+
         if (nameParam) {
             // Pre-fill creation
             setEditingItem({ name: nameParam } as Item);
             setIsDialogOpen(true);
+        }
 
-            // Clear the param after using it
+        if (searchParam) {
+            // Reuse the catalog's existing transient name search for global-search handoff.
+            setSearchQuery(searchParam);
+        }
+
+        if (nameParam || searchParam) {
+            // Clear one-shot navigation params after applying their UI intent.
             const newParams = new URLSearchParams(searchParams);
             newParams.delete("name");
+            newParams.delete("search");
             setSearchParams(newParams, { replace: true });
         }
     }, [searchParams, setSearchParams]);
