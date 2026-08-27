@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — change #12 non-blocking duplicate-data warnings integrated
+
+Early-use change #12 verified that reseller/item creation could use already loaded canonical records for conservative duplicate warnings without introducing a new persistence or identity contract. PR #106 adds warnings only to new reseller/item creation; edit paths remain unchanged.
+
+Reseller creation now warns when an existing record matches normalized name, normalized exact phone or exact case-insensitive e-mail and reports which fields matched. Item creation warns only when normalized item name matches within the same category and same optional subcategory context. Archived records are included in both warning contexts. The warning remains non-blocking: the operator can explicitly choose `Cadastrar mesmo assim`, so legitimate same-name records remain possible. No automatic merge, silent rejection or hard uniqueness constraint was introduced.
+
+The first D-019 run/job `33100789877` / `98617616754` failed only because `ResellerForm.test.tsx` newly exercised IndexedDB-backed reseller loading without initializing `fake-indexeddb`. The test setup was corrected without changing runtime behavior, and the full gate was rerun; no failure was waived.
+
+Final D-019 on PR #106: head `fed6c0ab1e23cbff4298dba11d8c827d5cc06cc6`, merge ref `5e26f76a227f9c90417767bfbacb34ddfe2098da`, run/job `33101052183` / `98618533607`: 0 lint errors / 104 warnings; 65 files / 285 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d`.
+
+PR #106 was squash-integrated into `develop` as `7d023e856e0883ba82b2392199d3320d431aa16a`; its Git tree is also `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d`. Exact tree equivalence: PASS. No database/schema, Supabase/Auth/RLS, recovery, financial/history, automatic Vercel deployment or `main` publication change occurred. Change #12 is closed and change #13 is now the sole current authorized queue item; change #13 was not started in this task.
+
+---
+
 ## 2026-08-27 — change #11 actionable global item search integrated
 
 Early-use change #11 verified that selecting an item in the global command center discarded the selected result context and opened the generic `/items` catalog. PR #104 fixes that bounded navigation defect by reusing the already accepted #9 catalog name search instead of introducing a new item-detail architecture.

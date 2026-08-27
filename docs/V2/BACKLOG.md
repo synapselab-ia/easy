@@ -248,12 +248,25 @@ Accepted result:
 D-019 run/job `33093633207` / `98592735176`: 0 lint errors / 104 warnings; 65 files / 282 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `409243291c33deed745ab04e857e8c5e5da05f5e`; validated tree `507bdbc9c81efc45ef36a6d7dab9e44dc2444866` exactly equals squash-integrated `develop@46f85bb5f1e8304a323b8c4a8c99f429e52eca5d` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #12 — non-blocking duplicate-data warnings
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #106`
 
-Add conservative warnings for likely duplicate reseller/item creation using existing fields and classification context. Warnings must remain non-destructive and operator-confirmed: no automatic merge, no silent rejection and no new hard uniqueness constraint is pre-authorized. Same-name legitimate records must remain possible.
+Accepted result:
+
+- verification confirmed reseller/item creation forms can compare against already loaded canonical records without a database/schema change;
+- new reseller creation warns when an existing reseller matches normalized name, normalized exact phone or exact case-insensitive e-mail and reports the matching fields;
+- new item creation warns only when normalized item name matches within the same category and same optional subcategory context;
+- archived reseller/item records remain visible to the warning so accidental recreation of inactive data is less likely;
+- editing existing records is unchanged;
+- warnings are non-blocking and the operator can explicitly choose `Cadastrar mesmo assim`;
+- legitimate same-name records remain possible; no automatic merge, silent rejection or hard uniqueness rule was added;
+- no database/schema migration, Supabase/Auth/RLS, recovery, financial/history or deployment behavior changed.
+
+The first D-019 run stopped only because the reseller form test began exercising IndexedDB-backed lookup without initializing the test's `fake-indexeddb` environment. The test setup was corrected without changing runtime behavior; no objective failure was waived.
+
+Final D-019 run/job `33101052183` / `98618533607`: 0 lint errors / 104 warnings; 65 files / 285 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `5e26f76a227f9c90417767bfbacb34ddfe2098da`; validated tree `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d` exactly equals squash-integrated `develop@7d023e856e0883ba82b2392199d3320d431aa16a` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #13 — product-level financial report analytics
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Extend the canonical read-only `FinancialReport` model with product/item aggregation useful for answering what sold, using immutable transaction-time order facts and the existing screen/PDF parity rule. No database migration or independent second accounting calculation path is authorized.
 
@@ -275,4 +288,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #12: verify the current reseller/item creation paths and existing loaded fields, then add conservative warnings for likely duplicate reseller/item creation using existing fields and classification context where safely applicable. Warnings must remain non-destructive and operator-confirmed: no automatic merge, no silent rejection and no new hard uniqueness constraint is authorized; legitimate same-name records must remain possible. Prefer bounded presentation/form-state logic over persistence/schema changes. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #13, then stop. Do not start change #13 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #13: verify the current canonical `FinancialReport` model, product/category reporting views and PDF section flow, then extend the existing read-only report model with bounded product/item aggregation useful for answering what sold. Use immutable transaction-time order facts, preserve occurrence-date and reversal-zero-effect semantics, and keep screen/PDF calculations on the same canonical `FinancialReport` path. No database migration, mutation path or independent second accounting calculation path is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #14, then stop. Do not start change #14 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.

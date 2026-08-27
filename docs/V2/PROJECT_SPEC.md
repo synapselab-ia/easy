@@ -181,7 +181,7 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports, early-use changes #5–#11 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
+D-033 / subcategories, D-034 / financial reports, early-use changes #5–#12 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
@@ -197,6 +197,8 @@ Early-use change #10 exposes the already-supported transaction `observation` fie
 
 Early-use change #11 makes selected global item-search results actionable without adding an item-detail architecture. Item selection now hands the selected item name into the existing catalog search, `ItemsPage` applies that one-shot navigation intent to the accepted transient #9 name filter and removes the URL parameter, and the operator lands in the filtered catalog context. Reseller navigation and create-item suggestions remain unchanged. No database/schema, item identity/lifecycle/classification/history, Supabase/Auth/RLS, recovery or deployment contract changed.
 
+Early-use change #12 adds conservative, non-blocking duplicate warnings only during **new** reseller/item creation using data already loaded by the existing forms. Reseller warnings match normalized name, normalized exact phone or exact case-insensitive e-mail and identify which fields coincided; item warnings require normalized name plus the same category and same optional subcategory, reducing false positives across legitimate classifications. Archived records are included as warning context, edits are unchanged, and the operator can still explicitly choose `Cadastrar mesmo assim`. No automatic merge, silent rejection, hard uniqueness constraint, database/schema migration, Supabase/Auth/RLS, recovery, financial/history or deployment contract changed.
+
 The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
 
 For each queue item:
@@ -207,8 +209,8 @@ For each queue item:
 - use an isolated branch and D-019 for executable integration;
 - after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
 
-Current item: **early-use change #12 — non-blocking duplicate-data warnings**.
+Current item: **early-use change #13 — product-level financial report analytics**.
 
-Change #12 is limited to conservative warnings for likely duplicate reseller/item creation using existing fields and classification context. Warnings must remain non-destructive and operator-confirmed: no automatic merge, silent rejection or new hard uniqueness constraint is authorized, and legitimate same-name records must remain possible.
+Change #13 is limited to extending the canonical read-only `FinancialReport` model with product/item aggregation useful for answering what sold, using immutable transaction-time order facts and preserving the existing screen/PDF parity rule. No database migration or independent second accounting calculation path is authorized.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
