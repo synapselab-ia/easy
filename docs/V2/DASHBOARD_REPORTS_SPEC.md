@@ -442,15 +442,24 @@ Validation/integration evidence: PR #120; feature head `972ad8ae0285e654a5b356a5
 
 ### DR-06 — Recent registrations + quick actions
 
-**Status:** CURRENT / AUTHORIZED.
+**Status:** DONE / INTEGRATED — PR #122.
 
-Add compact recent effective registration context using the prepared `DashboardSnapshot.recentRegistrations` plus page-level `+ Pedido`, `+ Pagamento` and `+ Sinal` actions that reuse the existing transaction route/type context. Preserve the established Dashboard hierarchy and do not create a second transaction form/write path or begin DR-07.
+- `DashboardQuickActions` exposes `+ Pedido`, `+ Pagamento` and `+ Sinal` using the existing `/transactions?type=...` route and existing transaction form/write path;
+- `RecentRegistrations` consumes prepared `DashboardSnapshot.recentRegistrations` directly and preserves its canonical `createdAt` ordering and reversal exclusion without local re-sorting/effective-transaction logic;
+- rows distinguish `Pedido`, `Pagamento` and `Sinal`, show reseller and pt-BR value, and retain registration timestamp context;
+- the D-014 financial occurrence date is shown when its calendar day differs from the registration day;
+- row selection navigates to the existing reseller detail/history route;
+- empty/loading behavior and keyboard-accessible interactive semantics are covered by focused tests;
+- the operational hierarchy remains `KPIs -> atenção -> aging -> recent activity`;
+- `PerformanceAnalysisSection` remains unchanged for DR-07 and no DR-07/later work was bundled.
+
+Validation/integration evidence: PR #122; feature head `c889e2ad73f13d2c6804a8248863d214d27c50e2`; merge ref `2b17e6c8fffd477e7716dd1ac4ad5e31848af0af`; D-019 run/job `33126181592` / `98704779945`; ESLint 0 errors / 105 warnings; Vitest 70 files / 304 tests PASS, including `RecentRegistrations` 4/4, `DashboardQuickActions` 1/1 and `DashboardPage` 3/3; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f`; squash-integrated `develop@1425fe0736dbf919e47c9c0c5bfb593331cec469`; exact tree equivalence PASS; no failed gate was waived.
 
 ### DR-07 — Remove Dashboard Performance block + contextual Reports handoff
 
-**Status:** QUEUED / NOT CURRENT.
+**Status:** CURRENT / AUTHORIZED.
 
-Remove the current Dashboard `Análise de Performance` surface only after the accepted operational replacements exist. Add contextual navigation needed to preserve a clear path to deeper analysis. Do not silently discard useful analytics.
+Remove the current Dashboard `Análise de Performance` surface now that the accepted operational replacements exist. Preserve a clear contextual path to the existing Reports workspace so useful analysis is not silently discarded. Reuse existing route/report semantics; do not perform DR-08 analytical redesign or create a competing accounting model.
 
 ### DR-08 — Reports analytical refinement
 
