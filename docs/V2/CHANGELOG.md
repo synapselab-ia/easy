@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — change #11 actionable global item search integrated
+
+Early-use change #11 verified that selecting an item in the global command center discarded the selected result context and opened the generic `/items` catalog. PR #104 fixes that bounded navigation defect by reusing the already accepted #9 catalog name search instead of introducing a new item-detail architecture.
+
+Selected item results now navigate with an encoded one-shot `search` handoff. `ItemsPage` consumes the value into its existing transient accent/case-insensitive item-name filter and immediately removes the navigation parameter with history replacement. Normal and recent item results share the same selection path. Reseller result navigation and existing create-item/create-reseller suggestions are unchanged.
+
+No item-detail route, database/schema migration, Supabase/Auth/RLS, recovery, item identity/lifecycle/classification/history or deployment behavior changed.
+
+Final D-019 on PR #104: head `e95b36b111aac38b7ec32ff2649b2daf22aad3de`, merge ref `409243291c33deed745ab04e857e8c5e5da05f5e`, run/job `33093633207` / `98592735176`: 0 lint errors / 104 warnings; 65 files / 282 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `507bdbc9c81efc45ef36a6d7dab9e44dc2444866`.
+
+PR #104 was squash-integrated into `develop` as `46f85bb5f1e8304a323b8c4a8c99f429e52eca5d`; its Git tree is also `507bdbc9c81efc45ef36a6d7dab9e44dc2444866`. Exact tree equivalence: PASS. No automatic Vercel deployment, database/Supabase change or `main` publication occurred. Change #11 is closed and change #12 is now the sole current authorized queue item; change #12 was not started in this task.
+
+---
+
 ## 2026-08-27 — change #10 payment/signal observations integrated
 
 Early-use change #10 verified that the canonical transaction contract already supported `observation` for payments and signals end to end. The local transaction model/sanitization, cloud adapter and current PostgreSQL `create_transaction` RPC already carry and store the field; the gap existed only in normal transaction entry, where observation had been exposed/sent only for orders.
