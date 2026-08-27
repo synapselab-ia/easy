@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — change #13 product-level financial report analytics integrated
+
+Early-use change #13 verified that the existing order transaction snapshots already contain the immutable product facts needed to answer what sold without introducing a new persistence or accounting contract. PR #108 extends the canonical read-only `FinancialReport` with `products` aggregation derived from effective occurrence-time order snapshots.
+
+Product rows expose the historical product label and classification together with order count, item quantity and gross sales. Repeated orders sharing the same exact transaction-time item/name/classification snapshot aggregate together, while a later historical rename or reclassification remains a distinct row instead of rewriting past sales from the current catalog. Reversed orders continue to contribute zero and range inclusion continues to use D-014 occurrence time.
+
+The `Resumo` product highlight now identifies the actual top-selling product, the `Produtos e categorias` view shows product performance before the existing category/subcategory drilldown, and the existing products/categories PDF section renders the same canonical `report.products` list. No second product calculation was introduced in the PDF.
+
+Final D-019 on PR #108: head `7b8699280e289c706a5d21ffae23a7267d07191b`, merge ref `43d7ebf749ca3924fcebe9fe8cd85d7351e5354a`, run/job `33103464797` / `98626992003`: 0 lint errors / 104 warnings; 65 files / 286 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `b8575e6c80a0d43109c25a307dc0faa183245262`.
+
+PR #108 was squash-integrated into `develop` as `d5b2cc5fb150777f12ece38bdd02abcada2974f7`; its Git tree is also `b8575e6c80a0d43109c25a307dc0faa183245262`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, transaction mutation, recovery, automatic Vercel deployment or `main` publication change occurred. Change #13 is closed and change #14 is now the sole current authorized queue item; change #14 was not started in this task.
+
+---
+
 ## 2026-08-27 — change #12 non-blocking duplicate-data warnings integrated
 
 Early-use change #12 verified that reseller/item creation could use already loaded canonical records for conservative duplicate warnings without introducing a new persistence or identity contract. PR #106 adds warnings only to new reseller/item creation; edit paths remain unchanged.
