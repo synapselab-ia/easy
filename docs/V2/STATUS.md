@@ -34,13 +34,14 @@ Current P10-S3 state:
   - change #11 actionable global item search result: `DONE / INTEGRATED` — PR #104;
   - change #12 non-blocking duplicate-data warnings: `DONE / INTEGRATED` — PR #106;
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
-  - change #14 Dashboard receipts-today card: `DEFERRED / ON HOLD — OPERATOR DECISION`;
-  - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111.
+  - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
+  - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
+  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
 
-D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by the screen and downloadable PDF.
+D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by the screen and downloadable PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles and an ordered `DR-*` redesign sequence.
 
 Current invariants:
 
@@ -55,6 +56,7 @@ Current invariants:
 9. Reversed transactions have zero effective financial/reporting effect while remaining audit-visible in history.
 10. Backup v2 schema 6 contains subcategories and related item/order references; supported schema 4/5 imports do not invent classification.
 11. The financial report screen and PDF must consume the same canonical `FinancialReport` model; the PDF may select sections but cannot implement a separate accounting interpretation.
+12. D-035 current-position Dashboard metrics are explicitly as-of the operator's current local day; valid future occurrence dates after today must not affect current open debt or aging before their occurrence date.
 
 ## D-032 rollout state
 
@@ -419,13 +421,11 @@ Validation/integration evidence:
 
 No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #13 is closed; change #14 was promoted next but was not implemented.
 
-## Early-use change #14 — Dashboard receipts-today card — deferred
+## Early-use change #14 — Dashboard receipts-today card — absorbed by D-035
 
-The operator reviewed the practical value of a dedicated `Recebimentos hoje` Dashboard KPI before implementation and decided to defer it. Payments/signals do not necessarily occur every day, so an isolated daily-receipts card could consume prominent Dashboard space without enough recurring operational value.
+The operator initially deferred the dedicated `Recebimentos hoje` KPI because payments/signals do not necessarily occur every day and an isolated daily card could consume prominent Dashboard space without enough recurring operational value.
 
-No executable change was made for #14. The idea remains available for a later broader Dashboard review, where KPI selection, layout and operational priorities can be evaluated together rather than one card at a time. No D-019 run was required for this documentation-only deferral.
-
-Change #15 was promoted as the next queue item and is now closed.
+After the full Dashboard/Reports efficiency audit, the operator accepted D-035. The old #14 idea is therefore **superseded as a standalone change**. Receipts remain part of the target Dashboard as `Recebimentos este mês`, with optional compact today context, inside the broader operational hierarchy defined by D-035. No standalone #14 executable change exists.
 
 ## Early-use change #15 — future occurrence-date confirmation
 
@@ -455,22 +455,22 @@ Validation/integration evidence:
 - PR #111 squash-integrated `develop`: `bee3e2cee2852c9bf0683fe5d564b34cef569c8a`;
 - integrated tree: `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` — exact tree equivalence PASS.
 
-No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #15 is closed. No later early-use queue item is authorized.
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #15 is closed.
 
-## Operator-authorized usability/data-quality queue
+## Historical operator-authorized usability/data-quality queue
 
-On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This authorization is sequencing/backlog scope, not a new architecture decision and does not supersede D-029 through D-034.
+On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
 
-Canonical execution lock:
+Canonical execution lock remains applicable:
 
 - only the item named in `NEXT_ACTION` is current;
-- later queue items remain `QUEUED / NOT CURRENT` and must not be bundled into the current task;
+- later items must not be bundled into the current task;
 - each item begins with verification and may close `NO_CHANGE / DEFERRED` rather than forcing a modification;
-- executable changes still require isolated work outside `main` and D-019 before integration;
+- executable changes require isolated work outside `main` and D-019 before integration;
 - after one item is integrated/closed, canonical docs promote exactly the next pending item and the task stops;
-- no queue item implicitly authorizes database/schema changes, financial-semantic changes, recovery/Auth/RLS weakening, automatic deploy, `main` publication, legacy import or definitive cutover.
+- no item implicitly authorizes database/schema changes, financial-semantic changes, recovery/Auth/RLS weakening, automatic deploy, `main` publication, legacy import or definitive cutover.
 
-Ordered queue:
+Historical ordered queue:
 
 1. **#6 DONE / INTEGRATED — PR #90** — Dashboard selected performance-window labels are localized without changing `90/180/360` semantics.
 2. **#7 DONE / INTEGRATED — PR #92** — operator-facing money is presented with pt-BR separators and two decimals without changing numeric/accounting semantics.
@@ -480,10 +480,41 @@ Ordered queue:
 6. **#11 DONE / INTEGRATED — PR #104** — selected global item results hand off into the existing transient catalog name filter instead of opening an unfiltered catalog.
 7. **#12 DONE / INTEGRATED — PR #106** — conservative duplicate-data warnings use existing loaded reseller/item fields and remain operator-overridable.
 8. **#13 DONE / INTEGRATED — PR #108** — product-level analytics use immutable occurrence-time order snapshots inside the canonical screen/PDF `FinancialReport` path.
-9. **#14 DEFERRED / ON HOLD — OPERATOR DECISION** — receipts-today Dashboard KPI is postponed pending a broader Dashboard review.
+9. **#14 SUPERSEDED / ABSORBED BY D-035** — the isolated receipts-today KPI will not be implemented standalone.
 10. **#15 DONE / INTEGRATED — PR #111** — future occurrence dates require explicit non-blocking confirmation while preserving the chosen D-014 occurrence date.
 
-There is currently no later bounded early-use queue item authorized. Detailed historical scope and stop conditions remain canonical in `docs/V2/BACKLOG.md`.
+Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` sequence.
+
+## D-035 — Dashboard + Reports core redesign
+
+**Status:** `AUTHORIZED / ORDERED / BOUNDED`  
+**Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
+
+Accepted product direction:
+
+- Dashboard is the glance/action surface; Reports is the period-controlled analytical surface;
+- target Dashboard top KPIs are `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`;
+- current-position values are as-of-today and exclude later future occurrences until their occurrence date;
+- `Precisa de atenção` becomes one deduplicated reseller-per-row action center;
+- aging becomes compact exact-value + percentage context;
+- recent effective registrations and quick order/payment/signal actions are target operational context;
+- large 90/180/360 Performance/Pareto/current-debtor/ranking content leaves the target Dashboard only after useful analysis is re-homed or handed off to Reports;
+- Reports refinements stay on canonical `FinancialReport` semantics;
+- one coherent Dashboard read-only projection comes before the major visual redesign.
+
+Ordered sequence:
+
+1. **DR-01 DONE — product contract/canonical documentation** — D-035 + focused spec.
+2. **DR-02 CURRENT / AUTHORIZED — canonical Dashboard read-model.**
+3. **DR-03 QUEUED / NOT CURRENT — primary KPI row.**
+4. **DR-04 QUEUED / NOT CURRENT — `Precisa de atenção` action center.**
+5. **DR-05 QUEUED / NOT CURRENT — compact carteira aging.**
+6. **DR-06 QUEUED / NOT CURRENT — recent registrations + quick actions.**
+7. **DR-07 QUEUED / NOT CURRENT — remove Dashboard Performance block + contextual Reports handoff.**
+8. **DR-08 QUEUED / NOT CURRENT — Reports analytical refinement.**
+9. **DR-09 QUEUED / NOT CURRENT — final Dashboard/Reports UX and efficiency acceptance.**
+
+Only `DR-02` is executable next. Do not bundle `DR-03` or later work into the same task.
 
 ## Startup protocol for a new conversation
 
@@ -497,15 +528,16 @@ Read in this exact order:
 6. `docs/V2/QA_LEDGER.md`
 7. `docs/V2/CHANGELOG.md`
 
-Then inspect only evidence required by `NEXT_ACTION`.
+Then, when `NEXT_ACTION` is a D-035 `DR-*` item, read `docs/V2/DASHBOARD_REPORTS_SPEC.md` before inspecting implementation evidence.
 
 Precedence when documents conflict:
 
 1. current `STATUS.md` and its `NEXT_ACTION`;
 2. newest applicable accepted decision in `DECISIONS.md`;
 3. current `BACKLOG.md`;
-4. phase execution/history documents.
+4. focused accepted spec for the current initiative;
+5. phase execution/history documents.
 
 ## NEXT_ACTION
 
-**No new bounded early-use queue item is currently authorized. Continue controlled clean-start early-use observation and wait for explicit operator instruction before starting another change. Change #14 remains `DEFERRED / ON HOLD` pending a broader Dashboard review unless the operator explicitly reauthorizes it sooner. Do not invent or start a #16, do not automatically deploy, do not modify/publish `main`, do not resume D-030/I2-I2, do not import legacy real-store data and do not claim definitive cutover without a new explicit operator decision.**
+**Execute only D-035 `DR-02 — canonical Dashboard read-model`. First verify the current Dashboard hooks/query invalidation and the accepted domain helpers. Then introduce one bounded read-only Dashboard projection that centralizes month-to-today sales/receipts/order/item context, as-of-today open debt, critical amount/count/oldest age, accepted FIFO aging buckets, one-reseller-per-row attention data and recent effective registrations. Current-position calculations must exclude valid future occurrence dates later than the operator's current local day until those dates occur. Reuse `FinancialReport` and existing transaction/FIFO helpers where their semantics match; do not create a competing accounting path. Do not perform the DR-03 visual KPI redesign, DR-04 attention UI, or any later DR item in the same task. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-03 if DR-02 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
