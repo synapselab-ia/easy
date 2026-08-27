@@ -85,9 +85,9 @@ describe('P3-S2 reseller statement semantics', () => {
         expect(screen.getByText('Saldo inicial')).toBeInTheDocument();
         expect(screen.getByText('Movimentos do período')).toBeInTheDocument();
         expect(screen.getByText('Saldo final')).toBeInTheDocument();
-        expect(screen.getByText('R$ 100.00')).toBeInTheDocument();
-        expect(screen.getByText('R$ 30.00')).toBeInTheDocument();
-        expect(screen.getByText('R$ 130.00')).toBeInTheDocument();
+        expect(screen.getByText('R$ 100,00')).toBeInTheDocument();
+        expect(screen.getByText('R$ 30,00')).toBeInTheDocument();
+        expect(screen.getByText('R$ 130,00')).toBeInTheDocument();
         expect(screen.queryByText('Saldo anterior')).not.toBeInTheDocument();
         expect(screen.getByText('Pedido do período')).toBeInTheDocument();
         expect(screen.queryByText('Depois do período')).not.toBeInTheDocument();
