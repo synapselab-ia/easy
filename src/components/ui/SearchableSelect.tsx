@@ -100,7 +100,7 @@ export function SearchableSelect({
     onValueChange(option.value)
     setOpen(false)
     setQuery("")
-    requestAnimationFrame(() => triggerRef.current?.focus())
+    triggerRef.current?.focus()
   }
 
   return (
