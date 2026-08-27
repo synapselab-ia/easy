@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Status
 
-**Updated:** 2026-08-26  
+**Updated:** 2026-08-27  
 **Repository:** `synapselab-ia/easy`  
 **Stable baseline:** `main`  
 **Integration branch:** `develop`
@@ -25,8 +25,9 @@ Current P10-S3 state:
   - change #4 financial reports workspace + PDF: `DONE / ACCEPTED / INTEGRATED` — D-034 / PR #85;
   - change #5 localized financial-report period labels: `DONE / INTEGRATED` — PR #87;
   - change #6 Dashboard performance-window labels: `DONE / INTEGRATED` — PR #90;
-  - **change #7 consistent pt-BR monetary presentation: `CURRENT / AUTHORIZED`;**
-  - changes #8–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #7 consistent pt-BR monetary presentation: `DONE / INTEGRATED` — PR #92;
+  - **change #8 catalog classification visibility at point of use: `CURRENT / AUTHORIZED`;**
+  - changes #9–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -146,6 +147,29 @@ Validation/integration evidence:
 
 No automatic Vercel publication occurred and `main` remains untouched.
 
+## Early-use change #7 — consistent pt-BR monetary presentation
+
+The first PR #92 implementation was reverted before integration and replaced with a simpler presentation-only approach: visible money uses a literal `R$ ` prefix plus the numeric portion formatted with `toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })`. This avoids currency-style Unicode/NBSP spacing while producing stable operator-facing values such as `R$ 150,00`, `R$ 1.200,50` and `R$ 10.000,00`.
+
+The bounded presentation delta covers reseller current/period balances, catalog prices and the read-only calculated total in new-order entry, monetary values in the transaction-correction dialog and reseller statement PDF values. Editable numeric inputs, parsing, calculations, persisted numeric values, rounding, financial/report semantics, transaction history and occurrence semantics remain unchanged.
+
+The first D-019 after simplification failed only because two pre-existing tests still expected dot-decimal presentation in `ResellerDetailPage.statement.test.tsx` and `pdfService.occurrence.test.ts`. GitHub Actions logs identified those exact stale assertions; only the expectations were aligned to the accepted visible comma-decimal presentation, without weakening or reverting the implementation.
+
+Validation/integration evidence:
+
+- feature head: `7aea7fca077e552d66bf8bc018f3fa4b49eea423`;
+- GitHub Actions merge ref: `a094ba30b968b9b5658809503803440b8cf27736`;
+- validated tree: `f973d83aa8116fef7254dd056a5c5e99debbf063`;
+- D-019 run/job: `33070649544` / `98511710752`;
+- ESLint: 0 errors / 83 warnings;
+- Vitest: 63 files / 268 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #92 squash-integrated `develop`: `3f9bafca186951f363c20e990a791a771a4cf35d`;
+- integrated tree: `f973d83aa8116fef7254dd056a5c5e99debbf063` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched.
+
 ## Operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This authorization is sequencing/backlog scope, not a new architecture decision and does not supersede D-029 through D-034.
@@ -162,8 +186,8 @@ Canonical execution lock:
 Ordered queue:
 
 1. **#6 DONE / INTEGRATED — PR #90** — Dashboard selected performance-window labels are localized without changing `90/180/360` semantics.
-2. **#7 CURRENT** — consistent operator-facing pt-BR/BRL monetary formatting without numeric/accounting changes.
-3. **#8 QUEUED** — show category/subcategory context in catalog and order item selection without rewriting historical snapshots.
+2. **#7 DONE / INTEGRATED — PR #92** — operator-facing money is presented with pt-BR separators and two decimals without changing numeric/accounting semantics.
+3. **#8 CURRENT / AUTHORIZED** — show category/subcategory context in catalog and order item selection without rewriting historical snapshots.
 4. **#9 QUEUED** — practical item/reseller search and lifecycle/classification filters using existing data.
 5. **#10 QUEUED** — optional observation on payment/signal creation if the existing transaction contract supports it; no migration.
 6. **#11 QUEUED** — make global item search selection land in useful item context.
@@ -197,4 +221,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #7. Audit operator-facing BRL values for raw decimal presentation such as `toFixed(2)` and standardize only visible money formatting where needed to proper `pt-BR`/BRL presentation. Preserve the exact numeric values, calculations, persistence and all accepted financial semantics; do not change report/PDF calculation logic merely for formatting. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #8 becomes current, then stop. Do not start #8 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #8. Verify where current category and optional subcategory context is missing at the catalog and new-order item-selection point of use, then expose existing current-catalog classification context only where it materially helps the operator choose or inspect an item. Preserve D-025/D-033 immutable transaction-time category/subcategory snapshots and do not rewrite historical classification. Prefer a bounded presentation/read-model delta over new architecture; no database/schema migration is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #9 becomes current, then stop. Do not start #9 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
