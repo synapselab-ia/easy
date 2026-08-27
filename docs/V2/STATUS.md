@@ -32,8 +32,9 @@ Current P10-S3 state:
   - change #9 practical item/reseller search and filters: `DONE / INTEGRATED` — PR #100;
   - change #10 observations on payment/signal entry: `DONE / INTEGRATED` — PR #102;
   - change #11 actionable global item search result: `DONE / INTEGRATED` — PR #104;
-  - **change #12 non-blocking duplicate-data warnings: `CURRENT / AUTHORIZED`;**
-  - changes #13–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #12 non-blocking duplicate-data warnings: `DONE / INTEGRATED` — PR #106;
+  - **change #13 product-level financial report analytics: `CURRENT / AUTHORIZED`;**
+  - changes #14–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -352,6 +353,39 @@ Validation/integration evidence:
 
 No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #11 is closed; change #12 is now the sole current queue item.
 
+## Early-use change #12 — non-blocking duplicate-data warnings
+
+Verification confirmed that the existing creation forms already load the canonical reseller/item lists needed for a bounded presentation/form-state warning. PR #106 therefore introduces no persistence/schema change.
+
+Accepted behavior:
+
+- new reseller creation compares the entered data against already loaded resellers and warns on a normalized-name match, normalized exact-phone match or exact case-insensitive e-mail match;
+- the warning identifies which fields matched and includes archived records so an inactive existing record is not silently overlooked;
+- new item creation warns only when normalized item name matches an existing item in the same current category and same optional subcategory context;
+- same-name items in another classification remain unflagged;
+- archived items are included in warning context;
+- edits of existing reseller/item records are unchanged;
+- warnings are non-blocking and the submit action becomes explicit as `Cadastrar mesmo assim` while still permitting legitimate duplicate-name creation;
+- no automatic merge, silent rejection or hard uniqueness rule exists;
+- no database/schema migration, Supabase/Auth/RLS, recovery, financial/history or deployment behavior changed.
+
+The first D-019 run/job `33100789877` / `98617616754` failed only in the reseller form tests because the newly exercised IndexedDB-backed lookup lacked `fake-indexeddb` initialization in that test file. The test environment was corrected; runtime duplicate-warning logic was unchanged and the objective failure was not waived.
+
+Validation/integration evidence:
+
+- feature head: `fed6c0ab1e23cbff4298dba11d8c827d5cc06cc6`;
+- GitHub Actions merge ref: `5e26f76a227f9c90417767bfbacb34ddfe2098da`;
+- validated tree: `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d`;
+- final D-019 run/job: `33101052183` / `98618533607`;
+- ESLint: 0 errors / 104 warnings;
+- Vitest: 65 files / 285 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #106 squash-integrated `develop`: `7d023e856e0883ba82b2392199d3320d431aa16a`;
+- integrated tree: `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #12 is closed; change #13 is now the sole current queue item and was not started in this task.
+
 ## Operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This authorization is sequencing/backlog scope, not a new architecture decision and does not supersede D-029 through D-034.
@@ -373,8 +407,8 @@ Ordered queue:
 4. **#9 DONE / INTEGRATED — PR #100** — practical item/reseller search and lifecycle/classification filters use existing loaded data only.
 5. **#10 DONE / INTEGRATED — PR #102** — the existing transaction observation contract is exposed in normal payment/signal entry without migration or financial-semantic change.
 6. **#11 DONE / INTEGRATED — PR #104** — selected global item results hand off into the existing transient catalog name filter instead of opening an unfiltered catalog.
-7. **#12 CURRENT / AUTHORIZED** — conservative non-blocking duplicate-data warnings; no automatic merge or hard uniqueness rule.
-8. **#13 QUEUED** — product-level analytics inside the canonical read-only financial report model.
+7. **#12 DONE / INTEGRATED — PR #106** — conservative duplicate-data warnings use existing loaded reseller/item fields and remain operator-overridable.
+8. **#13 CURRENT / AUTHORIZED** — product-level analytics inside the canonical read-only financial report model.
 9. **#14 QUEUED** — Dashboard receipts-today KPI using occurrence time and reversal-zero-effect semantics.
 10. **#15 QUEUED** — non-blocking confirmation for future occurrence dates in new transaction entry.
 
@@ -403,4 +437,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #12. Verify the current reseller/item creation paths and existing loaded fields, then add conservative warnings for likely duplicate reseller/item creation using existing fields and classification context where safely applicable. Warnings must remain non-destructive and operator-confirmed: no automatic merge, no silent rejection and no new hard uniqueness constraint is authorized; legitimate same-name records must remain possible. Prefer bounded presentation/form-state logic over persistence/schema changes. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #13 becomes current, then stop. Do not start #13 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #13. Verify the current canonical `FinancialReport` model, the existing product/category report presentation and the PDF section flow, then extend the same read-only report model with bounded product/item aggregation useful for answering what sold. Product analytics must use immutable transaction-time order facts, preserve D-014 occurrence-date inclusion and reversal-zero-effect semantics, and remain shared by screen/PDF rather than creating an independent calculation path. No database migration, transaction mutation, recovery/Auth/RLS change or second accounting implementation is authorized. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #14 becomes current, then stop. Do not start #14 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
