@@ -98,7 +98,7 @@ Rules:
 
 - exactly one optional subcategory level; recursive trees are out of scope;
 - every subcategory belongs to one category;
-- an item's subcategory, when present, must belong to the item's selected category;
+- an item's subcategory, when present, must belong to its selected category;
 - active items cannot use inactive classification;
 - active references protect category/subcategory archival;
 - legacy unclassified data stays unclassified rather than receiving guessed values;
@@ -136,6 +136,24 @@ Accounting semantics:
 9. PDF section selection changes presentation only; it does not create a second reporting calculation path.
 
 D-034 is intentionally read-only and does not add a persistence schema, mutation RPC, recovery exception or deployment exception.
+
+## 8A. Dashboard + Reports core decision system — D-035
+
+The operator accepted a second-pass product audit that treats Dashboard and Reports as the core management surfaces of Easy rather than independent feature collections.
+
+Accepted boundary:
+
+- **Dashboard** is the daily operational surface: current month flow, as-of-today receivable position, actionable aged-risk exceptions, compact aging context, recent effective registrations and direct paths to the next useful action;
+- **Reports** is the period-controlled analytical surface: comparison, timeline, product/category/reseller investigation, Pareto/concentration and downloadable PDF;
+- analytical `90/180/360` controls, large Pareto/ranking charts and duplicated open-balance analytics are not target permanent Dashboard content;
+- useful analytics removed from Dashboard must be re-homed in Reports on canonical `FinancialReport` semantics rather than discarded or recalculated through a competing path;
+- current-position Dashboard values are explicitly **as of the operator's current local day**. Legitimate future `occurredAt` values after today must not affect current open debt or aging before their occurrence date;
+- existing FIFO aging thresholds remain `0–6d`, `7–30d`, `>30d` unless separately reauthorized;
+- one coherent read-only Dashboard projection is required before the visual redesign so components do not repeatedly reconstruct financial meaning independently.
+
+The detailed accepted target, semantics, UX criteria and `DR-01…DR-09` execution sequence live in `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
+
+D-035 does not authorize a new database/schema, financial mutation/accounting contract, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
 
 ## 9. Cloud security requirements
 
@@ -179,9 +197,15 @@ Precedence:
 
 Historical `tasks/` checkboxes are not canonical status.
 
+For the current D-035 initiative, `docs/V2/DASHBOARD_REPORTS_SPEC.md` is the focused product contract and must be read after the canonical startup set before executing a `DR-*` item.
+
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, early-use change #15 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active. Change #14 remains **deferred / on hold by operator decision** pending a broader Dashboard review.
+D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, early-use change #15 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
+
+The previously proposed isolated change #14 (`Recebimentos hoje`) is no longer a standalone pending item. It is **absorbed/superseded by D-035**: receipts remain part of the target Dashboard, but as `Recebimentos este mês` with optional today context rather than a dedicated daily KPI card.
+
+D-035 / Dashboard + Reports core redesign is now the authorized product initiative. `DR-01` (product contract/canonical documentation) is complete when the D-035 documentation set is integrated. `DR-02` (canonical Dashboard read-model) is then the sole current executable item. Later `DR-03…DR-09` items remain queued/not current and must not be bundled.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
@@ -201,10 +225,8 @@ Early-use change #12 adds conservative, non-blocking duplicate warnings only dur
 
 Early-use change #13 extends the existing canonical read-only `FinancialReport` with product-level performance. Product rows come from effective occurrence-time order snapshots and aggregate exact transaction-time item/name/classification context, so later catalog rename or reclassification does not rewrite historical sales. The report screen now exposes product, historical classification, order count, quantity and gross sales; the product highlight uses the top-selling product; and the existing products/categories PDF section consumes the same canonical `report.products` list. Reversed transactions remain zero-effect. No persistence, database/Supabase, mutation, Auth/RLS, recovery or deployment contract changed.
 
-Early-use change #14, the proposed Dashboard receipts-today KPI, is **deferred / on hold by operator decision**. The operator determined that payments/signals do not necessarily occur daily and that adding one isolated daily-receipts card before a broader Dashboard review may not provide enough recurring operational value. No executable change was made; #14 remains available for a later Dashboard redesign/review.
-
 Early-use change #15 adds a non-blocking intent check to new transaction entry when the selected financial occurrence date is later than the operator's local current date. Same-day/past entries remain unchanged; a future date prompts `Voltar e corrigir` or `Cadastrar mesmo assim`, and explicit confirmation persists exactly the selected future `occurredAt`. The UI never auto-corrects or prohibits the date, preserving D-014. No database/schema, transaction-accounting, Supabase/RPC/Auth/RLS, recovery or deployment contract changed.
 
-The operator-authorized bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md` has no later current item after #15. Do not invent a #16. Further executable work requires a new explicit operator instruction. The strict one-item-at-a-time rule remains in force for any later authorized queue work.
+The previous bounded usability/data-quality queue remains historical and must not be extended by inventing a #16. New Dashboard/Reports work uses the separate D-035 `DR-*` sequence. The strict one-item-at-a-time rule remains in force.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.

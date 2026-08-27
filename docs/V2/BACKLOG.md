@@ -109,13 +109,13 @@ Accepted correction:
 
 D-019 run/job `33005354591` / `98297566705`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub merge-ref tree `ae183953e9f9248cab7ebc107fae57723ccb8aa4` exactly equals squash-integrated `develop@430b36feb7563c3370a334eb4962edc7aafdc117` tree.
 
-### Operator-authorized usability/data-quality queue — one item at a time
+### Historical operator-authorized usability/data-quality queue
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — NO CURRENT ITEM AFTER #15`
+**Status:** `CLOSED / HISTORICAL — NO #16`
 
-On 2026-08-26 the operator explicitly authorized the following early-use improvements to be evaluated and executed **one by one**, preserving the existing project safeguards.
+On 2026-08-26 the operator explicitly authorized the following early-use improvements to be evaluated and executed **one by one**, preserving the existing project safeguards. That numbered queue is now closed and must not be extended. D-035 uses a separate `DR-*` sequence.
 
-Queue governance:
+Queue governance retained as a general execution rule:
 
 1. Only the single item identified by `STATUS.md -> NEXT_ACTION` is executable in a task/conversation.
 2. Every item starts by verifying the current implementation/runtime evidence. If the suspected issue is not reproducible, the benefit is no longer applicable, or the safe solution would cross the stated boundary, close that item as `NO_CHANGE / DEFERRED` with evidence rather than forcing a modification.
@@ -284,9 +284,9 @@ Accepted result:
 D-019 run/job `33103464797` / `98626992003`: 0 lint errors / 104 warnings; 65 files / 286 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `43d7ebf749ca3924fcebe9fe8cd85d7351e5354a`; validated tree `b8575e6c80a0d43109c25a307dc0faa183245262` exactly equals squash-integrated `develop@d5b2cc5fb150777f12ece38bdd02abcada2974f7` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #14 — Dashboard receipts-today card
-**Status:** `DEFERRED / ON HOLD — OPERATOR DECISION`
+**Status:** `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`
 
-The operator decided not to add the daily-receipts KPI in isolation because payments/signals do not necessarily occur every day and the card's recurring Dashboard value is not yet established. No executable change was made. Revisit #14 only as part of a broader Dashboard review unless the operator explicitly reauthorizes it sooner.
+The operator initially deferred the isolated daily-receipts KPI because payments/signals do not necessarily occur every day and the card's recurring Dashboard value was not established. After the full Dashboard/Reports audit, D-035 absorbs the useful intent into `Recebimentos este mês` with optional compact today context. Do not implement #14 standalone.
 
 #### Early-use change #15 — future occurrence-date confirmation
 **Status:** `DONE / INTEGRATED — PR #111`
@@ -303,7 +303,84 @@ Accepted result:
 
 D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
 
-No later bounded early-use queue item is currently authorized. Change #14 remains deferred pending a broader Dashboard review.
+### D-035 — Dashboard + Reports core redesign
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-02 CURRENT`
+
+Focused product contract: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
+
+Initiative governance:
+
+1. This sequence is independent from the historical numbered early-use queue; do not call it #16.
+2. Only the single `DR-*` item named by `STATUS.md -> NEXT_ACTION` is executable.
+3. Every executable item verifies current behavior first, uses an isolated branch, receives proportionate focused tests and requires D-019 before integration.
+4. Close and document one item, promote exactly the next item, then stop.
+5. The initiative is read-model/presentation/navigation oriented. It does not authorize a database/schema migration, new financial-accounting semantics, transaction mutation path, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
+6. Existing D-014 occurrence, reversal-zero-effect, D-015 FIFO aging and D-034 `FinancialReport` semantics remain authoritative.
+7. Current-position Dashboard metrics use an as-of-today cutoff so later future occurrence dates do not affect current debt/aging before they occur.
+
+#### DR-01 — product contract and canonical documentation
+**Status:** `DONE / DOCUMENTATION — D-035`
+
+Accepted result:
+
+- Dashboard mission and Reports analytical boundary are explicit;
+- target KPI, attention, aging, recent-registration and quick-action semantics are defined;
+- Reports target refinements and Dashboard-to-Reports handoff are defined;
+- acceptance criteria and ordered `DR-*` execution are documented;
+- isolated #14 is absorbed/superseded rather than resurrected.
+
+#### DR-02 — canonical Dashboard read-model
+**Status:** `CURRENT / AUTHORIZED`
+
+Scope:
+
+- verify current Dashboard hooks/query invalidation and accepted domain helpers;
+- introduce one bounded read-only Dashboard projection;
+- centralize month-to-today sales/receipts/order/item context;
+- centralize as-of-today open debt, open-reseller count, critical amount/count/oldest age;
+- centralize accepted FIFO aging buckets and one-reseller-per-row attention data;
+- centralize recent effective registrations;
+- exclude valid future occurrences later than the operator's current local day from current-position debt/aging until their occurrence date;
+- reuse `FinancialReport` and existing transaction/FIFO helpers where semantics match;
+- add focused domain tests;
+- do **not** perform the DR-03 visual KPI redesign or any later item.
+
+No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized.
+
+#### DR-03 — primary Dashboard KPI row
+**Status:** `QUEUED / NOT CURRENT`
+
+Target: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`, using DR-02 prepared data; remove misleading `tempo real` wording and preserve responsive/loading/empty semantics.
+
+#### DR-04 — `Precisa de atenção` action center
+**Status:** `QUEUED / NOT CURRENT`
+
+Unify critical/attention presentation into one reseller-per-row action center with deterministic severity/age/value ordering and existing reseller-detail navigation.
+
+#### DR-05 — compact carteira aging
+**Status:** `QUEUED / NOT CURRENT`
+
+Replace the large default donut with compact exact-value + percentage aging context using the same DR-02 buckets.
+
+#### DR-06 — recent registrations + quick actions
+**Status:** `QUEUED / NOT CURRENT`
+
+Add compact recent effective registration context plus existing-route `Pedido` / `Pagamento` / `Sinal` quick actions.
+
+#### DR-07 — remove Dashboard Performance block + contextual Reports handoff
+**Status:** `QUEUED / NOT CURRENT`
+
+Remove the current Dashboard analytical Performance surface only after the operational replacements exist; add reproducible contextual navigation to Reports so useful analysis is not silently lost.
+
+#### DR-08 — Reports analytical refinement
+**Status:** `QUEUED / NOT CURRENT`
+
+Refine primary financial KPIs/comparison clarity, add bounded product/reseller search/sort/filter controls and re-home Pareto/concentration/open-balance analytics on canonical selected-period `FinancialReport` semantics.
+
+#### DR-09 — final Dashboard/Reports UX and efficiency acceptance
+**Status:** `QUEUED / NOT CURRENT`
+
+Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link and performance acceptance. Fix only evidence-backed defects found by that pass.
 
 ### P10-S3-I2-I4 — Legacy real-data migration
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
@@ -313,4 +390,4 @@ No later bounded early-use queue item is currently authorized. Change #14 remain
 
 ## Current NEXT_ACTION
 
-**No new bounded early-use queue item is currently authorized. Continue controlled clean-start early-use observation and wait for explicit operator instruction before starting another change. Change #14 remains `DEFERRED / ON HOLD` pending a broader Dashboard review unless explicitly reauthorized. Do not invent or start a #16. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
+**Execute only D-035 `DR-02 — canonical Dashboard read-model`. Verify the current Dashboard query/invalidation and existing domain helpers, then implement the bounded read-only projection defined by `docs/V2/DASHBOARD_REPORTS_SPEC.md`. Do not begin DR-03 or later work in the same task. Current-position calculations must be as-of the operator's current local day and exclude later future occurrences until they occur. Reuse accepted accounting/FIFO/reporting semantics; no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-03 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.

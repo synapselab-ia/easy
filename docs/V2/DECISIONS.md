@@ -1,6 +1,6 @@
 # Easy V2 — Decision Ledger
 
-**Updated:** 2026-08-26
+**Updated:** 2026-08-27
 
 Only accepted decisions belong here. Newer decisions may refine/supersede older sequencing while preserving historical evidence.
 
@@ -216,6 +216,40 @@ PR #85 feature head `0ad69e0a8e8eeb9e92c56cb39ec4b8489bb97fd1` passed D-019 on G
 The validated merge-ref tree was `124767ee7afa23c0c07e7215513fa5b90d8177a5`. PR #85 was squash-integrated into `develop` as `970cceaff9ce359f0ecb559648e38ab6cc7e1bd3`, whose tree is exactly `124767ee7afa23c0c07e7215513fa5b90d8177a5`. Exact tree equivalence: PASS.
 
 The post-integration D-034 canonical closure is documentation-only.
+
+## D-035 — Dashboard + Reports form one core decision system with separate operational/analytical roles
+**Status:** ACCEPTED / PRODUCT CONTRACT AUTHORIZED  
+**Date:** 2026-08-27
+
+### Trigger
+
+After the early-use usability queue closed, the operator requested a full efficiency audit of the existing Dashboard and then explicitly accepted a second-pass redesign direction treating Dashboard and Reports as the heart of the business-management experience.
+
+### Accepted contract
+
+1. **Dashboard mission.** In roughly 10 seconds, the operator should understand current business position, recent activity, aged-risk exceptions and the next useful action.
+2. **Reports mission.** Period-controlled comparison, trend and product/category/reseller investigation belong in the dedicated Reports workspace, with PDF parity retained.
+3. **No #16.** This is a new `DR-*` initiative, not an extension of the historical numbered early-use queue.
+4. **Primary Dashboard KPIs.** Target top-level indicators are `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto` and `Crítico > 30 dias`; daily values may be compact secondary context rather than permanent standalone cards.
+5. **As-of-today position.** Current open debt and aging are reconstructed only through the end of the operator's current local day. Legitimate future `occurredAt` values later than today remain valid under D-014/#15 but do not affect current-position KPIs or aging before their occurrence date.
+6. **Aging semantics.** D-015 FIFO allocation and current thresholds remain unchanged: 0–6d recent, 7–30d attention, >30d critical.
+7. **Action center.** `Precisa de atenção` uses one reseller per row. Any critical amount makes the reseller critical; otherwise attention applies only when attention-aged debt exists. Ordering is deterministic: severity, oldest determining occurrence, alert amount, name.
+8. **Compact aging.** Exact amount + percentage replaces the large donut as the target default presentation; the action center carries the operational priority.
+9. **Recent registrations.** A small effective `createdAt`-ordered feed may provide confidence in recently registered orders/payments/signals while keeping `occurredAt` visible when needed; it is not a replacement for audit history.
+10. **Quick actions.** Routine order/payment/signal actions reuse the existing transaction route/form rather than creating a parallel write flow.
+11. **Dashboard analytical removal.** The configurable 90/180/360 performance block, concentration card, large Pareto chart, current top-debtor card and `Ranking de Inadimplência` are not target permanent Dashboard content.
+12. **Analytics are re-homed, not discarded.** Applicable Pareto/concentration/open-balance analysis moves to Reports and must derive from selected-period `FinancialReport` reseller data rather than a competing Dashboard-only calculation path.
+13. **Reports refinement.** Target summary emphasis becomes `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`; orders/items become supporting sales context. Previous-period dates should be made explicit when practical, and product/reseller views may gain bounded search/sort/filter controls.
+14. **Shared read model first.** Before the major visual redesign, create one coherent read-only Dashboard projection so components do not repeatedly read/reduce the same transactions or implement separate financial interpretations.
+15. **Language.** Use `Carteira em aberto` for positive current receivable position; avoid equating every positive balance with `inadimplência`; remove `atualizada em tempo real` unless real-time behavior is actually implemented and verified.
+16. **One item at a time.** The accepted sequence is `DR-01…DR-09` in `docs/V2/DASHBOARD_REPORTS_SPEC.md`; only `STATUS.md -> NEXT_ACTION` is executable.
+17. **Boundaries retained.** No database/schema, financial mutation/accounting, Auth/RLS/recovery weakening, automatic Vercel deployment, `main` publication, legacy import or definitive cutover is implied.
+
+### Sequencing effect
+
+`DR-01` is the product-contract/documentation closure. After it integrates, `DR-02 — canonical Dashboard read-model` becomes the sole current authorized item. The former isolated early-use #14 receipts-today idea is absorbed/superseded by D-035 and must not be implemented standalone.
+
+Detailed target behavior and acceptance criteria: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
 ---
 

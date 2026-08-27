@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — D-035 Dashboard + Reports core redesign authorized
+
+After the numbered early-use usability queue closed, the operator requested a full efficiency audit of the existing Dashboard and then explicitly accepted a second-pass direction that treats Dashboard and Reports as the core business-management surfaces of Easy.
+
+D-035 establishes a product boundary rather than an accounting rewrite: Dashboard becomes the glance/action surface for month-to-today flow, as-of-today receivable position, aged-risk attention, compact aging context, recent effective registrations and routine quick actions; Reports remains the configurable analytical workspace for selected-period comparison, timeline, product/category/reseller investigation, Pareto/concentration and PDF.
+
+The target Dashboard top row is `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`. Current-position debt/aging is explicitly reconstructed only through the operator's current local day, so a valid future `occurredAt` later than today does not contaminate the current position before that date occurs. D-015 FIFO thresholds remain unchanged. The target attention center has one reseller per row and deterministic severity/age/value priority.
+
+The current large Dashboard Performance/Pareto/current-top-debtor/open-balance-ranking surface is no longer target permanent Dashboard content. Applicable analytics will be re-homed in Reports on selected-period canonical `FinancialReport` semantics rather than discarded or maintained as a competing Dashboard-only calculation path. The former isolated #14 `Recebimentos hoje` idea is superseded/absorbed: receipts remain in the target Dashboard as month-to-today with optional compact today context.
+
+`docs/V2/DASHBOARD_REPORTS_SPEC.md` records the complete accepted target, UX criteria and `DR-01…DR-09` sequence. `DR-01` is this documentation/product-contract closure; after integration, `DR-02 — canonical Dashboard read-model` is the sole next executable item. No #16 is created. No runtime, database/schema, Supabase/RPC/Auth/RLS, recovery, automatic Vercel deployment or `main` publication change is part of DR-01.
+
+---
+
 ## 2026-08-27 — change #15 future occurrence-date confirmation integrated
 
 Early-use change #15 verified that new transaction entry already preserves D-014 financial occurrence time separately from registration time and allows a valid future occurrence date. PR #111 adds a bounded form-only confirmation so an accidental future date is less likely to be committed without explicit operator intent.
