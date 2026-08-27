@@ -38,6 +38,25 @@ vi.mock('../components/ui/select', () => ({
     SelectValue: () => null,
 }));
 
+vi.mock('../components/ui/SearchableSelect', () => ({
+    SearchableSelect: ({ id, value, onValueChange, options, disabled }: any) => (
+        <select
+            id={id}
+            data-testid="mock-searchable-select"
+            value={value}
+            disabled={disabled}
+            onChange={(event) => onValueChange(event.target.value)}
+        >
+            <option value="" />
+            {options.map((option: any) => (
+                <option key={`${option.value}-${option.label}`} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    ),
+}));
+
 function renderPage(initialEntry: string) {
     const queryClient = new QueryClient();
     return render(
@@ -63,15 +82,15 @@ describe('TransactionsPage reseller context', () => {
         renderPage('/transactions?resellerId=1');
 
         await waitFor(() => expect(screen.getByText('Mariazinha')).toBeInTheDocument());
-        const selects = screen.getAllByTestId('mock-select');
-        expect((selects[0] as HTMLSelectElement).value).toBe('1');
+        const resellerSelect = screen.getByTestId('mock-searchable-select');
+        expect((resellerSelect as HTMLSelectElement).value).toBe('1');
     });
 
     it('keeps standalone transaction entry unselected when reseller context is malformed', async () => {
         renderPage('/transactions?resellerId=not-a-number');
 
         await waitFor(() => expect(screen.getByText('Mariazinha')).toBeInTheDocument());
-        const selects = screen.getAllByTestId('mock-select');
-        expect((selects[0] as HTMLSelectElement).value).toBe('');
+        const resellerSelect = screen.getByTestId('mock-searchable-select');
+        expect((resellerSelect as HTMLSelectElement).value).toBe('');
     });
 });
