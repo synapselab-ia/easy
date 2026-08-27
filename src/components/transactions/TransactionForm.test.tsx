@@ -81,11 +81,13 @@ describe('TransactionForm', () => {
         expect(screen.getByText(/Item do Catálogo/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Quantidade/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Valor Unitário/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Observação/i)).toBeInTheDocument();
         expect(screen.queryByLabelText(/Valor para Abatimento/i)).not.toBeInTheDocument();
 
         fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'payment' } });
 
         expect(await screen.findByText("Valor para Abatimento (R$)")).toBeInTheDocument();
+        expect(screen.getByLabelText(/Observação/i)).toBeInTheDocument();
         expect(screen.queryByText("Item do Catálogo")).not.toBeInTheDocument();
         expect(screen.queryByLabelText(/Quantidade/i)).not.toBeInTheDocument();
     });
@@ -173,7 +175,7 @@ describe('TransactionForm', () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
         await waitFor(() => expect(screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i)).toBeInTheDocument());
-        expect(screen.queryByText(/Perfume Arquivado/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('Perfume Arquivado')).not.toBeInTheDocument();
     });
 
     it('should show current category and optional subcategory in the new-order item option', async () => {
@@ -221,6 +223,32 @@ describe('TransactionForm', () => {
         expect(totalInput.value).toBe('R$ 450,00');
     });
 
+    it.each(['payment', 'signal'] as const)('should persist an optional observation for %s creation', async (movementType) => {
+        const onSubmitSuccess = vi.fn();
+        render(
+            <TransactionForm onSubmitSuccess={onSubmitSuccess} initialType={movementType} />,
+            { wrapper },
+        );
+
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        const resellerSelect = (await screen.findAllByTestId('mock-searchable-select'))[0];
+        const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
+        fireEvent.change(resellerSelect, { target: { value: resellerOption.value } });
+        fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '125.50' } });
+        fireEvent.change(screen.getByLabelText(/Observação/i), { target: { value: '  PIX referente ao pedido das canecas  ' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Lançar Movimentação' }));
+
+        await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledOnce());
+        const transactions = await db.transactions.toArray();
+        expect(transactions).toHaveLength(1);
+        expect(transactions[0]).toMatchObject({
+            type: movementType,
+            totalPrice: 125.5,
+            observation: 'PIX referente ao pedido das canecas',
+        });
+        expect(transactions[0].itemId).toBeUndefined();
+    });
+
     it('should clear entered data on cancel and restore the requested initial type', async () => {
         const onCancel = vi.fn();
         render(
@@ -237,6 +265,7 @@ describe('TransactionForm', () => {
 
         const paymentValueInput = screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement;
         fireEvent.change(paymentValueInput, { target: { value: '99.50' } });
+        fireEvent.change(screen.getByLabelText(/Observação/i), { target: { value: 'Teste' } });
 
         fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
@@ -246,6 +275,7 @@ describe('TransactionForm', () => {
             expect((resetSearchableSelects[0] as HTMLSelectElement).value).toBe('');
             expect((screen.getByTestId('mock-select') as HTMLSelectElement).value).toBe('signal');
             expect((screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement).value).toBe('');
+            expect((screen.getByLabelText(/Observação/i) as HTMLInputElement).value).toBe('');
         });
     });
 
