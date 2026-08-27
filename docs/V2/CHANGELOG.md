@@ -2,6 +2,18 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — change #15 future occurrence-date confirmation integrated
+
+Early-use change #15 verified that new transaction entry already preserves D-014 financial occurrence time separately from registration time and allows a valid future occurrence date. PR #111 adds a bounded form-only confirmation so an accidental future date is less likely to be committed without explicit operator intent.
+
+Same-day and past dates keep the existing submit path. When the selected occurrence date is later than the operator's local current date, the form opens `Data de ocorrência no futuro` before mutation. `Voltar e corrigir` closes the warning without writing; `Cadastrar mesmo assim` proceeds through the same transaction-creation path and persists exactly the selected future `occurredAt`. No automatic correction or prohibition was introduced.
+
+Focused occurrence-form coverage now has 3 passing tests, including proof that no transaction exists before future-date confirmation and that the explicitly confirmed year/month/day is preserved. Final D-019 on PR #111: head `6b0e86139265fdf06f482ae2fdb17d275212a79a`, merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`, run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`.
+
+PR #111 was squash-integrated into `develop` as `bee3e2cee2852c9bf0683fe5d564b34cef569c8a`; its Git tree is also `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, transaction-accounting, correction/reversal/history, recovery, automatic Vercel deployment or `main` publication change occurred. Change #14 remains deferred/on hold pending a broader Dashboard review, and no later bounded early-use queue item is authorized; no #16 was created.
+
+---
+
 ## 2026-08-27 — change #13 product-level financial report analytics integrated
 
 Early-use change #13 verified that the existing order transaction snapshots already contain the immutable product facts needed to answer what sold without introducing a new persistence or accounting contract. PR #108 extends the canonical read-only `FinancialReport` with `products` aggregation derived from effective occurrence-time order snapshots.

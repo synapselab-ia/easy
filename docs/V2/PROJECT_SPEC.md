@@ -181,7 +181,7 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
+D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, early-use change #15 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active. Change #14 remains **deferred / on hold by operator decision** pending a broader Dashboard review.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
@@ -203,18 +203,8 @@ Early-use change #13 extends the existing canonical read-only `FinancialReport` 
 
 Early-use change #14, the proposed Dashboard receipts-today KPI, is **deferred / on hold by operator decision**. The operator determined that payments/signals do not necessarily occur daily and that adding one isolated daily-receipts card before a broader Dashboard review may not provide enough recurring operational value. No executable change was made; #14 remains available for a later Dashboard redesign/review.
 
-The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
+Early-use change #15 adds a non-blocking intent check to new transaction entry when the selected financial occurrence date is later than the operator's local current date. Same-day/past entries remain unchanged; a future date prompts `Voltar e corrigir` or `Cadastrar mesmo assim`, and explicit confirmation persists exactly the selected future `occurredAt`. The UI never auto-corrects or prohibits the date, preserving D-014. No database/schema, transaction-accounting, Supabase/RPC/Auth/RLS, recovery or deployment contract changed.
 
-For each queue item:
-
-- verify the current evidence before changing code;
-- preserve the accepted financial/history/security/recovery architecture unless that item's scope explicitly requires otherwise;
-- close as `NO_CHANGE / DEFERRED` instead of forcing a change when the issue is absent or safe implementation would broaden scope;
-- use an isolated branch and D-019 for executable integration;
-- after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
-
-Current item: **early-use change #15 — future occurrence-date confirmation**.
-
-Change #15 is limited to a non-blocking warning/confirmation in new transaction entry when the selected financial occurrence date is in the future relative to the operator's local current date. Explicit confirmation must preserve the entered occurrence date under D-014; the application must not silently correct it or prohibit legitimate future dates. It does not authorize database/schema, transaction-accounting, Supabase/RPC/Auth/RLS, recovery or deployment changes.
+The operator-authorized bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md` has no later current item after #15. Do not invent a #16. Further executable work requires a new explicit operator instruction. The strict one-item-at-a-time rule remains in force for any later authorized queue work.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.

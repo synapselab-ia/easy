@@ -448,7 +448,48 @@ No database/schema migration, Supabase/RPC/Auth/RLS change, transaction mutation
 
 PR #108 was squash-integrated into `develop` as `d5b2cc5fb150777f12ece38bdd02abcada2974f7`. Git object inspection confirms the integrated commit tree is `b8575e6c80a0d43109c25a307dc0faa183245262`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
 
-The post-integration change #13 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched. Change #14 is promoted only as the next authorized item and was not implemented here.
+The post-integration change #13 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched. Change #14 was promoted next but later deferred by operator decision before implementation.
+
+## P10-S3-I2-I3-D early-use change #15 — future occurrence-date confirmation — PASS / INTEGRATED
+
+### Scope review — FORM / D-014 INTENT CHECK ONLY
+
+Verification confirmed the existing new-transaction form already:
+
+- defaults `occurrenceDate` from the operator's local date;
+- parses the selected date into a distinct `occurredAt` value;
+- keeps registration/audit time separate;
+- accepts a valid future occurrence date without changing the transaction contract.
+
+PR #111 changes only `src/components/transactions/TransactionForm.tsx` and `src/components/transactions/TransactionForm.occurrence.test.tsx`. The form now checks whether a valid selected occurrence date is later than the operator's local current date before mutation. A responsive confirmation offers `Voltar e corrigir` or `Cadastrar mesmo assim`.
+
+No database/schema migration, Supabase/RPC/Auth/RLS, transaction-accounting, correction/reversal/history, recovery or deployment behavior changed. The existing transaction creation path still receives the same explicit `occurredAt` after confirmation.
+
+### Focused coverage — PASS
+
+`TransactionForm.occurrence.test.tsx` now has 3 passing tests and verifies:
+
+1. the occurrence date still defaults to today and remains editable;
+2. a selected non-future financial date persists independently from registration time without a confirmation dialog;
+3. a future date creates no transaction before confirmation, `Voltar e corrigir` performs no write, and `Cadastrar mesmo assim` persists exactly the selected future year/month/day.
+
+### Final D-019 — PASS
+
+- feature head: `6b0e86139265fdf06f482ae2fdb17d275212a79a`;
+- exact GitHub-generated merge ref checked out by Actions: `650a28b4f53f484cec79bf4b80f4842364e3ee66`;
+- validated tree: `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`;
+- run/job: `33108818780` / `98645846558`;
+- ESLint: **0 errors / 105 warnings**;
+- Vitest: **65 files / 287 tests PASS**;
+- focused occurrence-form tests: **3/3 PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No failed D-019 iteration was waived. The workflow also emitted the already tracked non-blocking mocked-select/React `act(...)`, lint-warning and package-audit debt; none became an objective gate failure.
+
+PR #111 was squash-integrated into `develop` as `bee3e2cee2852c9bf0683fe5d564b34cef569c8a`. Git object inspection confirms the integrated commit tree is `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #15 closure is documentation-only. Change #14 remains deferred/on hold and no later bounded early-use queue item is authorized.
 
 ## Known non-blocking debt
 
@@ -506,6 +547,10 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #13 product-report D-019: **PASS**.
 - PR #108 integrated-tree equivalence: **PASS**.
 - early-use change #13 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #14: **CURRENT / AUTHORIZED / NOT STARTED**.
+- early-use change #14: **DEFERRED / ON HOLD — OPERATOR DECISION / NO EXECUTABLE DELTA**.
+- early-use change #15 future-occurrence confirmation D-019: **PASS**.
+- PR #111 integrated-tree equivalence: **PASS**.
+- early-use change #15 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- bounded early-use queue after #15: **NO NEW ITEM AUTHORIZED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
