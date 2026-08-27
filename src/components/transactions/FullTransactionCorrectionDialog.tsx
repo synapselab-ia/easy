@@ -10,6 +10,7 @@ import { ResponsiveDialog } from '../ui/ResponsiveDialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { SearchableSelect } from '../ui/SearchableSelect';
 import { toast } from 'sonner';
 
 interface Props {
@@ -63,6 +64,22 @@ export function FullTransactionCorrectionDialog({ transaction, open, onOpenChang
         if (transaction.type === 'order' && item.id === transaction.itemId) return true;
         return item.categoryId !== undefined && activeCategoryIds.has(item.categoryId);
     }), [items, transaction.type, transaction.itemId, activeCategoryIds]);
+    const resellerOptions = useMemo(() => [
+        { value: '', label: 'Selecione...' },
+        ...activeResellers.map(reseller => ({
+            value: String(reseller.id),
+            label: reseller.name,
+            searchText: reseller.name,
+        })),
+    ], [activeResellers]);
+    const itemOptions = useMemo(() => [
+        { value: '', label: 'Selecione...' },
+        ...orderItems.map(item => ({
+            value: String(item.id),
+            label: item.name,
+            searchText: item.name,
+        })),
+    ], [orderItems]);
 
     const [reason, setReason] = useState('');
     const [resellerId, setResellerId] = useState('');
@@ -175,10 +192,15 @@ export function FullTransactionCorrectionDialog({ transaction, open, onOpenChang
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-2">
                         <Label htmlFor="correctionReseller">Revendedor da substituição</Label>
-                        <select id="correctionReseller" value={resellerId} onChange={event => setResellerId(event.target.value)} className={selectClass}>
-                            <option value="">Selecione...</option>
-                            {activeResellers.map(reseller => <option key={reseller.id} value={reseller.id}>{reseller.name}</option>)}
-                        </select>
+                        <SearchableSelect
+                            id="correctionReseller"
+                            value={resellerId}
+                            onValueChange={setResellerId}
+                            options={resellerOptions}
+                            placeholder="Selecione..."
+                            searchPlaceholder="Pesquisar revendedor..."
+                            emptyMessage="Nenhum revendedor encontrado."
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="correctionType">Tipo da substituição</Label>
@@ -200,10 +222,15 @@ export function FullTransactionCorrectionDialog({ transaction, open, onOpenChang
                     </div>}
                     <div className="space-y-2">
                         <Label htmlFor="correctionItem">Item da substituição</Label>
-                        <select id="correctionItem" value={itemId} onChange={event => changeItem(event.target.value)} className={selectClass}>
-                            <option value="">Selecione...</option>
-                            {orderItems.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-                        </select>
+                        <SearchableSelect
+                            id="correctionItem"
+                            value={itemId}
+                            onValueChange={changeItem}
+                            options={itemOptions}
+                            placeholder="Selecione..."
+                            searchPlaceholder="Pesquisar item..."
+                            emptyMessage="Nenhum item encontrado."
+                        />
                         {!selectedItem && !originalItemUnavailable && <p className="text-sm text-red-500">Selecione um item ativo e classificado.</p>}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
