@@ -230,150 +230,148 @@ export function TransactionForm({
     };
 
     return (
-        <>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="resellerId">Revendedor</Label>
-                        <SearchableSelect
-                            id="resellerId"
-                            value={resellerId}
-                            onValueChange={setResellerId}
-                            options={resellerOptions}
-                            placeholder="Selecione..."
-                            searchPlaceholder="Pesquisar revendedor..."
-                            emptyMessage="Nenhum revendedor encontrado."
-                        />
-                        {activeResellers.length === 0 && (
-                            <p className="text-sm text-muted-foreground">Nenhum revendedor ativo disponível para novos lançamentos.</p>
-                        )}
-                        {errors.resellerId && <p className="text-red-500 text-sm">{errors.resellerId}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="type">Tipo de Movimentação</Label>
-                        <Select value={type} onValueChange={(val) => setType(val as TransactionType || "order")}>
-                            <SelectTrigger id="type">
-                                <SelectValue>
-                                    {type === 'order' ? 'Pedido' : type === 'payment' ? 'Pagamento' : 'Sinal'}
-                                </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="order">Pedido</SelectItem>
-                                <SelectItem value="payment">Pagamento</SelectItem>
-                                <SelectItem value="signal">Sinal</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="occurrenceDate">Data da ocorrência</Label>
-                        <Input
-                            id="occurrenceDate"
-                            type="date"
-                            value={occurrenceDate}
-                            onChange={(event) => setOccurrenceDate(event.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">Data financeira da movimentação. O momento de registro é salvo automaticamente.</p>
-                        {errors.occurrenceDate && <p className="text-red-500 text-sm">{errors.occurrenceDate}</p>}
-                    </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="resellerId">Revendedor</Label>
+                    <SearchableSelect
+                        id="resellerId"
+                        value={resellerId}
+                        onValueChange={setResellerId}
+                        options={resellerOptions}
+                        placeholder="Selecione..."
+                        searchPlaceholder="Pesquisar revendedor..."
+                        emptyMessage="Nenhum revendedor encontrado."
+                    />
+                    {activeResellers.length === 0 && (
+                        <p className="text-sm text-muted-foreground">Nenhum revendedor ativo disponível para novos lançamentos.</p>
+                    )}
+                    {errors.resellerId && <p className="text-red-500 text-sm">{errors.resellerId}</p>}
                 </div>
 
-                {type === "order" ? (
-                    <div className="space-y-4 pt-2 border-t mt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="itemId">Item do Catálogo</Label>
-                                <SearchableSelect
-                                    id="itemId"
-                                    value={itemId}
-                                    onValueChange={setItemId}
-                                    options={itemOptions}
-                                    placeholder="Selecione o item..."
-                                    searchPlaceholder="Pesquisar item..."
-                                    emptyMessage="Nenhum item encontrado."
-                                />
-                                {activeItems.length === 0 && (
-                                    <p className="text-sm text-muted-foreground">Nenhum item ativo disponível para novos pedidos.</p>
-                                )}
-                                {errors.itemId && <p className="text-red-500 text-sm">{errors.itemId}</p>}
-                            </div>
+                <div className="space-y-2">
+                    <Label htmlFor="type">Tipo de Movimentação</Label>
+                    <Select value={type} onValueChange={(val) => setType(val as TransactionType || "order")}>
+                        <SelectTrigger id="type">
+                            <SelectValue>
+                                {type === 'order' ? 'Pedido' : type === 'payment' ? 'Pagamento' : 'Sinal'}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="order">Pedido</SelectItem>
+                            <SelectItem value="payment">Pagamento</SelectItem>
+                            <SelectItem value="signal">Sinal</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="quantity">Quantidade</Label>
-                                <Input
-                                    id="quantity"
-                                    type="number"
-                                    min="1"
-                                    value={quantity}
-                                    onChange={(e) => setQuantity(e.target.value)}
-                                />
-                                {errors.quantity && <p className="text-red-500 text-sm">{errors.quantity}</p>}
-                            </div>
+                <div className="space-y-2">
+                    <Label htmlFor="occurrenceDate">Data da ocorrência</Label>
+                    <Input
+                        id="occurrenceDate"
+                        type="date"
+                        value={occurrenceDate}
+                        onChange={(event) => setOccurrenceDate(event.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Data financeira da movimentação. O momento de registro é salvo automaticamente.</p>
+                    {errors.occurrenceDate && <p className="text-red-500 text-sm">{errors.occurrenceDate}</p>}
+                </div>
+            </div>
+
+            {type === "order" ? (
+                <div className="space-y-4 pt-2 border-t mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="itemId">Item do Catálogo</Label>
+                            <SearchableSelect
+                                id="itemId"
+                                value={itemId}
+                                onValueChange={setItemId}
+                                options={itemOptions}
+                                placeholder="Selecione o item..."
+                                searchPlaceholder="Pesquisar item..."
+                                emptyMessage="Nenhum item encontrado."
+                            />
+                            {activeItems.length === 0 && (
+                                <p className="text-sm text-muted-foreground">Nenhum item ativo disponível para novos pedidos.</p>
+                            )}
+                            {errors.itemId && <p className="text-red-500 text-sm">{errors.itemId}</p>}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="unitPrice">Valor Unitário (R$)</Label>
-                                <Input
-                                    id="unitPrice"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={unitPrice}
-                                    onChange={(e) => setUnitPrice(e.target.value)}
-                                />
-                                {errors.unitPrice && <p className="text-red-500 text-sm">{errors.unitPrice}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="totalPrice">Valor Total</Label>
-                                <Input
-                                    id="totalPrice"
-                                    disabled
-                                    value={formatMoney(orderTotalPrice)}
-                                    className="bg-muted"
-                                />
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="quantity">Quantidade</Label>
+                            <Input
+                                id="quantity"
+                                type="number"
+                                min="1"
+                                value={quantity}
+                                onChange={(e) => setQuantity(e.target.value)}
+                            />
+                            {errors.quantity && <p className="text-red-500 text-sm">{errors.quantity}</p>}
                         </div>
                     </div>
-                ) : (
-                    <div className="space-y-4 pt-2 border-t mt-4">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="paymentValue">Valor para Abatimento (R$)</Label>
+                            <Label htmlFor="unitPrice">Valor Unitário (R$)</Label>
                             <Input
-                                id="paymentValue"
+                                id="unitPrice"
                                 type="number"
                                 step="0.01"
                                 min="0"
-                                value={paymentValue}
-                                onChange={(e) => setPaymentValue(e.target.value)}
-                                placeholder="0.00"
+                                value={unitPrice}
+                                onChange={(e) => setUnitPrice(e.target.value)}
                             />
-                            {errors.paymentValue && <p className="text-red-500 text-sm">{errors.paymentValue}</p>}
+                            {errors.unitPrice && <p className="text-red-500 text-sm">{errors.unitPrice}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="totalPrice">Valor Total</Label>
+                            <Input
+                                id="totalPrice"
+                                disabled
+                                value={formatMoney(orderTotalPrice)}
+                                className="bg-muted"
+                            />
                         </div>
                     </div>
-                )}
-
-                <div className="space-y-2">
-                    <Label htmlFor="observation">Observação</Label>
-                    <Input
-                        id="observation"
-                        value={observation}
-                        onChange={(e) => setObservation(e.target.value)}
-                        placeholder={type === "order" ? "Ex: Nome na placa" : "Ex.: referência ou contexto da movimentação"}
-                    />
                 </div>
-
-                <div className="flex justify-end space-x-2 pt-4">
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit" disabled={isPending}>
-                        {isPending ? "Lançando..." : "Lançar Movimentação"}
-                    </Button>
+            ) : (
+                <div className="space-y-4 pt-2 border-t mt-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="paymentValue">Valor para Abatimento (R$)</Label>
+                        <Input
+                            id="paymentValue"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={paymentValue}
+                            onChange={(e) => setPaymentValue(e.target.value)}
+                            placeholder="0.00"
+                        />
+                        {errors.paymentValue && <p className="text-red-500 text-sm">{errors.paymentValue}</p>}
+                    </div>
                 </div>
-            </form>
+            )}
+
+            <div className="space-y-2">
+                <Label htmlFor="observation">Observação</Label>
+                <Input
+                    id="observation"
+                    value={observation}
+                    onChange={(e) => setObservation(e.target.value)}
+                    placeholder={type === "order" ? "Ex: Nome na placa" : "Ex.: referência ou contexto da movimentação"}
+                />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending}>
+                    Cancelar
+                </Button>
+                <Button type="submit" disabled={isPending}>
+                    {isPending ? "Lançando..." : "Lançar Movimentação"}
+                </Button>
+            </div>
 
             <ResponsiveDialog
                 open={futureDateConfirmationOpen}
@@ -404,6 +402,6 @@ export function TransactionForm({
                     A movimentação está com data de ocorrência em {formatOccurrenceDate(occurrenceDate)}. Se isso for intencional, confirme para manter exatamente essa data financeira.
                 </p>
             </ResponsiveDialog>
-        </>
+        </form>
     );
 }
