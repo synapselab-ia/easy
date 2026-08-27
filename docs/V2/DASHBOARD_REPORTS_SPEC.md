@@ -425,15 +425,26 @@ Validation/integration evidence: PR #118; feature head `f035b6be20c5ea3dfbcbe912
 
 ### DR-05 — Compact carteira aging
 
-**Status:** CURRENT / AUTHORIZED.
+**Status:** DONE / INTEGRATED — PR #120.
 
-Replace the large donut/default aging presentation with compact exact-value + percentage context consuming the prepared `DashboardSnapshot.agingBuckets`. Preserve accepted bucket semantics and total open-position context; do not reconstruct FIFO/accounting in the component and do not begin DR-06.
+- the large Recharts donut/default chart is removed from the operational Dashboard aging block;
+- `DashboardPage` hands the shared DR-02 `DashboardSnapshot.agingBuckets` and `openDebt.amount` directly to `DebtHealthAgingCard`;
+- the card preserves the prepared bucket order and displays exact pt-BR value plus prepared percentage for `Recente (0–6d)`, `Em atenção (7–30d)` and `Crítico (>30d)`;
+- presentation does not run FIFO, classify debt age or derive percentages; it only bounds the visual progress width while displaying the prepared percentage unchanged;
+- current total open position remains explicit;
+- zero debt has a business-meaningful empty state while the three zero buckets remain inspectable;
+- loading remains compact and the former chart/SVG is absent;
+- each bucket has accessible progressbar semantics with label, value and percentage;
+- DR-04 attention behavior and DR-07 Performance content remain unchanged;
+- DR-06 and later work were not bundled.
+
+Validation/integration evidence: PR #120; feature head `972ad8ae0285e654a5b356a55251807c35d72dd7`; merge ref `ea9997d379d1c9f30cf398574dfa28545f37e7c4`; D-019 run/job `33124288969` / `98698548321`; ESLint 0 errors / 105 warnings; Vitest 68 files / 299 tests PASS, including `DebtHealthAgingCard` 4/4 and `DashboardPage` 3/3; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `6848853b03148d78c79474d6415d9732ec4af8e5`; squash-integrated `develop@cccf11fece99179aa895964c8b743cff29ce9e0f`; exact tree equivalence PASS; no failed gate was waived.
 
 ### DR-06 — Recent registrations + quick actions
 
-**Status:** QUEUED / NOT CURRENT.
+**Status:** CURRENT / AUTHORIZED.
 
-Add recent effective registration context and reuse existing transaction-route intents for order/payment/signal quick actions.
+Add compact recent effective registration context using the prepared `DashboardSnapshot.recentRegistrations` plus page-level `+ Pedido`, `+ Pagamento` and `+ Sinal` actions that reuse the existing transaction route/type context. Preserve the established Dashboard hierarchy and do not create a second transaction form/write path or begin DR-07.
 
 ### DR-07 — Remove Dashboard Performance block + contextual Reports handoff
 

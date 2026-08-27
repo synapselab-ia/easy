@@ -304,7 +304,7 @@ Accepted result:
 D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
 
 ### D-035 — Dashboard + Reports core redesign
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-05 CURRENT`
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-06 CURRENT`
 
 Focused product contract: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
@@ -373,20 +373,32 @@ Accepted result:
 - each row is keyboard-accessible and navigates to existing reseller detail/history;
 - the first six priorities are shown compactly, with optional expansion;
 - empty state communicates no current attention/critical pendency;
-- duplicate alert lists were removed from `DebtHealthAgingCard`, but its donut/legend remain for DR-05;
+- duplicate alert lists were removed from `DebtHealthAgingCard`;
 - no DR-05/later scope was bundled.
 
 D-019 run/job `33121893821` / `98690519373`: 0 lint errors / 105 warnings; 67 files / 295 Vitest PASS including `AttentionCenter` 4/4 and `DashboardPage` 3/3; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `124fa0bd812250d3822aca1a6be46eb5400dba61`; validated tree `69905255e836492e8b610ea1ae0ef8bf66d0d070` exactly equals squash-integrated `develop@4bac76dd83c31016b692efb17531fbf3eddf5122` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-05 — compact carteira aging
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #120`
 
-Replace the large default donut with compact exact-value + percentage aging context consuming the prepared DR-02 aging buckets. Preserve total/open-position semantics, responsive/loading/empty/accessibility behavior and accepted FIFO thresholds; do not recalculate aging in the component and do not begin DR-06.
+Accepted result:
+
+- the large Recharts donut/default chart is removed from `DebtHealthAgingCard`;
+- the card consumes prepared `DashboardSnapshot.agingBuckets` plus `openDebt.amount` from the shared Dashboard snapshot;
+- the canonical bucket order/thresholds are preserved and each row exposes exact pt-BR value plus prepared percentage;
+- no FIFO, debt-age classification or percentage derivation runs in presentation code;
+- total open position remains explicit;
+- zero debt uses a business empty state while all three zero buckets remain visible;
+- loading is compact and accessible progressbar semantics expose bucket label/value/percentage;
+- DR-04 attention and DR-07 Performance content remain unchanged;
+- DR-06/later work was not bundled.
+
+D-019 run/job `33124288969` / `98698548321`: 0 lint errors / 105 warnings; 68 files / 299 Vitest PASS including `DebtHealthAgingCard` 4/4 and `DashboardPage` 3/3; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `ea9997d379d1c9f30cf398574dfa28545f37e7c4`; validated tree `6848853b03148d78c79474d6415d9732ec4af8e5` exactly equals squash-integrated `develop@cccf11fece99179aa895964c8b743cff29ce9e0f` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-06 — recent registrations + quick actions
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
-Add compact recent effective registration context plus existing-route `Pedido` / `Pagamento` / `Sinal` quick actions.
+Add compact recent effective registration context using prepared `DashboardSnapshot.recentRegistrations` plus page-level `Pedido` / `Pagamento` / `Sinal` quick actions through the existing transaction route/type context. Preserve the operational hierarchy and do not create a second transaction form/write path or begin DR-07.
 
 #### DR-07 — remove Dashboard Performance block + contextual Reports handoff
 **Status:** `QUEUED / NOT CURRENT`
@@ -411,4 +423,4 @@ Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link a
 
 ## Current NEXT_ACTION
 
-**Execute only D-035 `DR-05 — compact carteira aging`. Verify the integrated DR-04 action center, the current `DebtHealthAgingCard` donut/legend and the DR-02 `DashboardSnapshot.agingBuckets` contract, then replace the large default donut with compact aging context that exposes exact value plus percentage for `Recente (0–6d)`, `Em atenção (7–30d)` and `Crítico (>30d)` using prepared snapshot data. Preserve current total/open-position meaning, responsive/loading/empty/accessibility behavior and accepted pt-BR presentation. Do not rebuild FIFO/accounting or aging classification in the component, alter DR-04 attention behavior, begin DR-06 recent registrations/quick actions, or perform later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-06 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
+**Execute only D-035 `DR-06 — recent registrations + quick actions`. Verify the integrated DR-05 compact aging block, the DR-02 `DashboardSnapshot.recentRegistrations` contract, the existing transaction route/type/reseller context and the current Dashboard page header/layout. Add a compact `Últimos lançamentos registrados` block consuming prepared recent effective registrations in canonical `createdAt` order, distinguishing `Pedido`, `Pagamento` and `Sinal`, showing reseller/value and occurrence-date context when registration and financial dates differ or otherwise need disambiguation; keep reversed rows excluded through the prepared projection and navigate to reseller detail/history when feasible. Add compact page-level `+ Pedido`, `+ Pagamento`, `+ Sinal` actions by reusing the existing transaction route/type context; do not create a second form or write path. Preserve `KPIs -> atenção -> aging -> recent activity`, responsive/loading/empty/accessibility behavior, and do not alter DR-05 aging, remove Performance (DR-07), refine Reports or begin later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-07 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
