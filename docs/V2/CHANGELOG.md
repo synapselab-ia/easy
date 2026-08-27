@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — change #8 catalog classification context integrated
+
+Early-use change #8 verified that current category/optional-subcategory context was absent at the two authorized points of use: the item catalog and new-order item selection. PR #98 introduced a bounded current-catalog resolver and presentation changes only.
+
+The item catalog now shows current category plus optional subcategory on desktop and mobile. New-order item options show the same path alongside the existing price, and the selected item retains classification context. Legacy or unresolved current-catalog references render `Sem classificação` rather than receiving guessed classification. The item selector continues to search by item name only, so change #9 search/filter scope was not bundled.
+
+D-025/D-033 immutable transaction-time classification snapshots and order mutation/history semantics remain unchanged. No database/schema migration, Supabase/Auth/RLS, recovery or deployment behavior changed.
+
+Final D-019 on PR #98: head `66026aa340f3b9aba1e8692f11d51ee751a8778b`, merge ref `2d3ab8ba9ff0af179337eb7654b7bfddb5f5a24f`, run/job `33082398941` / `98552849392`: repository Critical QA PASS; 65 files / 276 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `01bef29624079f90a8b1b0089c183abc26f96149`.
+
+PR #98 was squash-integrated into `develop` as `2c9d67221e3365b9476a95947906a6f4c21ecc7f`; its Git tree is also `01bef29624079f90a8b1b0089c183abc26f96149`. Exact tree equivalence: PASS. No automatic Vercel deployment or `main` publication occurred. Change #8 is closed and change #9 is now the sole current authorized queue item.
+
+---
+
 ## 2026-08-27 — searchable entity selectors integrated before change #8
 
 Before starting early-use change #8, the operator explicitly kept the ordered queue paused for a second bounded usability refinement: large variable selectors should allow direct text search instead of requiring long manual scrolling. PR #96 introduced one reusable searchable combobox using the project's existing `cmdk` infrastructure.
