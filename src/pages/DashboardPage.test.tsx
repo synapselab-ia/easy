@@ -7,6 +7,12 @@ vi.mock('../hooks/useDashboard', () => ({
     useDashboardSnapshot: vi.fn(),
 }));
 
+vi.mock('../components/dashboard/AttentionCenter', () => ({
+    AttentionCenter: ({ rows, isLoading }: { rows: unknown[]; isLoading: boolean }) => (
+        <div>{isLoading ? 'Attention loading' : `Attention center ${rows.length}`}</div>
+    ),
+}));
+
 vi.mock('../components/dashboard/DebtHealthAgingCard', () => ({
     DebtHealthAgingCard: () => <div>Debt aging</div>,
 }));
@@ -37,6 +43,17 @@ const dashboardSnapshot = {
         resellerCount: 2,
         oldestAgeDays: 45,
     },
+    attentionRows: [
+        {
+            resellerId: 10,
+            resellerName: 'Revendedor em risco',
+            status: 'critical',
+            alertAmount: 900,
+            totalOpenDebt: 1000,
+            oldestOutstandingAt: new Date('2026-07-01T12:00:00'),
+            ageDays: 45,
+        },
+    ],
 } as any;
 
 describe('DashboardPage integration', () => {
@@ -44,15 +61,16 @@ describe('DashboardPage integration', () => {
         vi.clearAllMocks();
     });
 
-    it('renders loading state for all primary KPI cards', () => {
+    it('renders loading state for the primary KPIs and attention center', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: undefined, isLoading: true } as any);
 
         render(<DashboardPage />);
 
         expect(screen.getAllByText('Carregando...')).toHaveLength(4);
+        expect(screen.getByText('Attention loading')).toBeInTheDocument();
     });
 
-    it('renders the four DR-03 KPIs from the canonical Dashboard snapshot', () => {
+    it('renders the four DR-03 KPIs and hands prepared DR-04 rows to the attention center', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: dashboardSnapshot, isLoading: false } as any);
 
         render(<DashboardPage />);
@@ -73,10 +91,11 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Hoje: R$ 250,00')).toBeInTheDocument();
         expect(screen.getByText('2 revendedores com saldo em aberto')).toBeInTheDocument();
         expect(screen.getByText('2 revendedores • mais antigo: 45 dias')).toBeInTheDocument();
+        expect(screen.getByText('Attention center 1')).toBeInTheDocument();
         expect(screen.queryByText(/tempo real/i)).not.toBeInTheDocument();
     });
 
-    it('keeps explicit empty-state meaning when the snapshot has no current activity or debt', () => {
+    it('keeps explicit empty-state meaning when the snapshot has no current activity, debt or attention rows', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({
             data: {
                 ...dashboardSnapshot,
@@ -84,6 +103,7 @@ describe('DashboardPage integration', () => {
                 today: { sales: 0, receipts: 0, orderCount: 0, itemQuantity: 0 },
                 openDebt: { amount: 0, resellerCount: 0 },
                 critical: { amount: 0, resellerCount: 0, oldestAgeDays: null },
+                attentionRows: [],
             },
             isLoading: false,
         } as any);
@@ -94,5 +114,6 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Nenhum recebimento registrado neste mês.')).toBeInTheDocument();
         expect(screen.getByText('Nenhum saldo em aberto hoje.')).toBeInTheDocument();
         expect(screen.getByText('Nenhum valor crítico hoje.')).toBeInTheDocument();
+        expect(screen.getByText('Attention center 0')).toBeInTheDocument();
     });
 });
