@@ -189,12 +189,21 @@ The first two D-019 attempts exposed stale test assumptions about native/select 
 Final D-019 run/job `33079397875` / `98542140423`: 0 lint errors / 98 warnings; 64 files / 272 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `ea1b93339b8356b9a2386b26fffc878428829d0d`; validated tree `569b7a7b760ba333b124094f159488b5b99fc92e` exactly equals squash-integrated `develop@20dcc0fb7469db8ae9638ab6ef39b38ca7e2ec97` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #8 — catalog classification visibility at point of use
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #98`
 
-Expose current category and optional subcategory context where it helps choose/inspect an item, especially the item catalog and new-order item selector. Preserve D-025/D-033 immutable historical snapshots; this is current-catalog presentation only and must not rewrite history or classification.
+Accepted result:
+
+- the item catalog exposes the current classification path in a dedicated desktop column and beneath the item name on mobile;
+- the new-order item selector exposes the same current category plus optional subcategory context while retaining the existing item price;
+- legacy or unresolved current-catalog references display `Sem classificação` rather than receiving fabricated classification;
+- item-selector search remains keyed to the item name only, so this change does not pre-implement change #9 filtering/search behavior;
+- D-025/D-033 immutable transaction-time classification snapshots and order mutation/history behavior are unchanged;
+- no database/schema migration, Supabase/Auth/RLS, recovery or deployment behavior changed.
+
+D-019 run/job `33082398941` / `98552849392`: Critical QA PASS. The suite includes 65 Vitest files / 276 tests, 17/17 Playwright tests and the production build. GitHub Actions validated merge ref `2d3ab8ba9ff0af179337eb7654b7bfddb5f5a24f`; validated tree `01bef29624079f90a8b1b0089c183abc26f96149` exactly equals squash-integrated `develop@2c9d67221e3365b9476a95947906a6f4c21ecc7f` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #9 — practical item/reseller search and filters
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Add bounded list ergonomics: item search plus category/subcategory/lifecycle filtering, and reseller search across useful existing identity/contact fields plus lifecycle filtering. No schema change, fuzzy identity inference or destructive bulk action is authorized.
 
@@ -236,4 +245,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #8: verify where current category and optional subcategory context is missing at the catalog and new-order item-selection point of use, then expose existing current-catalog classification context only where it materially helps choose or inspect an item. Preserve D-025/D-033 immutable historical snapshots and do not rewrite historical classification. Prefer a bounded presentation/read-model delta using existing data; this item does not authorize a database/schema migration. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #9, then stop. Do not start change #9 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #9: verify the current item and reseller list ergonomics, then add bounded practical search/filtering using existing data where it materially reduces operator effort. Item scope is search plus category/subcategory/lifecycle filters; reseller scope is search across useful existing identity/contact fields plus lifecycle filtering. Do not introduce a database/schema migration, fuzzy identity inference, destructive bulk action or changes to accepted lifecycle/history semantics. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #10, then stop. Do not start change #10 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
