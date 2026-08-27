@@ -148,6 +148,25 @@ The first D-019 after the simplified implementation exposed only two stale tests
 
 Final D-019 run/job `33070649544` / `98511710752`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `a094ba30b968b9b5658809503803440b8cf27736`; validated tree `f973d83aa8116fef7254dd056a5c5e99debbf063` exactly equals squash-integrated `develop@3f9bafca186951f363c20e990a791a771a4cf35d` tree. Exact tree equivalence: PASS.
 
+#### Operator-authorized pre-#8 refinement — client-facing reseller statement PDF
+**Status:** `DONE / INTEGRATED — PR #94`
+
+The operator explicitly paused the queue before #8 to simplify the reseller statement PDF without changing transaction/audit semantics.
+
+Accepted result:
+
+- current grouped-product behavior is preserved, including equal product/price aggregation and each valid order observation/name directly below the grouped item;
+- reversed orders/payments/signals are omitted from the PDF only; the underlying immutable audit history remains intact;
+- reversal/correction/replacement annotations are no longer rendered in the client-facing document;
+- financial closing appears immediately after products as `Total dos pedidos`, `Saldo anterior`, `(-) Total de pagamentos`, `SALDO ATUAL`;
+- selected-period `Saldo anterior` remains the canonical balance strictly before range start;
+- period order/payment totals use only effective movements and preserve occurrence-date semantics;
+- payment + signal detail remains available after the closing only when at least one effective settlement exists, with `Data`, `Tipo`, `Valor`;
+- no database, financial mutation, Supabase/Auth/RLS, recovery or deployment behavior changed;
+- change #8 was not started or bundled.
+
+D-019 run/job `33073644514` / `98522073542`: 0 lint errors / 83 warnings; 63 files / 269 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `9d7c067172c7146c27c36acf3390068da622e3d2`; validated tree `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a` exactly equals squash-integrated `develop@a2283d0a9408730e8cb136fdfe602d76a05cfa7a` tree. Exact tree equivalence: PASS.
+
 #### Early-use change #8 — catalog classification visibility at point of use
 **Status:** `CURRENT / AUTHORIZED`
 

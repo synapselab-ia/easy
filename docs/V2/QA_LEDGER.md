@@ -182,6 +182,39 @@ PR #92 was squash-integrated into `develop` as `3f9bafca186951f363c20e990a791a77
 
 The post-integration change #7 closure changes Markdown documentation only; no executable/runtime file differs from the validated integrated tree. No failed executable gate was waived, no automatic Vercel publication occurred and `main` remains untouched.
 
+## Operator-authorized pre-#8 reseller statement PDF refinement — PASS / INTEGRATED
+
+### Scope review — PRESENTATION / PROJECTION ONLY
+
+PR #94 changes only `src/services/pdfService.ts` and its three PDF test files. It does not alter transaction persistence, reversal/correction mechanics, statement balance functions, Supabase, Auth/RLS, recovery or deployment behavior.
+
+Accepted coverage verifies:
+
+1. existing equal-product/equal-price grouping remains intact;
+2. individual valid order observations/names remain rendered on separate lines below the grouped product;
+3. reversed orders, payments and signals are omitted from the PDF while remaining in immutable audit history;
+4. a corrected order/payment presents only the effective replacement and no reversal/correction/replacement annotation;
+5. the financial closing is rendered immediately after products as `Total dos pedidos`, `Saldo anterior`, `(-) Total de pagamentos`, `SALDO ATUAL`;
+6. selected-period `Saldo anterior` uses the canonical balance before range start;
+7. order/payment totals include only effective occurrence-time movements inside the selected range;
+8. detailed payment/signal rows follow the closing only when an effective settlement exists and expose only `Data`, `Tipo`, `Valor`;
+9. no-range behavior retains the existing supplied current balance as `SALDO ATUAL`.
+
+### Final D-019 — PASS
+
+- feature head: `a854cc6417f13ff9a82a9ded97f9681e36a8c718`;
+- exact GitHub-generated merge ref checked out by Actions: `9d7c067172c7146c27c36acf3390068da622e3d2`;
+- validated tree: `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a`;
+- run/job: `33073644514` / `98522073542`;
+- ESLint: **0 errors / 83 warnings**;
+- Vitest: **63 files / 269 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #94 was squash-integrated into `develop` as `a2283d0a9408730e8cb136fdfe602d76a05cfa7a`. Git object inspection confirms the integrated commit tree is `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration closure is documentation-only. Change #8 was not started or bundled. No failed executable gate was waived, no automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -214,5 +247,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #7 pt-BR monetary-presentation D-019: **PASS**.
 - PR #92 integrated-tree equivalence: **PASS**.
 - early-use change #7 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- pre-#8 reseller statement PDF D-019: **PASS**.
+- PR #94 integrated-tree equivalence: **PASS**.
+- pre-#8 reseller statement canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #8: **CURRENT / AUTHORIZED / NOT STARTED BY THIS REFINEMENT**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
