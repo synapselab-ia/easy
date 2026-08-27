@@ -33,8 +33,9 @@ Current P10-S3 state:
   - change #10 observations on payment/signal entry: `DONE / INTEGRATED` — PR #102;
   - change #11 actionable global item search result: `DONE / INTEGRATED` — PR #104;
   - change #12 non-blocking duplicate-data warnings: `DONE / INTEGRATED` — PR #106;
-  - **change #13 product-level financial report analytics: `CURRENT / AUTHORIZED`;**
-  - changes #14–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
+  - **change #14 Dashboard receipts-today card: `CURRENT / AUTHORIZED`;**
+  - change #15 future occurrence-date confirmation: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -384,7 +385,39 @@ Validation/integration evidence:
 - PR #106 squash-integrated `develop`: `7d023e856e0883ba82b2392199d3320d431aa16a`;
 - integrated tree: `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d` — exact tree equivalence PASS.
 
-No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #12 is closed; change #13 is now the sole current queue item and was not started in this task.
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. At this closure, change #13 was promoted as the next queue item.
+
+## Early-use change #13 — product-level financial report analytics
+
+Verification confirmed the existing transaction contract already contains the immutable order-time facts required for bounded product analytics (`itemId`, `itemName`, quantity, category/subcategory ids/names, total and occurrence date), while `FinancialReport` already centralizes occurrence filtering and reversal-zero-effect handling. PR #108 therefore extends the existing read-only report model rather than creating a new accounting path.
+
+Accepted behavior:
+
+- canonical `FinancialReport.products` aggregates effective orders by exact transaction-time item/name/classification snapshot context;
+- each product row exposes product label, historical classification, order count, item quantity and gross sales;
+- rows are ranked by gross sales, then quantity, then label;
+- repeated orders with the same historical snapshot aggregate together;
+- when the same stable item appears under a different historical name/classification snapshot, that historical fact remains a distinct report row instead of being rewritten from the current catalog;
+- reversed orders contribute zero and occurrence-date inclusion continues through the existing canonical `effectiveInRange` path;
+- the `Resumo` product highlight now shows the actual top-selling product rather than the top category;
+- the `Produtos e categorias` view exposes a product-performance table before the existing category/subcategory drilldown;
+- the existing PDF products/categories section renders the same canonical `report.products` list before category/subcategory rows;
+- no database/schema migration, Supabase/RPC/Auth/RLS, transaction mutation, recovery or deployment behavior changed.
+
+Validation/integration evidence:
+
+- feature head: `7b8699280e289c706a5d21ffae23a7267d07191b`;
+- GitHub Actions merge ref: `43d7ebf749ca3924fcebe9fe8cd85d7351e5354a`;
+- validated tree: `b8575e6c80a0d43109c25a307dc0faa183245262`;
+- D-019 run/job: `33103464797` / `98626992003`;
+- ESLint: 0 errors / 104 warnings;
+- Vitest: 65 files / 286 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #108 squash-integrated `develop`: `d5b2cc5fb150777f12ece38bdd02abcada2974f7`;
+- integrated tree: `b8575e6c80a0d43109c25a307dc0faa183245262` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #13 is closed; change #14 is now the sole current queue item and was not started in this task.
 
 ## Operator-authorized usability/data-quality queue
 
@@ -408,8 +441,8 @@ Ordered queue:
 5. **#10 DONE / INTEGRATED — PR #102** — the existing transaction observation contract is exposed in normal payment/signal entry without migration or financial-semantic change.
 6. **#11 DONE / INTEGRATED — PR #104** — selected global item results hand off into the existing transient catalog name filter instead of opening an unfiltered catalog.
 7. **#12 DONE / INTEGRATED — PR #106** — conservative duplicate-data warnings use existing loaded reseller/item fields and remain operator-overridable.
-8. **#13 CURRENT / AUTHORIZED** — product-level analytics inside the canonical read-only financial report model.
-9. **#14 QUEUED** — Dashboard receipts-today KPI using occurrence time and reversal-zero-effect semantics.
+8. **#13 DONE / INTEGRATED — PR #108** — product-level analytics use immutable occurrence-time order snapshots inside the canonical screen/PDF `FinancialReport` path.
+9. **#14 CURRENT / AUTHORIZED** — Dashboard receipts-today KPI using occurrence time and reversal-zero-effect semantics.
 10. **#15 QUEUED** — non-blocking confirmation for future occurrence dates in new transaction entry.
 
 Detailed scope and stop conditions for each queue item are canonical in `docs/V2/BACKLOG.md`.
@@ -437,4 +470,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #13. Verify the current canonical `FinancialReport` model, the existing product/category report presentation and the PDF section flow, then extend the same read-only report model with bounded product/item aggregation useful for answering what sold. Product analytics must use immutable transaction-time order facts, preserve D-014 occurrence-date inclusion and reversal-zero-effect semantics, and remain shared by screen/PDF rather than creating an independent calculation path. No database migration, transaction mutation, recovery/Auth/RLS change or second accounting implementation is authorized. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #14 becomes current, then stop. Do not start #14 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #14. Verify the current Dashboard KPI/read-model paths and add one glance KPI for effective payments + signals occurring today. The value must use D-014 financial occurrence time, exclude reversed transactions from effective contribution and remain read-only; no transaction mutation, database/schema migration, Supabase/RPC/Auth/RLS, recovery or independent accounting path is authorized. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #15 becomes current, then stop. Do not start #15 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
