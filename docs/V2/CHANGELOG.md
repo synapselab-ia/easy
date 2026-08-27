@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — pt-BR monetary presentation standardized
+
+Early-use change #7 standardized bounded operator-facing money presentation without changing the underlying financial model. After reverting the earlier currency-style formatter attempt, PR #92 used a simpler stable representation: literal `R$ ` plus the numeric value formatted with pt-BR separators and exactly two decimals. Visible values therefore render as `R$ 150,00`, `R$ 1.200,50`, `R$ 10.000,00`, etc.
+
+The change covers reseller balances/period summaries, catalog prices and the read-only calculated total during order entry, monetary values in the transaction-correction dialog and reseller statement PDF values. Editable numeric inputs, parsing, calculations, rounding, persistence, transaction/history semantics and report accounting semantics remain unchanged.
+
+The first D-019 after simplification failed only because two existing tests still expected dot-decimal strings. GitHub Actions logs identified those exact stale expectations in `ResellerDetailPage.statement.test.tsx` and `pdfService.occurrence.test.ts`; only the assertions were aligned to the accepted comma-decimal presentation. No correct product formatting was reverted to satisfy CI.
+
+Final D-019 on PR #92: head `7aea7fca077e552d66bf8bc018f3fa4b49eea423`, merge ref `a094ba30b968b9b5658809503803440b8cf27736`, run/job `33070649544` / `98511710752`: 0 lint errors / 83 warnings; 63 files / 268 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `f973d83aa8116fef7254dd056a5c5e99debbf063`.
+
+PR #92 was squash-integrated into `develop` as `3f9bafca186951f363c20e990a791a771a4cf35d`; its Git tree is also `f973d83aa8116fef7254dd056a5c5e99debbf063`. Exact tree equivalence: PASS. No automatic Vercel deployment, Supabase/database change or `main` publication occurred.
+
+---
+
 ## 2026-08-26 — Dashboard performance-window selected labels localized
 
 Controlled early-use verification confirmed that the Dashboard `Análise de Performance` selector used internal `AnalysisPeriod` values (`90`, `180`, `360`) without the explicit Base UI value/label mapping already accepted for the Reports selector.
