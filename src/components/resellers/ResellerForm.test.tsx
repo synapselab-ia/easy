@@ -47,7 +47,8 @@ describe('ResellerForm P7-S5 save feedback', () => {
 
         expect(await screen.findByText('Possível revendedor duplicado')).toBeInTheDocument();
         expect(screen.getByText(/Coincidência em: nome, telefone, e-mail/i)).toBeInTheDocument();
-        expect(screen.getByText(/El Dorado.*arquivado/i)).toBeInTheDocument();
+        expect(screen.getByText('El Dorado')).toBeInTheDocument();
+        expect(screen.getByText(/arquivado/i)).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: 'Cadastrar mesmo assim' }));
 
