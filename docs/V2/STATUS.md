@@ -31,8 +31,9 @@ Current P10-S3 state:
   - change #8 catalog classification visibility at point of use: `DONE / INTEGRATED` — PR #98;
   - change #9 practical item/reseller search and filters: `DONE / INTEGRATED` — PR #100;
   - change #10 observations on payment/signal entry: `DONE / INTEGRATED` — PR #102;
-  - **change #11 actionable global item search result: `CURRENT / AUTHORIZED`;**
-  - changes #12–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #11 actionable global item search result: `DONE / INTEGRATED` — PR #104;
+  - **change #12 non-blocking duplicate-data warnings: `CURRENT / AUTHORIZED`;**
+  - changes #13–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -321,7 +322,35 @@ Validation/integration evidence:
 - PR #102 squash-integrated `develop`: `2ce88ab7418715ef399b4b05b4776f6191d64a88`;
 - integrated tree: `a0f26f3c979b758f8c70f43a797689f47f2bc3a5` — exact tree equivalence PASS.
 
-No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #10 is closed; change #11 is now the sole current queue item.
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #10 is closed.
+
+## Early-use change #11 — actionable global item search result
+
+Verification confirmed that global item results already had enough current catalog data for a bounded navigation-only fix, but selecting an item discarded the result context and opened the generic `/items` catalog. PR #104 reuses the accepted #9 item-name filter rather than introducing a new detail route.
+
+Accepted behavior:
+
+- selecting a global item result navigates to the catalog with an encoded one-shot item-name search handoff;
+- `ItemsPage` applies the handoff to the existing accent/case-insensitive transient item-name filter and removes the navigation parameter using history replacement;
+- matching catalog context is immediately visible and remains operator-clearable through the existing `Limpar filtros` behavior;
+- normal and recent global item results share the same selection handler and therefore the same targeting behavior;
+- reseller result navigation and global create-item/create-reseller suggestion behavior are unchanged;
+- no new item-detail architecture, database/schema migration, Supabase/Auth/RLS, recovery, item identity/lifecycle/classification/history or deployment behavior changed.
+
+Validation/integration evidence:
+
+- feature head: `e95b36b111aac38b7ec32ff2649b2daf22aad3de`;
+- GitHub Actions merge ref: `409243291c33deed745ab04e857e8c5e5da05f5e`;
+- validated tree: `507bdbc9c81efc45ef36a6d7dab9e44dc2444866`;
+- D-019 run/job: `33093633207` / `98592735176`;
+- ESLint: 0 errors / 104 warnings;
+- Vitest: 65 files / 282 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #104 squash-integrated `develop`: `46f85bb5f1e8304a323b8c4a8c99f429e52eca5d`;
+- integrated tree: `507bdbc9c81efc45ef36a6d7dab9e44dc2444866` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #11 is closed; change #12 is now the sole current queue item.
 
 ## Operator-authorized usability/data-quality queue
 
@@ -343,8 +372,8 @@ Ordered queue:
 3. **#8 DONE / INTEGRATED — PR #98** — current category/subcategory context is visible in the catalog and new-order item selection without rewriting historical snapshots.
 4. **#9 DONE / INTEGRATED — PR #100** — practical item/reseller search and lifecycle/classification filters use existing loaded data only.
 5. **#10 DONE / INTEGRATED — PR #102** — the existing transaction observation contract is exposed in normal payment/signal entry without migration or financial-semantic change.
-6. **#11 CURRENT / AUTHORIZED** — make global item search selection land in useful item context.
-7. **#12 QUEUED** — conservative non-blocking duplicate-data warnings; no automatic merge or hard uniqueness rule.
+6. **#11 DONE / INTEGRATED — PR #104** — selected global item results hand off into the existing transient catalog name filter instead of opening an unfiltered catalog.
+7. **#12 CURRENT / AUTHORIZED** — conservative non-blocking duplicate-data warnings; no automatic merge or hard uniqueness rule.
 8. **#13 QUEUED** — product-level analytics inside the canonical read-only financial report model.
 9. **#14 QUEUED** — Dashboard receipts-today KPI using occurrence time and reversal-zero-effect semantics.
 10. **#15 QUEUED** — non-blocking confirmation for future occurrence dates in new transaction entry.
@@ -374,4 +403,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #11. Verify the current global item-search selection behavior, then make selecting an item land the operator in useful item context rather than an unfiltered generic catalog. Prefer a minimal stable filter/highlight/targeting mechanism over creating a new item-detail architecture. Preserve existing item identity, lifecycle, classification and search semantics. Prefer bounded navigation/presentation state; no database/schema migration or new item-detail architecture is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #12 becomes current, then stop. Do not start #12 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #12. Verify the current reseller/item creation paths and existing loaded fields, then add conservative warnings for likely duplicate reseller/item creation using existing fields and classification context where safely applicable. Warnings must remain non-destructive and operator-confirmed: no automatic merge, no silent rejection and no new hard uniqueness constraint is authorized; legitimate same-name records must remain possible. Prefer bounded presentation/form-state logic over persistence/schema changes. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #13 becomes current, then stop. Do not start #13 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
