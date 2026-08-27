@@ -181,11 +181,13 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports, early-use changes #5–#7 and the operator-authorized pre-#8 reseller statement PDF refinement are **closed**. Controlled early-use observation remains active.
+D-033 / subcategories, D-034 / financial reports, early-use changes #5–#7 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
 The pre-#8 PDF refinement preserved the existing grouped-product and per-order written-name behavior while removing reversed/audit-only rows from the client-facing document. Its closing now presents effective period orders, canonical pre-period balance, effective payments/signals and canonical current/closing balance directly after the products; optional payment/signal detail follows only when applicable. Audit history itself remains unchanged.
+
+The pre-#8 searchable-selector refinement introduced one reusable searchable combobox for large variable entity lists. Search is substring-based, case-insensitive and accent-insensitive; typed search text is presentation state only, while selection continues to use the existing entity IDs. It is used for reseller/item selection in new transactions and full correction, and category/subcategory selection in item create/edit. Small closed-list selectors remain unchanged. No persistence, database/Supabase, financial/history, Auth/RLS, recovery or deployment contract changed.
 
 The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
 
@@ -197,7 +199,7 @@ For each queue item:
 - use an isolated branch and D-019 for executable integration;
 - after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
 
-Current item: **early-use change #8 — catalog classification visibility at point of use**. Change #8 remains authorized but was not started during the pre-#8 PDF refinement.
+Current item: **early-use change #8 — catalog classification visibility at point of use**. Change #8 remains authorized but was not started during either pre-#8 refinement.
 
 Change #8 is limited to exposing existing current-catalog category/optional-subcategory context where useful for item inspection/selection. D-025/D-033 immutable transaction-time snapshots remain historical truth; this item does not authorize rewriting history or adding a database/schema migration merely for presentation.
 
