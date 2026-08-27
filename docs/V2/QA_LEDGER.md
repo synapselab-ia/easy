@@ -370,6 +370,48 @@ PR #104 was squash-integrated into `develop` as `46f85bb5f1e8304a323b8c4a8c99f42
 
 The post-integration change #11 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
 
+## P10-S3-I2-I3-D early-use change #12 — non-blocking duplicate-data warnings — PASS / INTEGRATED
+
+### Scope review — FORM / ALREADY LOADED DATA ONLY
+
+Verification confirmed no persistence contract or uniqueness rule was needed. PR #106 changes only the two existing create/edit forms plus focused tests:
+
+- `ResellerForm` reuses the loaded reseller list to surface likely duplicates during new creation;
+- reseller matching is deliberately conservative: normalized exact name, normalized exact phone or exact case-insensitive e-mail;
+- the warning reports which fields matched and includes archived records;
+- `ItemForm` reuses the loaded item list and warns only when normalized name matches within the same category and same optional subcategory;
+- same-name items in another classification are not flagged;
+- archived items remain visible in warning context;
+- edit paths are unchanged;
+- warnings are non-blocking and the operator can explicitly submit through `Cadastrar mesmo assim`.
+
+No automatic merge, silent rejection, hard uniqueness constraint, database/schema migration, Supabase/Auth/RLS, recovery, financial/history semantic or deployment behavior changed.
+
+### Focused coverage — PASS
+
+- `ItemForm.test.tsx` verifies normalized same-name detection in the same classification, archived-item visibility, explicit creation despite warning and no warning for a same-name item in a different category;
+- `ResellerForm.test.tsx` verifies name/phone/e-mail normalization, archived-reseller visibility and explicit creation despite warning;
+- existing rejected-create/edit retry-state coverage remains intact.
+
+### D-019 iteration — objective failure corrected, not waived
+
+The first run/job `33100789877` / `98617616754` reached lint with 0 errors / 104 warnings, then Vitest stopped with three failures in `ResellerForm.test.tsx`. The new `useResellers()` duplicate lookup caused that test file to exercise IndexedDB, but unlike the item-form tests it did not initialize the existing `fake-indexeddb` test environment. The runtime implementation was not changed to bypass the failure; `import 'fake-indexeddb/auto'` was added to the test setup and the full gate was rerun.
+
+### Final D-019 — PASS
+
+- feature head: `fed6c0ab1e23cbff4298dba11d8c827d5cc06cc6`;
+- exact GitHub-generated merge ref checked out by Actions: `5e26f76a227f9c90417767bfbacb34ddfe2098da`;
+- validated tree: `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d`;
+- run/job: `33101052183` / `98618533607`;
+- ESLint: **0 errors / 104 warnings**;
+- Vitest: **65 files / 285 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #106 was squash-integrated into `develop` as `7d023e856e0883ba82b2392199d3320d431aa16a`. Git object inspection confirms the integrated commit tree is `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #12 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched. Change #13 is promoted only as the next authorized item and was not implemented here.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -420,6 +462,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #11 actionable-global-item-search D-019: **PASS**.
 - PR #104 integrated-tree equivalence: **PASS**.
 - early-use change #11 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #12: **CURRENT / AUTHORIZED / NOT STARTED**.
+- early-use change #12 duplicate-warning D-019: **PASS**.
+- PR #106 integrated-tree equivalence: **PASS**.
+- early-use change #12 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #13: **CURRENT / AUTHORIZED / NOT STARTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
