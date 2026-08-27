@@ -153,7 +153,9 @@ Accepted boundary:
 
 The detailed accepted target, semantics, UX criteria and `DR-01…DR-09` execution sequence live in `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
-DR-02 is now integrated through PR #114. The canonical `DashboardSnapshot` projection centralizes month/today flow, as-of-today open position, FIFO aging, critical/attention context and recent effective registrations while reusing accepted `FinancialReport`/transaction helpers and excluding later future occurrences from current-position calculations. Existing Dashboard consumers remain presentation-compatible until the ordered visual items are executed.
+DR-02 is integrated through PR #114. The canonical `DashboardSnapshot` projection centralizes month/today flow, as-of-today open position, FIFO aging, critical/attention context and recent effective registrations while reusing accepted `FinancialReport`/transaction helpers and excluding later future occurrences from current-position calculations.
+
+DR-03 is integrated through PR #116. The Dashboard primary row now consumes that snapshot directly and presents `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto` and `Crítico > 30 dias`, with compact month/today/open-reseller/critical context, explicit loading/empty states and no misleading `tempo real` claim. No accounting calculation was moved into the presentation layer; DR-04 attention-center behavior remains the next isolated item.
 
 D-035 does not authorize a new database/schema, financial mutation/accounting contract, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
 
@@ -207,9 +209,11 @@ D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, ea
 
 The previously proposed isolated change #14 (`Recebimentos hoje`) is no longer a standalone pending item. It is **absorbed/superseded by D-035**: receipts remain part of the target Dashboard, but as `Recebimentos este mês` with optional today context rather than a dedicated daily KPI card.
 
-D-035 / Dashboard + Reports core redesign is the authorized product initiative. `DR-01` (product contract/canonical documentation) and `DR-02` (canonical Dashboard read-model) are complete. **`DR-03 — primary Dashboard KPI row` is the sole current executable item.** Later `DR-04…DR-09` items remain queued/not current and must not be bundled.
+D-035 / Dashboard + Reports core redesign is the authorized product initiative. `DR-01` (product contract/canonical documentation), `DR-02` (canonical Dashboard read-model) and `DR-03` (primary Dashboard KPI row) are complete. **`DR-04 — Precisa de atenção action center` is the sole current executable item.** Later `DR-05…DR-09` items remain queued/not current and must not be bundled.
 
 DR-02 integrated one bounded read-only `DashboardSnapshot` in `src/domain/dashboardSnapshot.ts` and one shared Dashboard snapshot query in `src/hooks/useDashboard.ts`. It centralizes month-to-today sales/receipts/order/item context, optional today context, current open debt/reseller count, critical amount/count/oldest age, accepted FIFO buckets, deterministic attention rows and recent effective registrations. The current-position side applies the operator-local end-of-today cutoff so valid future occurrences remain valid history/registrations but cannot affect current debt/aging until they occur. The implementation introduced no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment change.
+
+DR-03 replaced the legacy top-card presentation with the four accepted primary KPIs using the prepared `DashboardSnapshot` only. The row preserves useful month order/item context, optional today context, open-reseller count and critical reseller count/oldest age; responsive `1/2/4` column behavior, loading states and explicit business empty states are covered by focused tests. The first D-019 attempt exposed only a stale pre-DR-03 `DashboardCards` test contract; that test was aligned without weakening the feature, and the final D-019 passed before PR #116 was squash-integrated. Validated and integrated tree equivalence passed.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
