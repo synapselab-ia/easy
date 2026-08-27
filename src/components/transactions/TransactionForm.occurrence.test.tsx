@@ -24,6 +24,24 @@ vi.mock('../ui/select', () => ({
     SelectValue: ({ placeholder, children }: any) => <option disabled value="">{children || placeholder}</option>,
 }));
 
+vi.mock('../ui/SearchableSelect', () => ({
+    SearchableSelect: ({ id, value, onValueChange, options, disabled }: any) => (
+        <select
+            id={id}
+            data-testid="mock-searchable-select"
+            value={value}
+            disabled={disabled}
+            onChange={(event) => onValueChange(event.target.value)}
+        >
+            {options.map((option: any) => (
+                <option key={`${option.value}-${option.label}`} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    ),
+}));
+
 const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
@@ -88,8 +106,7 @@ describe('P3-S1 transaction form occurrence date', () => {
         );
 
         await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
-        const selects = screen.getAllByTestId('mock-select');
-        fireEvent.change(selects[0], { target: { value: String(resellerId) } });
+        fireEvent.change(screen.getByTestId('mock-searchable-select'), { target: { value: String(resellerId) } });
         fireEvent.change(screen.getByLabelText(/Data da ocorrência/i), {
             target: { value: '2026-07-04' },
         });

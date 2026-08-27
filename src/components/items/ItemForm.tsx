@@ -5,6 +5,7 @@ import { useSubcategories } from "../../hooks/useSubcategories";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { SearchableSelect } from "../ui/SearchableSelect";
 import { isCategoryActive, isSubcategoryActive, type Item } from "../../db/database";
 import { toast } from "sonner";
 
@@ -50,6 +51,39 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
     const currentSubcategory = initialData?.subcategoryId
         ? subcategories.find(subcategory => subcategory.id === initialData.subcategoryId)
         : undefined;
+    const categoryOptions = useMemo(() => [
+        {
+            value: "",
+            label: isExistingItem ? "Sem categoria — legado" : "Selecione uma categoria...",
+        },
+        ...(currentCategory && !isCategoryActive(currentCategory) ? [{
+            value: currentCategory.id!.toString(),
+            label: `${currentCategory.name} — arquivada`,
+            searchText: currentCategory.name,
+            disabled: true,
+        }] : []),
+        ...activeCategories.map(category => ({
+            value: category.id!.toString(),
+            label: category.name,
+            searchText: category.name,
+        })),
+    ], [activeCategories, currentCategory, isExistingItem]);
+    const subcategoryOptions = useMemo(() => [
+        { value: "", label: "Sem subcategoria" },
+        ...(currentSubcategory
+            && currentSubcategory.categoryId === selectedCategoryId
+            && !isSubcategoryActive(currentSubcategory) ? [{
+                value: currentSubcategory.id!.toString(),
+                label: `${currentSubcategory.name} — arquivada`,
+                searchText: currentSubcategory.name,
+                disabled: true,
+            }] : []),
+        ...activeSubcategories.map(subcategory => ({
+            value: subcategory.id!.toString(),
+            label: subcategory.name,
+            searchText: subcategory.name,
+        })),
+    ], [activeSubcategories, currentSubcategory, selectedCategoryId]);
 
     const createMutation = useCreateItem();
     const updateMutation = useUpdateItem();
@@ -142,6 +176,13 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
         }
     };
 
+    const changeCategory = (nextCategoryId: string) => {
+        setCategoryId(nextCategoryId);
+        setCategoryChanged(true);
+        setSubcategoryId("");
+        setSubcategoryChanged(true);
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -157,31 +198,15 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
 
             <div className="space-y-2">
                 <Label htmlFor="categoryId">Categoria</Label>
-                <select
+                <SearchableSelect
                     id="categoryId"
                     value={categoryId}
-                    onChange={(event) => {
-                        setCategoryId(event.target.value);
-                        setCategoryChanged(true);
-                        setSubcategoryId("");
-                        setSubcategoryChanged(true);
-                    }}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                >
-                    <option value="">
-                        {isExistingItem ? "Sem categoria — legado" : "Selecione uma categoria..."}
-                    </option>
-                    {currentCategory && !isCategoryActive(currentCategory) && (
-                        <option value={currentCategory.id?.toString()} disabled>
-                            {currentCategory.name} — arquivada
-                        </option>
-                    )}
-                    {activeCategories.map(category => (
-                        <option key={category.id} value={category.id?.toString()}>
-                            {category.name}
-                        </option>
-                    ))}
-                </select>
+                    onValueChange={changeCategory}
+                    options={categoryOptions}
+                    placeholder={isExistingItem ? "Sem categoria — legado" : "Selecione uma categoria..."}
+                    searchPlaceholder="Pesquisar categoria..."
+                    emptyMessage="Nenhuma categoria encontrada."
+                />
                 {activeCategories.length === 0 && (
                     <p className="text-sm text-muted-foreground">
                         Cadastre uma categoria ativa antes de criar novos itens.
@@ -197,30 +222,19 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
 
             <div className="space-y-2">
                 <Label htmlFor="subcategoryId">Subcategoria (opcional)</Label>
-                <select
+                <SearchableSelect
                     id="subcategoryId"
                     value={subcategoryId}
-                    onChange={(event) => {
-                        setSubcategoryId(event.target.value);
+                    onValueChange={(nextSubcategoryId) => {
+                        setSubcategoryId(nextSubcategoryId);
                         setSubcategoryChanged(true);
                     }}
+                    options={subcategoryOptions}
+                    placeholder="Sem subcategoria"
+                    searchPlaceholder="Pesquisar subcategoria..."
+                    emptyMessage="Nenhuma subcategoria encontrada."
                     disabled={!categoryId}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    <option value="">Sem subcategoria</option>
-                    {currentSubcategory
-                        && currentSubcategory.categoryId === selectedCategoryId
-                        && !isSubcategoryActive(currentSubcategory) && (
-                        <option value={currentSubcategory.id?.toString()} disabled>
-                            {currentSubcategory.name} — arquivada
-                        </option>
-                    )}
-                    {activeSubcategories.map(subcategory => (
-                        <option key={subcategory.id} value={subcategory.id?.toString()}>
-                            {subcategory.name}
-                        </option>
-                    ))}
-                </select>
+                />
                 {categoryId && activeSubcategories.length === 0 && (
                     <p className="text-xs text-muted-foreground">
                         Esta categoria ainda não possui subcategorias ativas. O item pode ficar somente na categoria.

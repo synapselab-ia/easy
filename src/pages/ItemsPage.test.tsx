@@ -11,6 +11,23 @@ vi.mock('@/hooks/use-media-query', () => ({
     useMediaQuery: () => true,
 }));
 
+vi.mock('../components/ui/SearchableSelect', () => ({
+    SearchableSelect: ({ id, value, onValueChange, options, disabled }: any) => (
+        <select
+            id={id}
+            value={value}
+            disabled={disabled}
+            onChange={(event) => onValueChange(event.target.value)}
+        >
+            {options.map((option: any) => (
+                <option key={`${option.value}-${option.label}`} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    ),
+}));
+
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>

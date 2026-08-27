@@ -16,6 +16,17 @@ vi.mock('../ui/ResponsiveDialog', () => ({
         <div role="dialog"><h2>{title}</h2><p>{description}</p>{children}<div>{footer}</div></div>
     ) : null,
 }));
+vi.mock('../ui/SearchableSelect', () => ({
+    SearchableSelect: ({ id, value, onValueChange, options, disabled }: any) => (
+        <select id={id} value={value} disabled={disabled} onChange={(event) => onValueChange(event.target.value)}>
+            {options.map((option: any) => (
+                <option key={`${option.value}-${option.label}`} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    ),
+}));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const mutateAsync = vi.fn();
