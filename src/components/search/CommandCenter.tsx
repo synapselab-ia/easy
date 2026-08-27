@@ -43,7 +43,7 @@ export function CommandCenter({ open, onOpenChange }: CommandCenterProps) {
         if (result.type === 'reseller') {
             navigate(`/resellers/${result.id}`)
         } else {
-            navigate('/items')
+            navigate(`/items?search=${encodeURIComponent(result.title)}`)
         }
     }
 
