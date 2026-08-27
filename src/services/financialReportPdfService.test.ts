@@ -60,6 +60,25 @@ const report: FinancialReport = {
         { key: '2026-08-01', label: '01/08', sales: 600, receipts: 200 },
         { key: '2026-08-02', label: '02/08', sales: 400, receipts: 500 },
     ],
+    products: [
+        {
+            itemId: 1,
+            label: 'Placa 15x30',
+            categoryLabel: 'Porcelana antiga',
+            subcategoryLabel: 'Placas antigas',
+            orderCount: 3,
+            quantity: 5,
+            grossValue: 700,
+        },
+        {
+            itemId: 2,
+            label: 'Caneca 325 ml',
+            categoryLabel: 'Porcelana',
+            orderCount: 2,
+            quantity: 3,
+            grossValue: 300,
+        },
+    ],
     categories: [
         {
             categoryId: 1,
@@ -96,11 +115,13 @@ describe('financialReportPdfService', () => {
     it('renders the same report sections used by the reports workspace', () => {
         generateFinancialReportPdf(report);
 
-        expect(autoTable).toHaveBeenCalledTimes(4);
+        expect(autoTable).toHaveBeenCalledTimes(5);
         expect(tableOptions(0).head).toEqual([['Vendas', 'Recebimentos', 'Em aberto no fim', 'Pedidos']]);
         expect(tableOptions(1).head).toEqual([['Período', 'Vendas', 'Recebimentos', 'Movimento líquido']]);
-        expect(tableOptions(2).head).toEqual([['Categoria / subcategoria', 'Pedidos', 'Itens', 'Vendas']]);
-        expect(tableOptions(3).head).toEqual([['Revendedor', 'Pedidos', 'Vendas', 'Recebido', 'Em aberto']]);
+        expect(tableOptions(2).head).toEqual([['Produto', 'Classificação', 'Pedidos', 'Itens', 'Vendas']]);
+        expect(tableOptions(2).body[0]).toEqual(expect.arrayContaining(['Placa 15x30', 'Porcelana antiga > Placas antigas']));
+        expect(tableOptions(3).head).toEqual([['Categoria / subcategoria', 'Pedidos', 'Itens', 'Vendas']]);
+        expect(tableOptions(4).head).toEqual([['Revendedor', 'Pedidos', 'Vendas', 'Recebido', 'Em aberto']]);
     });
 
     it('supports a short PDF with only selected sections', () => {
