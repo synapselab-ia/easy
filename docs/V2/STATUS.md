@@ -26,6 +26,7 @@ Current P10-S3 state:
   - change #5 localized financial-report period labels: `DONE / INTEGRATED` — PR #87;
   - change #6 Dashboard performance-window labels: `DONE / INTEGRATED` — PR #90;
   - change #7 consistent pt-BR monetary presentation: `DONE / INTEGRATED` — PR #92;
+  - reseller client-facing statement PDF refinement: `DONE / INTEGRATED` — PR #94;
   - **change #8 catalog classification visibility at point of use: `CURRENT / AUTHORIZED`;**
   - changes #9–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
@@ -169,6 +170,37 @@ Validation/integration evidence:
 - integrated tree: `f973d83aa8116fef7254dd056a5c5e99debbf063` — exact tree equivalence PASS.
 
 No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched.
+
+## Operator-authorized pre-#8 refinement — client-facing reseller statement PDF
+
+Before starting change #8, the operator explicitly paused the ordered queue to simplify the reseller statement PDF for client reading. PR #94 changes only the PDF projection and its tests; change #8 was not started or bundled.
+
+Accepted presentation behavior:
+
+- existing equal-product/equal-price grouping is preserved;
+- each valid order observation remains directly below its grouped product, preserving plate names/text such as the individual names to be produced;
+- reversed orders, payments and signals are omitted entirely from the PDF while remaining preserved and audit-visible in transaction history;
+- correction/replacement/reversal annotations are not shown to the client; only the effective replacement is presented;
+- the financial closing appears immediately after the product table as `Total dos pedidos`, `Saldo anterior`, `(-) Total de pagamentos` and `SALDO ATUAL`;
+- for a selected period, `Saldo anterior` is the canonical balance strictly before the range start, preserving D-014/D-015 statement semantics;
+- `Total dos pedidos` and `Total de pagamentos` include only effective movements inside the selected interval, with signals included together with payments;
+- the detailed `Pagamentos e sinais` table is a secondary/internal complement after the closing, rendered only when at least one effective payment/signal exists, with only `Data`, `Tipo` and `Valor`;
+- no financial persistence/history semantics, database/Supabase, Auth/RLS, recovery or deployment behavior changed.
+
+Validation/integration evidence:
+
+- feature head: `a854cc6417f13ff9a82a9ded97f9681e36a8c718`;
+- GitHub Actions merge ref: `9d7c067172c7146c27c36acf3390068da622e3d2`;
+- validated tree: `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a`;
+- D-019 run/job: `33073644514` / `98522073542`;
+- ESLint: 0 errors / 83 warnings;
+- Vitest: 63 files / 269 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #94 squash-integrated `develop`: `a2283d0a9408730e8cb136fdfe602d76a05cfa7a`;
+- integrated tree: `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #8 remains the next authorized queue item but was not started during this refinement.
 
 ## Operator-authorized usability/data-quality queue
 
