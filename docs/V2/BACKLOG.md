@@ -203,12 +203,24 @@ Accepted result:
 D-019 run/job `33082398941` / `98552849392`: Critical QA PASS. The suite includes 65 Vitest files / 276 tests, 17/17 Playwright tests and the production build. GitHub Actions validated merge ref `2d3ab8ba9ff0af179337eb7654b7bfddb5f5a24f`; validated tree `01bef29624079f90a8b1b0089c183abc26f96149` exactly equals squash-integrated `develop@2c9d67221e3365b9476a95947906a6f4c21ecc7f` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #9 — practical item/reseller search and filters
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #100`
 
-Add bounded list ergonomics: item search plus category/subcategory/lifecycle filtering, and reseller search across useful existing identity/contact fields plus lifecycle filtering. No schema change, fuzzy identity inference or destructive bulk action is authorized.
+Accepted result:
+
+- item search matches name substrings and ignores case/accents;
+- item filters combine category, category-scoped optional subcategory and lifecycle (`Todos`, `Ativos`, `Inativos`);
+- category/subcategory filters reuse the accepted searchable-selector behavior;
+- legacy/unresolved current-catalog items can be filtered explicitly as `Sem classificação` without inventing data;
+- reseller search matches existing name, phone and email fields and ignores case/accents;
+- reseller lifecycle filtering supports `Todos`, `Ativos` and `Inativos`;
+- filters are transient presentation/read-model state only and `Limpar filtros` restores the full list;
+- the filtered item empty state is distinct from a truly empty catalog;
+- no database/schema migration, Supabase/API/policy, fuzzy identity inference, destructive bulk action, lifecycle/history or financial semantics changed.
+
+D-019 run/job `33086388558` / `98567054353`: repository Critical QA PASS. GitHub Actions validated merge ref `e0eba21d9a695be4b7bab918c8faa72de060039b`; validated tree `83e27d1d63685eee1a4ae6bc751b30e8dccba786` exactly equals squash-integrated `develop@b6d92db102d7ba17b920e8c41282a5075697bc04` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #10 — observations on payment/signal entry
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Verify the existing transaction/cloud contract supports `observation` for payment/signal creation and, if so, expose the optional observation field in the normal entry flow. Reuse the existing transaction field; no database migration or change to payment/signal financial effect is authorized.
 
@@ -245,4 +257,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #9: verify the current item and reseller list ergonomics, then add bounded practical search/filtering using existing data where it materially reduces operator effort. Item scope is search plus category/subcategory/lifecycle filters; reseller scope is search across useful existing identity/contact fields plus lifecycle filtering. Do not introduce a database/schema migration, fuzzy identity inference, destructive bulk action or changes to accepted lifecycle/history semantics. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #10, then stop. Do not start change #10 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #10: verify whether the existing transaction and cloud contracts already support `observation` on payment/signal creation and, if so, expose one optional observation field in the normal payment/signal entry flow. Reuse the existing transaction field and preserve current payment/signal financial effect, occurrence-date semantics, reversals/corrections and immutable history. Prefer a bounded form/mutation-contract delta; no database/schema migration is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #11, then stop. Do not start change #11 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.

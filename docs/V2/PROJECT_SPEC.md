@@ -181,7 +181,7 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports, early-use changes #5–#8 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
+D-033 / subcategories, D-034 / financial reports, early-use changes #5–#9 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
@@ -189,7 +189,9 @@ The pre-#8 PDF refinement preserved the existing grouped-product and per-order w
 
 The pre-#8 searchable-selector refinement introduced one reusable searchable combobox for large variable entity lists. Search is substring-based, case-insensitive and accent-insensitive; typed search text is presentation state only, while selection continues to use the existing entity IDs. It is used for reseller/item selection in new transactions and full correction, and category/subcategory selection in item create/edit. Small closed-list selectors remain unchanged. No persistence, database/Supabase, financial/history, Auth/RLS, recovery or deployment contract changed.
 
-Early-use change #8 now exposes the **current catalog** classification path (`category` plus optional `subcategory`) in the item catalog and in the new-order item selector. Legacy or unresolved current-catalog references are shown as `Sem classificação`; no classification is fabricated. The selector's search key remains item-name-only, and order creation/history behavior is unchanged, so D-025/D-033 transaction-time classification snapshots remain the historical source of truth.
+Early-use change #8 exposes the **current catalog** classification path (`category` plus optional `subcategory`) in the item catalog and in the new-order item selector. Legacy or unresolved current-catalog references are shown as `Sem classificação`; no classification is fabricated. The selector's search key remains item-name-only, and order creation/history behavior is unchanged, so D-025/D-033 transaction-time classification snapshots remain the historical source of truth.
+
+Early-use change #9 adds transient list ergonomics using already loaded data: item name search plus category/category-scoped-subcategory/lifecycle filters, and reseller search across name/phone/email plus lifecycle filtering. Search ignores case/accents, filters combine without mutating records, and no database/schema, fuzzy identity, bulk action, lifecycle/history, financial or recovery contract changed.
 
 The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
 
@@ -201,8 +203,8 @@ For each queue item:
 - use an isolated branch and D-019 for executable integration;
 - after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
 
-Current item: **early-use change #9 — practical item/reseller search and filters**.
+Current item: **early-use change #10 — observations on payment/signal entry**.
 
-Change #9 is limited to bounded list ergonomics using existing data: item search plus category/subcategory/lifecycle filtering, and reseller search across useful existing identity/contact fields plus lifecycle filtering. It does not authorize a database/schema migration, fuzzy identity inference, destructive bulk action or weakening of existing lifecycle/history semantics.
+Change #10 is limited to verifying whether the existing transaction/cloud contract already supports `observation` for payment/signal creation and, if so, exposing that existing optional field in normal entry. It does not authorize a database/schema migration or any change to payment/signal financial effect, occurrence semantics, reversals/corrections or immutable history.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.

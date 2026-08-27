@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — change #9 practical item/reseller list search and filters integrated
+
+Early-use change #9 verified that the item catalog had no list search/filter controls and the reseller page searched only by name without lifecycle filtering. PR #100 added bounded transient list ergonomics over data already loaded by the existing hooks.
+
+Items now support accent/case-insensitive name search combined with category, category-scoped optional subcategory and lifecycle filters. Legacy/unresolved current-catalog items can be isolated as `Sem classificação` without fabricated data. Revendedores now support accent/case-insensitive search across existing name, phone and email fields plus lifecycle filtering. `Limpar filtros` restores the full list, and a filtered-empty catalog is distinguished from a truly empty catalog.
+
+No database/schema migration, Supabase/API/policy change, fuzzy identity inference, destructive bulk action, lifecycle/history, financial/recovery, Auth/RLS or deployment behavior changed.
+
+Final D-019 on PR #100: head `df6efcee47d6a43941cbdbd273ec95bb93f56059`, merge ref `e0eba21d9a695be4b7bab918c8faa72de060039b`, run/job `33086388558` / `98567054353`: repository Critical QA (`lint + Vitest + Playwright + production build`) PASS. Validated tree: `83e27d1d63685eee1a4ae6bc751b30e8dccba786`.
+
+PR #100 was squash-integrated into `develop` as `b6d92db102d7ba17b920e8c41282a5075697bc04`; its Git tree is also `83e27d1d63685eee1a4ae6bc751b30e8dccba786`. Exact tree equivalence: PASS. No automatic Vercel deployment or `main` publication occurred. Change #9 is closed and change #10 is now the sole current authorized queue item.
+
+---
+
 ## 2026-08-27 — change #8 catalog classification context integrated
 
 Early-use change #8 verified that current category/optional-subcategory context was absent at the two authorized points of use: the item catalog and new-order item selection. PR #98 introduced a bounded current-catalog resolver and presentation changes only.

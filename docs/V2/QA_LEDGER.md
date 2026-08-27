@@ -279,6 +279,35 @@ PR #98 was squash-integrated into `develop` as `2c9d67221e3365b9476a95947906a6f4
 
 The post-integration change #8 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
 
+## P10-S3-I2-I3-D early-use change #9 — practical item/reseller search and filters — PASS / INTEGRATED
+
+### Scope review — UI / READ-MODEL ONLY
+
+PR #100 changes only the list UI and focused tests:
+
+- item catalog name search;
+- item category, category-scoped optional subcategory and lifecycle filters;
+- reseller search across existing name, phone and email fields;
+- reseller lifecycle filter;
+- filtered item empty-state presentation;
+- focused integration coverage for combined filtering and contact-field search.
+
+Search normalization ignores case and accents. Category/subcategory controls reuse existing searchable-selector infrastructure; lifecycle remains a small closed-list selector. Filter values are transient page state over already loaded data and are not persisted. Legacy/unresolved current item classification remains explicit as `Sem classificação` rather than being guessed.
+
+No database/schema migration, Supabase/API/policy, business mutation, fuzzy identity inference, destructive bulk action, lifecycle/history semantic, financial/recovery, Auth/RLS or deployment behavior changed.
+
+### Final D-019 — PASS
+
+- feature head: `df6efcee47d6a43941cbdbd273ec95bb93f56059`;
+- exact GitHub-generated merge ref checked out by Actions: `e0eba21d9a695be4b7bab918c8faa72de060039b`;
+- validated tree: `83e27d1d63685eee1a4ae6bc751b30e8dccba786`;
+- run/job: `33086388558` / `98567054353`;
+- repository Critical QA (`lint + Vitest + Playwright + production build`): **PASS**.
+
+PR #100 was squash-integrated into `develop` as `b6d92db102d7ba17b920e8c41282a5075697bc04`. Git object inspection confirms the integrated commit tree is `83e27d1d63685eee1a4ae6bc751b30e8dccba786`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #9 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -320,6 +349,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #8 catalog-classification visibility D-019: **PASS**.
 - PR #98 integrated-tree equivalence: **PASS**.
 - early-use change #8 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #9: **CURRENT / AUTHORIZED / NOT STARTED**.
+- early-use change #9 list-search/filter D-019: **PASS**.
+- PR #100 integrated-tree equivalence: **PASS**.
+- early-use change #9 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #10: **CURRENT / AUTHORIZED / NOT STARTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
