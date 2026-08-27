@@ -93,6 +93,26 @@ describe('CommandCenter', () => {
         expect(mockNavigate).toHaveBeenCalledWith('/resellers/1')
     })
 
+    it('should navigate to the catalog with the selected item search applied', () => {
+        vi.mocked(searchHook.useSearch).mockReturnValue({
+            results: [
+                { id: 7, title: 'Placa QR Code MDF', type: 'item', isActive: true }
+            ],
+            recent: [],
+            isLoading: false,
+        })
+
+        render(
+            <MemoryRouter>
+                <CommandCenter open={true} onOpenChange={() => { }} />
+            </MemoryRouter>
+        )
+
+        fireEvent.click(screen.getByText('Placa QR Code MDF'))
+
+        expect(mockNavigate).toHaveBeenCalledWith('/items?search=Placa%20QR%20Code%20MDF')
+    })
+
     it('should keep inactive resellers visible and identify them as inactive', () => {
         vi.mocked(searchHook.useSearch).mockReturnValue({
             results: [
