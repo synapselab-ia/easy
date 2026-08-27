@@ -65,7 +65,7 @@ describe('P3-S2 PDF statement semantics', () => {
         vi.clearAllMocks();
     });
 
-    it('renders opening, period movement and closing balance with orders above settlements', () => {
+    it('renders products, closing summary and payment detail using the canonical statement balances', () => {
         const statement = buildStatementPeriod(transactions, {
             startDate: new Date('2026-01-01T00:00:00'),
             endDate: new Date('2026-01-31T23:59:59.999'),
@@ -73,19 +73,27 @@ describe('P3-S2 PDF statement semantics', () => {
 
         generateResellerExtract(reseller, transactions, statement);
 
-        expect(mockText).toHaveBeenCalledWith('Saldo inicial: R$ 100,00', 14, 76);
-        expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 30,00', 14, 84);
-        expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 130,00', 14, 92);
+        expect(mockText).not.toHaveBeenCalledWith('Saldo inicial: R$ 100,00', 14, 76);
+        expect(mockText).not.toHaveBeenCalledWith('Movimentos do período: R$ 30,00', 14, 84);
+        expect(mockText).not.toHaveBeenCalledWith('Saldo final: R$ 130,00', 14, 92);
 
         const itemTable = vi.mocked(autoTable).mock.calls[0][1];
-        const settlementTable = vi.mocked(autoTable).mock.calls[1][1];
-        expect(itemTable.startY).toBe(102);
+        const summaryTable = vi.mocked(autoTable).mock.calls[1][1];
+        const settlementTable = vi.mocked(autoTable).mock.calls[2][1];
+
+        expect(itemTable.startY).toBe(74);
         expect(itemTable.body).toHaveLength(1);
+        expect(summaryTable.body).toEqual([
+            ['Total dos pedidos', 'R$ 50,00'],
+            ['Saldo anterior', 'R$ 100,00'],
+            ['(-) Total de pagamentos', 'R$ 20,00'],
+            ['SALDO ATUAL', 'R$ 130,00'],
+        ]);
         expect(settlementTable.body).toHaveLength(1);
         expect((settlementTable.body as string[][])[0][1]).toBe('Pagamento');
     });
 
-    it('renders empty item/settlement sections without losing the opening/closing balance', () => {
+    it('keeps the closing summary when the selected period has no products or payments', () => {
         const statement = buildStatementPeriod([transactions[0]], {
             startDate: new Date('2026-01-01T00:00:00'),
             endDate: new Date('2026-01-31T23:59:59.999'),
@@ -93,10 +101,13 @@ describe('P3-S2 PDF statement semantics', () => {
 
         generateResellerExtract(reseller, [transactions[0]], statement);
 
-        expect(mockText).toHaveBeenCalledWith('Saldo inicial: R$ 100,00', 14, 76);
-        expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 0,00', 14, 84);
-        expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 100,00', 14, 92);
+        expect(autoTable).toHaveBeenCalledTimes(2);
         expect(vi.mocked(autoTable).mock.calls[0][1].body).toEqual([]);
-        expect(vi.mocked(autoTable).mock.calls[1][1].body).toEqual([]);
+        expect(vi.mocked(autoTable).mock.calls[1][1].body).toEqual([
+            ['Total dos pedidos', 'R$ 0,00'],
+            ['Saldo anterior', 'R$ 100,00'],
+            ['(-) Total de pagamentos', 'R$ 0,00'],
+            ['SALDO ATUAL', 'R$ 100,00'],
+        ]);
     });
 });
