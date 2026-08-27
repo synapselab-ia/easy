@@ -113,6 +113,10 @@ function comparisonText(value: number | null) {
     return `${value > 0 ? '+' : ''}${value.toFixed(1).replace('.', ',')}% vs. período anterior`;
 }
 
+function productClassification(categoryLabel: string, subcategoryLabel?: string) {
+    return subcategoryLabel ? `${categoryLabel} › ${subcategoryLabel}` : categoryLabel;
+}
+
 function SummaryMetric({
     title,
     value,
@@ -251,7 +255,7 @@ function FinancialTimeline({ report }: { report: FinancialReport }) {
 }
 
 function SummaryView({ report }: { report: FinancialReport }) {
-    const topCategory = report.categories[0];
+    const topProduct = report.products[0];
     const topReseller = report.resellers.find(reseller => reseller.sales > 0);
 
     return (
@@ -266,21 +270,28 @@ function SummaryView({ report }: { report: FinancialReport }) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {topCategory ? (
-                            <div className="space-y-2">
+                        {topProduct ? (
+                            <div className="space-y-3">
                                 <div className="flex items-end justify-between gap-4">
-                                    <div>
-                                        <p className="font-semibold">{topCategory.label}</p>
-                                        <p className="text-sm text-muted-foreground">Categoria com maior venda no período</p>
+                                    <div className="min-w-0">
+                                        <p className="truncate font-semibold">{topProduct.label}</p>
+                                        <p className="text-sm text-muted-foreground">Produto com maior venda no período</p>
                                     </div>
-                                    <p className="text-xl font-bold">{currencyFormatter.format(topCategory.grossValue)}</p>
+                                    <p className="shrink-0 text-xl font-bold">{currencyFormatter.format(topProduct.grossValue)}</p>
                                 </div>
-                                {topCategory.subcategories.slice(0, 3).map(subcategory => (
-                                    <div key={subcategory.subcategoryId ?? subcategory.label} className="flex justify-between border-t pt-2 text-sm">
-                                        <span className="text-muted-foreground">{subcategory.label}</span>
-                                        <span className="font-medium">{currencyFormatter.format(subcategory.grossValue)}</span>
+                                <div className="grid grid-cols-2 gap-3 border-t pt-3 text-sm">
+                                    <div>
+                                        <p className="text-muted-foreground">Itens vendidos</p>
+                                        <p className="font-medium">{topProduct.quantity}</p>
                                     </div>
-                                ))}
+                                    <div>
+                                        <p className="text-muted-foreground">Pedidos</p>
+                                        <p className="font-medium">{topProduct.orderCount}</p>
+                                    </div>
+                                </div>
+                                <p className="border-t pt-3 text-xs text-muted-foreground">
+                                    {productClassification(topProduct.categoryLabel, topProduct.subcategoryLabel)}
+                                </p>
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground">Nenhuma venda para destacar neste período.</p>
@@ -340,7 +351,7 @@ function CategoryView({ report }: { report: FinancialReport }) {
         });
     };
 
-    if (report.categories.length === 0) {
+    if (report.products.length === 0 && report.categories.length === 0) {
         return (
             <Card className="shadow-none">
                 <CardContent className="py-12 text-center text-sm text-muted-foreground">
@@ -351,62 +362,109 @@ function CategoryView({ report }: { report: FinancialReport }) {
     }
 
     return (
-        <Card className="overflow-hidden shadow-none">
-            <CardHeader>
-                <CardTitle>Desempenho por categoria</CardTitle>
-                <CardDescription>
-                    Abra uma categoria para detalhar as subcategorias registradas nos pedidos.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-                <div className="divide-y border-t">
-                    {report.categories.map(category => {
-                        const key = category.categoryId === undefined ? 'legacy' : String(category.categoryId);
-                        const isExpanded = expanded.has(key);
-                        return (
-                            <div key={key}>
-                                <button
-                                    type="button"
-                                    onClick={() => toggle(key)}
-                                    className="grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-muted/40"
-                                >
-                                    <div className="flex min-w-0 items-center gap-3">
-                                        {isExpanded
-                                            ? <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                                            : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                                        <div className="min-w-0">
-                                            <p className="truncate font-medium">{category.label}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {category.orderCount} pedidos · {category.quantity} itens · {category.subcategories.length} grupos
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <p className="text-right font-semibold">{currencyFormatter.format(category.grossValue)}</p>
-                                </button>
-                                {isExpanded && (
-                                    <div className="border-t bg-muted/20 px-5 py-2 sm:pl-12">
-                                        {category.subcategories.map(subcategory => (
-                                            <div
-                                                key={subcategory.subcategoryId ?? subcategory.label}
-                                                className="grid grid-cols-[1fr_auto] gap-4 border-b py-3 last:border-b-0"
-                                            >
-                                                <div>
-                                                    <p className="text-sm font-medium">{subcategory.label}</p>
+        <div className="space-y-6">
+            {report.products.length > 0 && (
+                <Card className="overflow-hidden shadow-none">
+                    <CardHeader>
+                        <CardTitle>Desempenho por produto</CardTitle>
+                        <CardDescription>
+                            Ranking por valor vendido usando nome e classificação registrados em cada pedido.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto border-t">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Produto</TableHead>
+                                        <TableHead>Classificação histórica</TableHead>
+                                        <TableHead className="text-right">Pedidos</TableHead>
+                                        <TableHead className="text-right">Itens</TableHead>
+                                        <TableHead className="text-right">Vendas</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {report.products.map(product => (
+                                        <TableRow
+                                            key={`${product.itemId ?? 'legacy'}:${product.label}:${product.categoryLabel}:${product.subcategoryLabel ?? ''}`}
+                                        >
+                                            <TableCell className="font-medium">{product.label}</TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {productClassification(product.categoryLabel, product.subcategoryLabel)}
+                                            </TableCell>
+                                            <TableCell className="text-right">{product.orderCount}</TableCell>
+                                            <TableCell className="text-right">{product.quantity}</TableCell>
+                                            <TableCell className="text-right font-semibold">
+                                                {currencyFormatter.format(product.grossValue)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {report.categories.length > 0 && (
+                <Card className="overflow-hidden shadow-none">
+                    <CardHeader>
+                        <CardTitle>Desempenho por categoria</CardTitle>
+                        <CardDescription>
+                            Abra uma categoria para detalhar as subcategorias registradas nos pedidos.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="divide-y border-t">
+                            {report.categories.map(category => {
+                                const key = category.categoryId === undefined ? 'legacy' : String(category.categoryId);
+                                const isExpanded = expanded.has(key);
+                                return (
+                                    <div key={key}>
+                                        <button
+                                            type="button"
+                                            onClick={() => toggle(key)}
+                                            className="grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-muted/40"
+                                        >
+                                            <div className="flex min-w-0 items-center gap-3">
+                                                {isExpanded
+                                                    ? <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                                    : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-medium">{category.label}</p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {subcategory.orderCount} pedidos · {subcategory.quantity} itens
+                                                        {category.orderCount} pedidos · {category.quantity} itens · {category.subcategories.length} grupos
                                                     </p>
                                                 </div>
-                                                <p className="text-sm font-semibold">{currencyFormatter.format(subcategory.grossValue)}</p>
                                             </div>
-                                        ))}
+                                            <p className="text-right font-semibold">{currencyFormatter.format(category.grossValue)}</p>
+                                        </button>
+                                        {isExpanded && (
+                                            <div className="border-t bg-muted/20 px-5 py-2 sm:pl-12">
+                                                {category.subcategories.map(subcategory => (
+                                                    <div
+                                                        key={subcategory.subcategoryId ?? subcategory.label}
+                                                        className="grid grid-cols-[1fr_auto] gap-4 border-b py-3 last:border-b-0"
+                                                    >
+                                                        <div>
+                                                            <p className="text-sm font-medium">{subcategory.label}</p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {subcategory.orderCount} pedidos · {subcategory.quantity} itens
+                                                            </p>
+                                                        </div>
+                                                        <p className="text-sm font-semibold">{currencyFormatter.format(subcategory.grossValue)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            </CardContent>
-        </Card>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 }
 
@@ -565,7 +623,7 @@ export default function ReportsPage() {
                 <div className="space-y-1">
                     <h1 className="text-2xl font-bold tracking-tight">Relatórios</h1>
                     <p className="text-sm text-muted-foreground">
-                        Entenda vendas, recebimentos, categorias e revendedores — e transforme a mesma visão em PDF.
+                        Entenda vendas, recebimentos, produtos, categorias e revendedores — e transforme a mesma visão em PDF.
                     </p>
                 </div>
                 <Button onClick={() => setPdfOpen(true)} disabled={!report || isLoading} className="w-full sm:w-auto">
