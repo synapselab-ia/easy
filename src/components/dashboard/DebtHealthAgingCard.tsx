@@ -1,99 +1,140 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { SectionHeader } from "./SectionHeader";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { useDebtAging } from "@/hooks/useDashboard";
+import { Card, CardContent } from '@/components/ui/card';
+import type { DashboardAgingBucket } from '@/domain/dashboardSnapshot';
+import { SectionHeader } from './SectionHeader';
 
-const formatBRL = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
+const FINANCIAL_DISPLAY_EPSILON = 0.01;
+
+const BUCKET_PRESENTATION: Record<
+    DashboardAgingBucket['category'],
+    { label: string; barClassName: string }
+> = {
+    recent: {
+        label: 'Recente (0–6d)',
+        barClassName: 'bg-emerald-500',
+    },
+    attention: {
+        label: 'Em atenção (7–30d)',
+        barClassName: 'bg-amber-500',
+    },
+    critical: {
+        label: 'Crítico (>30d)',
+        barClassName: 'bg-destructive',
+    },
 };
 
-export function DebtHealthAgingCard() {
-    const { data, isLoading } = useDebtAging();
+interface DebtHealthAgingCardProps {
+    buckets?: DashboardAgingBucket[];
+    totalDebt?: number;
+    isLoading: boolean;
+}
 
-    if (isLoading || !data) {
+function formatBRL(value: number) {
+    return `R$ ${value.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
+}
+
+function formatPercentage(value: number) {
+    return `${value.toLocaleString('pt-BR', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 1,
+    })}%`;
+}
+
+function boundedPercentage(value: number) {
+    return Math.min(100, Math.max(0, value));
+}
+
+export function DebtHealthAgingCard({ buckets, totalDebt, isLoading }: DebtHealthAgingCardProps) {
+    if (isLoading || !buckets || totalDebt === undefined) {
         return (
-            <div className="w-full space-y-4 animate-pulse">
-                <div className="space-y-2">
-                    <div className="h-8 w-1/3 bg-muted rounded"></div>
-                    <div className="h-4 w-1/2 bg-muted rounded"></div>
-                </div>
+            <div className="w-full" aria-busy="true">
+                <SectionHeader
+                    title="Carteira por idade"
+                    description="Distribuição da carteira em aberto pelos três intervalos FIFO aceitos."
+                />
                 <Card className="w-full">
-                    <CardContent className="h-[400px] flex items-center justify-center">
-                        <div className="h-40 w-40 rounded-full bg-muted"></div>
+                    <CardContent className="space-y-3 p-4 sm:p-6">
+                        {Array.from({ length: 3 }, (_, index) => (
+                            <div key={index} className="space-y-3 rounded-lg border p-4">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="h-4 w-36 rounded bg-muted" />
+                                    <div className="h-4 w-12 rounded bg-muted" />
+                                </div>
+                                <div className="h-2 w-full rounded-full bg-muted" />
+                            </div>
+                        ))}
                     </CardContent>
                 </Card>
             </div>
         );
     }
 
-    const { buckets, totalDebt } = data;
+    const hasOpenDebt = totalDebt > FINANCIAL_DISPLAY_EPSILON;
 
     return (
         <div className="w-full">
             <SectionHeader
-                title="Radar de Recebimentos"
+                title="Carteira por idade"
                 description={
                     <>
-                        Distribuição do saldo devedor pela idade dos pedidos ainda em aberto.
-                        <br className="sm:hidden" />
+                        Distribuição da carteira em aberto pelos três intervalos FIFO aceitos.
                         <span className="sm:ml-2">
-                            Pagamentos e sinais abatem primeiro os pedidos mais antigos (FIFO). Total:{' '}
+                            Total em aberto:{' '}
                             <span className="font-semibold text-foreground">{formatBRL(totalDebt)}</span>
                         </span>
                     </>
                 }
             />
-            <Card className="w-full overflow-hidden">
-                <CardContent className="p-6">
-                    <div className="mx-auto w-full max-w-xl">
-                        <div className="h-[240px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={buckets}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={65}
-                                        outerRadius={85}
-                                        paddingAngle={4}
-                                        dataKey="value"
-                                        nameKey="label"
-                                    >
-                                        {buckets.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(value: any) => formatBRL(Number(value))}
-                                        contentStyle={{
-                                            borderRadius: '8px',
-                                            border: '1px solid hsl(var(--border))',
-                                            backgroundColor: 'hsl(var(--card))',
-                                            color: 'hsl(var(--card-foreground))',
-                                            fontSize: '12px'
-                                        }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
 
-                        <div className="mt-4 grid w-full grid-cols-1 gap-2">
-                            {buckets.map((bucket) => (
-                                <div key={bucket.category} className="flex items-center justify-between text-[11px] p-2 rounded border bg-muted/30">
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="w-2 h-2 rounded-full"
-                                            style={{ backgroundColor: bucket.color }}
-                                        />
-                                        <span className="font-medium">{bucket.label}</span>
+            <Card className="w-full overflow-hidden">
+                <CardContent className="space-y-4 p-4 sm:p-6">
+                    {!hasOpenDebt && (
+                        <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                            Nenhum saldo em aberto hoje.
+                        </p>
+                    )}
+
+                    <div className="grid gap-3" role="list" aria-label="Distribuição da carteira por idade">
+                        {buckets.map((bucket) => {
+                            const presentation = BUCKET_PRESENTATION[bucket.category];
+                            const progressValue = boundedPercentage(bucket.percentage);
+
+                            return (
+                                <div
+                                    key={bucket.category}
+                                    role="listitem"
+                                    className="space-y-3 rounded-lg border bg-muted/20 p-4"
+                                >
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <p className="font-medium">{presentation.label}</p>
+                                            <p className="mt-1 text-sm font-semibold tabular-nums">
+                                                {formatBRL(bucket.value)}
+                                            </p>
+                                        </div>
+                                        <span className="shrink-0 text-sm font-semibold tabular-nums">
+                                            {formatPercentage(bucket.percentage)}
+                                        </span>
                                     </div>
-                                    <div className="font-bold">{bucket.percentage.toFixed(0)}%</div>
+
+                                    <div
+                                        className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                                        role="progressbar"
+                                        aria-label={`${presentation.label}: ${formatBRL(bucket.value)}, ${formatPercentage(bucket.percentage)}`}
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                        aria-valuenow={progressValue}
+                                    >
+                                        <div
+                                            className={`h-full rounded-full ${presentation.barClassName}`}
+                                            style={{ width: `${progressValue}%` }}
+                                        />
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
+                            );
+                        })}
                     </div>
                 </CardContent>
             </Card>
