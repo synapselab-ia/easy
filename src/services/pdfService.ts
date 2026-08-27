@@ -20,7 +20,7 @@ type OrderGroup = {
 };
 
 function formatMoney(value: number) {
-    return `R$ ${value.toFixed(2)}`;
+    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function auditNotes(transaction: Transaction) {
@@ -173,22 +173,22 @@ export function generateResellerExtract(
         if (statement) {
             doc.setFontSize(11);
             doc.setTextColor(0, 0, 0);
-            doc.text(`Saldo inicial: R$ ${statement.openingBalance.toFixed(2)}`, 14, 76);
-            doc.text(`Movimentos do período: R$ ${statement.periodMovement.toFixed(2)}`, 14, 84);
+            doc.text(`Saldo inicial: ${formatMoney(statement.openingBalance)}`, 14, 76);
+            doc.text(`Movimentos do período: ${formatMoney(statement.periodMovement)}`, 14, 84);
 
             const closingColor = statement.closingBalance > 0 ? [220, 38, 38] : [22, 163, 74];
             doc.setTextColor(closingColor[0], closingColor[1], closingColor[2]);
-            doc.text(`Saldo final: R$ ${statement.closingBalance.toFixed(2)}`, 14, 92);
+            doc.text(`Saldo final: ${formatMoney(statement.closingBalance)}`, 14, 92);
             tableStartY = 102;
         } else {
             const balanceColor = closingBalance > 0 ? [220, 38, 38] : [22, 163, 74];
             doc.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
-            doc.text(`Saldo Devedor do Período: R$ ${closingBalance.toFixed(2)}`, 14, 76);
+            doc.text(`Saldo Devedor do Período: ${formatMoney(closingBalance)}`, 14, 76);
         }
     } else {
         const balanceColor = closingBalance > 0 ? [220, 38, 38] : [22, 163, 74];
         doc.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
-        doc.text(`Saldo Devedor Atual: R$ ${closingBalance.toFixed(2)}`, 14, 70);
+        doc.text(`Saldo Devedor Atual: ${formatMoney(closingBalance)}`, 14, 70);
     }
 
     const filtered = statement
