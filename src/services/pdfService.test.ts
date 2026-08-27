@@ -120,8 +120,8 @@ describe('pdfService', () => {
         expect(body).toHaveLength(4);
         expect(cellContent(body[0][0])).toBe('Placa 3x8');
         expect(cellContent(body[0][1])).toBe('2');
-        expect(cellContent(body[0][2])).toBe('R$ 50.00');
-        expect(cellContent(body[0][3])).toBe('R$ 100.00');
+        expect(cellContent(body[0][2])).toBe('R$ 50,00');
+        expect(cellContent(body[0][3])).toBe('R$ 100,00');
         expect(cellContent(body[1][0])).toBe('Lucas');
         expect(cellContent(body[2][0])).toBe('Eduardo');
         expect(cellContent(body[3][0])).toBe('Moldura Flor Bronze');
@@ -192,6 +192,7 @@ describe('pdfService', () => {
         const row = (tableOptions(1).body?.[0] ?? []) as string[];
         expect(tableOptions(1).head?.[1]).toEqual(['Data', 'Tipo', 'Valor', 'Status', 'Observação']);
         expect(tableOptions(1).body).toHaveLength(1);
+        expect(row[2]).toBe('R$ 90,00');
         expect(row[3]).toBe('Estornado');
         expect(row[4]).toContain('PIX');
         expect(row[4]).toContain('Motivo do estorno: Pagamento duplicado');
@@ -226,8 +227,10 @@ describe('pdfService', () => {
         const originalRow = tableOptions(1).body?.[0] as string[];
         const replacementRow = tableOptions(1).body?.[1] as string[];
 
+        expect(originalRow[2]).toBe('R$ 5.000,00');
         expect(originalRow[3]).toBe('Estornado');
         expect(originalRow[4]).toContain('Substituído pelo lançamento #11');
+        expect(replacementRow[2]).toBe('R$ 500,00');
         expect(replacementRow[3]).toBe('Válido');
         expect(replacementRow[4]).toContain('Correção do lançamento #10');
     });

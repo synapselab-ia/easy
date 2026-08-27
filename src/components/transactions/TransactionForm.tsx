@@ -35,6 +35,10 @@ function occurrenceFromDateInput(value: string) {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function formatMoney(value: number) {
+    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export function TransactionForm({
     onSubmitSuccess,
     onCancel,
@@ -240,7 +244,7 @@ export function TransactionForm({
                                 <SelectContent>
                                     {activeItems.map((i) => (
                                         <SelectItem key={i.id} value={i.id!.toString()}>
-                                            {i.name} (R$ {i.basePrice.toFixed(2)})
+                                            {i.name} ({formatMoney(i.basePrice)})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -279,11 +283,11 @@ export function TransactionForm({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="totalPrice">Valor Total (R$)</Label>
+                            <Label htmlFor="totalPrice">Valor Total</Label>
                             <Input
                                 id="totalPrice"
                                 disabled
-                                value={orderTotalPrice.toFixed(2)}
+                                value={formatMoney(orderTotalPrice)}
                                 className="bg-muted"
                             />
                         </div>

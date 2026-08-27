@@ -24,6 +24,10 @@ const unitPriceOf = (transaction: Transaction) => typeof transaction.unitPrice =
     ? transaction.unitPrice
     : transaction.totalPrice / quantityOf(transaction);
 
+function formatMoney(value: number) {
+    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function dateInput(date: Date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -158,7 +162,7 @@ export function FullTransactionCorrectionDialog({ transaction, open, onOpenChang
             <div className="space-y-4 py-2">
                 <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
                     <div><strong>Original:</strong> #{transaction.id} · {typeLabel(transaction.type)}</div>
-                    <div><strong>Valor atual:</strong> R$ {transaction.totalPrice.toFixed(2)}</div>
+                    <div><strong>Valor atual:</strong> {formatMoney(transaction.totalPrice)}</div>
                     {transaction.itemName && <div><strong>Item:</strong> {transaction.itemName}</div>}
                 </div>
 
@@ -212,7 +216,7 @@ export function FullTransactionCorrectionDialog({ transaction, open, onOpenChang
                             <Input id="correctionUnitPrice" type="number" min="0" step="0.01" value={unitPrice} onChange={event => setUnitPrice(event.target.value)} />
                         </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">Total da substituição: <strong className="text-foreground">R$ {orderValid ? (parsedQuantity * parsedUnitPrice).toFixed(2) : '0.00'}</strong></div>
+                    <div className="text-sm text-muted-foreground">Total da substituição: <strong className="text-foreground">{formatMoney(orderValid ? parsedQuantity * parsedUnitPrice : 0)}</strong></div>
                 </div> : <div className="space-y-2">
                     <Label htmlFor="correctionValue">Valor corrigido (R$)</Label>
                     <Input id="correctionValue" type="number" min="0.01" step="0.01" value={movementValue} onChange={event => setMovementValue(event.target.value)} />

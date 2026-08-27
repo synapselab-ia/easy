@@ -46,8 +46,8 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
 
-        expect(screen.getByText('R$ 100.00')).toBeInTheDocument();
-        const balanceDiv = screen.getByText('R$ 100.00');
+        expect(screen.getByText('R$ 100,00')).toBeInTheDocument();
+        const balanceDiv = screen.getByText('R$ 100,00');
         expect(balanceDiv.className).toContain('text-debt');
     });
 
@@ -71,7 +71,7 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
 
-        expect(screen.getByText('R$ -50.00')).toBeInTheDocument();
+        expect(screen.getByText('R$ -50,00')).toBeInTheDocument();
         expect(screen.getByText('Pedido Incorreto')).toBeInTheDocument();
         expect(screen.getByText('Estornado')).toBeInTheDocument();
         expect(screen.getByText(/Motivo do estorno: Valor incorreto/i)).toBeInTheDocument();
@@ -104,8 +104,8 @@ describe('ResellerDetailPage Calculation and Unit rendering', () => {
 
         render(<MemoryRouter><ResellerDetailPage /></MemoryRouter>);
 
-        expect(screen.getByText('R$ -50.00')).toBeInTheDocument();
-        const balanceDiv = screen.getByText('R$ -50.00');
+        expect(screen.getByText('R$ -50,00')).toBeInTheDocument();
+        const balanceDiv = screen.getByText('R$ -50,00');
         expect(balanceDiv.className).toContain('text-payment');
     });
 

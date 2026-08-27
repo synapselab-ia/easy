@@ -152,7 +152,7 @@ describe('TransactionForm', () => {
     it('should only list active items for new orders', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
-        await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150\.00\)/i)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument());
         expect(screen.queryByText(/Perfume Arquivado/i)).not.toBeInTheDocument();
     });
 
@@ -162,10 +162,10 @@ describe('TransactionForm', () => {
         const selects = await screen.findAllByTestId('mock-select');
 
         await waitFor(() => {
-            expect(screen.queryByText(/Perfume \(R\$ 150\.00\)/i)).toBeInTheDocument();
+            expect(screen.queryByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument();
         });
 
-        const itemOption = screen.getByText(/Perfume \(R\$ 150\.00\)/i) as HTMLOptionElement;
+        const itemOption = screen.getByText(/Perfume \(R\$ 150,00\)/i) as HTMLOptionElement;
         fireEvent.change(selects[2], { target: { value: itemOption.value } });
 
         const unitPriceInput = await screen.findByLabelText(/Valor Unitário/i) as HTMLInputElement;
@@ -177,7 +177,7 @@ describe('TransactionForm', () => {
         fireEvent.change(qtyInput, { target: { value: '3' } });
 
         const totalInput = screen.getByLabelText(/Valor Total/i) as HTMLInputElement;
-        expect(totalInput.value).toBe('450.00');
+        expect(totalInput.value).toBe('R$ 450,00');
     });
 
     it('should clear entered data on cancel and restore the requested initial type', async () => {
@@ -218,8 +218,8 @@ describe('TransactionForm', () => {
         const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
         fireEvent.change(selects[0], { target: { value: resellerOption.value } });
 
-        await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150\.00\)/i)).toBeInTheDocument());
-        const itemOption = screen.getByText(/Perfume \(R\$ 150\.00\)/i) as HTMLOptionElement;
+        await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument());
+        const itemOption = screen.getByText(/Perfume \(R\$ 150,00\)/i) as HTMLOptionElement;
         fireEvent.change(selects[2], { target: { value: itemOption.value } });
 
         const qtyInput = screen.getByLabelText(/Quantidade/i) as HTMLInputElement;

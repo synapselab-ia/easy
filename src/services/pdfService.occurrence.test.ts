@@ -72,6 +72,6 @@ describe('P3-S1 PDF occurrence-date behavior', () => {
         expect(body).toHaveLength(1);
         expect(body[0][0]).toBe(insideOccurrence.toLocaleDateString());
         expect(body[0][1]).toBe('Pagamento');
-        expect(body[0][2]).toBe('R$ 40.00');
+        expect(body[0][2]).toBe('R$ 40,00');
     });
 });
