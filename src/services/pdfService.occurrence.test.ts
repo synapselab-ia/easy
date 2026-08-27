@@ -65,12 +65,19 @@ describe('P3-S1 PDF occurrence-date behavior', () => {
         });
 
         const itemTable = vi.mocked(autoTable).mock.calls[0][1];
-        const settlementTable = vi.mocked(autoTable).mock.calls[1][1];
+        const summaryTable = vi.mocked(autoTable).mock.calls[1][1];
+        const settlementTable = vi.mocked(autoTable).mock.calls[2][1];
         const body = settlementTable.body as string[][];
 
         expect(itemTable.body).toEqual([]);
+        expect(summaryTable.body).toEqual([
+            ['Total dos pedidos', 'R$ 0,00'],
+            ['Saldo anterior', 'R$ 0,00'],
+            ['(-) Total de pagamentos', 'R$ 40,00'],
+            ['SALDO ATUAL', 'R$ -40,00'],
+        ]);
         expect(body).toHaveLength(1);
-        expect(body[0][0]).toBe(insideOccurrence.toLocaleDateString());
+        expect(body[0][0]).toBe(insideOccurrence.toLocaleDateString('pt-BR'));
         expect(body[0][1]).toBe('Pagamento');
         expect(body[0][2]).toBe('R$ 40,00');
     });
