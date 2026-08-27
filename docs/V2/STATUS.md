@@ -35,7 +35,7 @@ Current P10-S3 state:
   - change #12 non-blocking duplicate-data warnings: `DONE / INTEGRATED` — PR #106;
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `DEFERRED / ON HOLD — OPERATOR DECISION`;
-  - **change #15 future occurrence-date confirmation: `CURRENT / AUTHORIZED`.**
+  - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -425,7 +425,37 @@ The operator reviewed the practical value of a dedicated `Recebimentos hoje` Das
 
 No executable change was made for #14. The idea remains available for a later broader Dashboard review, where KPI selection, layout and operational priorities can be evaluated together rather than one card at a time. No D-019 run was required for this documentation-only deferral.
 
-Change #15 is promoted as the sole current queue item.
+Change #15 was promoted as the next queue item and is now closed.
+
+## Early-use change #15 — future occurrence-date confirmation
+
+Verification confirmed that new transaction entry already keeps financial occurrence time separate from registration time and accepts any valid occurrence date, including future dates. PR #111 adds a form-only intent check before mutation; it does not alter the transaction contract or D-014 semantics.
+
+Accepted behavior:
+
+- same-day and past occurrence dates continue through the existing submit path without an extra prompt;
+- a valid date later than the operator's local current date opens a responsive confirmation before any transaction is created;
+- `Voltar e corrigir` closes the warning and performs no write;
+- `Cadastrar mesmo assim` explicitly proceeds and persists exactly the selected future occurrence date;
+- the warning never auto-corrects the occurrence date and never prohibits a legitimate future date;
+- the existing `occurredAt` payload and transaction creation path remain unchanged after confirmation;
+- no database/schema migration, Supabase/RPC/Auth/RLS, transaction-accounting, correction/reversal/history, recovery or deployment behavior changed.
+
+Validation/integration evidence:
+
+- feature head: `6b0e86139265fdf06f482ae2fdb17d275212a79a`;
+- GitHub Actions merge ref: `650a28b4f53f484cec79bf4b80f4842364e3ee66`;
+- validated tree: `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`;
+- D-019 run/job: `33108818780` / `98645846558`;
+- ESLint: 0 errors / 105 warnings;
+- Vitest: 65 files / 287 tests PASS;
+- focused occurrence-form coverage: 3 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #111 squash-integrated `develop`: `bee3e2cee2852c9bf0683fe5d564b34cef569c8a`;
+- integrated tree: `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #15 is closed. No later early-use queue item is authorized.
 
 ## Operator-authorized usability/data-quality queue
 
@@ -451,9 +481,9 @@ Ordered queue:
 7. **#12 DONE / INTEGRATED — PR #106** — conservative duplicate-data warnings use existing loaded reseller/item fields and remain operator-overridable.
 8. **#13 DONE / INTEGRATED — PR #108** — product-level analytics use immutable occurrence-time order snapshots inside the canonical screen/PDF `FinancialReport` path.
 9. **#14 DEFERRED / ON HOLD — OPERATOR DECISION** — receipts-today Dashboard KPI is postponed pending a broader Dashboard review.
-10. **#15 CURRENT / AUTHORIZED** — non-blocking confirmation for future occurrence dates in new transaction entry.
+10. **#15 DONE / INTEGRATED — PR #111** — future occurrence dates require explicit non-blocking confirmation while preserving the chosen D-014 occurrence date.
 
-Detailed scope and stop conditions for each queue item are canonical in `docs/V2/BACKLOG.md`.
+There is currently no later bounded early-use queue item authorized. Detailed historical scope and stop conditions remain canonical in `docs/V2/BACKLOG.md`.
 
 ## Startup protocol for a new conversation
 
@@ -478,4 +508,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #15. Verify the current new-transaction occurrence-date input, validation and submit path, then add a non-blocking confirmation when the selected financial occurrence date is in the future relative to the operator's local current date. The warning must preserve D-014: an explicitly confirmed future date remains the transaction's actual occurrence date; do not auto-correct the date and do not prohibit future dates. No database/schema migration, transaction-accounting change, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update the canonical docs and stop; do not invent or start a new queue item without explicit operator instruction. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**No new bounded early-use queue item is currently authorized. Continue controlled clean-start early-use observation and wait for explicit operator instruction before starting another change. Change #14 remains `DEFERRED / ON HOLD` pending a broader Dashboard review unless the operator explicitly reauthorizes it sooner. Do not invent or start a #16, do not automatically deploy, do not modify/publish `main`, do not resume D-030/I2-I2, do not import legacy real-store data and do not claim definitive cutover without a new explicit operator decision.**
