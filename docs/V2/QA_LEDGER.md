@@ -664,6 +664,61 @@ PR #120 was squash-integrated into `develop` as `cccf11fece99179aa895964c8b743cf
 
 The post-integration DR-05 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-06 — recent registrations + quick actions — PASS / INTEGRATED
+
+### Scope review — PRESENTATION / EXISTING NAVIGATION AND WRITE PATH ONLY
+
+Verification before implementation confirmed:
+
+- `DashboardSnapshot.recentRegistrations` already supplies effective non-reversed registrations in canonical `createdAt` descending order;
+- the current Dashboard already owns the shared snapshot and has the integrated DR-03/04/05 operational blocks;
+- `/transactions?type=order|payment|signal` already initializes the existing `TransactionForm` through `TransactionsPage`;
+- `/resellers/:id` already provides the related reseller detail/history surface;
+- `PerformanceAnalysisSection` remains the separate legacy analytical block reserved for DR-07.
+
+PR #122 is bounded to six Dashboard/test files:
+
+- adds `DashboardQuickActions` with the three accepted transaction intents through existing route context;
+- adds `RecentRegistrations` consuming prepared snapshot rows without presentation-side sorting/effective/reversal reconstruction;
+- integrates quick actions into the page identity/header and recent activity immediately after aging;
+- preserves Performance unchanged below the newly complete operational hierarchy;
+- adds focused quick-action/recent-registration tests plus Dashboard snapshot-handoff coverage.
+
+No domain/FIFO/accounting helper, transaction write form/path, database/schema, Supabase/RPC/Auth/RLS, recovery, deployment-path, Reports or DR-07/later scope was changed.
+
+### Focused coverage — PASS
+
+`RecentRegistrations.test.tsx` has **4/4 PASS** and verifies:
+
+1. prepared row order is projected unchanged while `Pedido`, `Pagamento` and `Sinal` plus pt-BR values are explicit;
+2. occurrence-date context appears when financial and registration calendar dates differ and is omitted when the day is the same;
+3. selecting a row navigates to existing `/resellers/:id` detail/history;
+4. business empty state and compact `aria-busy` loading state remain explicit.
+
+`DashboardQuickActions.test.tsx` has **1/1 PASS** and verifies the exact existing transaction route intents for `order`, `payment` and `signal`.
+
+`DashboardPage.test.tsx` remains **3/3 PASS** and verifies loading plus prepared DR-04/05/06 snapshot handoff without removing the existing Performance block.
+
+### Final D-019 — PASS
+
+- feature head: `c889e2ad73f13d2c6804a8248863d214d27c50e2`;
+- exact GitHub-generated merge ref checked out by Actions: `2b17e6c8fffd477e7716dd1ac4ad5e31848af0af`;
+- validated tree: `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f`;
+- run/job: `33126181592` / `98704779945`;
+- ESLint: **0 errors / 105 warnings**;
+- Vitest: **70 files / 304 tests PASS**;
+- focused `RecentRegistrations`: **4/4 PASS**;
+- focused `DashboardQuickActions`: **1/1 PASS**;
+- focused `DashboardPage`: **3/3 PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No objective D-019 failure was waived. The successful run retained only already tracked non-blocking React/test/lint/audit/chunk warnings.
+
+PR #122 was squash-integrated into `develop` as `1425fe0736dbf919e47c9c0c5bfb593331cec469`. Git object inspection confirms the integrated tree is `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f`, exactly the same tree validated by the PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-06 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -737,6 +792,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-035 DR-05 compact-aging D-019: **PASS**.
 - PR #120 integrated-tree equivalence: **PASS**.
 - D-035 DR-05 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- D-035 DR-06 recent registrations + quick actions: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
+- D-035 DR-06 recent registrations + quick actions D-019: **PASS**.
+- PR #122 integrated-tree equivalence: **PASS**.
+- D-035 DR-06 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 DR-07 Performance removal + Reports handoff: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
