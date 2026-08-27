@@ -232,9 +232,18 @@ export default function ItemsPage() {
 
                     <div className="space-y-2">
                         <Label htmlFor="itemLifecycleFilter">Status</Label>
-                        <Select value={lifecycleFilter} onValueChange={setLifecycleFilter}>
+                        <Select
+                            value={lifecycleFilter}
+                            onValueChange={(value) => setLifecycleFilter(value || "all")}
+                        >
                             <SelectTrigger id="itemLifecycleFilter">
-                                <SelectValue />
+                                <SelectValue>
+                                    {lifecycleFilter === "active"
+                                        ? "Ativos"
+                                        : lifecycleFilter === "inactive"
+                                            ? "Inativos"
+                                            : "Todos"}
+                                </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Todos</SelectItem>
