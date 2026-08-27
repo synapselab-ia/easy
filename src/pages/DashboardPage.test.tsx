@@ -14,7 +14,19 @@ vi.mock('../components/dashboard/AttentionCenter', () => ({
 }));
 
 vi.mock('../components/dashboard/DebtHealthAgingCard', () => ({
-    DebtHealthAgingCard: () => <div>Debt aging</div>,
+    DebtHealthAgingCard: ({
+        buckets,
+        totalDebt,
+        isLoading,
+    }: {
+        buckets?: unknown[];
+        totalDebt?: number;
+        isLoading: boolean;
+    }) => (
+        <div>
+            {isLoading ? 'Debt aging loading' : `Debt aging ${buckets?.length ?? 0} / ${totalDebt ?? 0}`}
+        </div>
+    ),
 }));
 
 vi.mock('../components/dashboard/PerformanceAnalysisSection', () => ({
@@ -43,6 +55,11 @@ const dashboardSnapshot = {
         resellerCount: 2,
         oldestAgeDays: 45,
     },
+    agingBuckets: [
+        { category: 'recent', value: 700, percentage: 33.3333 },
+        { category: 'attention', value: 500, percentage: 23.8095 },
+        { category: 'critical', value: 900, percentage: 42.8571 },
+    ],
     attentionRows: [
         {
             resellerId: 10,
@@ -61,16 +78,17 @@ describe('DashboardPage integration', () => {
         vi.clearAllMocks();
     });
 
-    it('renders loading state for the primary KPIs and attention center', () => {
+    it('renders loading state for the primary KPIs, attention center and aging context', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: undefined, isLoading: true } as any);
 
         render(<DashboardPage />);
 
         expect(screen.getAllByText('Carregando...')).toHaveLength(4);
         expect(screen.getByText('Attention loading')).toBeInTheDocument();
+        expect(screen.getByText('Debt aging loading')).toBeInTheDocument();
     });
 
-    it('renders the four DR-03 KPIs and hands prepared DR-04 rows to the attention center', () => {
+    it('renders the four DR-03 KPIs and hands prepared DR-04/DR-05 data to their operational blocks', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: dashboardSnapshot, isLoading: false } as any);
 
         render(<DashboardPage />);
@@ -92,6 +110,7 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('2 revendedores com saldo em aberto')).toBeInTheDocument();
         expect(screen.getByText('2 revendedores • mais antigo: 45 dias')).toBeInTheDocument();
         expect(screen.getByText('Attention center 1')).toBeInTheDocument();
+        expect(screen.getByText('Debt aging 3 / 2100')).toBeInTheDocument();
         expect(screen.queryByText(/tempo real/i)).not.toBeInTheDocument();
     });
 
@@ -103,6 +122,11 @@ describe('DashboardPage integration', () => {
                 today: { sales: 0, receipts: 0, orderCount: 0, itemQuantity: 0 },
                 openDebt: { amount: 0, resellerCount: 0 },
                 critical: { amount: 0, resellerCount: 0, oldestAgeDays: null },
+                agingBuckets: dashboardSnapshot.agingBuckets.map((bucket: any) => ({
+                    ...bucket,
+                    value: 0,
+                    percentage: 0,
+                })),
                 attentionRows: [],
             },
             isLoading: false,
@@ -115,5 +139,6 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Nenhum saldo em aberto hoje.')).toBeInTheDocument();
         expect(screen.getByText('Nenhum valor crítico hoje.')).toBeInTheDocument();
         expect(screen.getByText('Attention center 0')).toBeInTheDocument();
+        expect(screen.getByText('Debt aging 3 / 0')).toBeInTheDocument();
     });
 });

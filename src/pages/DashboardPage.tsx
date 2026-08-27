@@ -25,7 +25,11 @@ export default function DashboardPage() {
             />
 
             <div className="w-full">
-                <DebtHealthAgingCard />
+                <DebtHealthAgingCard
+                    buckets={snapshot?.agingBuckets}
+                    totalDebt={snapshot?.openDebt.amount}
+                    isLoading={isLoading}
+                />
             </div>
 
             <div className="w-full">
