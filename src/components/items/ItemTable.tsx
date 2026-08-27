@@ -22,9 +22,16 @@ interface ItemTableProps {
     categories: Category[];
     subcategories: Subcategory[];
     onEdit: (item: Item) => void;
+    emptyMessage?: string;
 }
 
-export function ItemTable({ items, categories, subcategories, onEdit }: ItemTableProps) {
+export function ItemTable({
+    items,
+    categories,
+    subcategories,
+    onEdit,
+    emptyMessage = "Nenhum item cadastrado.",
+}: ItemTableProps) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const archiveMutation = useArchiveItem();
     const reactivateMutation = useReactivateItem();
@@ -127,7 +134,7 @@ export function ItemTable({ items, categories, subcategories, onEdit }: ItemTabl
             <div className="space-y-4">
                 {items.length === 0 ? (
                     <div className="text-center py-10 bg-card rounded-lg border border-dashed text-muted-foreground">
-                        Nenhum item cadastrado.
+                        {emptyMessage}
                     </div>
                 ) : (
                     items.map((item) => {
@@ -184,7 +191,7 @@ export function ItemTable({ items, categories, subcategories, onEdit }: ItemTabl
                         {items.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                                    Nenhum item cadastrado.
+                                    {emptyMessage}
                                 </TableCell>
                             </TableRow>
                         ) : (
