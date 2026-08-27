@@ -266,12 +266,25 @@ The first D-019 run stopped only because the reseller form test began exercising
 Final D-019 run/job `33101052183` / `98618533607`: 0 lint errors / 104 warnings; 65 files / 285 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `5e26f76a227f9c90417767bfbacb34ddfe2098da`; validated tree `fa34f9c6811ce0bc63c2d0aa1cd5f4d7efd2e13d` exactly equals squash-integrated `develop@7d023e856e0883ba82b2392199d3320d431aa16a` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #13 — product-level financial report analytics
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #108`
 
-Extend the canonical read-only `FinancialReport` model with product/item aggregation useful for answering what sold, using immutable transaction-time order facts and the existing screen/PDF parity rule. No database migration or independent second accounting calculation path is authorized.
+Accepted result:
+
+- verification confirmed the existing order transaction snapshots already contain item identity/name, quantity and category/subcategory context required for read-only product analytics;
+- canonical `FinancialReport.products` aggregates effective orders by exact transaction-time item/name/classification snapshot context;
+- each product row exposes product label, historical classification, order count, item quantity and gross sales;
+- rows are ranked by gross sales, then quantity, then label;
+- repeated matching historical snapshots aggregate together, while a historical rename/reclassification remains distinct instead of being rewritten from the current catalog;
+- reversed orders contribute zero and period inclusion continues to use D-014 occurrence time through the existing canonical report path;
+- the `Resumo` product highlight now identifies the actual top-selling product;
+- the `Produtos e categorias` view shows product performance before the existing category/subcategory drilldown;
+- the existing PDF products/categories section renders the same canonical `report.products` list and does not implement a second calculation;
+- no database/schema migration, Supabase/RPC/Auth/RLS, transaction mutation, recovery or deployment behavior changed.
+
+D-019 run/job `33103464797` / `98626992003`: 0 lint errors / 104 warnings; 65 files / 286 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `43d7ebf749ca3924fcebe9fe8cd85d7351e5354a`; validated tree `b8575e6c80a0d43109c25a307dc0faa183245262` exactly equals squash-integrated `develop@d5b2cc5fb150777f12ece38bdd02abcada2974f7` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #14 — Dashboard receipts-today card
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Add a glance KPI for effective payments + signals occurring today, respecting D-014 occurrence time and reversal-zero-effect semantics. Read-only; no transaction behavior change.
 
@@ -288,4 +301,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #13: verify the current canonical `FinancialReport` model, product/category reporting views and PDF section flow, then extend the existing read-only report model with bounded product/item aggregation useful for answering what sold. Use immutable transaction-time order facts, preserve occurrence-date and reversal-zero-effect semantics, and keep screen/PDF calculations on the same canonical `FinancialReport` path. No database migration, mutation path or independent second accounting calculation path is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #14, then stop. Do not start change #14 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #14: verify the current Dashboard KPI/read-model paths and add one glance KPI for effective payments + signals occurring today. Use D-014 financial occurrence time, exclude reversed transactions from effective contribution and keep the change read-only. No database/schema migration, transaction mutation, Supabase/RPC/Auth/RLS, recovery or independent accounting path is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #15, then stop. Do not start change #15 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
