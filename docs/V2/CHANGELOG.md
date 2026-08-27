@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — D-035 DR-04 `Precisa de atenção` action center integrated
+
+D-035 `DR-04` replaced the Dashboard's duplicated critical/attention alert lists with one compact operational action center immediately after the DR-03 KPI row. PR #118 adds `AttentionCenter`, consumes the canonical DR-02 `DashboardSnapshot.attentionRows` directly and removes only the old duplicated alert lists from `DebtHealthAgingCard`.
+
+The action center preserves one reseller per row and the snapshot's deterministic severity/oldest-age/alert-value/name priority. Each row exposes explicit `CRÍTICO` or `ATENÇÃO`, the prepared determining age and alert-class amount, plus current total open balance when materially different. Rows are keyboard-accessible and navigate to the existing reseller detail/history route. Initial density is six rows with explicit expansion/collapse, and the empty state describes the business condition.
+
+DR-05 was not bundled: `DebtHealthAgingCard` still retains its existing donut and aging legend for the next isolated step. No FIFO/accounting calculation moved into the component; no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Final D-019 on PR #118: head `f035b6be20c5ea3dfbcbe912474abc945123611f`, merge ref `124fa0bd812250d3822aca1a6be46eb5400dba61`, run/job `33121893821` / `98690519373`: 0 lint errors / 105 warnings; 67 files / 295 Vitest PASS including `AttentionCenter` 4/4 and `DashboardPage` 3/3; 17/17 Playwright PASS; production build PASS. Validated tree: `69905255e836492e8b610ea1ae0ef8bf66d0d070`.
+
+PR #118 was squash-integrated into `develop` as `4bac76dd83c31016b692efb17531fbf3eddf5122`; its tree is also `69905255e836492e8b610ea1ae0ef8bf66d0d070`. Exact tree equivalence: PASS. No failed gate was waived. No automatic Vercel publication occurred and `main` remains untouched. DR-04 is closed and `DR-05 — compact carteira aging` is now the sole current authorized item; DR-05 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 DR-03 primary Dashboard KPI row integrated
 
 D-035 `DR-03` replaced the legacy two-card Dashboard summary with the accepted four-card primary operational row while consuming the canonical DR-02 `DashboardSnapshot` rather than recreating financial meaning in UI components. PR #116 renders `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto` and `Crítico > 30 dias` in that order.
