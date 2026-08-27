@@ -85,6 +85,61 @@ describe('ItemForm', () => {
         expect(screen.queryByRole('option', { name: 'Madeira' })).not.toBeInTheDocument();
     });
 
+    it('warns on a normalized same-name item in the same classification and still allows explicit creation', async () => {
+        await db.items.add({
+            name: 'Placa Decorativa',
+            basePrice: 100,
+            categoryId,
+            isActive: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+        const onSubmitSuccess = vi.fn();
+
+        render(<ItemForm onSubmitSuccess={onSubmitSuccess} onCancel={vi.fn()} />, { wrapper });
+        await screen.findByRole('option', { name: 'Porcelana' });
+
+        fireEvent.change(screen.getByLabelText(/Nome do Item/i), { target: { value: 'PLACA-DECORATIVA' } });
+        fireEvent.change(screen.getByLabelText(/Preço Base/i), { target: { value: '125' } });
+        fireEvent.change(screen.getByLabelText(/^Categoria$/i), { target: { value: String(categoryId) } });
+
+        expect(await screen.findByText('Possível item duplicado')).toBeInTheDocument();
+        expect(screen.getByText(/Placa Decorativa — arquivado/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Cadastrar mesmo assim' }));
+
+        await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledTimes(1));
+        await expect(db.items.count()).resolves.toBe(2);
+    });
+
+    it('does not warn for the same item name in a different category', async () => {
+        const otherCategoryId = await db.categories.add({
+            name: 'Madeira',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        await db.items.add({
+            name: 'Placa Decorativa',
+            basePrice: 100,
+            categoryId,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        render(<ItemForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
+        await screen.findByRole('option', { name: 'Madeira' });
+
+        fireEvent.change(screen.getByLabelText(/Nome do Item/i), { target: { value: 'placa decorativa' } });
+        fireEvent.change(screen.getByLabelText(/^Categoria$/i), { target: { value: String(otherCategoryId) } });
+
+        await waitFor(() => {
+            expect(screen.queryByText('Possível item duplicado')).not.toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
+        });
+    });
+
     it('should validate empty values', async () => {
         render(<ItemForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
