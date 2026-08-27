@@ -30,8 +30,9 @@ Current P10-S3 state:
   - searchable entity-selector refinement: `DONE / INTEGRATED` — PR #96;
   - change #8 catalog classification visibility at point of use: `DONE / INTEGRATED` — PR #98;
   - change #9 practical item/reseller search and filters: `DONE / INTEGRATED` — PR #100;
-  - **change #10 observations on payment/signal entry: `CURRENT / AUTHORIZED`;**
-  - changes #11–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #10 observations on payment/signal entry: `DONE / INTEGRATED` — PR #102;
+  - **change #11 actionable global item search result: `CURRENT / AUTHORIZED`;**
+  - changes #12–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -293,7 +294,34 @@ Validation/integration evidence:
 - PR #100 squash-integrated `develop`: `b6d92db102d7ba17b920e8c41282a5075697bc04`;
 - integrated tree: `83e27d1d63685eee1a4ae6bc751b30e8dccba786` — exact tree equivalence PASS.
 
-No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #9 is closed; change #10 is now the sole current queue item.
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #9 is closed.
+
+## Early-use change #10 — observations on payment/signal entry
+
+Verification confirmed the `observation` field already existed throughout the accepted transaction contract: local `Transaction`/`NewTransactionInput`, local sanitization/persistence, cloud input/adapter and the current PostgreSQL `create_transaction` RPC all already carry and store it for payments/signals. The only gap was the normal creation form, which exposed/sent observation only in the order branch.
+
+PR #102 makes the observation field common to all transaction types while preserving the order presentation and existing contract.
+
+Accepted behavior:
+
+- payment and signal creation now expose `Observação` in the normal transaction form;
+- trimmed nonblank text is sent through the existing `observation` field; blank input remains absent;
+- order observation behavior remains unchanged, including its existing order-specific placeholder;
+- payment/signal observations are descriptive metadata only and do not change their financial effect;
+- focused tests prove both payment and signal creation persist the trimmed observation and do not acquire order/item references;
+- no database/schema migration, Supabase function/policy, financial-effect, occurrence-date, reversal/correction/history, PDF, recovery or deployment behavior changed.
+
+Validation/integration evidence:
+
+- feature head: `ebc9c4bc389e3f7ba75a084d67e764e64e75dafd`;
+- GitHub Actions merge ref: `f0da9706933804c53a0dc0edd41cfaaafebee59e`;
+- validated tree: `a0f26f3c979b758f8c70f43a797689f47f2bc3a5`;
+- D-019 run/job: `33089151402` / `98576935845`;
+- repository Critical QA (`lint + Vitest + Playwright + production build`): PASS;
+- PR #102 squash-integrated `develop`: `2ce88ab7418715ef399b4b05b4776f6191d64a88`;
+- integrated tree: `a0f26f3c979b758f8c70f43a797689f47f2bc3a5` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #10 is closed; change #11 is now the sole current queue item.
 
 ## Operator-authorized usability/data-quality queue
 
@@ -314,8 +342,8 @@ Ordered queue:
 2. **#7 DONE / INTEGRATED — PR #92** — operator-facing money is presented with pt-BR separators and two decimals without changing numeric/accounting semantics.
 3. **#8 DONE / INTEGRATED — PR #98** — current category/subcategory context is visible in the catalog and new-order item selection without rewriting historical snapshots.
 4. **#9 DONE / INTEGRATED — PR #100** — practical item/reseller search and lifecycle/classification filters use existing loaded data only.
-5. **#10 CURRENT / AUTHORIZED** — optional observation on payment/signal creation if the existing transaction contract supports it; no migration.
-6. **#11 QUEUED** — make global item search selection land in useful item context.
+5. **#10 DONE / INTEGRATED — PR #102** — the existing transaction observation contract is exposed in normal payment/signal entry without migration or financial-semantic change.
+6. **#11 CURRENT / AUTHORIZED** — make global item search selection land in useful item context.
 7. **#12 QUEUED** — conservative non-blocking duplicate-data warnings; no automatic merge or hard uniqueness rule.
 8. **#13 QUEUED** — product-level analytics inside the canonical read-only financial report model.
 9. **#14 QUEUED** — Dashboard receipts-today KPI using occurrence time and reversal-zero-effect semantics.
@@ -346,4 +374,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #10. Verify whether the existing transaction and cloud contracts already support `observation` on payment/signal creation and, if so, expose one optional observation field in the normal payment/signal entry flow. Reuse the existing transaction field and preserve current payment/signal financial effect, occurrence-date semantics, reversals/corrections and immutable history. Prefer a bounded form/mutation-contract delta; no database/schema migration is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if the existing contract cannot safely support the field without broader architecture. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #11 becomes current, then stop. Do not start #11 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #11. Verify the current global item-search selection behavior, then make selecting an item land the operator in useful item context rather than an unfiltered generic catalog. Prefer a minimal stable filter/highlight/targeting mechanism over creating a new item-detail architecture. Preserve existing item identity, lifecycle, classification and search semantics. Prefer bounded navigation/presentation state; no database/schema migration or new item-detail architecture is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #12 becomes current, then stop. Do not start #12 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**

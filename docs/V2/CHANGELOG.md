@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — change #10 payment/signal observations integrated
+
+Early-use change #10 verified that the canonical transaction contract already supported `observation` for payments and signals end to end. The local transaction model/sanitization, cloud adapter and current PostgreSQL `create_transaction` RPC already carry and store the field; the gap existed only in normal transaction entry, where observation had been exposed/sent only for orders.
+
+PR #102 moves the normalized observation into the common creation payload and exposes the same `Observação` input for payment and signal entry while preserving the existing order placeholder and behavior. Focused tests create both movement types with a trimmed observation and verify their non-order shape remains intact with no item reference.
+
+No database/schema migration, Supabase function/policy change, payment/signal financial-effect change, occurrence-date, reversal/correction/history, PDF, recovery, Auth/RLS or deployment behavior changed.
+
+Final D-019 on PR #102: head `ebc9c4bc389e3f7ba75a084d67e764e64e75dafd`, merge ref `f0da9706933804c53a0dc0edd41cfaaafebee59e`, run/job `33089151402` / `98576935845`: repository Critical QA (`lint + Vitest + Playwright + production build`) PASS. Validated tree: `a0f26f3c979b758f8c70f43a797689f47f2bc3a5`.
+
+PR #102 was squash-integrated into `develop` as `2ce88ab7418715ef399b4b05b4776f6191d64a88`; its Git tree is also `a0f26f3c979b758f8c70f43a797689f47f2bc3a5`. Exact tree equivalence: PASS. No automatic Vercel deployment or `main` publication occurred. Change #10 is closed and change #11 is now the sole current authorized queue item.
+
+---
+
 ## 2026-08-27 — change #9 practical item/reseller list search and filters integrated
 
 Early-use change #9 verified that the item catalog had no list search/filter controls and the reseller page searched only by name without lifecycle filtering. PR #100 added bounded transient list ergonomics over data already loaded by the existing hooks.
