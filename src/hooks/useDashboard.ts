@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { db, type Transaction } from '../db/database';
+import { db } from '../db/database';
 import {
-    calculateOutstandingDebtLots,
-    calculateTotalDebt,
-    debtAgeCategory,
+    type DashboardResellerDebtProfile,
+    type DashboardSnapshot,
+    buildDashboardSnapshot,
+} from '../domain/dashboardSnapshot';
+import {
     effectiveTransactions,
     transactionOccurredAt,
     transactionSignedAmount,
@@ -56,151 +58,104 @@ export interface PerformanceData {
 
 export type AnalysisPeriod = 90 | 180 | 360;
 
+const DASHBOARD_SNAPSHOT_QUERY_KEY = ['dashboard', 'snapshot'] as const;
+
+async function loadDashboardSnapshot() {
+    const [transactions, resellers] = await Promise.all([
+        db.transactions.toArray(),
+        db.resellers.toArray(),
+    ]);
+
+    return buildDashboardSnapshot(transactions, resellers, new Date());
+}
+
+export function useDashboardSnapshot() {
+    return useQuery({
+        queryKey: DASHBOARD_SNAPSHOT_QUERY_KEY,
+        queryFn: loadDashboardSnapshot,
+    });
+}
+
 export function useTotalDebt() {
     return useQuery({
-        queryKey: ['dashboard', 'total-debt'],
-        queryFn: async () => calculateTotalDebt(await db.transactions.toArray()),
+        queryKey: DASHBOARD_SNAPSHOT_QUERY_KEY,
+        queryFn: loadDashboardSnapshot,
+        select: snapshot => snapshot.openDebt.amount,
     });
 }
 
 export function useTodayOrders() {
     return useQuery({
-        queryKey: ['dashboard', 'today-orders'],
-        queryFn: async () => {
-            const startOfDay = new Date();
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(startOfDay);
-            endOfDay.setHours(23, 59, 59, 999);
-
-            const transactions = effectiveTransactions(await db.transactions.toArray()).filter(transaction => {
-                const occurredAt = transactionOccurredAt(transaction);
-                return occurredAt >= startOfDay && occurredAt <= endOfDay;
-            });
-
-            const todayOrders = transactions.filter(t => t.type === 'order');
-            const totalVolume = todayOrders.reduce((sum, current) => sum + current.totalPrice, 0);
-
-            return {
-                count: todayOrders.length,
-                volume: totalVolume
-            };
-        },
+        queryKey: DASHBOARD_SNAPSHOT_QUERY_KEY,
+        queryFn: loadDashboardSnapshot,
+        select: snapshot => ({
+            count: snapshot.today.orderCount,
+            volume: snapshot.today.sales,
+        }),
     });
+}
+
+function legacyAlertReseller(
+    profile: DashboardResellerDebtProfile,
+    kind: 'critical' | 'attention',
+): CriticalReseller | null {
+    const balance = kind === 'critical' ? profile.criticalAmount : profile.attentionAmount;
+    const oldestOutstandingAt = kind === 'critical'
+        ? profile.oldestCriticalAt
+        : profile.oldestAttentionAt;
+
+    if (balance <= 0.01 || !oldestOutstandingAt) return null;
+
+    return {
+        id: profile.resellerId,
+        name: profile.resellerName,
+        balance,
+        totalBalance: profile.totalOpenDebt,
+        oldestOutstandingAt,
+        lastMovement: oldestOutstandingAt,
+    };
+}
+
+function legacyDebtAging(snapshot: DashboardSnapshot): DebtAgingResult {
+    const labels: Record<AgingData['category'], string> = {
+        recent: 'Recente (0–6d)',
+        attention: 'Em Atenção (7–30d)',
+        critical: 'Crítico (> 30d)',
+    };
+    const colors: Record<AgingData['category'], string> = {
+        recent: '#22c55e',
+        attention: '#eab308',
+        critical: '#ef4444',
+    };
+
+    const criticalResellers = snapshot.resellerDebtProfiles
+        .map(profile => legacyAlertReseller(profile, 'critical'))
+        .filter((reseller): reseller is CriticalReseller => reseller !== null)
+        .sort((left, right) => right.balance - left.balance)
+        .slice(0, 10);
+    const attentionResellers = snapshot.resellerDebtProfiles
+        .map(profile => legacyAlertReseller(profile, 'attention'))
+        .filter((reseller): reseller is CriticalReseller => reseller !== null)
+        .sort((left, right) => right.balance - left.balance)
+        .slice(0, 10);
+
+    return {
+        buckets: snapshot.agingBuckets.map(bucket => ({
+            ...bucket,
+            label: labels[bucket.category],
+            color: colors[bucket.category],
+        })),
+        criticalResellers,
+        attentionResellers,
+        totalDebt: snapshot.openDebt.amount,
+    };
 }
 
 export function useDebtAging() {
     return useQuery({
-        queryKey: ['dashboard', 'debt-aging'],
-        queryFn: async (): Promise<DebtAgingResult> => {
-            const resellers = await db.resellers.toArray();
-            const transactions = await db.transactions.toArray();
-            const now = new Date();
-
-            const transactionsByReseller = new Map<number, Transaction[]>();
-            transactions.forEach(transaction => {
-                const resellerTransactions = transactionsByReseller.get(transaction.resellerId) || [];
-                resellerTransactions.push(transaction);
-                transactionsByReseller.set(transaction.resellerId, resellerTransactions);
-            });
-
-            const buckets: Record<'recent' | 'attention' | 'critical', number> = {
-                recent: 0,
-                attention: 0,
-                critical: 0,
-            };
-            let totalDebt = 0;
-            const criticalResellersList: CriticalReseller[] = [];
-            const attentionResellersList: CriticalReseller[] = [];
-
-            resellers.forEach(reseller => {
-                if (!reseller.id) return;
-
-                const lots = calculateOutstandingDebtLots(transactionsByReseller.get(reseller.id) || []);
-                const totalBalance = lots.reduce((sum, lot) => sum + lot.amount, 0);
-                if (totalBalance <= 0.01) return;
-
-                totalDebt += totalBalance;
-
-                let criticalAmount = 0;
-                let attentionAmount = 0;
-                let oldestCritical: Date | null = null;
-                let oldestAttention: Date | null = null;
-
-                lots.forEach(lot => {
-                    const category = debtAgeCategory(lot.occurredAt, now);
-                    buckets[category] += lot.amount;
-
-                    if (category === 'critical') {
-                        criticalAmount += lot.amount;
-                        if (!oldestCritical || lot.occurredAt < oldestCritical) {
-                            oldestCritical = lot.occurredAt;
-                        }
-                    } else if (category === 'attention') {
-                        attentionAmount += lot.amount;
-                        if (!oldestAttention || lot.occurredAt < oldestAttention) {
-                            oldestAttention = lot.occurredAt;
-                        }
-                    }
-                });
-
-                if (criticalAmount > 0.01 && oldestCritical) {
-                    criticalResellersList.push({
-                        id: reseller.id,
-                        name: reseller.name,
-                        balance: criticalAmount,
-                        totalBalance,
-                        oldestOutstandingAt: oldestCritical,
-                        lastMovement: oldestCritical,
-                    });
-                }
-
-                if (attentionAmount > 0.01 && oldestAttention) {
-                    attentionResellersList.push({
-                        id: reseller.id,
-                        name: reseller.name,
-                        balance: attentionAmount,
-                        totalBalance,
-                        oldestOutstandingAt: oldestAttention,
-                        lastMovement: oldestAttention,
-                    });
-                }
-            });
-
-            const resultBuckets: AgingData[] = [
-                {
-                    category: 'recent',
-                    label: 'Recente (0–6d)',
-                    value: buckets.recent,
-                    percentage: totalDebt > 0 ? (buckets.recent / totalDebt) * 100 : 0,
-                    color: '#22c55e'
-                },
-                {
-                    category: 'attention',
-                    label: 'Em Atenção (7–30d)',
-                    value: buckets.attention,
-                    percentage: totalDebt > 0 ? (buckets.attention / totalDebt) * 100 : 0,
-                    color: '#eab308'
-                },
-                {
-                    category: 'critical',
-                    label: 'Crítico (> 30d)',
-                    value: buckets.critical,
-                    percentage: totalDebt > 0 ? (buckets.critical / totalDebt) * 100 : 0,
-                    color: '#ef4444'
-                }
-            ];
-
-            return {
-                buckets: resultBuckets,
-                criticalResellers: criticalResellersList
-                    .sort((a, b) => b.balance - a.balance)
-                    .slice(0, 10),
-                attentionResellers: attentionResellersList
-                    .sort((a, b) => b.balance - a.balance)
-                    .slice(0, 10),
-                totalDebt
-            };
-        }
+        queryKey: DASHBOARD_SNAPSHOT_QUERY_KEY,
+        queryFn: loadDashboardSnapshot,
+        select: legacyDebtAging,
     });
 }
 
