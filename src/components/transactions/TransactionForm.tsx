@@ -168,6 +168,7 @@ export function TransactionForm({
             resellerId: parseInt(resellerId, 10),
             type,
             occurredAt,
+            observation: observation.trim() || undefined,
         };
 
         if (type === "order") {
@@ -179,7 +180,6 @@ export function TransactionForm({
                 quantity: parseInt(quantity, 10),
                 unitPrice: parseFloat(unitPrice.replace(",", ".")),
                 totalPrice: orderTotalPrice,
-                observation: observation.trim() || undefined,
             };
         } else {
             data = {
@@ -308,16 +308,6 @@ export function TransactionForm({
                             />
                         </div>
                     </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="observation">Observação</Label>
-                        <Input
-                            id="observation"
-                            value={observation}
-                            onChange={(e) => setObservation(e.target.value)}
-                            placeholder="Ex: Nome na placa"
-                        />
-                    </div>
                 </div>
             ) : (
                 <div className="space-y-4 pt-2 border-t mt-4">
@@ -336,6 +326,16 @@ export function TransactionForm({
                     </div>
                 </div>
             )}
+
+            <div className="space-y-2">
+                <Label htmlFor="observation">Observação (opcional)</Label>
+                <Input
+                    id="observation"
+                    value={observation}
+                    onChange={(e) => setObservation(e.target.value)}
+                    placeholder="Ex.: referência ou contexto da movimentação"
+                />
+            </div>
 
             <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending}>
