@@ -284,12 +284,12 @@ Accepted result:
 D-019 run/job `33103464797` / `98626992003`: 0 lint errors / 104 warnings; 65 files / 286 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `43d7ebf749ca3924fcebe9fe8cd85d7351e5354a`; validated tree `b8575e6c80a0d43109c25a307dc0faa183245262` exactly equals squash-integrated `develop@d5b2cc5fb150777f12ece38bdd02abcada2974f7` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #14 — Dashboard receipts-today card
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DEFERRED / ON HOLD — OPERATOR DECISION`
 
-Add a glance KPI for effective payments + signals occurring today, respecting D-014 occurrence time and reversal-zero-effect semantics. Read-only; no transaction behavior change.
+The operator decided not to add the daily-receipts KPI in isolation because payments/signals do not necessarily occur every day and the card's recurring Dashboard value is not yet established. No executable change was made. Revisit #14 only as part of a broader Dashboard review unless the operator explicitly reauthorizes it sooner.
 
 #### Early-use change #15 — future occurrence-date confirmation
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 For new transaction entry, warn/confirm when the selected financial occurrence date is in the future so accidental date entry is less likely. This must be a non-blocking confirmation, not a prohibition, and must preserve D-014 occurrence-date semantics.
 
@@ -301,4 +301,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #14: verify the current Dashboard KPI/read-model paths and add one glance KPI for effective payments + signals occurring today. Use D-014 financial occurrence time, exclude reversed transactions from effective contribution and keep the change read-only. No database/schema migration, transaction mutation, Supabase/RPC/Auth/RLS, recovery or independent accounting path is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #15, then stop. Do not start change #15 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #15: verify the current new-transaction occurrence-date input, validation and submit path, then add a non-blocking confirmation when the selected financial occurrence date is in the future relative to the operator's local current date. An explicitly confirmed future date must remain the transaction's actual occurrence date under D-014; do not auto-correct it and do not prohibit future dates. No database/schema migration, transaction-accounting change, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs, then stop. Do not invent or start a new queue item without explicit operator instruction. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.

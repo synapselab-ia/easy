@@ -49,7 +49,7 @@ Hosted cloud early use uses a store-global manual logical-backup boundary:
 4. The operator stores the JSON outside Easy and explicitly confirms that action.
 5. That confirmed checkpoint is shared by all approved devices.
 6. Normal writes are permitted only while the checkpoint age is strictly `< 24h`.
-7. At `>= 24h`, the database blocks business writes; clients also fail closed when health cannot be verified.
+7. At `>= 24h`, the database blocks business writes; clients also fail closed when cloud recovery health cannot be verified.
 8. Cloud restore remains checkpointed, server-atomic and post-restore verified.
 
 A fresh real global checkpoint has been exported/stored/confirmed on the updated candidate, so D-032 is operationally initialized.
@@ -201,6 +201,8 @@ Early-use change #12 adds conservative, non-blocking duplicate warnings only dur
 
 Early-use change #13 extends the existing canonical read-only `FinancialReport` with product-level performance. Product rows come from effective occurrence-time order snapshots and aggregate exact transaction-time item/name/classification context, so later catalog rename or reclassification does not rewrite historical sales. The report screen now exposes product, historical classification, order count, quantity and gross sales; the product highlight uses the top-selling product; and the existing products/categories PDF section consumes the same canonical `report.products` list. Reversed transactions remain zero-effect. No persistence, database/Supabase, mutation, Auth/RLS, recovery or deployment contract changed.
 
+Early-use change #14, the proposed Dashboard receipts-today KPI, is **deferred / on hold by operator decision**. The operator determined that payments/signals do not necessarily occur daily and that adding one isolated daily-receipts card before a broader Dashboard review may not provide enough recurring operational value. No executable change was made; #14 remains available for a later Dashboard redesign/review.
+
 The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
 
 For each queue item:
@@ -211,8 +213,8 @@ For each queue item:
 - use an isolated branch and D-019 for executable integration;
 - after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
 
-Current item: **early-use change #14 — Dashboard receipts-today card**.
+Current item: **early-use change #15 — future occurrence-date confirmation**.
 
-Change #14 is limited to one glance KPI for effective payments + signals occurring today, respecting D-014 occurrence time and reversal-zero-effect semantics. It is read-only and does not authorize transaction, persistence, recovery or security changes.
+Change #15 is limited to a non-blocking warning/confirmation in new transaction entry when the selected financial occurrence date is in the future relative to the operator's local current date. Explicit confirmation must preserve the entered occurrence date under D-014; the application must not silently correct it or prohibit legitimate future dates. It does not authorize database/schema, transaction-accounting, Supabase/RPC/Auth/RLS, recovery or deployment changes.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
