@@ -34,8 +34,8 @@ Current P10-S3 state:
   - change #11 actionable global item search result: `DONE / INTEGRATED` — PR #104;
   - change #12 non-blocking duplicate-data warnings: `DONE / INTEGRATED` — PR #106;
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
-  - **change #14 Dashboard receipts-today card: `CURRENT / AUTHORIZED`;**
-  - change #15 future occurrence-date confirmation: `QUEUED / NOT CURRENT`.
+  - change #14 Dashboard receipts-today card: `DEFERRED / ON HOLD — OPERATOR DECISION`;
+  - **change #15 future occurrence-date confirmation: `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -417,7 +417,15 @@ Validation/integration evidence:
 - PR #108 squash-integrated `develop`: `d5b2cc5fb150777f12ece38bdd02abcada2974f7`;
 - integrated tree: `b8575e6c80a0d43109c25a307dc0faa183245262` — exact tree equivalence PASS.
 
-No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #13 is closed; change #14 is now the sole current queue item and was not started in this task.
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #13 is closed; change #14 was promoted next but was not implemented.
+
+## Early-use change #14 — Dashboard receipts-today card — deferred
+
+The operator reviewed the practical value of a dedicated `Recebimentos hoje` Dashboard KPI before implementation and decided to defer it. Payments/signals do not necessarily occur every day, so an isolated daily-receipts card could consume prominent Dashboard space without enough recurring operational value.
+
+No executable change was made for #14. The idea remains available for a later broader Dashboard review, where KPI selection, layout and operational priorities can be evaluated together rather than one card at a time. No D-019 run was required for this documentation-only deferral.
+
+Change #15 is promoted as the sole current queue item.
 
 ## Operator-authorized usability/data-quality queue
 
@@ -442,8 +450,8 @@ Ordered queue:
 6. **#11 DONE / INTEGRATED — PR #104** — selected global item results hand off into the existing transient catalog name filter instead of opening an unfiltered catalog.
 7. **#12 DONE / INTEGRATED — PR #106** — conservative duplicate-data warnings use existing loaded reseller/item fields and remain operator-overridable.
 8. **#13 DONE / INTEGRATED — PR #108** — product-level analytics use immutable occurrence-time order snapshots inside the canonical screen/PDF `FinancialReport` path.
-9. **#14 CURRENT / AUTHORIZED** — Dashboard receipts-today KPI using occurrence time and reversal-zero-effect semantics.
-10. **#15 QUEUED** — non-blocking confirmation for future occurrence dates in new transaction entry.
+9. **#14 DEFERRED / ON HOLD — OPERATOR DECISION** — receipts-today Dashboard KPI is postponed pending a broader Dashboard review.
+10. **#15 CURRENT / AUTHORIZED** — non-blocking confirmation for future occurrence dates in new transaction entry.
 
 Detailed scope and stop conditions for each queue item are canonical in `docs/V2/BACKLOG.md`.
 
@@ -470,4 +478,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #14. Verify the current Dashboard KPI/read-model paths and add one glance KPI for effective payments + signals occurring today. The value must use D-014 financial occurrence time, exclude reversed transactions from effective contribution and remain read-only; no transaction mutation, database/schema migration, Supabase/RPC/Auth/RLS, recovery or independent accounting path is authorized. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #15 becomes current, then stop. Do not start #15 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #15. Verify the current new-transaction occurrence-date input, validation and submit path, then add a non-blocking confirmation when the selected financial occurrence date is in the future relative to the operator's local current date. The warning must preserve D-014: an explicitly confirmed future date remains the transaction's actual occurrence date; do not auto-correct the date and do not prohibit future dates. No database/schema migration, transaction-accounting change, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update the canonical docs and stop; do not invent or start a new queue item without explicit operator instruction. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
