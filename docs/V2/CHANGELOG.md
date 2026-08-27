@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — D-035 DR-05 compact carteira aging integrated
+
+D-035 `DR-05` replaced the large default Dashboard aging donut with the accepted compact `Carteira por idade` context while consuming the canonical DR-02 `DashboardSnapshot.agingBuckets` rather than rebuilding FIFO/aging in presentation code. PR #120 removes the Recharts donut from `DebtHealthAgingCard`; `DashboardPage` now hands the prepared aging buckets plus current `openDebt.amount` from the same shared snapshot into the block.
+
+The three accepted buckets remain in canonical order and thresholds — `Recente (0–6d)`, `Em atenção (7–30d)`, `Crítico (>30d)` — and each row exposes exact pt-BR monetary value plus the prepared percentage without hover. The total current open position remains explicit. Zero debt uses `Nenhum saldo em aberto hoje.` while all three zero buckets remain visible; loading is compact; each loaded row has accessible progressbar semantics. Focused coverage proves that a deliberately non-derived snapshot percentage is displayed unchanged rather than recalculated in the component.
+
+DR-04 attention behavior and `PerformanceAnalysisSection` remain unchanged, so DR-06/DR-07 were not bundled. No domain/FIFO, database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Final D-019 on PR #120: head `972ad8ae0285e654a5b356a55251807c35d72dd7`, merge ref `ea9997d379d1c9f30cf398574dfa28545f37e7c4`, run/job `33124288969` / `98698548321`: 0 lint errors / 105 warnings; 68 files / 299 Vitest PASS including `DebtHealthAgingCard` 4/4 and `DashboardPage` 3/3; 17/17 Playwright PASS; TypeScript + production Vite build PASS. Validated tree: `6848853b03148d78c79474d6415d9732ec4af8e5`.
+
+PR #120 was squash-integrated into `develop` as `cccf11fece99179aa895964c8b743cff29ce9e0f`; its tree is also `6848853b03148d78c79474d6415d9732ec4af8e5`. Exact tree equivalence: PASS. No failed gate was waived. No automatic Vercel publication occurred and `main` remains untouched. DR-05 is closed and `DR-06 — recent registrations + quick actions` is now the sole current authorized item; DR-06 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 DR-04 `Precisa de atenção` action center integrated
 
 D-035 `DR-04` replaced the Dashboard's duplicated critical/attention alert lists with one compact operational action center immediately after the DR-03 KPI row. PR #118 adds `AttentionCenter`, consumes the canonical DR-02 `DashboardSnapshot.attentionRows` directly and removes only the old duplicated alert lists from `DebtHealthAgingCard`.
