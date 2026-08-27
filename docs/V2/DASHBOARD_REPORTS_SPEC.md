@@ -299,15 +299,15 @@ Do not couple the Dashboard to internal component state in a way that makes dire
 
 ## 13. Dashboard read-model / efficiency contract
 
-The current Dashboard independently reads/reduces the same transactions multiple times. The redesign should introduce one coherent read-only Dashboard projection (conceptually `DashboardSnapshot`) before major visual changes.
+The original Dashboard independently read/reduced the same transactions multiple times. DR-02 is now integrated and establishes one coherent read-only `DashboardSnapshot` before major visual changes.
 
-The snapshot should cover, at minimum:
+The snapshot covers:
 
 - month sales;
 - month receipts;
 - month order count;
 - month item quantity;
-- optional today sales/orders/receipts context;
+- today sales/orders/receipts context;
 - current as-of-today open debt;
 - unique resellers with open debt;
 - critical open amount and unique critical-reseller count;
@@ -316,15 +316,17 @@ The snapshot should cover, at minimum:
 - deduplicated attention rows;
 - recent effective registrations.
 
-Implementation constraints:
+Accepted DR-02 implementation:
 
-- verify and reuse existing domain helpers rather than recoding accounting rules in components;
-- use `FinancialReport` for month-to-today flow where its semantics match;
-- use accepted FIFO debt-lot reconstruction for aging;
-- enforce one as-of-today cutoff so future occurrence dates do not affect current position;
-- no database/schema migration is implied;
-- Supabase/Auth/RLS/recovery/deployment boundaries are unchanged;
-- components receive prepared data instead of repeatedly reconstructing financial meaning independently.
+- `src/domain/dashboardSnapshot.ts` owns the bounded projection;
+- month/today flow reuses `buildFinancialReport` where its semantics match;
+- aging reuses accepted effective-transaction/FIFO helpers;
+- current-position FIFO processing applies one explicit operator-local end-of-today cutoff so later future occurrences cannot affect current debt/aging before they occur;
+- recent registrations remain registration-time context, ordered by `createdAt`, while reversed rows are excluded;
+- `src/hooks/useDashboard.ts` exposes a shared `['dashboard', 'snapshot']` query and maps the snapshot into the legacy operational-hook shapes during the ordered UI transition;
+- existing transaction/reseller mutation invalidation of the `['dashboard']` prefix refreshes the snapshot without introducing a second invalidation mechanism;
+- no database/schema migration, Supabase/Auth/RLS/recovery/deployment change was introduced;
+- DR-02 deliberately did not perform DR-03/DR-04 visual work or alter the legacy Performance block reserved for DR-07.
 
 ## 14. Language and visual semantics
 
@@ -373,19 +375,25 @@ Only the item named by `STATUS.md -> NEXT_ACTION` is current.
 
 ### DR-02 — Canonical Dashboard read-model
 
-**Status:** CURRENT / AUTHORIZED after DR-01 closure.
+**Status:** DONE / INTEGRATED — PR #114.
 
-- verify current Dashboard query/invalidation behavior;
-- introduce the bounded read-only Dashboard projection;
-- centralize month-to-today, as-of-today, aging, alert and recent-registration calculations;
-- add focused domain tests;
-- do not redesign the full UI in the same item.
+- canonical `DashboardSnapshot` introduced in `src/domain/dashboardSnapshot.ts`;
+- operational Dashboard hooks share the snapshot query while preserving their current UI contract;
+- month-to-today/today flow reuses `FinancialReport` semantics;
+- current debt/aging reuses accepted transaction/FIFO helpers with an explicit as-of-today cutoff;
+- valid later future occurrences do not alter current debt/aging before occurrence;
+- attention rows are deduplicated/deterministically ordered in the snapshot;
+- recent effective registrations are centralized;
+- focused snapshot tests plus full D-019 passed;
+- no DR-03 or later UI redesign was bundled.
+
+Validation/integration evidence: PR #114; D-019 run/job `33115854899` / `98670186895`; validated/integrated tree `b9b5040abd6f217f41d4bba12f21ae05d06271dc`; squash-integrated `develop@4e3a9b28174cb64ad820f4ec60356194d1a760bb`; exact tree equivalence PASS.
 
 ### DR-03 — Primary KPI row
 
-**Status:** QUEUED / NOT CURRENT.
+**Status:** CURRENT / AUTHORIZED.
 
-Implement the four target KPIs from the accepted Dashboard projection and remove the misleading realtime subtitle. Preserve responsive/loading/empty behavior.
+Implement the four target KPIs from the accepted DR-02 snapshot: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`. Remove misleading realtime wording and preserve responsive/loading/empty behavior. This item is presentation/projection consumption only; do not rebuild the accounting calculations in components and do not begin DR-04.
 
 ### DR-04 — `Precisa de atenção` action center
 
