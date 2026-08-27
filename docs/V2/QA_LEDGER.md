@@ -412,6 +412,44 @@ PR #106 was squash-integrated into `develop` as `7d023e856e0883ba82b2392199d3320
 
 The post-integration change #12 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched. Change #13 is promoted only as the next authorized item and was not implemented here.
 
+## P10-S3-I2-I3-D early-use change #13 — product-level financial report analytics — PASS / INTEGRATED
+
+### Scope review — READ-MODEL / EXISTING REPORT PATH ONLY
+
+Verification confirmed the existing transaction contract already carries the immutable order-time facts required for product analytics: item id/name, quantity, category/subcategory ids/names, total and financial occurrence time. PR #108 therefore stays inside the existing `FinancialReport` calculation/projection path.
+
+PR #108 changes only:
+
+- `src/domain/financialReporting.ts` to add canonical `report.products` aggregation;
+- `src/pages/ReportsPage.tsx` to project product performance and the actual top-selling product;
+- `src/services/financialReportPdfService.ts` to render the same canonical product list in the existing products/categories PDF section;
+- focused domain and PDF tests.
+
+No database/schema migration, Supabase/RPC/Auth/RLS change, transaction mutation, recovery mechanism, financial occurrence/reversal semantic or deployment workflow changed.
+
+### Focused coverage — PASS
+
+- repeated orders with the same exact transaction-time item/name/classification snapshot aggregate together;
+- the same stable item under a different historical name/classification remains a distinct historical row rather than being rewritten from current catalog state;
+- reversed orders are excluded from effective product totals through the existing report filtering path;
+- product quantity, order count and gross sales are verified;
+- the PDF product table consumes `FinancialReport.products` rather than recalculating product totals.
+
+### Final D-019 — PASS
+
+- feature head: `7b8699280e289c706a5d21ffae23a7267d07191b`;
+- exact GitHub-generated merge ref checked out by Actions: `43d7ebf749ca3924fcebe9fe8cd85d7351e5354a`;
+- validated tree: `b8575e6c80a0d43109c25a307dc0faa183245262`;
+- run/job: `33103464797` / `98626992003`;
+- ESLint: **0 errors / 104 warnings**;
+- Vitest: **65 files / 286 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #108 was squash-integrated into `develop` as `d5b2cc5fb150777f12ece38bdd02abcada2974f7`. Git object inspection confirms the integrated commit tree is `b8575e6c80a0d43109c25a307dc0faa183245262`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #13 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched. Change #14 is promoted only as the next authorized item and was not implemented here.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -465,6 +503,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #12 duplicate-warning D-019: **PASS**.
 - PR #106 integrated-tree equivalence: **PASS**.
 - early-use change #12 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #13: **CURRENT / AUTHORIZED / NOT STARTED**.
+- early-use change #13 product-report D-019: **PASS**.
+- PR #108 integrated-tree equivalence: **PASS**.
+- early-use change #13 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #14: **CURRENT / AUTHORIZED / NOT STARTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
