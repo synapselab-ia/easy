@@ -71,50 +71,50 @@ export function AttentionCenter({ rows, isLoading }: AttentionCenterProps) {
                                     const statusLabel = row.status === 'critical' ? 'CRÍTICO' : 'ATENÇÃO';
 
                                     return (
-                                        <button
-                                            key={row.resellerId}
-                                            type="button"
-                                            role="listitem"
-                                            className="grid w-full grid-cols-1 gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
-                                            onClick={() => navigate(`/resellers/${row.resellerId}`)}
-                                            aria-label={`${row.resellerName}, ${statusLabel}, ${formatAge(row.ageDays)}, ${formatBRL(row.alertAmount)}`}
-                                        >
-                                            <div className="min-w-0 space-y-1.5">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="truncate text-sm font-semibold">{row.resellerName}</span>
-                                                    <span
+                                        <div key={row.resellerId} role="listitem">
+                                            <button
+                                                type="button"
+                                                className="grid w-full grid-cols-1 gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                                                onClick={() => navigate(`/resellers/${row.resellerId}`)}
+                                                aria-label={`${row.resellerName}, ${statusLabel}, ${formatAge(row.ageDays)}, ${formatBRL(row.alertAmount)}`}
+                                            >
+                                                <div className="min-w-0 space-y-1.5">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="truncate text-sm font-semibold">{row.resellerName}</span>
+                                                        <span
+                                                            className={cn(
+                                                                'rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide',
+                                                                row.status === 'critical'
+                                                                    ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                                                                    : 'border-yellow-500/30 bg-yellow-500/10 text-foreground',
+                                                            )}
+                                                        >
+                                                            {statusLabel}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatAge(row.ageDays)} desde o lançamento em aberto que determina esta prioridade.
+                                                    </p>
+                                                </div>
+
+                                                <div className="sm:text-right">
+                                                    <div
                                                         className={cn(
-                                                            'rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide',
-                                                            row.status === 'critical'
-                                                                ? 'border-destructive/30 bg-destructive/10 text-destructive'
-                                                                : 'border-yellow-500/30 bg-yellow-500/10 text-foreground',
+                                                            'text-sm font-bold tabular-nums',
+                                                            row.status === 'critical' && 'text-destructive',
                                                         )}
                                                     >
-                                                        {statusLabel}
-                                                    </span>
+                                                        {formatBRL(row.alertAmount)}
+                                                    </div>
+                                                    <div className="text-[11px] text-muted-foreground">
+                                                        {row.status === 'critical' ? 'valor crítico' : 'valor em atenção'}
+                                                        {showTotalOpenDebt
+                                                            ? ` · carteira total ${formatBRL(row.totalOpenDebt)}`
+                                                            : ''}
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {formatAge(row.ageDays)} desde o lançamento em aberto que determina esta prioridade.
-                                                </p>
-                                            </div>
-
-                                            <div className="sm:text-right">
-                                                <div
-                                                    className={cn(
-                                                        'text-sm font-bold tabular-nums',
-                                                        row.status === 'critical' && 'text-destructive',
-                                                    )}
-                                                >
-                                                    {formatBRL(row.alertAmount)}
-                                                </div>
-                                                <div className="text-[11px] text-muted-foreground">
-                                                    {row.status === 'critical' ? 'valor crítico' : 'valor em atenção'}
-                                                    {showTotalOpenDebt
-                                                        ? ` · carteira total ${formatBRL(row.totalOpenDebt)}`
-                                                        : ''}
-                                                </div>
-                                            </div>
-                                        </button>
+                                            </button>
+                                        </div>
                                     );
                                 })}
                             </div>
