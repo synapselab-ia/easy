@@ -153,6 +153,8 @@ Accepted boundary:
 
 The detailed accepted target, semantics, UX criteria and `DR-01…DR-09` execution sequence live in `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
+DR-02 is now integrated through PR #114. The canonical `DashboardSnapshot` projection centralizes month/today flow, as-of-today open position, FIFO aging, critical/attention context and recent effective registrations while reusing accepted `FinancialReport`/transaction helpers and excluding later future occurrences from current-position calculations. Existing Dashboard consumers remain presentation-compatible until the ordered visual items are executed.
+
 D-035 does not authorize a new database/schema, financial mutation/accounting contract, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
 
 ## 9. Cloud security requirements
@@ -205,7 +207,9 @@ D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, ea
 
 The previously proposed isolated change #14 (`Recebimentos hoje`) is no longer a standalone pending item. It is **absorbed/superseded by D-035**: receipts remain part of the target Dashboard, but as `Recebimentos este mês` with optional today context rather than a dedicated daily KPI card.
 
-D-035 / Dashboard + Reports core redesign is now the authorized product initiative. `DR-01` (product contract/canonical documentation) is complete when the D-035 documentation set is integrated. `DR-02` (canonical Dashboard read-model) is then the sole current executable item. Later `DR-03…DR-09` items remain queued/not current and must not be bundled.
+D-035 / Dashboard + Reports core redesign is the authorized product initiative. `DR-01` (product contract/canonical documentation) and `DR-02` (canonical Dashboard read-model) are complete. **`DR-03 — primary Dashboard KPI row` is the sole current executable item.** Later `DR-04…DR-09` items remain queued/not current and must not be bundled.
+
+DR-02 integrated one bounded read-only `DashboardSnapshot` in `src/domain/dashboardSnapshot.ts` and one shared Dashboard snapshot query in `src/hooks/useDashboard.ts`. It centralizes month-to-today sales/receipts/order/item context, optional today context, current open debt/reseller count, critical amount/count/oldest age, accepted FIFO buckets, deterministic attention rows and recent effective registrations. The current-position side applies the operator-local end-of-today cutoff so valid future occurrences remain valid history/registrations but cannot affect current debt/aging until they occur. The implementation introduced no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment change.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
