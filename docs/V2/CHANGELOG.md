@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — reseller statement PDF simplified for client reading
+
+Before starting early-use change #8, the operator explicitly paused the ordered queue to refine the reseller statement PDF. PR #94 preserved the existing grouped-product behavior and the individual written names/observations below each grouped product while simplifying the document around the information a client needs.
+
+Reversed orders, payments and signals are now omitted from the PDF only; the underlying immutable audit history remains intact. Reversal/correction/replacement annotations are no longer printed. A corrected movement therefore presents only its effective replacement in the client-facing document.
+
+The financial closing now appears immediately after the product table as `Total dos pedidos`, `Saldo anterior`, `(-) Total de pagamentos` and `SALDO ATUAL`. For selected periods, `Saldo anterior` remains the canonical balance strictly before the range start, while period totals use effective occurrence-time orders and payments/signals. The detailed `Pagamentos e sinais` table remains available after the closing only when at least one effective settlement exists and is reduced to `Data`, `Tipo`, `Valor`.
+
+Final D-019 on PR #94: head `a854cc6417f13ff9a82a9ded97f9681e36a8c718`, merge ref `9d7c067172c7146c27c36acf3390068da622e3d2`, run/job `33073644514` / `98522073542`: 0 lint errors / 83 warnings; 63 files / 269 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a`.
+
+PR #94 was squash-integrated into `develop` as `a2283d0a9408730e8cb136fdfe602d76a05cfa7a`; its Git tree is also `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a`. Exact tree equivalence: PASS. No database/Supabase, Auth/RLS, recovery, automatic Vercel deployment or `main` publication change occurred. Change #8 was not started and remains the next authorized action.
+
+---
+
 ## 2026-08-27 — pt-BR monetary presentation standardized
 
 Early-use change #7 standardized bounded operator-facing money presentation without changing the underlying financial model. After reverting the earlier currency-style formatter attempt, PR #92 used a simpler stable representation: literal `R$ ` plus the numeric value formatted with pt-BR separators and exactly two decimals. Visible values therefore render as `R$ 150,00`, `R$ 1.200,50`, `R$ 10.000,00`, etc.
