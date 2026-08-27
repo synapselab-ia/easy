@@ -391,15 +391,26 @@ Validation/integration evidence: PR #114; D-019 run/job `33115854899` / `9867018
 
 ### DR-03 — Primary KPI row
 
-**Status:** CURRENT / AUTHORIZED.
+**Status:** DONE / INTEGRATED — PR #116.
 
-Implement the four target KPIs from the accepted DR-02 snapshot: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`. Remove misleading realtime wording and preserve responsive/loading/empty behavior. This item is presentation/projection consumption only; do not rebuild the accounting calculations in components and do not begin DR-04.
+- Dashboard page consumes the canonical `useDashboardSnapshot` shared query for the primary row;
+- four accepted cards are rendered in order: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`;
+- compact supporting context retains month order/item totals, optional today sales/orders/receipts, open-reseller count and critical reseller count/oldest age;
+- the legacy `Dívida Total` / `Pedidos de Hoje` top-card contract is removed from the primary row;
+- misleading `tempo real` wording is removed;
+- responsive `1/2/4` column behavior, loading states and explicit business empty states are preserved;
+- presentation consumes the prepared snapshot and does not reconstruct accounting/FIFO logic;
+- DR-04 attention redesign, DR-05 aging redesign and later items were not bundled.
+
+QA/integration note: the first D-019 run failed because the pre-existing `DashboardCards.test.tsx` still asserted the legacy two-card contract. The implementation was not integrated. Only that stale focused contract was aligned, with an additional singular-age presentation check, and the complete gate was rerun successfully.
+
+Validation/integration evidence: PR #116; final feature head `57a07e35a042bcaed37eb35c8a4be039a277766f`; final D-019 run/job `33118656171` / `98679713377`; ESLint 0 errors / 105 warnings; Vitest 66 files / 291 tests PASS; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `d4be4496de22cb752a25c2307f4b29d5dd393b1e`; squash-integrated `develop@345a84f3d94d65515671a928b627e7d2d62eb687`; exact tree equivalence PASS. Initial failed gate: run/job `33118356365` / `98678713093`; no failed gate was waived.
 
 ### DR-04 — `Precisa de atenção` action center
 
-**Status:** QUEUED / NOT CURRENT.
+**Status:** CURRENT / AUTHORIZED.
 
-Unify critical/attention presentation into one reseller-per-row action center with deterministic priority and reseller-detail navigation.
+Unify critical/attention presentation into one reseller-per-row action center with deterministic priority and reseller-detail navigation. Consume the already prepared `DashboardSnapshot.attentionRows`; do not reconstruct FIFO/accounting in the component and do not begin DR-05.
 
 ### DR-05 — Compact carteira aging
 

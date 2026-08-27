@@ -36,7 +36,7 @@ Current P10-S3 state:
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
   - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
-  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `CURRENT / AUTHORIZED`.**
+  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -487,6 +487,35 @@ Validation/integration evidence:
 
 No failed D-019 objective gate was waived. The post-integration DR-02 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
 
+## D-035 DR-03 closure — primary Dashboard KPI row
+
+PR #116 replaced the legacy top-card presentation with the four accepted primary Dashboard KPIs while keeping financial meaning inside the integrated DR-02 snapshot.
+
+Accepted result:
+
+- the primary row now renders `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto` and `Crítico > 30 dias` in that order;
+- `DashboardPage` consumes `useDashboardSnapshot`, and `DashboardCards` reads only prepared snapshot fields rather than rebuilding accounting or FIFO logic;
+- compact supporting context includes month order/item totals, optional today order/sales/receipts values, open-reseller count and critical reseller count/oldest age;
+- the legacy `Dívida Total` / `Pedidos de Hoje` top-card contract and misleading `atualizada em tempo real` wording are removed;
+- responsive `1/2/4` column behavior, loading states and explicit business empty states are covered by focused tests;
+- `DebtHealthAgingCard` and `PerformanceAnalysisSection` remain unchanged so DR-04/DR-05/DR-07 work was not bundled;
+- no database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Validation/integration evidence:
+
+- final feature head: `57a07e35a042bcaed37eb35c8a4be039a277766f`;
+- validated merge-ref tree: `d4be4496de22cb752a25c2307f4b29d5dd393b1e`;
+- first D-019 run/job `33118356365` / `98678713093` failed because the pre-existing `DashboardCards.test.tsx` still asserted the legacy two-card API; no integration occurred and no gate was waived;
+- final D-019 run/job: `33118656171` / `98679713377`;
+- ESLint: 0 errors / 105 warnings;
+- Vitest: 66 files / 291 tests PASS, including `DashboardCards` 4/4 and `DashboardPage` 3/3;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #116 squash-integrated `develop`: `345a84f3d94d65515671a928b627e7d2d62eb687`;
+- integrated tree: `d4be4496de22cb752a25c2307f4b29d5dd393b1e` — exact tree equivalence PASS.
+
+No failed D-019 objective gate was waived. The post-integration DR-03 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
+
 ## Historical operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
@@ -517,7 +546,7 @@ Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` s
 
 ## D-035 — Dashboard + Reports core redesign
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-03 CURRENT`  
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-04 CURRENT`  
 **Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
 
 Accepted product direction:
@@ -530,21 +559,22 @@ Accepted product direction:
 - recent effective registrations and quick order/payment/signal actions are target operational context;
 - large 90/180/360 Performance/Pareto/current-debtor/ranking content leaves the target Dashboard only after useful analysis is re-homed or handed off to Reports;
 - Reports refinements stay on canonical `FinancialReport` semantics;
-- DR-02 established one coherent Dashboard read-only projection before the major visual redesign.
+- DR-02 established one coherent Dashboard read-only projection before the major visual redesign;
+- DR-03 established the accepted four-card primary KPI row on that projection.
 
 Ordered sequence:
 
 1. **DR-01 DONE — product contract/canonical documentation** — D-035 + focused spec.
 2. **DR-02 DONE / INTEGRATED — canonical Dashboard read-model — PR #114.**
-3. **DR-03 CURRENT / AUTHORIZED — primary KPI row.**
-4. **DR-04 QUEUED / NOT CURRENT — `Precisa de atenção` action center.**
+3. **DR-03 DONE / INTEGRATED — primary KPI row — PR #116.**
+4. **DR-04 CURRENT / AUTHORIZED — `Precisa de atenção` action center.**
 5. **DR-05 QUEUED / NOT CURRENT — compact carteira aging.**
 6. **DR-06 QUEUED / NOT CURRENT — recent registrations + quick actions.**
 7. **DR-07 QUEUED / NOT CURRENT — remove Dashboard Performance block + contextual Reports handoff.**
 8. **DR-08 QUEUED / NOT CURRENT — Reports analytical refinement.**
 9. **DR-09 QUEUED / NOT CURRENT — final Dashboard/Reports UX and efficiency acceptance.**
 
-Only `DR-03` is executable next. Do not bundle `DR-04` or later work into the same task.
+Only `DR-04` is executable next. Do not bundle `DR-05` or later work into the same task.
 
 ## Startup protocol for a new conversation
 
@@ -570,4 +600,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only D-035 `DR-03 — primary Dashboard KPI row`. First verify the current Dashboard page/card implementation and the integrated DR-02 `DashboardSnapshot`/shared query contract. Then replace the existing top Dashboard KPI presentation with the four accepted primary cards: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`, consuming prepared DR-02 data rather than rebuilding accounting in components. Preserve useful compact secondary context defined by the focused spec (month order/item context, optional today context, open-reseller count, critical reseller count/oldest age), remove misleading `tempo real` wording, and preserve responsive/loading/empty semantics. Do not implement the DR-04 `Precisa de atenção` redesign, DR-05 aging redesign, DR-06 recent registrations/quick actions, or any later DR item in the same task. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-04 if DR-03 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only D-035 `DR-04 — Precisa de atenção action center`. First verify the integrated DR-03 primary KPI row, the current `DebtHealthAgingCard` attention presentation and the DR-02 `DashboardSnapshot.attentionRows` contract. Replace the current duplicated critical/attention presentation with one compact `Precisa de atenção` action center consuming the prepared `attentionRows`: one reseller per row; `CRÍTICO` before `ATENÇÃO`; show reseller name, explicit severity text, determining age, determining alert amount, and current total open balance when materially different; preserve the deterministic snapshot order and navigate row selection to the existing reseller detail/history surface. Use a business-meaningful empty state and preserve responsive/accessibility semantics. Do not rebuild FIFO/accounting in components, add a parallel collection model or direct-payment workflow, or implement DR-05 aging redesign, DR-06 recent registrations/quick actions, or any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-05 if DR-04 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**

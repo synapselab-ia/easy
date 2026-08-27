@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — D-035 DR-03 primary Dashboard KPI row integrated
+
+D-035 `DR-03` replaced the legacy two-card Dashboard summary with the accepted four-card primary operational row while consuming the canonical DR-02 `DashboardSnapshot` rather than recreating financial meaning in UI components. PR #116 renders `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto` and `Crítico > 30 dias` in that order.
+
+The row preserves compact month order/item context, optional today sales/orders/receipts context, open-reseller count and critical reseller count/oldest age. The old `Dívida Total` / `Pedidos de Hoje` contract and the misleading `atualizada em tempo real` claim are removed. Responsive 1/2/4-column behavior, loading states and explicit business empty states are covered by focused Dashboard tests. Existing aging and Performance sections remain untouched, so DR-04/DR-05/DR-07 were not bundled.
+
+The first D-019 run/job `33118356365` / `98678713093` failed because the pre-existing `DashboardCards.test.tsx` still asserted the old two-card API. Nothing was integrated on that failure and no gate was waived. The stale focused test contract was aligned, a singular-age presentation check was added, and the complete gate was rerun.
+
+Final D-019 on PR #116: head `57a07e35a042bcaed37eb35c8a4be039a277766f`, run/job `33118656171` / `98679713377`: 0 lint errors / 105 warnings; 66 files / 291 Vitest PASS including `DashboardCards` 4/4 and `DashboardPage` 3/3; 17/17 Playwright PASS; TypeScript + production Vite build PASS. Validated merge-ref tree: `d4be4496de22cb752a25c2307f4b29d5dd393b1e`.
+
+PR #116 was squash-integrated into `develop` as `345a84f3d94d65515671a928b627e7d2d62eb687`; its tree is also `d4be4496de22cb752a25c2307f4b29d5dd393b1e`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, recovery, automatic Vercel deployment or `main` publication change occurred. DR-03 is closed and `DR-04 — Precisa de atenção action center` is now the sole current authorized D-035 item; DR-04 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 DR-02 canonical Dashboard read-model integrated
 
 D-035 `DR-02` replaced the operational Dashboard's repeated transaction reductions with one bounded canonical read-only projection before any major visual redesign. PR #114 adds `src/domain/dashboardSnapshot.ts`, focused domain coverage and a shared snapshot query in `src/hooks/useDashboard.ts` while preserving the existing hook/UI contract for later ordered visual work.
