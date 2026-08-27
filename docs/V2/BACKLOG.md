@@ -234,12 +234,21 @@ Accepted result:
 D-019 run/job `33089151402` / `98576935845`: repository Critical QA PASS. GitHub Actions validated merge ref `f0da9706933804c53a0dc0edd41cfaaafebee59e`; validated tree `a0f26f3c979b758f8c70f43a797689f47f2bc3a5` exactly equals squash-integrated `develop@2ce88ab7418715ef399b4b05b4776f6191d64a88` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #11 — actionable global item search result
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #104`
 
-Make selecting an item in global search land the operator in useful item context instead of an unfiltered generic catalog. Prefer a minimal stable filter/highlight/targeting mechanism over creating a new item-detail architecture.
+Accepted result:
+
+- verification confirmed that selecting an item in the global command center previously discarded item context and navigated only to the unfiltered `/items` catalog;
+- item selection now navigates with a one-shot encoded item-name search handoff;
+- `ItemsPage` applies that handoff to the existing #9 transient item-name filter and then removes the navigation parameter with history replacement;
+- normal and recent item results share the same selection path, so both land in useful filtered catalog context;
+- reseller result navigation and existing create-item/create-reseller suggestion behavior remain unchanged;
+- no item-detail route/architecture, database/schema migration, Supabase/Auth/RLS, recovery, item identity/lifecycle/classification/history or deployment behavior changed.
+
+D-019 run/job `33093633207` / `98592735176`: 0 lint errors / 104 warnings; 65 files / 282 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `409243291c33deed745ab04e857e8c5e5da05f5e`; validated tree `507bdbc9c81efc45ef36a6d7dab9e44dc2444866` exactly equals squash-integrated `develop@46f85bb5f1e8304a323b8c4a8c99f429e52eca5d` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #12 — non-blocking duplicate-data warnings
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Add conservative warnings for likely duplicate reseller/item creation using existing fields and classification context. Warnings must remain non-destructive and operator-confirmed: no automatic merge, no silent rejection and no new hard uniqueness constraint is pre-authorized. Same-name legitimate records must remain possible.
 
@@ -266,4 +275,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #11: verify the current global item-search selection behavior, then make selecting an item land the operator in useful item context rather than an unfiltered generic catalog. Prefer a minimal stable filter/highlight/targeting mechanism over creating a new item-detail architecture. Preserve existing item identity, lifecycle, classification and search semantics. Prefer bounded navigation/presentation state; no database/schema migration or new item-detail architecture is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #12, then stop. Do not start change #12 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #12: verify the current reseller/item creation paths and existing loaded fields, then add conservative warnings for likely duplicate reseller/item creation using existing fields and classification context where safely applicable. Warnings must remain non-destructive and operator-confirmed: no automatic merge, no silent rejection and no new hard uniqueness constraint is authorized; legitimate same-name records must remain possible. Prefer bounded presentation/form-state logic over persistence/schema changes. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #13, then stop. Do not start change #13 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
