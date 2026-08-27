@@ -12,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select";
+import { SearchableSelect } from "../ui/SearchableSelect";
 import { isItemActive, isResellerActive, type TransactionType } from "../../db/database";
 import { toast } from "sonner";
 
@@ -69,6 +70,23 @@ export function TransactionForm({
     const activeResellers = useMemo(
         () => resellers.filter(isResellerActive),
         [resellers]
+    );
+    const resellerOptions = useMemo(
+        () => activeResellers.map(reseller => ({
+            value: reseller.id!.toString(),
+            label: reseller.name,
+            searchText: reseller.name,
+        })),
+        [activeResellers],
+    );
+    const itemOptions = useMemo(
+        () => activeItems.map(item => ({
+            value: item.id!.toString(),
+            label: `${item.name} (${formatMoney(item.basePrice)})`,
+            selectedLabel: item.name,
+            searchText: item.name,
+        })),
+        [activeItems],
     );
 
     useEffect(() => {
@@ -181,20 +199,15 @@ export function TransactionForm({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="resellerId">Revendedor</Label>
-                    <Select value={resellerId} onValueChange={(val) => setResellerId(val ?? "")}>
-                        <SelectTrigger id="resellerId">
-                            <SelectValue>
-                                {resellerId ? activeResellers.find(r => r.id!.toString() === resellerId)?.name : "Selecione..."}
-                            </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {activeResellers.map((r) => (
-                                <SelectItem key={r.id} value={r.id!.toString()}>
-                                    {r.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                        id="resellerId"
+                        value={resellerId}
+                        onValueChange={setResellerId}
+                        options={resellerOptions}
+                        placeholder="Selecione..."
+                        searchPlaceholder="Pesquisar revendedor..."
+                        emptyMessage="Nenhum revendedor encontrado."
+                    />
                     {activeResellers.length === 0 && (
                         <p className="text-sm text-muted-foreground">Nenhum revendedor ativo disponível para novos lançamentos.</p>
                     )}
@@ -235,20 +248,15 @@ export function TransactionForm({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="itemId">Item do Catálogo</Label>
-                            <Select value={itemId} onValueChange={(val) => setItemId(val ?? "")}>
-                                <SelectTrigger id="itemId">
-                                    <SelectValue>
-                                        {itemId ? activeItems.find(i => i.id!.toString() === itemId)?.name : "Selecione o item..."}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {activeItems.map((i) => (
-                                        <SelectItem key={i.id} value={i.id!.toString()}>
-                                            {i.name} ({formatMoney(i.basePrice)})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                id="itemId"
+                                value={itemId}
+                                onValueChange={setItemId}
+                                options={itemOptions}
+                                placeholder="Selecione o item..."
+                                searchPlaceholder="Pesquisar item..."
+                                emptyMessage="Nenhum item encontrado."
+                            />
                             {activeItems.length === 0 && (
                                 <p className="text-sm text-muted-foreground">Nenhum item ativo disponível para novos pedidos.</p>
                             )}
