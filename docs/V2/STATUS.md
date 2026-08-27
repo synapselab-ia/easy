@@ -28,8 +28,9 @@ Current P10-S3 state:
   - change #7 consistent pt-BR monetary presentation: `DONE / INTEGRATED` — PR #92;
   - reseller client-facing statement PDF refinement: `DONE / INTEGRATED` — PR #94;
   - searchable entity-selector refinement: `DONE / INTEGRATED` — PR #96;
-  - **change #8 catalog classification visibility at point of use: `CURRENT / AUTHORIZED`;**
-  - changes #9–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #8 catalog classification visibility at point of use: `DONE / INTEGRATED` — PR #98;
+  - **change #9 practical item/reseller search and filters: `CURRENT / AUTHORIZED`;**
+  - changes #10–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -234,7 +235,36 @@ Validation/integration evidence:
 - PR #96 squash-integrated `develop`: `20dcc0fb7469db8ae9638ab6ef39b38ca7e2ec97`;
 - integrated tree: `569b7a7b760ba333b124094f159488b5b99fc92e` — exact tree equivalence PASS.
 
-No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #8 remains the next authorized queue item and was not started during this refinement.
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched.
+
+## Early-use change #8 — catalog classification visibility at point of use
+
+Verification confirmed that current category/optional-subcategory context was absent from both the item catalog and the new-order item selector. PR #98 adds one bounded current-catalog presentation helper and exposes the resolved path without changing persistence or historical facts.
+
+Accepted behavior:
+
+- desktop catalog rows include a `Classificação` column;
+- mobile catalog cards show the current classification directly under the item name;
+- new-order item options show item name, current classification and existing price, while the selected trigger retains item plus classification context;
+- legacy/unresolved current-catalog references display `Sem classificação` rather than receiving invented classification;
+- the item selector continues to search by item name only, so #8 does not pre-implement #9 filtering/search scope;
+- D-025/D-033 transaction-time category/subcategory snapshots remain immutable historical truth; no order creation/history semantics changed;
+- no database/schema migration, Supabase/Auth/RLS, recovery or deployment behavior changed.
+
+Validation/integration evidence:
+
+- feature head: `66026aa340f3b9aba1e8692f11d51ee751a8778b`;
+- GitHub Actions merge ref: `2d3ab8ba9ff0af179337eb7654b7bfddb5f5a24f`;
+- validated tree: `01bef29624079f90a8b1b0089c183abc26f96149`;
+- D-019 run/job: `33082398941` / `98552849392`;
+- Critical QA: PASS;
+- Vitest suite: 65 files / 276 tests PASS;
+- Playwright: 17/17 PASS;
+- production build: PASS;
+- PR #98 squash-integrated `develop`: `2c9d67221e3365b9476a95947906a6f4c21ecc7f`;
+- integrated tree: `01bef29624079f90a8b1b0089c183abc26f96149` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #8 is closed; change #9 is now the sole current queue item.
 
 ## Operator-authorized usability/data-quality queue
 
@@ -253,8 +283,8 @@ Ordered queue:
 
 1. **#6 DONE / INTEGRATED — PR #90** — Dashboard selected performance-window labels are localized without changing `90/180/360` semantics.
 2. **#7 DONE / INTEGRATED — PR #92** — operator-facing money is presented with pt-BR separators and two decimals without changing numeric/accounting semantics.
-3. **#8 CURRENT / AUTHORIZED** — show category/subcategory context in catalog and order item selection without rewriting historical snapshots.
-4. **#9 QUEUED** — practical item/reseller search and lifecycle/classification filters using existing data.
+3. **#8 DONE / INTEGRATED — PR #98** — current category/subcategory context is visible in the catalog and new-order item selection without rewriting historical snapshots.
+4. **#9 CURRENT / AUTHORIZED** — practical item/reseller search and lifecycle/classification filters using existing data.
 5. **#10 QUEUED** — optional observation on payment/signal creation if the existing transaction contract supports it; no migration.
 6. **#11 QUEUED** — make global item search selection land in useful item context.
 7. **#12 QUEUED** — conservative non-blocking duplicate-data warnings; no automatic merge or hard uniqueness rule.
@@ -287,4 +317,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #8. Verify where current category and optional subcategory context is missing at the catalog and new-order item-selection point of use, then expose existing current-catalog classification context only where it materially helps the operator choose or inspect an item. Preserve D-025/D-033 immutable transaction-time category/subcategory snapshots and do not rewrite historical classification. Prefer a bounded presentation/read-model delta over new architecture; no database/schema migration is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #9 becomes current, then stop. Do not start #9 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #9. Verify the current item and reseller list ergonomics, then add bounded practical search/filtering using existing data where it materially reduces operator effort. Item scope is search plus category/subcategory/lifecycle filtering; reseller scope is search across useful existing identity/contact fields plus lifecycle filtering. Preserve existing identity, lifecycle, financial/history and D-025/D-033 classification semantics. Prefer bounded presentation/read-model changes; no database/schema migration, fuzzy identity inference or destructive bulk action is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #10 becomes current, then stop. Do not start #10 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
