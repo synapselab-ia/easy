@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — D-035 DR-02 canonical Dashboard read-model integrated
+
+D-035 `DR-02` replaced the operational Dashboard's repeated transaction reductions with one bounded canonical read-only projection before any major visual redesign. PR #114 adds `src/domain/dashboardSnapshot.ts`, focused domain coverage and a shared snapshot query in `src/hooks/useDashboard.ts` while preserving the existing hook/UI contract for later ordered visual work.
+
+The snapshot centralizes month-to-today and today sales/receipts/order/item context, current positive open debt and reseller count, critical amount/count/oldest age, accepted FIFO aging buckets, deterministic one-reseller-per-row attention data and recent effective registrations. Month/today flow reuses `buildFinancialReport`; current position/aging reuses accepted effective-transaction/FIFO helpers. One explicit end-of-current-local-day cutoff is applied before FIFO reconstruction, so legitimate future `occurredAt` values later than today remain valid registration/history data but do not contaminate current debt or aging before occurrence.
+
+`useDashboardSnapshot`, `useTotalDebt`, `useTodayOrders` and `useDebtAging` share `['dashboard', 'snapshot']`; the already existing `['dashboard']` invalidation prefix remains sufficient after transaction/reseller mutations. The legacy critical/attention hook shape is mapped from the snapshot so the DR-04 action-center redesign was not bundled, and `usePerformanceAnalysis` remains unchanged for DR-07.
+
+Final D-019 on PR #114: head `e02ab13eb8987cc6ea4865f4b3c39211380e9515`, merge ref `3e09a992a20e3edf72df093c312581c88e04457b`, run/job `33115854899` / `98670186895`: 0 lint errors / 105 warnings; 66 files / 290 Vitest PASS including 3/3 focused snapshot tests; 17/17 Playwright PASS; production build PASS. Validated tree: `b9b5040abd6f217f41d4bba12f21ae05d06271dc`.
+
+PR #114 was squash-integrated into `develop` as `4e3a9b28174cb64ad820f4ec60356194d1a760bb`; its tree is also `b9b5040abd6f217f41d4bba12f21ae05d06271dc`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, recovery, automatic Vercel deployment or `main` publication change occurred. DR-02 is closed and `DR-03 — primary Dashboard KPI row` is now the sole current authorized D-035 item; DR-03 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 Dashboard + Reports core redesign authorized
 
 After the numbered early-use usability queue closed, the operator requested a full efficiency audit of the existing Dashboard and then explicitly accepted a second-pass direction that treats Dashboard and Reports as the core business-management surfaces of Easy.
