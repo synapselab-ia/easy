@@ -3,7 +3,7 @@
 **Status:** canonical V2 product reference  
 **Repository:** `synapselab-ia/easy`  
 **Integration branch:** `develop`  
-**Updated:** 2026-08-26
+**Updated:** 2026-08-27
 
 ## 1. Purpose
 
@@ -181,7 +181,9 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports and early-use changes #5–#6 are **closed**. Controlled early-use observation remains active.
+D-033 / subcategories, D-034 / financial reports and early-use changes #5–#7 are **closed**. Controlled early-use observation remains active.
+
+Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
 The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
 
@@ -193,6 +195,8 @@ For each queue item:
 - use an isolated branch and D-019 for executable integration;
 - after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
 
-Current item: **early-use change #7 — consistent pt-BR monetary presentation**.
+Current item: **early-use change #8 — catalog classification visibility at point of use**.
+
+Change #8 is limited to exposing existing current-catalog category/optional-subcategory context where useful for item inspection/selection. D-025/D-033 immutable transaction-time snapshots remain historical truth; this item does not authorize rewriting history or adding a database/schema migration merely for presentation.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
