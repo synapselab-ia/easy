@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { isItemActive, type Item } from "../../db/database";
+import { isItemActive, type Category, type Item, type Subcategory } from "../../db/database";
 import { useArchiveItem, useReactivateItem } from "../../hooks/useItems";
+import { getCurrentItemClassificationLabel } from "../../lib/catalogClassification";
 import {
     Table,
     TableBody,
@@ -18,10 +19,12 @@ import { toast } from "sonner";
 
 interface ItemTableProps {
     items: Item[];
+    categories: Category[];
+    subcategories: Subcategory[];
     onEdit: (item: Item) => void;
 }
 
-export function ItemTable({ items, onEdit }: ItemTableProps) {
+export function ItemTable({ items, categories, subcategories, onEdit }: ItemTableProps) {
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const archiveMutation = useArchiveItem();
     const reactivateMutation = useReactivateItem();
@@ -33,6 +36,9 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
             currency: 'BRL'
         }).format(value);
     };
+
+    const classificationLabel = (item: Item) =>
+        getCurrentItemClassificationLabel(item, categories, subcategories);
 
     const handleArchive = async () => {
         if (itemToArchive?.id) {
@@ -130,14 +136,19 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
                             <Card key={item.id} className={active ? "overflow-hidden" : "overflow-hidden opacity-75"}>
                                 <CardContent className="p-4 space-y-4">
                                     <div className="flex justify-between items-start gap-3">
-                                        <div className="font-bold text-lg text-primary flex items-center gap-2 min-w-0">
-                                            <Tag size={18} className="shrink-0" />
-                                            <span className="truncate">{item.name}</span>
-                                            {!active && (
-                                                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-semibold tracking-wider">
-                                                    Inativo
-                                                </span>
-                                            )}
+                                        <div className="min-w-0 space-y-1">
+                                            <div className="font-bold text-lg text-primary flex items-center gap-2 min-w-0">
+                                                <Tag size={18} className="shrink-0" />
+                                                <span className="truncate">{item.name}</span>
+                                                {!active && (
+                                                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase font-semibold tracking-wider">
+                                                        Inativo
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-sm text-muted-foreground">
+                                                {classificationLabel(item)}
+                                            </div>
                                         </div>
                                         {lifecycleActions(item)}
                                     </div>
@@ -163,6 +174,7 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Nome</TableHead>
+                            <TableHead>Classificação</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Preço Base</TableHead>
                             <TableHead className="text-right">Ações</TableHead>
@@ -171,7 +183,7 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
                     <TableBody>
                         {items.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                                     Nenhum item cadastrado.
                                 </TableCell>
                             </TableRow>
@@ -181,6 +193,7 @@ export function ItemTable({ items, onEdit }: ItemTableProps) {
                                 return (
                                     <TableRow key={item.id} className={active ? undefined : "opacity-75"}>
                                         <TableCell className="font-medium">{item.name}</TableCell>
+                                        <TableCell className="text-muted-foreground">{classificationLabel(item)}</TableCell>
                                         <TableCell>{active ? 'Ativo' : 'Inativo'}</TableCell>
                                         <TableCell>{formatCurrency(item.basePrice)}</TableCell>
                                         <TableCell className="text-right">

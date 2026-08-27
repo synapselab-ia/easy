@@ -64,6 +64,8 @@ describe('TransactionForm', () => {
         await db.items.clear();
         await db.resellers.clear();
         await db.transactions.clear();
+        await db.subcategories.clear();
+        await db.categories.clear();
         queryClient.clear();
 
         await db.items.add({ name: 'Perfume', basePrice: 150, isActive: true, createdAt: new Date(), updatedAt: new Date() });
@@ -167,22 +169,44 @@ describe('TransactionForm', () => {
         expect(await db.transactions.count()).toBe(0);
     });
 
-    it('should only list active items for new orders', async () => {
+    it('should only list active items for new orders and identify legacy unclassified items', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
-        await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i)).toBeInTheDocument());
         expect(screen.queryByText(/Perfume Arquivado/i)).not.toBeInTheDocument();
+    });
+
+    it('should show current category and optional subcategory in the new-order item option', async () => {
+        const categoryId = await db.categories.add({
+            name: 'Porcelana',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        const subcategoryId = await db.subcategories.add({
+            categoryId,
+            name: 'Canecas',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        const perfume = (await db.items.toArray()).find(item => item.name === 'Perfume');
+        await db.items.update(perfume!.id!, { categoryId, subcategoryId });
+
+        render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
+
+        expect(await screen.findByText(/Perfume — Porcelana › Canecas \(R\$ 150,00\)/i)).toBeInTheDocument();
     });
 
     it('should auto fill price and calculate total automatically', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
         await waitFor(() => {
-            expect(screen.queryByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument();
+            expect(screen.queryByText(/Perfume — Sem classificação \(R\$ 150,00\)/i)).toBeInTheDocument();
         });
 
         const searchableSelects = screen.getAllByTestId('mock-searchable-select');
-        const itemOption = screen.getByText(/Perfume \(R\$ 150,00\)/i) as HTMLOptionElement;
+        const itemOption = screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i) as HTMLOptionElement;
         fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
         const unitPriceInput = await screen.findByLabelText(/Valor Unitário/i) as HTMLInputElement;
@@ -235,8 +259,8 @@ describe('TransactionForm', () => {
         const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
         fireEvent.change(searchableSelects[0], { target: { value: resellerOption.value } });
 
-        await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument());
-        const itemOption = screen.getByText(/Perfume \(R\$ 150,00\)/i) as HTMLOptionElement;
+        await waitFor(() => expect(screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i)).toBeInTheDocument());
+        const itemOption = screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i) as HTMLOptionElement;
         fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
         const qtyInput = screen.getByLabelText(/Quantidade/i) as HTMLInputElement;

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useItems } from "../hooks/useItems";
+import { useCategories } from "../hooks/useCategories";
+import { useSubcategories } from "../hooks/useSubcategories";
 import { ItemTable } from "../components/items/ItemTable";
 import { ItemForm } from "../components/items/ItemForm";
 import type { Item } from "../db/database";
@@ -10,7 +12,9 @@ import { ResponsiveDialog } from "../components/ui/ResponsiveDialog";
 
 export default function ItemsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { data: items = [], isLoading } = useItems();
+    const { data: items = [], isLoading: isItemsLoading } = useItems();
+    const { data: categories = [], isLoading: isCategoriesLoading } = useCategories();
+    const { data: subcategories = [], isLoading: isSubcategoriesLoading } = useSubcategories();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Item | undefined>();
 
@@ -43,6 +47,8 @@ export default function ItemsPage() {
         setEditingItem(undefined);
     };
 
+    const isLoading = isItemsLoading || isCategoriesLoading || isSubcategoriesLoading;
+
     return (
         <div className="p-4 lg:p-6 space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -63,7 +69,12 @@ export default function ItemsPage() {
                     Carregando itens...
                 </div>
             ) : (
-                <ItemTable items={items} onEdit={handleEdit} />
+                <ItemTable
+                    items={items}
+                    categories={categories}
+                    subcategories={subcategories}
+                    onEdit={handleEdit}
+                />
             )}
 
             <ResponsiveDialog
