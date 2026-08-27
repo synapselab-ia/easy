@@ -7,6 +7,10 @@ vi.mock('../hooks/useDashboard', () => ({
     useDashboardSnapshot: vi.fn(),
 }));
 
+vi.mock('../components/dashboard/DashboardQuickActions', () => ({
+    DashboardQuickActions: () => <div>Quick actions</div>,
+}));
+
 vi.mock('../components/dashboard/AttentionCenter', () => ({
     AttentionCenter: ({ rows, isLoading }: { rows: unknown[]; isLoading: boolean }) => (
         <div>{isLoading ? 'Attention loading' : `Attention center ${rows.length}`}</div>
@@ -26,6 +30,12 @@ vi.mock('../components/dashboard/DebtHealthAgingCard', () => ({
         <div>
             {isLoading ? 'Debt aging loading' : `Debt aging ${buckets?.length ?? 0} / ${totalDebt ?? 0}`}
         </div>
+    ),
+}));
+
+vi.mock('../components/dashboard/RecentRegistrations', () => ({
+    RecentRegistrations: ({ rows, isLoading }: { rows: unknown[]; isLoading: boolean }) => (
+        <div>{isLoading ? 'Recent loading' : `Recent registrations ${rows.length}`}</div>
     ),
 }));
 
@@ -71,6 +81,26 @@ const dashboardSnapshot = {
             ageDays: 45,
         },
     ],
+    recentRegistrations: [
+        {
+            transactionId: 30,
+            resellerId: 10,
+            resellerName: 'Revendedor em risco',
+            type: 'payment',
+            totalPrice: 250,
+            createdAt: new Date('2026-08-27T15:30:00'),
+            occurredAt: new Date('2026-08-26T12:00:00'),
+        },
+        {
+            transactionId: 29,
+            resellerId: 20,
+            resellerName: 'Revendedor recente',
+            type: 'order',
+            totalPrice: 500,
+            createdAt: new Date('2026-08-27T14:30:00'),
+            occurredAt: new Date('2026-08-27T12:00:00'),
+        },
+    ],
 } as any;
 
 describe('DashboardPage integration', () => {
@@ -78,17 +108,19 @@ describe('DashboardPage integration', () => {
         vi.clearAllMocks();
     });
 
-    it('renders loading state for the primary KPIs, attention center and aging context', () => {
+    it('renders loading state for the primary KPIs and all operational blocks', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: undefined, isLoading: true } as any);
 
         render(<DashboardPage />);
 
         expect(screen.getAllByText('Carregando...')).toHaveLength(4);
+        expect(screen.getByText('Quick actions')).toBeInTheDocument();
         expect(screen.getByText('Attention loading')).toBeInTheDocument();
         expect(screen.getByText('Debt aging loading')).toBeInTheDocument();
+        expect(screen.getByText('Recent loading')).toBeInTheDocument();
     });
 
-    it('renders the four DR-03 KPIs and hands prepared DR-04/DR-05 data to their operational blocks', () => {
+    it('renders the four KPIs and hands prepared DR-04/DR-05/DR-06 data to the operational blocks', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: dashboardSnapshot, isLoading: false } as any);
 
         render(<DashboardPage />);
@@ -109,12 +141,14 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Hoje: R$ 250,00')).toBeInTheDocument();
         expect(screen.getByText('2 revendedores com saldo em aberto')).toBeInTheDocument();
         expect(screen.getByText('2 revendedores • mais antigo: 45 dias')).toBeInTheDocument();
+        expect(screen.getByText('Quick actions')).toBeInTheDocument();
         expect(screen.getByText('Attention center 1')).toBeInTheDocument();
         expect(screen.getByText('Debt aging 3 / 2100')).toBeInTheDocument();
+        expect(screen.getByText('Recent registrations 2')).toBeInTheDocument();
         expect(screen.queryByText(/tempo real/i)).not.toBeInTheDocument();
     });
 
-    it('keeps explicit empty-state meaning when the snapshot has no current activity, debt or attention rows', () => {
+    it('keeps explicit empty-state meaning when the snapshot has no current activity, debt, attention or recent rows', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({
             data: {
                 ...dashboardSnapshot,
@@ -128,6 +162,7 @@ describe('DashboardPage integration', () => {
                     percentage: 0,
                 })),
                 attentionRows: [],
+                recentRegistrations: [],
             },
             isLoading: false,
         } as any);
@@ -140,5 +175,6 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Nenhum valor crítico hoje.')).toBeInTheDocument();
         expect(screen.getByText('Attention center 0')).toBeInTheDocument();
         expect(screen.getByText('Debt aging 3 / 0')).toBeInTheDocument();
+        expect(screen.getByText('Recent registrations 0')).toBeInTheDocument();
     });
 });
