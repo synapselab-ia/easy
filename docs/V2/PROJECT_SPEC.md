@@ -119,7 +119,7 @@ The report workspace must support:
 - summary KPIs for sales, receipts, open debt at report end and orders;
 - comparison against the immediately preceding equal-length period;
 - sales/receipts timeline;
-- category -> subcategory analysis;
+- product/item analytics plus category -> subcategory analysis;
 - reseller performance;
 - downloadable financial PDF whose calculations come from the same canonical report model as the screen.
 
@@ -131,7 +131,7 @@ Accounting semantics:
 4. `Recebimentos` = effective payment + signal value inside the range.
 5. `Movimento líquido` = period sales minus period receipts.
 6. `Em aberto no fim` = sum of positive reseller balances reconstructed from all effective history through the selected end date; it is not the period net.
-7. Category/subcategory analytics use immutable transaction-time order snapshots and retain explicit legacy/unclassified groups rather than reclassifying history from current catalog data.
+7. Product and category/subcategory analytics use immutable transaction-time order snapshots and retain explicit legacy/unclassified groups rather than reclassifying history from current catalog data.
 8. Reseller rows may combine period activity with an as-of-end closing balance, and the UI/PDF must label this distinction clearly.
 9. PDF section selection changes presentation only; it does not create a second reporting calculation path.
 
@@ -181,7 +181,7 @@ Historical `tasks/` checkboxes are not canonical status.
 
 ## 13. Current bounded goal
 
-D-033 / subcategories, D-034 / financial reports, early-use changes #5–#12 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
+D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
@@ -199,6 +199,8 @@ Early-use change #11 makes selected global item-search results actionable withou
 
 Early-use change #12 adds conservative, non-blocking duplicate warnings only during **new** reseller/item creation using data already loaded by the existing forms. Reseller warnings match normalized name, normalized exact phone or exact case-insensitive e-mail and identify which fields coincided; item warnings require normalized name plus the same category and same optional subcategory, reducing false positives across legitimate classifications. Archived records are included as warning context, edits are unchanged, and the operator can still explicitly choose `Cadastrar mesmo assim`. No automatic merge, silent rejection, hard uniqueness constraint, database/schema migration, Supabase/Auth/RLS, recovery, financial/history or deployment contract changed.
 
+Early-use change #13 extends the existing canonical read-only `FinancialReport` with product-level performance. Product rows come from effective occurrence-time order snapshots and aggregate exact transaction-time item/name/classification context, so later catalog rename or reclassification does not rewrite historical sales. The report screen now exposes product, historical classification, order count, quantity and gross sales; the product highlight uses the top-selling product; and the existing products/categories PDF section consumes the same canonical `report.products` list. Reversed transactions remain zero-effect. No persistence, database/Supabase, mutation, Auth/RLS, recovery or deployment contract changed.
+
 The operator has explicitly authorized the bounded usability/data-quality queue recorded in `STATUS.md` and `BACKLOG.md`, with a strict **one-item-at-a-time** rule. Only the item named by current `NEXT_ACTION` is executable; later queue entries are ordered candidates, not permission to batch work.
 
 For each queue item:
@@ -209,8 +211,8 @@ For each queue item:
 - use an isolated branch and D-019 for executable integration;
 - after closure, promote exactly the next pending queue item in canonical docs and stop before implementing it.
 
-Current item: **early-use change #13 — product-level financial report analytics**.
+Current item: **early-use change #14 — Dashboard receipts-today card**.
 
-Change #13 is limited to extending the canonical read-only `FinancialReport` model with product/item aggregation useful for answering what sold, using immutable transaction-time order facts and preserving the existing screen/PDF parity rule. No database migration or independent second accounting calculation path is authorized.
+Change #14 is limited to one glance KPI for effective payments + signals occurring today, respecting D-014 occurrence time and reversal-zero-effect semantics. It is read-only and does not authorize transaction, persistence, recovery or security changes.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
