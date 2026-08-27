@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from "../ui/select";
 import { SearchableSelect } from "../ui/SearchableSelect";
+import { ResponsiveDialog } from "../ui/ResponsiveDialog";
 import { isItemActive, isResellerActive, type TransactionType } from "../../db/database";
 import { toast } from "sonner";
 
@@ -39,6 +40,16 @@ function occurrenceFromDateInput(value: string) {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function isFutureOccurrenceDate(value: string, today = new Date()) {
+    if (!occurrenceFromDateInput(value)) return false;
+    return value > formatDateInput(today);
+}
+
+function formatOccurrenceDate(value: string) {
+    const date = occurrenceFromDateInput(value);
+    return date?.toLocaleDateString('pt-BR') ?? value;
+}
+
 function formatMoney(value: number) {
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -60,6 +71,7 @@ export function TransactionForm({
     const [observation, setObservation] = useState<string>("");
     const [paymentValue, setPaymentValue] = useState<string>("");
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [futureDateConfirmationOpen, setFutureDateConfirmationOpen] = useState(false);
 
     const createMutation = useCreateTransaction();
     const isPending = createMutation.isPending;
@@ -120,6 +132,7 @@ export function TransactionForm({
         setPaymentValue("");
         setObservation("");
         setErrors({});
+        setFutureDateConfirmationOpen(false);
         createMutation.reset();
     };
 
@@ -157,10 +170,7 @@ export function TransactionForm({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validate()) return;
-
+    const persistTransaction = async () => {
         const occurredAt = occurrenceFromDateInput(occurrenceDate);
         if (!occurredAt) return;
 
@@ -195,6 +205,23 @@ export function TransactionForm({
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Não foi possível salvar o lançamento.");
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validate()) return;
+
+        if (isFutureOccurrenceDate(occurrenceDate)) {
+            setFutureDateConfirmationOpen(true);
+            return;
+        }
+
+        await persistTransaction();
+    };
+
+    const handleConfirmFutureDate = async () => {
+        setFutureDateConfirmationOpen(false);
+        await persistTransaction();
     };
 
     const handleCancel = () => {
@@ -345,6 +372,36 @@ export function TransactionForm({
                     {isPending ? "Lançando..." : "Lançar Movimentação"}
                 </Button>
             </div>
+
+            <ResponsiveDialog
+                open={futureDateConfirmationOpen}
+                onOpenChange={setFutureDateConfirmationOpen}
+                title="Data de ocorrência no futuro"
+                description="A data selecionada é posterior à data de hoje."
+                footer={(
+                    <>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setFutureDateConfirmationOpen(false)}
+                            disabled={isPending}
+                        >
+                            Voltar e corrigir
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleConfirmFutureDate}
+                            disabled={isPending}
+                        >
+                            {isPending ? "Lançando..." : "Cadastrar mesmo assim"}
+                        </Button>
+                    </>
+                )}
+            >
+                <p className="text-sm text-muted-foreground">
+                    A movimentação está com data de ocorrência em {formatOccurrenceDate(occurrenceDate)}. Se isso for intencional, confirme para manter exatamente essa data financeira.
+                </p>
+            </ResponsiveDialog>
         </form>
     );
 }
