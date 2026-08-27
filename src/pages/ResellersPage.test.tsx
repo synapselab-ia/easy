@@ -12,6 +12,22 @@ vi.mock('@/hooks/use-media-query', () => ({
     useMediaQuery: () => true,
 }));
 
+vi.mock('../components/ui/select', () => ({
+    Select: ({ value, onValueChange, children }: any) => (
+        <select
+            data-testid="mock-select"
+            value={value}
+            onChange={(event) => onValueChange(event.target.value)}
+        >
+            {children}
+        </select>
+    ),
+    SelectContent: ({ children }: any) => <>{children}</>,
+    SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+    SelectTrigger: () => null,
+    SelectValue: () => null,
+}));
+
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
@@ -84,7 +100,7 @@ describe('ResellersPage Tests', () => {
         expect(await screen.findByText('Maria Souza')).toBeInTheDocument();
 
         // 3. Search remains functional.
-        const searchInput = screen.getByPlaceholderText(/Buscar por nome.../i);
+        const searchInput = screen.getByPlaceholderText(/Buscar por nome, telefone ou email/i);
         fireEvent.change(searchInput, { target: { value: 'Maria' } });
 
         await waitFor(() => {
@@ -138,6 +154,64 @@ describe('ResellersPage Tests', () => {
 
         fireEvent.change(searchInput, { target: { value: '' } });
         expect(await screen.findByText('Maria Souza')).toBeInTheDocument();
+    });
+
+    it('searches reseller identity/contact fields and filters lifecycle without changing records', async () => {
+        await db.resellers.bulkAdd([
+            {
+                name: 'João Ávila',
+                phone: '11987654321',
+                email: 'joao@teste.com',
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: 'Maria Souza',
+                phone: '2188887777',
+                email: 'maria@empresa.com',
+                isActive: false,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        ]);
+
+        render(<ResellersPage />, { wrapper });
+
+        expect(await screen.findByText('João Ávila')).toBeInTheDocument();
+        expect(screen.getByText('Maria Souza')).toBeInTheDocument();
+
+        const searchInput = screen.getByLabelText('Buscar revendedor');
+
+        fireEvent.change(searchInput, { target: { value: 'joao avila' } });
+        await waitFor(() => {
+            expect(screen.getByText('João Ávila')).toBeInTheDocument();
+            expect(screen.queryByText('Maria Souza')).not.toBeInTheDocument();
+        });
+
+        fireEvent.change(searchInput, { target: { value: '8888' } });
+        await waitFor(() => {
+            expect(screen.getByText('Maria Souza')).toBeInTheDocument();
+            expect(screen.queryByText('João Ávila')).not.toBeInTheDocument();
+        });
+
+        fireEvent.change(searchInput, { target: { value: 'JOAO@TESTE' } });
+        await waitFor(() => {
+            expect(screen.getByText('João Ávila')).toBeInTheDocument();
+            expect(screen.queryByText('Maria Souza')).not.toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+        fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'inactive' } });
+        await waitFor(() => {
+            expect(screen.getByText('Maria Souza')).toBeInTheDocument();
+            expect(screen.queryByText('João Ávila')).not.toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+        expect(await screen.findByText('João Ávila')).toBeInTheDocument();
+        expect(screen.getByText('Maria Souza')).toBeInTheDocument();
+        expect(await db.resellers.count()).toBe(2);
     });
 
     it('navigates to reseller details page when clicking on the reseller name', async () => {
