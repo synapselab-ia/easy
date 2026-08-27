@@ -32,6 +32,24 @@ vi.mock('../ui/select', () => ({
     SelectValue: () => null,
 }));
 
+vi.mock('../ui/SearchableSelect', () => ({
+    SearchableSelect: ({ id, value, onValueChange, options, disabled }: any) => (
+        <select
+            id={id}
+            data-testid="mock-searchable-select"
+            value={value}
+            disabled={disabled}
+            onChange={(event) => onValueChange(event.target.value)}
+        >
+            {options.map((option: any) => (
+                <option key={`${option.value}-${option.label}`} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    ),
+}));
+
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
@@ -62,8 +80,7 @@ describe('TransactionForm', () => {
         expect(screen.getByLabelText(/Valor Unitário/i)).toBeInTheDocument();
         expect(screen.queryByLabelText(/Valor para Abatimento/i)).not.toBeInTheDocument();
 
-        const selects = screen.getAllByTestId('mock-select');
-        fireEvent.change(selects[1], { target: { value: 'payment' } });
+        fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'payment' } });
 
         expect(await screen.findByText("Valor para Abatimento (R$)")).toBeInTheDocument();
         expect(screen.queryByText("Item do Catálogo")).not.toBeInTheDocument();
@@ -90,18 +107,18 @@ describe('TransactionForm', () => {
             { wrapper },
         );
 
-        const selects = await screen.findAllByTestId('mock-select');
+        const searchableSelects = await screen.findAllByTestId('mock-searchable-select');
         await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
-        expect((selects[0] as HTMLSelectElement).value).toBe(String(activeReseller!.id));
+        expect((searchableSelects[0] as HTMLSelectElement).value).toBe(String(activeReseller!.id));
 
-        fireEvent.change(selects[1], { target: { value: 'payment' } });
+        fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'payment' } });
         fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '25.00' } });
         fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
         await waitFor(() => {
-            const resetSelects = screen.getAllByTestId('mock-select');
-            expect((resetSelects[0] as HTMLSelectElement).value).toBe(String(activeReseller!.id));
-            expect((resetSelects[1] as HTMLSelectElement).value).toBe('order');
+            const resetSearchableSelects = screen.getAllByTestId('mock-searchable-select');
+            expect((resetSearchableSelects[0] as HTMLSelectElement).value).toBe(String(activeReseller!.id));
+            expect((screen.getByTestId('mock-select') as HTMLSelectElement).value).toBe('order');
         });
     });
 
@@ -159,14 +176,13 @@ describe('TransactionForm', () => {
     it('should auto fill price and calculate total automatically', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
-        const selects = await screen.findAllByTestId('mock-select');
-
         await waitFor(() => {
             expect(screen.queryByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument();
         });
 
+        const searchableSelects = screen.getAllByTestId('mock-searchable-select');
         const itemOption = screen.getByText(/Perfume \(R\$ 150,00\)/i) as HTMLOptionElement;
-        fireEvent.change(selects[2], { target: { value: itemOption.value } });
+        fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
         const unitPriceInput = await screen.findByLabelText(/Valor Unitário/i) as HTMLInputElement;
         await waitFor(() => {
@@ -187,12 +203,12 @@ describe('TransactionForm', () => {
             { wrapper },
         );
 
-        const selects = await screen.findAllByTestId('mock-select');
+        const searchableSelects = await screen.findAllByTestId('mock-searchable-select');
         await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
 
         const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
-        fireEvent.change(selects[0], { target: { value: resellerOption.value } });
-        fireEvent.change(selects[1], { target: { value: 'payment' } });
+        fireEvent.change(searchableSelects[0], { target: { value: resellerOption.value } });
+        fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'payment' } });
 
         const paymentValueInput = screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement;
         fireEvent.change(paymentValueInput, { target: { value: '99.50' } });
@@ -201,9 +217,9 @@ describe('TransactionForm', () => {
 
         expect(onCancel).toHaveBeenCalledOnce();
         await waitFor(() => {
-            const resetSelects = screen.getAllByTestId('mock-select');
-            expect((resetSelects[0] as HTMLSelectElement).value).toBe('');
-            expect((resetSelects[1] as HTMLSelectElement).value).toBe('signal');
+            const resetSearchableSelects = screen.getAllByTestId('mock-searchable-select');
+            expect((resetSearchableSelects[0] as HTMLSelectElement).value).toBe('');
+            expect((screen.getByTestId('mock-select') as HTMLSelectElement).value).toBe('signal');
             expect((screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement).value).toBe('');
         });
     });
@@ -212,15 +228,15 @@ describe('TransactionForm', () => {
         const onSubmitSuccess = vi.fn();
         render(<TransactionForm onSubmitSuccess={onSubmitSuccess} />, { wrapper });
 
-        const selects = await screen.findAllByTestId('mock-select');
         await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        const searchableSelects = screen.getAllByTestId('mock-searchable-select');
 
         const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
-        fireEvent.change(selects[0], { target: { value: resellerOption.value } });
+        fireEvent.change(searchableSelects[0], { target: { value: resellerOption.value } });
 
         await waitFor(() => expect(screen.getByText(/Perfume \(R\$ 150,00\)/i)).toBeInTheDocument());
         const itemOption = screen.getByText(/Perfume \(R\$ 150,00\)/i) as HTMLOptionElement;
-        fireEvent.change(selects[2], { target: { value: itemOption.value } });
+        fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
         const qtyInput = screen.getByLabelText(/Quantidade/i) as HTMLInputElement;
         fireEvent.change(qtyInput, { target: { value: '2' } });
@@ -230,8 +246,8 @@ describe('TransactionForm', () => {
 
         await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Revendedor não encontrado.'));
         expect(onSubmitSuccess).not.toHaveBeenCalled();
-        expect((selects[0] as HTMLSelectElement).value).toBe(resellerOption.value);
-        expect((selects[2] as HTMLSelectElement).value).toBe(itemOption.value);
+        expect((searchableSelects[0] as HTMLSelectElement).value).toBe(resellerOption.value);
+        expect((searchableSelects[1] as HTMLSelectElement).value).toBe(itemOption.value);
         expect(qtyInput.value).toBe('2');
     });
 });
