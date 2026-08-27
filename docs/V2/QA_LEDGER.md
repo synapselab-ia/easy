@@ -573,6 +573,51 @@ PR #116 was squash-integrated into `develop` as `345a84f3d94d65515671a928b627e7d
 
 The post-integration DR-03 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-04 — `Precisa de atenção` action center — PASS / INTEGRATED
+
+### Scope review — PRESENTATION / CANONICAL ATTENTION PROJECTION ONLY
+
+Verification before implementation confirmed that `DebtHealthAgingCard` still rendered two independent critical/attention lists and recomputed displayed ages in the UI, even though the integrated DR-02 snapshot already supplied deduplicated `attentionRows` with deterministic order, status, prepared age, alert amount and current total open balance.
+
+PR #118 is bounded to Dashboard presentation and focused tests:
+
+- adds `AttentionCenter` immediately after the DR-03 KPI row;
+- consumes prepared `DashboardSnapshot.attentionRows` without sorting or rebuilding FIFO/accounting/age classification;
+- removes only the duplicated alert lists from `DebtHealthAgingCard` while retaining its existing donut and aging legend for DR-05;
+- adds focused `AttentionCenter` coverage and verifies the Dashboard passes snapshot rows into the new block.
+
+No database/schema migration, Supabase/RPC/Auth/RLS, recovery, deployment-path, Reports, DR-05 aging redesign, DR-06 quick actions/recent registrations or later D-035 scope was bundled.
+
+### Focused coverage — PASS
+
+`AttentionCenter.test.tsx` has **4/4 PASS** and verifies:
+
+1. prepared canonical row order, explicit `CRÍTICO` / `ATENÇÃO`, prepared age and alert amount, plus conditional total open balance;
+2. row activation reaches the existing reseller detail route;
+3. the initial six-row presentation remains compact and expands/collapses explicitly when more priorities exist;
+4. the empty state communicates the business condition and does not claim reseller master data is missing.
+
+`DashboardPage.test.tsx` remains **3/3 PASS** and verifies the prepared snapshot rows are handed to the action center while DR-03 KPI semantics stay intact.
+
+### Final D-019 — PASS
+
+- feature head: `f035b6be20c5ea3dfbcbe912474abc945123611f`;
+- exact GitHub-generated merge ref checked out by Actions: `124fa0bd812250d3822aca1a6be46eb5400dba61`;
+- validated tree: `69905255e836492e8b610ea1ae0ef8bf66d0d070`;
+- run/job: `33121893821` / `98690519373`;
+- ESLint: **0 errors / 105 warnings**;
+- Vitest: **67 files / 295 tests PASS**;
+- focused `AttentionCenter` tests: **4/4 PASS**;
+- focused `DashboardPage` tests: **3/3 PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No objective D-019 failure was waived. The successful run retained only already tracked non-blocking React/test/lint/audit/chunk warnings.
+
+PR #118 was squash-integrated into `develop` as `4bac76dd83c31016b692efb17531fbf3eddf5122`. Git object inspection confirms the integrated tree is `69905255e836492e8b610ea1ae0ef8bf66d0d070`, exactly the same tree validated by the PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-04 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -640,6 +685,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-035 DR-03 primary KPI row D-019: **PASS**.
 - PR #116 integrated-tree equivalence: **PASS**.
 - D-035 DR-03 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- D-035 DR-04 `Precisa de atenção` action center: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
+- D-035 DR-04 attention-center D-019: **PASS**.
+- PR #118 integrated-tree equivalence: **PASS**.
+- D-035 DR-04 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 DR-05 compact carteira aging: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.

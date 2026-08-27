@@ -408,15 +408,26 @@ Validation/integration evidence: PR #116; final feature head `57a07e35a042bcaed3
 
 ### DR-04 — `Precisa de atenção` action center
 
-**Status:** CURRENT / AUTHORIZED.
+**Status:** DONE / INTEGRATED — PR #118.
 
-Unify critical/attention presentation into one reseller-per-row action center with deterministic priority and reseller-detail navigation. Consume the already prepared `DashboardSnapshot.attentionRows`; do not reconstruct FIFO/accounting in the component and do not begin DR-05.
+- one dedicated action center is rendered immediately after the DR-03 KPI row;
+- it consumes `DashboardSnapshot.attentionRows` as prepared, without sorting, aging classification or FIFO/accounting reconstruction in the component;
+- each reseller appears once with explicit `CRÍTICO` / `ATENÇÃO`, determining age and alert-class amount;
+- current total open balance is shown when materially different from the alert amount;
+- canonical severity/age/value/name ordering is preserved;
+- rows use keyboard-accessible buttons and navigate to the existing reseller detail/history route;
+- initial density is six rows with explicit expansion/collapse when more priorities exist;
+- the empty state describes the business condition rather than missing reseller data;
+- duplicate critical/attention lists were removed from `DebtHealthAgingCard` while its existing donut/legend remain unchanged for DR-05;
+- DR-05 and later work were not bundled.
+
+Validation/integration evidence: PR #118; feature head `f035b6be20c5ea3dfbcbe912474abc945123611f`; merge ref `124fa0bd812250d3822aca1a6be46eb5400dba61`; D-019 run/job `33121893821` / `98690519373`; ESLint 0 errors / 105 warnings; Vitest 67 files / 295 tests PASS, including `AttentionCenter` 4/4 and `DashboardPage` 3/3; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `69905255e836492e8b610ea1ae0ef8bf66d0d070`; squash-integrated `develop@4bac76dd83c31016b692efb17531fbf3eddf5122`; exact tree equivalence PASS; no failed gate was waived.
 
 ### DR-05 — Compact carteira aging
 
-**Status:** QUEUED / NOT CURRENT.
+**Status:** CURRENT / AUTHORIZED.
 
-Replace the large donut/default aging presentation with compact exact-value + percentage context using the same snapshot buckets.
+Replace the large donut/default aging presentation with compact exact-value + percentage context consuming the prepared `DashboardSnapshot.agingBuckets`. Preserve accepted bucket semantics and total open-position context; do not reconstruct FIFO/accounting in the component and do not begin DR-06.
 
 ### DR-06 — Recent registrations + quick actions
 
