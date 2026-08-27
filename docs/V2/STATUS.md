@@ -29,8 +29,9 @@ Current P10-S3 state:
   - reseller client-facing statement PDF refinement: `DONE / INTEGRATED` — PR #94;
   - searchable entity-selector refinement: `DONE / INTEGRATED` — PR #96;
   - change #8 catalog classification visibility at point of use: `DONE / INTEGRATED` — PR #98;
-  - **change #9 practical item/reseller search and filters: `CURRENT / AUTHORIZED`;**
-  - changes #10–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
+  - change #9 practical item/reseller search and filters: `DONE / INTEGRATED` — PR #100;
+  - **change #10 observations on payment/signal entry: `CURRENT / AUTHORIZED`;**
+  - changes #11–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -264,7 +265,35 @@ Validation/integration evidence:
 - PR #98 squash-integrated `develop`: `2c9d67221e3365b9476a95947906a6f4c21ecc7f`;
 - integrated tree: `01bef29624079f90a8b1b0089c183abc26f96149` — exact tree equivalence PASS.
 
-No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #8 is closed; change #9 is now the sole current queue item.
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #8 is closed.
+
+## Early-use change #9 — practical item/reseller search and filters
+
+Verification found that the item catalog had no list search/filter controls, while the reseller page searched only by name and had no lifecycle filter. PR #100 adds bounded client-side list ergonomics over the already loaded canonical data.
+
+Accepted behavior:
+
+- item search matches name substrings and ignores case/accents;
+- item filters combine category, category-scoped optional subcategory and lifecycle (`Todos`, `Ativos`, `Inativos`);
+- category/subcategory filters reuse the accepted searchable selector behavior and include archived classification context where relevant;
+- `Sem classificação` explicitly filters legacy/unresolved current-catalog items without inventing classification;
+- reseller search matches existing name, phone or email fields and ignores case/accents;
+- reseller lifecycle filtering supports `Todos`, `Ativos` and `Inativos`;
+- filters are transient presentation/read-model state only and `Limpar filtros` restores the full list;
+- the filtered catalog empty state is distinct from a truly empty catalog;
+- no database/schema migration, Supabase/API/policy, fuzzy identity inference, destructive bulk action, lifecycle/history or financial semantics changed.
+
+Validation/integration evidence:
+
+- feature head: `df6efcee47d6a43941cbdbd273ec95bb93f56059`;
+- GitHub Actions merge ref: `e0eba21d9a695be4b7bab918c8faa72de060039b`;
+- validated tree: `83e27d1d63685eee1a4ae6bc751b30e8dccba786`;
+- D-019 run/job: `33086388558` / `98567054353`;
+- repository Critical QA (`lint + Vitest + Playwright + production build`): PASS;
+- PR #100 squash-integrated `develop`: `b6d92db102d7ba17b920e8c41282a5075697bc04`;
+- integrated tree: `83e27d1d63685eee1a4ae6bc751b30e8dccba786` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #9 is closed; change #10 is now the sole current queue item.
 
 ## Operator-authorized usability/data-quality queue
 
@@ -284,8 +313,8 @@ Ordered queue:
 1. **#6 DONE / INTEGRATED — PR #90** — Dashboard selected performance-window labels are localized without changing `90/180/360` semantics.
 2. **#7 DONE / INTEGRATED — PR #92** — operator-facing money is presented with pt-BR separators and two decimals without changing numeric/accounting semantics.
 3. **#8 DONE / INTEGRATED — PR #98** — current category/subcategory context is visible in the catalog and new-order item selection without rewriting historical snapshots.
-4. **#9 CURRENT / AUTHORIZED** — practical item/reseller search and lifecycle/classification filters using existing data.
-5. **#10 QUEUED** — optional observation on payment/signal creation if the existing transaction contract supports it; no migration.
+4. **#9 DONE / INTEGRATED — PR #100** — practical item/reseller search and lifecycle/classification filters use existing loaded data only.
+5. **#10 CURRENT / AUTHORIZED** — optional observation on payment/signal creation if the existing transaction contract supports it; no migration.
 6. **#11 QUEUED** — make global item search selection land in useful item context.
 7. **#12 QUEUED** — conservative non-blocking duplicate-data warnings; no automatic merge or hard uniqueness rule.
 8. **#13 QUEUED** — product-level analytics inside the canonical read-only financial report model.
@@ -317,4 +346,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only early-use change #9. Verify the current item and reseller list ergonomics, then add bounded practical search/filtering using existing data where it materially reduces operator effort. Item scope is search plus category/subcategory/lifecycle filtering; reseller scope is search across useful existing identity/contact fields plus lifecycle filtering. Preserve existing identity, lifecycle, financial/history and D-025/D-033 classification semantics. Prefer bounded presentation/read-model changes; no database/schema migration, fuzzy identity inference or destructive bulk action is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if no safe applicable delta exists. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #10 becomes current, then stop. Do not start #10 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only early-use change #10. Verify whether the existing transaction and cloud contracts already support `observation` on payment/signal creation and, if so, expose one optional observation field in the normal payment/signal entry flow. Reuse the existing transaction field and preserve current payment/signal financial effect, occurrence-date semantics, reversals/corrections and immutable history. Prefer a bounded form/mutation-contract delta; no database/schema migration is authorized by this item. Begin with verification and close as `NO_CHANGE / DEFERRED` if the existing contract cannot safely support the field without broader architecture. Work on an isolated branch from current `develop`; for any executable delta run proportionate tests plus D-019 before integration. At closure, update canonical docs so exactly change #11 becomes current, then stop. Do not start #11 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
