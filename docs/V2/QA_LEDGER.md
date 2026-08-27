@@ -535,6 +535,44 @@ PR #114 was squash-integrated into `develop` as `4e3a9b28174cb64ad820f4ec6035619
 
 The post-integration DR-02 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-03 — primary Dashboard KPI row — PASS / INTEGRATED
+
+### Scope review — PRESENTATION / CANONICAL SNAPSHOT ONLY
+
+Verification before implementation confirmed the Dashboard still rendered the legacy `Dívida Total` / `Pedidos de Hoje` top-card pair and claimed `atualizada em tempo real`, while the integrated DR-02 `DashboardSnapshot` already exposed all accepted month/today/open/critical data required by DR-03.
+
+PR #116 changes the Dashboard presentation and focused tests only:
+
+- `DashboardPage` consumes `useDashboardSnapshot` for the primary row;
+- `DashboardCards` renders the accepted four KPIs and compact supporting context from prepared snapshot fields;
+- `DashboardPage.test.tsx` and `DashboardCards.test.tsx` verify values, loading, business empty states, responsive-content contract and removal of legacy/realtime wording.
+
+No accounting/FIFO reconstruction, database/schema migration, Supabase/RPC/Auth/RLS, recovery, deployment-path, DR-04 attention redesign or later D-035 scope was bundled.
+
+### D-019 iteration — objective failure corrected, not waived
+
+The first run/job `33118356365` / `98678713093` failed in Vitest because the pre-existing `src/components/dashboard/DashboardCards.test.tsx` still instantiated and asserted the old two-card component API. The new `DashboardPage` coverage already passed. Nothing was integrated on that failed gate.
+
+The stale focused test contract was aligned to DR-03 and a singular critical-age presentation check was added; the complete D-019 gate was rerun.
+
+### Final D-019 — PASS
+
+- final feature head: `57a07e35a042bcaed37eb35c8a4be039a277766f`;
+- validated merge-ref tree: `d4be4496de22cb752a25c2307f4b29d5dd393b1e`;
+- run/job: `33118656171` / `98679713377`;
+- ESLint: **0 errors / 105 warnings**;
+- Vitest: **66 files / 291 tests PASS**;
+- focused `DashboardCards` tests: **4/4 PASS**;
+- focused `DashboardPage` tests: **3/3 PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+The successful gate retained only already tracked non-blocking React/test/lint/audit/chunk warnings.
+
+PR #116 was squash-integrated into `develop` as `345a84f3d94d65515671a928b627e7d2d62eb687`. Git object inspection confirms the integrated tree is `d4be4496de22cb752a25c2307f4b29d5dd393b1e`, exactly the same tree validated by the final PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-03 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -599,6 +637,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-035 DR-02 canonical Dashboard read-model D-019: **PASS**.
 - PR #114 integrated-tree equivalence: **PASS**.
 - D-035 DR-02 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- D-035 DR-03 primary KPI row: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
+- D-035 DR-03 primary KPI row D-019: **PASS**.
+- PR #116 integrated-tree equivalence: **PASS**.
+- D-035 DR-03 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 DR-04 `Precisa de atenção` action center: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
