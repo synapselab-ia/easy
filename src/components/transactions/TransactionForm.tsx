@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useCreateTransaction } from "../../hooks/useTransactions";
 import { useItems } from "../../hooks/useItems";
 import { useResellers } from "../../hooks/useResellers";
+import { useCategories } from "../../hooks/useCategories";
+import { useSubcategories } from "../../hooks/useSubcategories";
+import { getCurrentItemClassificationLabel } from "../../lib/catalogClassification";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -63,6 +66,8 @@ export function TransactionForm({
 
     const { data: items = [] } = useItems();
     const { data: resellers = [] } = useResellers();
+    const { data: categories = [] } = useCategories();
+    const { data: subcategories = [] } = useSubcategories();
     const activeItems = useMemo(
         () => items.filter(isItemActive),
         [items]
@@ -80,13 +85,16 @@ export function TransactionForm({
         [activeResellers],
     );
     const itemOptions = useMemo(
-        () => activeItems.map(item => ({
-            value: item.id!.toString(),
-            label: `${item.name} (${formatMoney(item.basePrice)})`,
-            selectedLabel: item.name,
-            searchText: item.name,
-        })),
-        [activeItems],
+        () => activeItems.map(item => {
+            const classification = getCurrentItemClassificationLabel(item, categories, subcategories);
+            return {
+                value: item.id!.toString(),
+                label: `${item.name} — ${classification} (${formatMoney(item.basePrice)})`,
+                selectedLabel: `${item.name} — ${classification}`,
+                searchText: item.name,
+            };
+        }),
+        [activeItems, categories, subcategories],
     );
 
     useEffect(() => {
