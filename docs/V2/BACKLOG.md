@@ -220,12 +220,21 @@ Accepted result:
 D-019 run/job `33086388558` / `98567054353`: repository Critical QA PASS. GitHub Actions validated merge ref `e0eba21d9a695be4b7bab918c8faa72de060039b`; validated tree `83e27d1d63685eee1a4ae6bc751b30e8dccba786` exactly equals squash-integrated `develop@b6d92db102d7ba17b920e8c41282a5075697bc04` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #10 — observations on payment/signal entry
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #102`
 
-Verify the existing transaction/cloud contract supports `observation` for payment/signal creation and, if so, expose the optional observation field in the normal entry flow. Reuse the existing transaction field; no database migration or change to payment/signal financial effect is authorized.
+Accepted result:
+
+- verification confirmed `Transaction.observation`, local sanitization/persistence, the cloud adapter and the current `create_transaction` PostgreSQL RPC already support observations for payments and signals;
+- normal transaction entry now exposes the existing observation field for payments and signals as well as orders;
+- the normalized trimmed observation is part of the common transaction create payload; blank input remains absent;
+- existing order observation presentation and behavior are preserved;
+- focused tests prove payment and signal creation persist the trimmed observation while retaining the non-order shape with no item reference;
+- no database/schema migration, Supabase function/policy, financial-effect, occurrence-date, reversal/correction/history, PDF, recovery or deployment behavior changed.
+
+D-019 run/job `33089151402` / `98576935845`: repository Critical QA PASS. GitHub Actions validated merge ref `f0da9706933804c53a0dc0edd41cfaaafebee59e`; validated tree `a0f26f3c979b758f8c70f43a797689f47f2bc3a5` exactly equals squash-integrated `develop@2ce88ab7418715ef399b4b05b4776f6191d64a88` tree. Exact tree equivalence: PASS.
 
 #### Early-use change #11 — actionable global item search result
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
 Make selecting an item in global search land the operator in useful item context instead of an unfiltered generic catalog. Prefer a minimal stable filter/highlight/targeting mechanism over creating a new item-detail architecture.
 
@@ -257,4 +266,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #10: verify whether the existing transaction and cloud contracts already support `observation` on payment/signal creation and, if so, expose one optional observation field in the normal payment/signal entry flow. Reuse the existing transaction field and preserve current payment/signal financial effect, occurrence-date semantics, reversals/corrections and immutable history. Prefer a bounded form/mutation-contract delta; no database/schema migration is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #11, then stop. Do not start change #11 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**Execute only early-use change #11: verify the current global item-search selection behavior, then make selecting an item land the operator in useful item context rather than an unfiltered generic catalog. Prefer a minimal stable filter/highlight/targeting mechanism over creating a new item-detail architecture. Preserve existing item identity, lifecycle, classification and search semantics. Prefer bounded navigation/presentation state; no database/schema migration or new item-detail architecture is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs to promote exactly change #12, then stop. Do not start change #12 in the same task unless the operator explicitly overrides the one-item rule. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
