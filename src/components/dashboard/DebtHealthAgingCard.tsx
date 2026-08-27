@@ -80,7 +80,7 @@ export function DebtHealthAgingCard({ buckets, totalDebt, isLoading }: DebtHealt
                 description={
                     <>
                         Distribuição da carteira em aberto pelos três intervalos FIFO aceitos.
-                        <span className="sm:ml-2">
+                        <span className="block sm:ml-2 sm:inline">
                             Total em aberto:{' '}
                             <span className="font-semibold text-foreground">{formatBRL(totalDebt)}</span>
                         </span>
