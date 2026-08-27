@@ -36,7 +36,7 @@ Current P10-S3 state:
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
   - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
-  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `CURRENT / AUTHORIZED`.**
+  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -516,6 +516,38 @@ Validation/integration evidence:
 
 No failed D-019 objective gate was waived. The post-integration DR-03 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
 
+## D-035 DR-04 closure — `Precisa de atenção` action center
+
+PR #118 replaced the duplicated critical/attention lists with one compact operational action center directly after the DR-03 KPI row, consuming the already canonical DR-02 attention projection.
+
+Accepted result:
+
+- `AttentionCenter` consumes `DashboardSnapshot.attentionRows` exactly as prepared; no FIFO, age classification or financial ordering is reconstructed in the component;
+- one reseller appears once, with explicit `CRÍTICO` or `ATENÇÃO`, prepared determining age and alert-class amount;
+- current total open balance is shown when materially different from the determining alert amount;
+- the deterministic snapshot order is preserved unchanged: severity, older determining occurrence, larger alert amount, reseller name;
+- each row is a keyboard-accessible button navigating to the existing `/resellers/:id` detail/history route;
+- the initial presentation is compact at six rows with explicit `Ver todos` / `Mostrar menos` expansion;
+- the empty state states the business condition instead of implying missing reseller master data;
+- `DebtHealthAgingCard` no longer renders duplicate alert lists, while its existing donut and aging legend remain unchanged for the isolated DR-05 redesign;
+- `PerformanceAnalysisSection` remains unchanged for DR-07;
+- no database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Validation/integration evidence:
+
+- feature head: `f035b6be20c5ea3dfbcbe912474abc945123611f`;
+- exact GitHub-generated merge ref checked out by Actions: `124fa0bd812250d3822aca1a6be46eb5400dba61`;
+- validated tree: `69905255e836492e8b610ea1ae0ef8bf66d0d070`;
+- D-019 run/job: `33121893821` / `98690519373`;
+- ESLint: 0 errors / 105 warnings;
+- Vitest: 67 files / 295 tests PASS, including `AttentionCenter` 4/4 and `DashboardPage` 3/3;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #118 squash-integrated `develop`: `4bac76dd83c31016b692efb17531fbf3eddf5122`;
+- integrated tree: `69905255e836492e8b610ea1ae0ef8bf66d0d070` — exact tree equivalence PASS.
+
+No failed D-019 objective gate was waived. The post-integration DR-04 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
+
 ## Historical operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
@@ -546,7 +578,7 @@ Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` s
 
 ## D-035 — Dashboard + Reports core redesign
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-04 CURRENT`  
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-05 CURRENT`  
 **Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
 
 Accepted product direction:
@@ -554,27 +586,28 @@ Accepted product direction:
 - Dashboard is the glance/action surface; Reports is the period-controlled analytical surface;
 - target Dashboard top KPIs are `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`;
 - current-position values are as-of-today and exclude later future occurrences until their occurrence date;
-- `Precisa de atenção` becomes one deduplicated reseller-per-row action center;
+- `Precisa de atenção` is one deduplicated reseller-per-row action center consuming canonical snapshot rows;
 - aging becomes compact exact-value + percentage context;
 - recent effective registrations and quick order/payment/signal actions are target operational context;
 - large 90/180/360 Performance/Pareto/current-debtor/ranking content leaves the target Dashboard only after useful analysis is re-homed or handed off to Reports;
 - Reports refinements stay on canonical `FinancialReport` semantics;
 - DR-02 established one coherent Dashboard read-only projection before the major visual redesign;
-- DR-03 established the accepted four-card primary KPI row on that projection.
+- DR-03 established the accepted four-card primary KPI row on that projection;
+- DR-04 established the deduplicated actionable attention center and removed the old duplicated alert lists without redesigning aging.
 
 Ordered sequence:
 
 1. **DR-01 DONE — product contract/canonical documentation** — D-035 + focused spec.
 2. **DR-02 DONE / INTEGRATED — canonical Dashboard read-model — PR #114.**
 3. **DR-03 DONE / INTEGRATED — primary KPI row — PR #116.**
-4. **DR-04 CURRENT / AUTHORIZED — `Precisa de atenção` action center.**
-5. **DR-05 QUEUED / NOT CURRENT — compact carteira aging.**
+4. **DR-04 DONE / INTEGRATED — `Precisa de atenção` action center — PR #118.**
+5. **DR-05 CURRENT / AUTHORIZED — compact carteira aging.**
 6. **DR-06 QUEUED / NOT CURRENT — recent registrations + quick actions.**
 7. **DR-07 QUEUED / NOT CURRENT — remove Dashboard Performance block + contextual Reports handoff.**
 8. **DR-08 QUEUED / NOT CURRENT — Reports analytical refinement.**
 9. **DR-09 QUEUED / NOT CURRENT — final Dashboard/Reports UX and efficiency acceptance.**
 
-Only `DR-04` is executable next. Do not bundle `DR-05` or later work into the same task.
+Only `DR-05` is executable next. Do not bundle `DR-06` or later work into the same task.
 
 ## Startup protocol for a new conversation
 
@@ -600,4 +633,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only D-035 `DR-04 — Precisa de atenção action center`. First verify the integrated DR-03 primary KPI row, the current `DebtHealthAgingCard` attention presentation and the DR-02 `DashboardSnapshot.attentionRows` contract. Replace the current duplicated critical/attention presentation with one compact `Precisa de atenção` action center consuming the prepared `attentionRows`: one reseller per row; `CRÍTICO` before `ATENÇÃO`; show reseller name, explicit severity text, determining age, determining alert amount, and current total open balance when materially different; preserve the deterministic snapshot order and navigate row selection to the existing reseller detail/history surface. Use a business-meaningful empty state and preserve responsive/accessibility semantics. Do not rebuild FIFO/accounting in components, add a parallel collection model or direct-payment workflow, or implement DR-05 aging redesign, DR-06 recent registrations/quick actions, or any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-05 if DR-04 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only D-035 `DR-05 — compact carteira aging`. First verify the integrated DR-04 attention center, the current `DebtHealthAgingCard` donut/legend presentation and the DR-02 `DashboardSnapshot.agingBuckets` contract. Replace the large default donut with compact aging context consuming the prepared buckets and exposing both exact value and percentage for `Recente (0–6d)`, `Em atenção (7–30d)` and `Crítico (>30d)`, while preserving current total/open-position semantics plus responsive/loading/empty/accessibility behavior. Do not rebuild FIFO/accounting or reclassify aging in the component, alter the DR-04 action center, implement DR-06 recent registrations/quick actions, or begin any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-06 if DR-05 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
