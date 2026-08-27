@@ -111,7 +111,7 @@ D-019 run/job `33005354591` / `98297566705`: 0 lint errors / 83 warnings; 63 fil
 
 ### Operator-authorized usability/data-quality queue — one item at a time
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED`
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — NO CURRENT ITEM AFTER #15`
 
 On 2026-08-26 the operator explicitly authorized the following early-use improvements to be evaluated and executed **one by one**, preserving the existing project safeguards.
 
@@ -120,7 +120,7 @@ Queue governance:
 1. Only the single item identified by `STATUS.md -> NEXT_ACTION` is executable in a task/conversation.
 2. Every item starts by verifying the current implementation/runtime evidence. If the suspected issue is not reproducible, the benefit is no longer applicable, or the safe solution would cross the stated boundary, close that item as `NO_CHANGE / DEFERRED` with evidence rather than forcing a modification.
 3. Each executable item uses an isolated branch from current `develop`, receives proportionate tests, and executable integration requires D-019. Supabase-bearing scope additionally requires the relevant database/security evidence.
-4. Do not bundle the next queued item into the same implementation. After the current item is integrated/closed, update the canonical docs so exactly the next pending item becomes `NEXT_ACTION`, then stop.
+4. Do not bundle the next queued item into the same implementation. After the current item is integrated/closed, update the canonical docs so exactly the next pending item becomes `NEXT_ACTION`, then stop. If no later item exists, record that no new queue work is authorized instead of inventing one.
 5. The queue does not authorize changes to accepted financial semantics, transaction history, recovery policy, Auth/RLS/operator authorization, deployment automation, `main`, legacy-data migration or definitive cutover unless an individual item explicitly says otherwise.
 6. Prefer presentation/read-model changes and existing fields/contracts. Do not introduce a database migration merely to satisfy a UX improvement when the accepted model already supports it.
 7. Any unexpected dependency that would materially broaden scope requires a new operator decision instead of silent expansion.
@@ -289,9 +289,21 @@ D-019 run/job `33103464797` / `98626992003`: 0 lint errors / 104 warnings; 65 fi
 The operator decided not to add the daily-receipts KPI in isolation because payments/signals do not necessarily occur every day and the card's recurring Dashboard value is not yet established. No executable change was made. Revisit #14 only as part of a broader Dashboard review unless the operator explicitly reauthorizes it sooner.
 
 #### Early-use change #15 — future occurrence-date confirmation
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #111`
 
-For new transaction entry, warn/confirm when the selected financial occurrence date is in the future so accidental date entry is less likely. This must be a non-blocking confirmation, not a prohibition, and must preserve D-014 occurrence-date semantics.
+Accepted result:
+
+- verification confirmed new transaction entry already stores operator-selected `occurredAt` separately from registration time and permits valid future dates;
+- same-day and past dates keep the normal submit behavior;
+- a future financial occurrence date relative to the operator's local current date opens a confirmation before mutation;
+- `Voltar e corrigir` closes the warning without creating a transaction;
+- `Cadastrar mesmo assim` proceeds through the existing creation path and preserves exactly the selected future occurrence date;
+- no automatic date correction or prohibition was introduced, preserving D-014;
+- no database/schema migration, transaction-accounting, Supabase/RPC/Auth/RLS, correction/reversal/history, recovery or deployment behavior changed.
+
+D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
+
+No later bounded early-use queue item is currently authorized. Change #14 remains deferred pending a broader Dashboard review.
 
 ### P10-S3-I2-I4 — Legacy real-data migration
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
@@ -301,4 +313,4 @@ For new transaction entry, warn/confirm when the selected financial occurrence d
 
 ## Current NEXT_ACTION
 
-**Execute only early-use change #15: verify the current new-transaction occurrence-date input, validation and submit path, then add a non-blocking confirmation when the selected financial occurrence date is in the future relative to the operator's local current date. An explicitly confirmed future date must remain the transaction's actual occurrence date under D-014; do not auto-correct it and do not prohibit future dates. No database/schema migration, transaction-accounting change, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, verify scope first, run proportionate tests plus D-019 for any executable delta, integrate/close the bounded item, update canonical docs, then stop. Do not invent or start a new queue item without explicit operator instruction. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2 or import legacy real-store data.** See `STATUS.md` for the authoritative instruction.
+**No new bounded early-use queue item is currently authorized. Continue controlled clean-start early-use observation and wait for explicit operator instruction before starting another change. Change #14 remains `DEFERRED / ON HOLD` pending a broader Dashboard review unless explicitly reauthorized. Do not invent or start a #16. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
