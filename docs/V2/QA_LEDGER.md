@@ -308,6 +308,34 @@ PR #100 was squash-integrated into `develop` as `b6d92db102d7ba17b920e8c41282a50
 
 The post-integration change #9 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
 
+## P10-S3-I2-I3-D early-use change #10 — payment/signal observations — PASS / INTEGRATED
+
+### Scope review — FORM / EXISTING TRANSACTION CONTRACT ONLY
+
+Verification confirmed no new persistence contract was required:
+
+- `Transaction.observation` and `NewTransactionInput` already support the field;
+- local sanitization/persistence already preserves observation for non-order movements;
+- `CloudNewTransactionInput` and `createCloudTransaction` already pass `p_observation`;
+- the current D-033 `create_transaction` PostgreSQL RPC already stores `p_observation` for payments/signals;
+- full correction and transaction history already support the same observation field.
+
+PR #102 therefore changes only `TransactionForm` and its focused test file. The observation field is available for order/payment/signal creation, normalized once in the common create payload and reset with the rest of the form. Existing order placeholder/behavior remains preserved. Tests explicitly create both a payment and a signal with a trimmed observation and verify no item reference is introduced.
+
+No database/schema migration, Supabase function/policy, financial-effect, occurrence-date, reversal/correction/history, PDF, recovery, Auth/RLS or deployment behavior changed.
+
+### Final D-019 — PASS
+
+- feature head: `ebc9c4bc389e3f7ba75a084d67e764e64e75dafd`;
+- exact GitHub-generated merge ref checked out by Actions: `f0da9706933804c53a0dc0edd41cfaaafebee59e`;
+- validated tree: `a0f26f3c979b758f8c70f43a797689f47f2bc3a5`;
+- run/job: `33089151402` / `98576935845`;
+- repository Critical QA (`lint + Vitest + Playwright + production build`): **PASS**.
+
+PR #102 was squash-integrated into `develop` as `2ce88ab7418715ef399b4b05b4776f6191d64a88`. Git object inspection confirms the integrated commit tree is `a0f26f3c979b758f8c70f43a797689f47f2bc3a5`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #10 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -352,6 +380,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #9 list-search/filter D-019: **PASS**.
 - PR #100 integrated-tree equivalence: **PASS**.
 - early-use change #9 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #10: **CURRENT / AUTHORIZED / NOT STARTED**.
+- early-use change #10 payment/signal-observation D-019: **PASS**.
+- PR #102 integrated-tree equivalence: **PASS**.
+- early-use change #10 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #11: **CURRENT / AUTHORIZED / NOT STARTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
