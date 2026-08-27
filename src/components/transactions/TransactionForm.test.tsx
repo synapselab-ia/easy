@@ -175,7 +175,7 @@ describe('TransactionForm', () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
         await waitFor(() => expect(screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i)).toBeInTheDocument());
-        expect(screen.queryByText('Perfume Arquivado')).not.toBeInTheDocument();
+        expect(screen.queryByText(/Perfume Arquivado/i)).not.toBeInTheDocument();
     });
 
     it('should show current category and optional subcategory in the new-order item option', async () => {
