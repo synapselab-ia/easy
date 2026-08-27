@@ -1,4 +1,5 @@
 import { DashboardCards } from '../components/dashboard/DashboardCards';
+import { AttentionCenter } from '../components/dashboard/AttentionCenter';
 import { DebtHealthAgingCard } from '../components/dashboard/DebtHealthAgingCard';
 import { PerformanceAnalysisSection } from '../components/dashboard/PerformanceAnalysisSection';
 import { useDashboardSnapshot } from '../hooks/useDashboard';
@@ -15,6 +16,11 @@ export default function DashboardPage() {
 
             <DashboardCards
                 snapshot={snapshot}
+                isLoading={isLoading}
+            />
+
+            <AttentionCenter
+                rows={snapshot?.attentionRows ?? []}
                 isLoading={isLoading}
             />
 
