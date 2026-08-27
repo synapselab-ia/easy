@@ -24,6 +24,25 @@ vi.mock('../components/ui/select', () => ({
     SelectValue: ({ placeholder, children }: any) => <option disabled value="">{children || placeholder}</option>,
 }));
 
+vi.mock('../components/ui/SearchableSelect', () => ({
+    SearchableSelect: ({ id, value, onValueChange, options, disabled }: any) => (
+        <select
+            id={id}
+            data-testid="mock-searchable-select"
+            value={value}
+            disabled={disabled}
+            onChange={(event) => onValueChange(event.target.value)}
+        >
+            <option value="" />
+            {options.map((option: any) => (
+                <option key={`${option.value}-${option.label}`} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    ),
+}));
+
 const queryClient = new QueryClient();
 
 function renderPage(initialEntry = '/transactions') {
@@ -52,20 +71,19 @@ describe('TransactionsPage Integration', () => {
     it('executes the full order launch flow', async () => {
         renderPage();
 
-        const selects = await screen.findAllByTestId('mock-select');
-
         await waitFor(() => {
             expect(screen.getByText('Mariazinha')).toBeInTheDocument();
         });
 
+        const searchableSelects = screen.getAllByTestId('mock-searchable-select');
         const resellerOption = screen.getByText('Mariazinha') as HTMLOptionElement;
-        fireEvent.change(selects[0], { target: { value: resellerOption.value } });
+        fireEvent.change(searchableSelects[0], { target: { value: resellerOption.value } });
 
         await waitFor(() => {
             expect(screen.getByText(/Creme/)).toBeInTheDocument();
         });
         const itemOption = screen.getByText(/Creme/) as HTMLOptionElement;
-        fireEvent.change(selects[2], { target: { value: itemOption.value } });
+        fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
         const qtyInput = await screen.findByLabelText(/Quantidade/i);
         fireEvent.change(qtyInput, { target: { value: '2' } });
@@ -85,16 +103,15 @@ describe('TransactionsPage Integration', () => {
     it('executes the full payment launch flow', async () => {
         renderPage();
 
-        const selects = await screen.findAllByTestId('mock-select');
-
         await waitFor(() => {
             expect(screen.getByText('Mariazinha')).toBeInTheDocument();
         });
 
+        const resellerSelect = screen.getAllByTestId('mock-searchable-select')[0];
         const resellerOption = screen.getByText('Mariazinha') as HTMLOptionElement;
-        fireEvent.change(selects[0], { target: { value: resellerOption.value } });
+        fireEvent.change(resellerSelect, { target: { value: resellerOption.value } });
 
-        fireEvent.change(selects[1], { target: { value: 'payment' } });
+        fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'payment' } });
 
         const paymentValueInput = await screen.findByLabelText(/Valor para Abatimento/i);
         fireEvent.change(paymentValueInput, { target: { value: '250.50' } });
@@ -114,8 +131,8 @@ describe('TransactionsPage Integration', () => {
     it('preserves signal intent from the transaction URL', async () => {
         renderPage('/transactions?type=signal');
 
-        const selects = await screen.findAllByTestId('mock-select');
-        expect((selects[1] as HTMLSelectElement).value).toBe('signal');
+        const typeSelect = await screen.findByTestId('mock-select');
+        expect((typeSelect as HTMLSelectElement).value).toBe('signal');
         expect(screen.getByLabelText(/Valor para Abatimento/i)).toBeInTheDocument();
         expect(screen.queryByLabelText(/Item do Catálogo/i)).not.toBeInTheDocument();
     });
