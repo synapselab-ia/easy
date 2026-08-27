@@ -336,6 +336,40 @@ PR #102 was squash-integrated into `develop` as `2ce88ab7418715ef399b4b05b4776f6
 
 The post-integration change #10 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
 
+## P10-S3-I2-I3-D early-use change #11 — actionable global item search result — PASS / INTEGRATED
+
+### Scope review — NAVIGATION / EXISTING CATALOG FILTER ONLY
+
+Verification confirmed that item results in the global command center previously navigated to generic `/items`, discarding the selected result context. PR #104 changes only the item-result handoff, the existing catalog page's one-shot query handling and focused tests:
+
+- selected item results navigate with an encoded `search` query containing the item title;
+- `ItemsPage` consumes that value into the already accepted #9 transient item-name search state;
+- the navigation parameter is removed with history replacement after applying the intent;
+- recent and normal item results share the same `onSelect` path;
+- reseller navigation and existing create suggestions remain unchanged.
+
+The catalog's existing substring/case/accent-insensitive name matching, lifecycle behavior and classification semantics remain unchanged. No new detail route, database/schema migration, Supabase/Auth/RLS, recovery, item identity/history or deployment behavior changed.
+
+### Focused coverage — PASS
+
+- `CommandCenter.test.tsx` verifies an item result navigates to the catalog with the encoded selected-item search handoff;
+- `ItemsPage.test.tsx` verifies the one-shot handoff populates the existing search control, exposes the matching item context, hides a nonmatching item and keeps `Limpar filtros` available.
+
+### Final D-019 — PASS
+
+- feature head: `e95b36b111aac38b7ec32ff2649b2daf22aad3de`;
+- exact GitHub-generated merge ref checked out by Actions: `409243291c33deed745ab04e857e8c5e5da05f5e`;
+- validated tree: `507bdbc9c81efc45ef36a6d7dab9e44dc2444866`;
+- run/job: `33093633207` / `98592735176`;
+- ESLint: **0 errors / 104 warnings**;
+- Vitest: **65 files / 282 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #104 was squash-integrated into `develop` as `46f85bb5f1e8304a323b8c4a8c99f429e52eca5d`. Git object inspection confirms the integrated commit tree is `507bdbc9c81efc45ef36a6d7dab9e44dc2444866`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #11 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -383,6 +417,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #10 payment/signal-observation D-019: **PASS**.
 - PR #102 integrated-tree equivalence: **PASS**.
 - early-use change #10 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #11: **CURRENT / AUTHORIZED / NOT STARTED**.
+- early-use change #11 actionable-global-item-search D-019: **PASS**.
+- PR #104 integrated-tree equivalence: **PASS**.
+- early-use change #11 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #12: **CURRENT / AUTHORIZED / NOT STARTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
