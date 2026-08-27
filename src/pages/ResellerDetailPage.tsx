@@ -19,7 +19,7 @@ import {
 } from '../domain/transactions';
 
 function formatBalance(value: number) {
-    return `R$ ${value.toFixed(2)}`;
+    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function ResellerDetailPage() {
