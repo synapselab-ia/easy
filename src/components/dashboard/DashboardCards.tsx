@@ -81,7 +81,7 @@ export function DashboardCards({ snapshot, isLoading }: DashboardCardsProps) {
     const oldestCriticalAge = critical?.oldestAgeDays ?? null;
 
     const criticalContext = criticalResellerCount > 0
-        ? `${pluralize(criticalResellerCount, 'revendedor', 'revendedores')}${oldestCriticalAge !== null ? ` • mais antigo: ${oldestCriticalAge} dias` : ''}`
+        ? `${pluralize(criticalResellerCount, 'revendedor', 'revendedores')}${oldestCriticalAge !== null ? ` • mais antigo: ${pluralize(oldestCriticalAge, 'dia', 'dias')}` : ''}`
         : 'Nenhum revendedor em faixa crítica.';
 
     return (
