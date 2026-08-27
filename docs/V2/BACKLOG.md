@@ -167,6 +167,27 @@ Accepted result:
 
 D-019 run/job `33073644514` / `98522073542`: 0 lint errors / 83 warnings; 63 files / 269 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `9d7c067172c7146c27c36acf3390068da622e3d2`; validated tree `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a` exactly equals squash-integrated `develop@a2283d0a9408730e8cb136fdfe602d76a05cfa7a` tree. Exact tree equivalence: PASS.
 
+#### Operator-authorized pre-#8 refinement — searchable entity selectors
+**Status:** `DONE / INTEGRATED — PR #96`
+
+The operator explicitly kept change #8 paused to improve high-variance selectors before returning to the ordered queue.
+
+Accepted result:
+
+- one reusable searchable combobox uses the project's existing `cmdk` infrastructure; no new dependency or persistence field was introduced;
+- filtering matches substrings, ignores case and ignores accents;
+- typed search text is transient UI state only; selection continues to return the existing entity ID;
+- new transaction entry uses it for reseller and item selection;
+- full transaction correction uses it for reseller and item selection;
+- item create/edit uses it for category and optional subcategory selection;
+- small closed-list selectors such as transaction type and period/window choices remain ordinary selects;
+- existing lifecycle, validation, financial/history, database/Supabase, Auth/RLS, recovery and deployment semantics are unchanged;
+- change #8 was not started or bundled.
+
+The first two D-019 attempts exposed stale test assumptions about native/select mocks and ambiguous test targeting after two searchable selectors correctly existed on the same screen. Those test-only assumptions were aligned; no product behavior or gate failure was waived.
+
+Final D-019 run/job `33079397875` / `98542140423`: 0 lint errors / 98 warnings; 64 files / 272 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `ea1b93339b8356b9a2386b26fffc878428829d0d`; validated tree `569b7a7b760ba333b124094f159488b5b99fc92e` exactly equals squash-integrated `develop@20dcc0fb7469db8ae9638ab6ef39b38ca7e2ec97` tree. Exact tree equivalence: PASS.
+
 #### Early-use change #8 — catalog classification visibility at point of use
 **Status:** `CURRENT / AUTHORIZED`
 
