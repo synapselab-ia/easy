@@ -419,7 +419,7 @@ Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link a
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
 
 ### P10-S4 — Definitive cutover / durability closure
-**Status:** `NOT_STARTED / NOT_AUTHORIZED`
+**Status:** `NOT_STARTED / NOT AUTHORIZED`
 
 ## Current NEXT_ACTION
 
