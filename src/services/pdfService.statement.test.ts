@@ -73,9 +73,9 @@ describe('P3-S2 PDF statement semantics', () => {
 
         generateResellerExtract(reseller, transactions, statement);
 
-        expect(mockText).toHaveBeenCalledWith('Saldo inicial: R$ 100.00', 14, 76);
-        expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 30.00', 14, 84);
-        expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 130.00', 14, 92);
+        expect(mockText).toHaveBeenCalledWith('Saldo inicial: R$ 100,00', 14, 76);
+        expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 30,00', 14, 84);
+        expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 130,00', 14, 92);
 
         const itemTable = vi.mocked(autoTable).mock.calls[0][1];
         const settlementTable = vi.mocked(autoTable).mock.calls[1][1];
@@ -93,9 +93,9 @@ describe('P3-S2 PDF statement semantics', () => {
 
         generateResellerExtract(reseller, [transactions[0]], statement);
 
-        expect(mockText).toHaveBeenCalledWith('Saldo inicial: R$ 100.00', 14, 76);
-        expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 0.00', 14, 84);
-        expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 100.00', 14, 92);
+        expect(mockText).toHaveBeenCalledWith('Saldo inicial: R$ 100,00', 14, 76);
+        expect(mockText).toHaveBeenCalledWith('Movimentos do período: R$ 0,00', 14, 84);
+        expect(mockText).toHaveBeenCalledWith('Saldo final: R$ 100,00', 14, 92);
         expect(vi.mocked(autoTable).mock.calls[0][1].body).toEqual([]);
         expect(vi.mocked(autoTable).mock.calls[1][1].body).toEqual([]);
     });
