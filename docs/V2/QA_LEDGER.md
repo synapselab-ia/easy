@@ -249,6 +249,36 @@ PR #96 was squash-integrated into `develop` as `20dcc0fb7469db8ae9638ab6ef39b38c
 
 The post-integration closure is documentation-only. Change #8 was not started or bundled. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
 
+## P10-S3-I2-I3-D early-use change #8 — catalog classification visibility — PASS / INTEGRATED
+
+### Scope review — CURRENT-CATALOG PRESENTATION ONLY
+
+PR #98 is bounded to current catalog context at the two authorized points of use:
+
+- item catalog desktop table and mobile cards;
+- new-order item selection;
+- a small shared resolver for current category/optional-subcategory labels;
+- focused resolver, catalog and transaction-form tests.
+
+The catalog now shows `category › optional subcategory` where resolvable. Legacy/unresolved current-catalog references are shown as `Sem classificação` instead of receiving guessed data. The new-order selector shows the same context while preserving its existing price information; its search key remains item name only, so change #9 search/filter scope is not bundled.
+
+No transaction mutation code, immutable D-025/D-033 order snapshots, database/schema, Supabase/API/policy, financial/history semantics, recovery, Auth/RLS or deployment behavior changed.
+
+### Final D-019 — PASS
+
+- feature head: `66026aa340f3b9aba1e8692f11d51ee751a8778b`;
+- exact GitHub-generated merge ref checked out by Actions: `2d3ab8ba9ff0af179337eb7654b7bfddb5f5a24f`;
+- validated tree: `01bef29624079f90a8b1b0089c183abc26f96149`;
+- run/job: `33082398941` / `98552849392`;
+- repository Critical QA workflow: **PASS**;
+- Vitest: **65 files / 276 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #98 was squash-integrated into `develop` as `2c9d67221e3365b9476a95947906a6f4c21ecc7f`. Git object inspection confirms the integrated commit tree is `01bef29624079f90a8b1b0089c183abc26f96149`, exactly the same tree as the D-019-validated merge-ref tree. Integrated-tree equivalence: **PASS**.
+
+The post-integration change #8 closure is documentation-only. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -287,6 +317,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - pre-#8 searchable entity-selector D-019: **PASS**.
 - PR #96 integrated-tree equivalence: **PASS**.
 - pre-#8 searchable entity-selector canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #8: **CURRENT / AUTHORIZED / NOT STARTED BY THIS REFINEMENT**.
+- early-use change #8 catalog-classification visibility D-019: **PASS**.
+- PR #98 integrated-tree equivalence: **PASS**.
+- early-use change #8 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- early-use change #9: **CURRENT / AUTHORIZED / NOT STARTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
