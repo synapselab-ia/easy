@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -20,10 +21,40 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('ResellerForm P7-S5 save feedback', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.restoreAllMocks();
         vi.clearAllMocks();
+        await db.resellers.clear();
         queryClient.clear();
+    });
+
+    it('warns on normalized duplicate reseller data and still allows explicit creation', async () => {
+        await db.resellers.add({
+            name: 'El Dorado',
+            phone: '(16) 99999-8888',
+            email: 'contato@eldorado.com',
+            notes: '',
+            isActive: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+        const onSubmitSuccess = vi.fn();
+
+        render(<ResellerForm onSubmitSuccess={onSubmitSuccess} onCancel={vi.fn()} />, { wrapper });
+
+        fireEvent.change(screen.getByLabelText(/Nome do Revendedor/i), { target: { value: 'ELDORADO' } });
+        fireEvent.change(screen.getByLabelText(/Telefone/i), { target: { value: '16 99999 8888' } });
+        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'CONTATO@ELDORADO.COM' } });
+
+        expect(await screen.findByText('Possível revendedor duplicado')).toBeInTheDocument();
+        expect(screen.getByText(/Coincidência em: nome, telefone, e-mail/i)).toBeInTheDocument();
+        expect(screen.getByText('El Dorado')).toBeInTheDocument();
+        expect(screen.getByText(/arquivado/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Cadastrar mesmo assim' }));
+
+        await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledTimes(1));
+        await expect(db.resellers.count()).resolves.toBe(2);
     });
 
     it('shows a rejected create error and keeps reseller values for retry', async () => {
@@ -64,6 +95,7 @@ describe('ResellerForm P7-S5 save feedback', () => {
             createdAt: new Date('2026-08-01T12:00:00.000Z'),
             updatedAt: new Date('2026-08-01T12:00:00.000Z'),
         };
+        await db.resellers.put(initialData);
         vi.spyOn(db.resellers, 'update').mockRejectedValueOnce(new Error('Falha simulada ao editar revendedor.'));
 
         render(

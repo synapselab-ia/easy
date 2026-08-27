@@ -1,18 +1,31 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useCreateItem, useUpdateItem } from "../../hooks/useItems";
+import { useCreateItem, useItems, useUpdateItem } from "../../hooks/useItems";
 import { useCategories } from "../../hooks/useCategories";
 import { useSubcategories } from "../../hooks/useSubcategories";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { SearchableSelect } from "../ui/SearchableSelect";
-import { isCategoryActive, isSubcategoryActive, type Item } from "../../db/database";
+import {
+    isCategoryActive,
+    isItemActive,
+    isSubcategoryActive,
+    type Item,
+} from "../../db/database";
 import { toast } from "sonner";
 
 interface ItemFormProps {
     initialData?: Item;
     onSubmitSuccess: () => void;
     onCancel: () => void;
+}
+
+function normalizeDuplicateName(value: string) {
+    return value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase("pt-BR")
+        .replace(/[^a-z0-9]/g, "");
 }
 
 export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormProps) {
@@ -32,6 +45,7 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
         subcategoryId?: string;
     }>({});
 
+    const { data: existingItems = [] } = useItems();
     const { data: categories = [] } = useCategories();
     const { data: subcategories = [] } = useSubcategories();
     const activeCategories = useMemo(
@@ -39,6 +53,7 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
         [categories],
     );
     const selectedCategoryId = categoryId ? Number(categoryId) : undefined;
+    const selectedSubcategoryId = subcategoryId ? Number(subcategoryId) : undefined;
     const activeSubcategories = useMemo(
         () => subcategories.filter(subcategory =>
             isSubcategoryActive(subcategory) && subcategory.categoryId === selectedCategoryId
@@ -84,6 +99,28 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
             searchText: subcategory.name,
         })),
     ], [activeSubcategories, currentSubcategory, selectedCategoryId]);
+
+    const duplicateItems = useMemo(() => {
+        if (isExistingItem || selectedCategoryId === undefined) return [];
+
+        const normalizedName = normalizeDuplicateName(name);
+        if (!normalizedName) return [];
+
+        return existingItems.filter(item =>
+            normalizeDuplicateName(item.name) === normalizedName
+            && item.categoryId === selectedCategoryId
+            && (item.subcategoryId ?? undefined) === selectedSubcategoryId
+        );
+    }, [existingItems, isExistingItem, name, selectedCategoryId, selectedSubcategoryId]);
+
+    const duplicateClassificationLabel = useMemo(() => {
+        if (selectedCategoryId === undefined) return "";
+        const categoryName = categories.find(category => category.id === selectedCategoryId)?.name;
+        const subcategoryName = selectedSubcategoryId === undefined
+            ? undefined
+            : subcategories.find(subcategory => subcategory.id === selectedSubcategoryId)?.name;
+        return [categoryName, subcategoryName].filter(Boolean).join(" › ");
+    }, [categories, selectedCategoryId, selectedSubcategoryId, subcategories]);
 
     const createMutation = useCreateItem();
     const updateMutation = useUpdateItem();
@@ -257,12 +294,32 @@ export function ItemForm({ initialData, onSubmitSuccess, onCancel }: ItemFormPro
                 {errors.basePrice && <p className="text-red-500 text-sm">{errors.basePrice}</p>}
             </div>
 
+            {duplicateItems.length > 0 && (
+                <div role="alert" className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm space-y-2">
+                    <p className="font-medium">Possível item duplicado</p>
+                    <p className="text-muted-foreground">
+                        Já existe {duplicateItems.length === 1 ? "um item" : "mais de um item"} com este nome e a mesma classificação
+                        {duplicateClassificationLabel ? ` (${duplicateClassificationLabel})` : ""}.
+                    </p>
+                    <ul className="list-disc pl-5">
+                        {duplicateItems.slice(0, 3).map(item => (
+                            <li key={item.id ?? `${item.name}-${item.createdAt.toString()}`}>
+                                {item.name} — {isItemActive(item) ? "ativo" : "arquivado"}
+                            </li>
+                        ))}
+                    </ul>
+                    <p className="text-muted-foreground">
+                        Se for realmente outro item, confirme em “Cadastrar mesmo assim”.
+                    </p>
+                </div>
+            )}
+
             <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
                     Cancelar
                 </Button>
                 <Button type="submit" disabled={isPending}>
-                    {isPending ? "Salvando..." : "Salvar"}
+                    {isPending ? "Salvando..." : duplicateItems.length > 0 ? "Cadastrar mesmo assim" : "Salvar"}
                 </Button>
             </div>
         </form>
