@@ -42,6 +42,17 @@ vi.mock('../ui/SearchableSelect', () => ({
     ),
 }));
 
+vi.mock('../ui/ResponsiveDialog', () => ({
+    ResponsiveDialog: ({ open, title, description, children, footer }: any) => open ? (
+        <div role="dialog" aria-label={title}>
+            <h2>{title}</h2>
+            {description && <p>{description}</p>}
+            {children}
+            {footer}
+        </div>
+    ) : null,
+}));
+
 const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
@@ -55,6 +66,12 @@ function localDateInput(date = new Date()) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+function futureLocalDateInput(daysAhead = 5) {
+    const date = new Date();
+    date.setDate(date.getDate() + daysAhead);
+    return localDateInput(date);
 }
 
 describe('P3-S1 transaction form occurrence date', () => {
@@ -122,5 +139,57 @@ describe('P3-S1 transaction form occurrence date', () => {
         expect(stored.occurredAt?.getMonth()).toBe(6);
         expect(stored.occurredAt?.getDate()).toBe(4);
         expect(stored.createdAt.toDateString()).not.toBe(stored.occurredAt?.toDateString());
+        expect(screen.queryByRole('dialog', { name: /Data de ocorrência no futuro/i })).not.toBeInTheDocument();
+    });
+
+    it('requires explicit non-blocking confirmation before saving a future occurrence date', async () => {
+        const resellerId = await db.resellers.add({
+            name: 'Bruna',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        const onSubmitSuccess = vi.fn();
+        const futureDate = futureLocalDateInput();
+        const [expectedYear, expectedMonth, expectedDay] = futureDate.split('-').map(Number);
+
+        render(
+            <TransactionForm
+                initialType="payment"
+                onSubmitSuccess={onSubmitSuccess}
+                onCancel={vi.fn()}
+            />,
+            { wrapper },
+        );
+
+        await waitFor(() => expect(screen.getByText('Bruna')).toBeInTheDocument());
+        fireEvent.change(screen.getByTestId('mock-searchable-select'), { target: { value: String(resellerId) } });
+        fireEvent.change(screen.getByLabelText(/Data da ocorrência/i), {
+            target: { value: futureDate },
+        });
+        fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), {
+            target: { value: '40' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: /Lançar Movimentação/i }));
+
+        expect(screen.getByRole('dialog', { name: /Data de ocorrência no futuro/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Voltar e corrigir/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Cadastrar mesmo assim/i })).toBeInTheDocument();
+        expect(await db.transactions.count()).toBe(0);
+        expect(onSubmitSuccess).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: /Voltar e corrigir/i }));
+        expect(screen.queryByRole('dialog', { name: /Data de ocorrência no futuro/i })).not.toBeInTheDocument();
+        expect(await db.transactions.count()).toBe(0);
+
+        fireEvent.click(screen.getByRole('button', { name: /Lançar Movimentação/i }));
+        fireEvent.click(screen.getByRole('button', { name: /Cadastrar mesmo assim/i }));
+
+        await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledTimes(1));
+        const stored = (await db.transactions.toArray())[0];
+
+        expect(stored.occurredAt?.getFullYear()).toBe(expectedYear);
+        expect(stored.occurredAt?.getMonth()).toBe(expectedMonth - 1);
+        expect(stored.occurredAt?.getDate()).toBe(expectedDay);
     });
 });
