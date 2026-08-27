@@ -253,4 +253,44 @@ describe('ItemsPage Integration', () => {
         fireEvent.change(searchInput, { target: { value: 'inexistente' } });
         expect(await screen.findByText('Nenhum item encontrado com os filtros atuais.')).toBeInTheDocument();
     });
+
+    it('applies a one-shot global-search handoff to the existing catalog filter', async () => {
+        await db.items.bulkAdd([
+            {
+                name: 'Placa QR Code MDF',
+                basePrice: 30,
+                isActive: true,
+                categoryId,
+                subcategoryId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: 'Caneca Branca',
+                basePrice: 20,
+                isActive: true,
+                categoryId,
+                subcategoryId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        ]);
+
+        render(
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter initialEntries={['/items?search=Placa%20QR%20Code%20MDF']}>
+                    <ItemsPage />
+                </MemoryRouter>
+            </QueryClientProvider>
+        );
+
+        const searchInput = await screen.findByLabelText('Buscar item');
+        await waitFor(() => {
+            expect(searchInput).toHaveValue('Placa QR Code MDF');
+        });
+
+        expect(await screen.findByText('Placa QR Code MDF')).toBeInTheDocument();
+        expect(screen.queryByText('Caneca Branca')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeInTheDocument();
+    });
 });
