@@ -27,6 +27,7 @@ Current P10-S3 state:
   - change #6 Dashboard performance-window labels: `DONE / INTEGRATED` — PR #90;
   - change #7 consistent pt-BR monetary presentation: `DONE / INTEGRATED` — PR #92;
   - reseller client-facing statement PDF refinement: `DONE / INTEGRATED` — PR #94;
+  - searchable entity-selector refinement: `DONE / INTEGRATED` — PR #96;
   - **change #8 catalog classification visibility at point of use: `CURRENT / AUTHORIZED`;**
   - changes #9–#15 usability/data-quality queue: `QUEUED / NOT CURRENT`.
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
@@ -201,6 +202,39 @@ Validation/integration evidence:
 - integrated tree: `25ff7654c57368f1cb7c02cefc7a2a8c13cc3b7a` — exact tree equivalence PASS.
 
 No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #8 remains the next authorized queue item but was not started during this refinement.
+
+## Operator-authorized pre-#8 refinement — searchable entity selectors
+
+Before starting change #8, the operator explicitly kept the ordered queue paused to make large variable selectors searchable. PR #96 adds one reusable `cmdk`-backed combobox and applies it only where direct entity search materially reduces scrolling.
+
+Accepted behavior:
+
+- search matches any substring, is case-insensitive and accent-insensitive;
+- the typed query is transient presentation state and is never persisted as entity data;
+- selecting a result continues to return the existing reseller/item/category/subcategory ID;
+- new transaction entry uses searchable reseller and item selectors;
+- full transaction correction uses searchable reseller and item selectors;
+- item create/edit uses searchable category and optional subcategory selectors;
+- small closed-list selects remain unchanged;
+- lifecycle validation, financial/history semantics, database/Supabase, Auth/RLS, recovery and deployment behavior remain unchanged;
+- change #8 was not started or bundled.
+
+The first two D-019 attempts exposed only stale test assumptions caused by the control-type change: seven tests still modeled affected fields as native selects, then two context tests used an ambiguous singular query after two searchable controls correctly coexisted. These objective failures were corrected in test code and were not waived.
+
+Validation/integration evidence:
+
+- feature head: `95be7dac0bc5db87c21fc45ac6fb0303084d70ae`;
+- GitHub Actions merge ref: `ea1b93339b8356b9a2386b26fffc878428829d0d`;
+- validated tree: `569b7a7b760ba333b124094f159488b5b99fc92e`;
+- D-019 run/job: `33079397875` / `98542140423`;
+- ESLint: 0 errors / 98 warnings;
+- Vitest: 64 files / 272 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #96 squash-integrated `develop`: `20dcc0fb7469db8ae9638ab6ef39b38ca7e2ec97`;
+- integrated tree: `569b7a7b760ba333b124094f159488b5b99fc92e` — exact tree equivalence PASS.
+
+No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #8 remains the next authorized queue item and was not started during this refinement.
 
 ## Operator-authorized usability/data-quality queue
 

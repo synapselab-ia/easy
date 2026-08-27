@@ -215,6 +215,40 @@ PR #94 was squash-integrated into `develop` as `a2283d0a9408730e8cb136fdfe602d76
 
 The post-integration closure is documentation-only. Change #8 was not started or bundled. No failed executable gate was waived, no automatic Vercel publication occurred and `main` remains untouched.
 
+## Operator-authorized pre-#8 searchable entity-selector refinement — PASS / INTEGRATED
+
+### Scope review — UI / SELECTION ONLY
+
+PR #96 adds a reusable searchable combobox using the already-installed `cmdk` infrastructure and applies it only to high-variance entity selection:
+
+- reseller and item in new transaction entry;
+- reseller and item in full transaction correction;
+- category and optional subcategory in item create/edit;
+- focused unit/integration test coverage and aligned selector mocks.
+
+Search is substring-based, case-insensitive and accent-insensitive. The typed query is transient UI state only; selected values remain the existing stable entity IDs. Small closed-list selectors remain unchanged. No database migration, Supabase/API/policy, business mutation, financial/history semantic, recovery, Auth/RLS or deployment behavior changed.
+
+### D-019 iterations — objective failures corrected, not waived
+
+The first run/job, `33077905703` / `98536898243`, stopped in Vitest with seven failures. All seven came from pre-existing tests that still modeled affected controls as native `<select>` elements or used mocks whose empty-value behavior no longer represented the real searchable control. The dedicated `SearchableSelect` coverage itself passed.
+
+After those stale assumptions were aligned, the second run/job, `33079060658` / `98540948912`, reached 270 passing tests and only two failures. Both were in `TransactionsPage.context.test.tsx`: a singular `getByTestId('mock-searchable-select')` became ambiguous because the page now correctly contains both reseller and item searchable selectors. The test was changed to target the `Revendedor` field by label. No production behavior changed in that final correction.
+
+### Final D-019 — PASS
+
+- feature head: `95be7dac0bc5db87c21fc45ac6fb0303084d70ae`;
+- exact GitHub-generated merge ref checked out by Actions: `ea1b93339b8356b9a2386b26fffc878428829d0d`;
+- validated tree: `569b7a7b760ba333b124094f159488b5b99fc92e`;
+- run/job: `33079397875` / `98542140423`;
+- ESLint: **0 errors / 98 warnings**;
+- Vitest: **64 files / 272 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+PR #96 was squash-integrated into `develop` as `20dcc0fb7469db8ae9638ab6ef39b38ca7e2ec97`. Git object inspection confirms the integrated commit tree is `569b7a7b760ba333b124094f159488b5b99fc92e`, exactly the same tree as the D-019-validated feature content. Integrated-tree equivalence: **PASS**.
+
+The post-integration closure is documentation-only. Change #8 was not started or bundled. No failed executable gate was waived, no automatic Vercel publication occurred, no database/Supabase change was made and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -250,6 +284,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - pre-#8 reseller statement PDF D-019: **PASS**.
 - PR #94 integrated-tree equivalence: **PASS**.
 - pre-#8 reseller statement canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- pre-#8 searchable entity-selector D-019: **PASS**.
+- PR #96 integrated-tree equivalence: **PASS**.
+- pre-#8 searchable entity-selector canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
 - early-use change #8: **CURRENT / AUTHORIZED / NOT STARTED BY THIS REFINEMENT**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.

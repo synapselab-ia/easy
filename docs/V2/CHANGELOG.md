@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — searchable entity selectors integrated before change #8
+
+Before starting early-use change #8, the operator explicitly kept the ordered queue paused for a second bounded usability refinement: large variable selectors should allow direct text search instead of requiring long manual scrolling. PR #96 introduced one reusable searchable combobox using the project's existing `cmdk` infrastructure.
+
+Search now matches substrings, is case-insensitive and accent-insensitive. Typed search text remains transient UI state; selecting an option continues to return the existing entity ID, so no free-form value or new persistence contract is introduced. The searchable control is used for reseller/item selection in new transaction entry, reseller/item selection in full transaction correction, and category/optional-subcategory selection in item create/edit. Small closed-list selectors such as transaction type and period/window choices remain unchanged.
+
+The first D-019 attempt exposed seven stale tests that still modeled the affected fields as native `<select>` controls. After those test assumptions were aligned, the second attempt exposed two remaining ambiguous test queries because two searchable selectors correctly coexist on the transaction screen. Those two tests were changed to target the reseller field by label. Neither objective failure was waived and no product behavior was weakened to satisfy CI.
+
+Final D-019 on PR #96: head `95be7dac0bc5db87c21fc45ac6fb0303084d70ae`, merge ref `ea1b93339b8356b9a2386b26fffc878428829d0d`, run/job `33079397875` / `98542140423`: 0 lint errors / 98 warnings; 64 files / 272 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `569b7a7b760ba333b124094f159488b5b99fc92e`.
+
+PR #96 was squash-integrated into `develop` as `20dcc0fb7469db8ae9638ab6ef39b38ca7e2ec97`; its Git tree is also `569b7a7b760ba333b124094f159488b5b99fc92e`. Exact tree equivalence: PASS. No database/Supabase, financial/history, Auth/RLS, recovery, automatic Vercel deployment or `main` publication change occurred. Change #8 was not started and remains the next authorized action.
+
+---
+
 ## 2026-08-27 — reseller statement PDF simplified for client reading
 
 Before starting early-use change #8, the operator explicitly paused the ordered queue to refine the reseller statement PDF. PR #94 preserved the existing grouped-product behavior and the individual written names/observations below each grouped product while simplifying the document around the information a client needs.
