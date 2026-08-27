@@ -274,7 +274,7 @@ Accepted result:
 - canonical `FinancialReport.products` aggregates effective orders by exact transaction-time item/name/classification snapshot context;
 - each product row exposes product label, historical classification, order count, item quantity and gross sales;
 - rows are ranked by gross sales, then quantity, then label;
-- repeated matching historical snapshots aggregate together, while a historical rename/reclassification remains distinct instead of being rewritten from the current catalog;
+- repeated matching historical snapshots aggregate together, while a historical rename/reclassification remains distinct instead of being rewritten from current catalog;
 - reversed orders contribute zero and period inclusion continues to use D-014 occurrence time through the existing canonical report path;
 - the `Resumo` product highlight now identifies the actual top-selling product;
 - the `Produtos e categorias` view shows product performance before the existing category/subcategory drilldown;
@@ -304,7 +304,7 @@ Accepted result:
 D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
 
 ### D-035 — Dashboard + Reports core redesign
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-02 CURRENT`
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-03 CURRENT`
 
 Focused product contract: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
@@ -330,27 +330,25 @@ Accepted result:
 - isolated #14 is absorbed/superseded rather than resurrected.
 
 #### DR-02 — canonical Dashboard read-model
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #114`
 
-Scope:
+Accepted result:
 
-- verify current Dashboard hooks/query invalidation and accepted domain helpers;
-- introduce one bounded read-only Dashboard projection;
-- centralize month-to-today sales/receipts/order/item context;
-- centralize as-of-today open debt, open-reseller count, critical amount/count/oldest age;
-- centralize accepted FIFO aging buckets and one-reseller-per-row attention data;
-- centralize recent effective registrations;
-- exclude valid future occurrences later than the operator's current local day from current-position debt/aging until their occurrence date;
-- reuse `FinancialReport` and existing transaction/FIFO helpers where semantics match;
-- add focused domain tests;
-- do **not** perform the DR-03 visual KPI redesign or any later item.
+- one bounded read-only `DashboardSnapshot` centralizes month-to-today and today flow, as-of-today open position, critical metrics, FIFO aging buckets, deterministic deduplicated attention rows and recent effective registrations;
+- month/today flow reuses canonical `buildFinancialReport` semantics;
+- aging/current position reuses accepted transaction/FIFO helpers with one explicit end-of-current-local-day cutoff;
+- valid future occurrences later than today remain legitimate but cannot affect current debt/aging before occurrence;
+- `useDashboardSnapshot`, `useTotalDebt`, `useTodayOrders` and `useDebtAging` share `['dashboard', 'snapshot']`; existing `['dashboard']` invalidations remain sufficient;
+- legacy operational UI contracts remain compatible so DR-03/DR-04 visual scope was not bundled;
+- `usePerformanceAnalysis` remains unchanged for DR-07;
+- no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
 
-No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized.
+D-019 run/job `33115854899` / `98670186895`: 0 lint errors / 105 warnings; 66 files / 290 Vitest PASS; focused snapshot coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `3e09a992a20e3edf72df093c312581c88e04457b`; validated tree `b9b5040abd6f217f41d4bba12f21ae05d06271dc` exactly equals squash-integrated `develop@4e3a9b28174cb64ad820f4ec60356194d1a760bb` tree. Exact tree equivalence: PASS.
 
 #### DR-03 — primary Dashboard KPI row
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
-Target: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`, using DR-02 prepared data; remove misleading `tempo real` wording and preserve responsive/loading/empty semantics.
+Target: consume DR-02 prepared data to render `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`; preserve the accepted compact secondary context and responsive/loading/empty behavior; remove misleading realtime wording; do not reconstruct accounting inside the visual components and do not begin DR-04.
 
 #### DR-04 — `Precisa de atenção` action center
 **Status:** `QUEUED / NOT CURRENT`
@@ -390,4 +388,4 @@ Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link a
 
 ## Current NEXT_ACTION
 
-**Execute only D-035 `DR-02 — canonical Dashboard read-model`. Verify the current Dashboard query/invalidation and existing domain helpers, then implement the bounded read-only projection defined by `docs/V2/DASHBOARD_REPORTS_SPEC.md`. Do not begin DR-03 or later work in the same task. Current-position calculations must be as-of the operator's current local day and exclude later future occurrences until they occur. Reuse accepted accounting/FIFO/reporting semantics; no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-03 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
+**Execute only D-035 `DR-03 — primary Dashboard KPI row`. Verify the current Dashboard page/card implementation and the integrated DR-02 snapshot/query contract, then implement the four accepted top cards using prepared snapshot data: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`. Preserve useful compact secondary context defined by the focused spec, responsive/loading/empty behavior and accepted pt-BR presentation; remove misleading realtime wording. Do not rebuild financial/FIFO calculations in components and do not begin DR-04 or later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-04 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.

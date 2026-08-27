@@ -36,7 +36,7 @@ Current P10-S3 state:
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
   - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
-  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `CURRENT / AUTHORIZED`.**
+  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -457,6 +457,36 @@ Validation/integration evidence:
 
 No automatic Vercel publication occurred, no Supabase/database change was made and `main` remains untouched. Change #15 is closed.
 
+## D-035 DR-02 closure — canonical Dashboard read-model
+
+PR #114 introduced the bounded canonical Dashboard read-only projection without performing the later visual redesign.
+
+Accepted result:
+
+- `src/domain/dashboardSnapshot.ts` centralizes month-to-today and today sales/receipts/order/item context, current open debt/open-reseller count, critical amount/count/oldest age, accepted FIFO aging buckets, deterministic deduplicated attention rows and recent effective registrations;
+- month/today financial flow reuses `buildFinancialReport`; aging/current-position reconstruction reuses accepted effective-transaction/FIFO helpers instead of introducing a competing accounting path;
+- current-position processing explicitly stops at the end of the operator's current local day, so legitimate later future occurrences stay valid registration/history data but cannot affect current debt or aging before occurrence;
+- `src/hooks/useDashboard.ts` exposes one shared `['dashboard', 'snapshot']` query; the existing `['dashboard']` invalidation prefix continues to refresh it after transaction/reseller mutations;
+- legacy operational Dashboard hook shapes are mapped from the snapshot so DR-03/DR-04 presentation work was not bundled;
+- `usePerformanceAnalysis` remains unchanged for the later DR-07 scope;
+- no database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Validation/integration evidence:
+
+- feature head: `e02ab13eb8987cc6ea4865f4b3c39211380e9515`;
+- exact GitHub-generated merge ref checked out by Actions: `3e09a992a20e3edf72df093c312581c88e04457b`;
+- validated tree: `b9b5040abd6f217f41d4bba12f21ae05d06271dc`;
+- D-019 run/job: `33115854899` / `98670186895`;
+- ESLint: 0 errors / 105 warnings;
+- Vitest: 66 files / 290 tests PASS;
+- focused `dashboardSnapshot` coverage: 3/3 PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #114 squash-integrated `develop`: `4e3a9b28174cb64ad820f4ec60356194d1a760bb`;
+- integrated tree: `b9b5040abd6f217f41d4bba12f21ae05d06271dc` — exact tree equivalence PASS.
+
+No failed D-019 objective gate was waived. The post-integration DR-02 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
+
 ## Historical operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
@@ -487,7 +517,7 @@ Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` s
 
 ## D-035 — Dashboard + Reports core redesign
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED`  
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-03 CURRENT`  
 **Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
 
 Accepted product direction:
@@ -500,13 +530,13 @@ Accepted product direction:
 - recent effective registrations and quick order/payment/signal actions are target operational context;
 - large 90/180/360 Performance/Pareto/current-debtor/ranking content leaves the target Dashboard only after useful analysis is re-homed or handed off to Reports;
 - Reports refinements stay on canonical `FinancialReport` semantics;
-- one coherent Dashboard read-only projection comes before the major visual redesign.
+- DR-02 established one coherent Dashboard read-only projection before the major visual redesign.
 
 Ordered sequence:
 
 1. **DR-01 DONE — product contract/canonical documentation** — D-035 + focused spec.
-2. **DR-02 CURRENT / AUTHORIZED — canonical Dashboard read-model.**
-3. **DR-03 QUEUED / NOT CURRENT — primary KPI row.**
+2. **DR-02 DONE / INTEGRATED — canonical Dashboard read-model — PR #114.**
+3. **DR-03 CURRENT / AUTHORIZED — primary KPI row.**
 4. **DR-04 QUEUED / NOT CURRENT — `Precisa de atenção` action center.**
 5. **DR-05 QUEUED / NOT CURRENT — compact carteira aging.**
 6. **DR-06 QUEUED / NOT CURRENT — recent registrations + quick actions.**
@@ -514,7 +544,7 @@ Ordered sequence:
 8. **DR-08 QUEUED / NOT CURRENT — Reports analytical refinement.**
 9. **DR-09 QUEUED / NOT CURRENT — final Dashboard/Reports UX and efficiency acceptance.**
 
-Only `DR-02` is executable next. Do not bundle `DR-03` or later work into the same task.
+Only `DR-03` is executable next. Do not bundle `DR-04` or later work into the same task.
 
 ## Startup protocol for a new conversation
 
@@ -540,4 +570,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only D-035 `DR-02 — canonical Dashboard read-model`. First verify the current Dashboard hooks/query invalidation and the accepted domain helpers. Then introduce one bounded read-only Dashboard projection that centralizes month-to-today sales/receipts/order/item context, as-of-today open debt, critical amount/count/oldest age, accepted FIFO aging buckets, one-reseller-per-row attention data and recent effective registrations. Current-position calculations must exclude valid future occurrence dates later than the operator's current local day until those dates occur. Reuse `FinancialReport` and existing transaction/FIFO helpers where their semantics match; do not create a competing accounting path. Do not perform the DR-03 visual KPI redesign, DR-04 attention UI, or any later DR item in the same task. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-03 if DR-02 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only D-035 `DR-03 — primary Dashboard KPI row`. First verify the current Dashboard page/card implementation and the integrated DR-02 `DashboardSnapshot`/shared query contract. Then replace the existing top Dashboard KPI presentation with the four accepted primary cards: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`, consuming prepared DR-02 data rather than rebuilding accounting in components. Preserve useful compact secondary context defined by the focused spec (month order/item context, optional today context, open-reseller count, critical reseller count/oldest age), remove misleading `tempo real` wording, and preserve responsive/loading/empty semantics. Do not implement the DR-04 `Precisa de atenção` redesign, DR-05 aging redesign, DR-06 recent registrations/quick actions, or any later DR item in the same task. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-04 if DR-03 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**

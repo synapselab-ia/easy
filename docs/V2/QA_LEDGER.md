@@ -491,6 +491,50 @@ PR #111 was squash-integrated into `develop` as `bee3e2cee2852c9bf0683fe5d564b34
 
 The post-integration change #15 closure is documentation-only. Change #14 remains deferred/on hold and no later bounded early-use queue item is authorized.
 
+## D-035 DR-02 — canonical Dashboard read-model — PASS / INTEGRATED
+
+### Scope review — READ-MODEL / EXISTING ACCOUNTING PATH ONLY
+
+Verification before implementation confirmed the operational Dashboard hooks were separately reading/reducing the same transactions, while transaction/reseller mutations already invalidate the `['dashboard']` query prefix. It also confirmed `calculateOutstandingDebtLots` correctly implements accepted FIFO allocation but does not impose an as-of cutoff by itself.
+
+PR #114 is bounded to three executable files:
+
+- `src/domain/dashboardSnapshot.ts` — canonical read-only Dashboard projection;
+- `src/domain/dashboardSnapshot.test.ts` — focused domain coverage;
+- `src/hooks/useDashboard.ts` — shared snapshot query plus compatibility mapping for existing operational hooks.
+
+The snapshot reuses `buildFinancialReport` for month-to-today/today flow and existing effective-transaction/FIFO helpers for current position and aging. Before FIFO reconstruction it filters valid effective transactions through `endOfDay(asOf)`, so legitimate future occurrence dates later than the operator's current local day cannot change current debt/aging before occurrence. Recent registrations are separately ordered by `createdAt` and can retain legitimate future-occurrence registration context while reversed rows remain excluded.
+
+No Dashboard visual redesign, DR-04 action-center UI, Performance/Reports re-home, database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change was bundled.
+
+### Focused coverage — PASS
+
+`src/domain/dashboardSnapshot.test.ts` has **3/3 PASS** and verifies:
+
+1. month/today flow, as-of-today open debt, FIFO aging buckets, critical metrics and future-occurrence exclusion;
+2. one-reseller-per-row attention priority plus deterministic severity/oldest-age/amount/name ordering;
+3. effective recent-registration ordering and exclusion of reversed rows, plus invalid reference-date rejection.
+
+Existing Dashboard tests also remained green inside the full Vitest run.
+
+### Final D-019 — PASS
+
+- feature head: `e02ab13eb8987cc6ea4865f4b3c39211380e9515`;
+- exact GitHub-generated merge ref checked out by Actions: `3e09a992a20e3edf72df093c312581c88e04457b`;
+- validated tree: `b9b5040abd6f217f41d4bba12f21ae05d06271dc`;
+- run/job: `33115854899` / `98670186895`;
+- ESLint: **0 errors / 105 warnings**;
+- Vitest: **66 files / 290 tests PASS**;
+- focused Dashboard snapshot tests: **3/3 PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No objective D-019 failure was waived. The run retained only already tracked non-blocking warning/audit/chunk debt.
+
+PR #114 was squash-integrated into `develop` as `4e3a9b28174cb64ad820f4ec60356194d1a760bb`. Git object inspection confirms the integrated tree is `b9b5040abd6f217f41d4bba12f21ae05d06271dc`, exactly the same tree validated by the PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-02 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -547,10 +591,14 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - early-use change #13 product-report D-019: **PASS**.
 - PR #108 integrated-tree equivalence: **PASS**.
 - early-use change #13 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- early-use change #14: **DEFERRED / ON HOLD — OPERATOR DECISION / NO EXECUTABLE DELTA**.
+- early-use change #14: **SUPERSEDED / ABSORBED BY D-035 — NO EXECUTABLE DELTA**.
 - early-use change #15 future-occurrence confirmation D-019: **PASS**.
 - PR #111 integrated-tree equivalence: **PASS**.
 - early-use change #15 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- bounded early-use queue after #15: **NO NEW ITEM AUTHORIZED**.
+- historical bounded early-use queue after #15: **CLOSED / NO #16**.
+- D-035 DR-02 canonical Dashboard read-model D-019: **PASS**.
+- PR #114 integrated-tree equivalence: **PASS**.
+- D-035 DR-02 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 DR-03 primary KPI row: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
