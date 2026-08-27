@@ -64,18 +64,25 @@ describe('pdfService', () => {
         vi.clearAllMocks();
     });
 
-    it('generates the reseller PDF with item and settlement sections', () => {
-        generateResellerExtract(mockReseller, mockTransactions, 100);
+    it('renders products, financial closing and payment detail in client-reading order', () => {
+        generateResellerExtract(mockReseller, mockTransactions, 250);
 
         expect(mockSave).toHaveBeenCalledWith('extrato_john_doe.pdf');
-        expect(autoTable).toHaveBeenCalledTimes(2);
+        expect(autoTable).toHaveBeenCalledTimes(3);
         expect(mockText).toHaveBeenCalledWith('Nome: John Doe', 14, 40);
-        expect(mockSetTextColor).toHaveBeenCalledWith(220, 38, 38);
         expect(tableOptions(0).head?.[0]?.[0]).toMatchObject({ content: 'Itens do pedido' });
-        expect(tableOptions(1).head?.[0]?.[0]).toMatchObject({ content: 'Pagamentos e sinais' });
+        expect(tableOptions(1).body).toEqual([
+            ['Total dos pedidos', 'R$ 300,00'],
+            ['Saldo anterior', 'R$ 0,00'],
+            ['(-) Total de pagamentos', 'R$ 50,00'],
+            ['SALDO ATUAL', 'R$ 250,00'],
+        ]);
+        expect(tableOptions(2).head?.[0]?.[0]).toMatchObject({ content: 'Pagamentos e sinais' });
+        expect(tableOptions(2).head?.[1]).toEqual(['Data', 'Tipo', 'Valor']);
+        expect(tableOptions(2).body).toHaveLength(1);
     });
 
-    it('groups equal item/price/status orders and lists each written name underneath', () => {
+    it('groups equal item/price orders and keeps each written name underneath', () => {
         const transactions: Transaction[] = [
             {
                 id: 10,
@@ -125,6 +132,7 @@ describe('pdfService', () => {
         expect(cellContent(body[1][0])).toBe('Lucas');
         expect(cellContent(body[2][0])).toBe('Eduardo');
         expect(cellContent(body[3][0])).toBe('Moldura Flor Bronze');
+        expect(autoTable).toHaveBeenCalledTimes(2);
     });
 
     it('does not merge the same catalog item when the unit price differs', () => {
@@ -161,7 +169,7 @@ describe('pdfService', () => {
         expect(body.filter(row => cellContent(row[0]) === 'Placa 3x8')).toHaveLength(2);
     });
 
-    it('gera PDF com dateRange separando pedidos e pagamentos do período', () => {
+    it('uses the selected period for products, payment detail and the financial closing', () => {
         const dateRange = {
             startDate: new Date('2025-01-01T00:00:00'),
             endDate: new Date('2025-02-28T23:59:59'),
@@ -170,10 +178,16 @@ describe('pdfService', () => {
         generateResellerExtract(mockReseller, mockTransactions, 50, dateRange);
 
         expect(tableOptions(0).body).toHaveLength(1);
-        expect(tableOptions(1).body).toHaveLength(1);
+        expect(tableOptions(1).body).toEqual([
+            ['Total dos pedidos', 'R$ 100,00'],
+            ['Saldo anterior', 'R$ 0,00'],
+            ['(-) Total de pagamentos', 'R$ 50,00'],
+            ['SALDO ATUAL', 'R$ 50,00'],
+        ]);
+        expect(tableOptions(2).body).toHaveLength(1);
     });
 
-    it('keeps reversed settlement rows visible with mandatory audit reason', () => {
+    it('omits a reversed settlement entirely and does not render a payment table for it', () => {
         const reversed: Transaction = {
             id: 4,
             resellerId: 1,
@@ -189,16 +203,20 @@ describe('pdfService', () => {
 
         generateResellerExtract(mockReseller, [reversed], 0);
 
-        const row = (tableOptions(1).body?.[0] ?? []) as string[];
-        expect(tableOptions(1).head?.[1]).toEqual(['Data', 'Tipo', 'Valor', 'Status', 'Observação']);
-        expect(tableOptions(1).body).toHaveLength(1);
-        expect(row[2]).toBe('R$ 90,00');
-        expect(row[3]).toBe('Estornado');
-        expect(row[4]).toContain('PIX');
-        expect(row[4]).toContain('Motivo do estorno: Pagamento duplicado');
+        expect(autoTable).toHaveBeenCalledTimes(2);
+        expect(tableOptions(1).body).toEqual([
+            ['Total dos pedidos', 'R$ 0,00'],
+            ['Saldo anterior', 'R$ 0,00'],
+            ['(-) Total de pagamentos', 'R$ 0,00'],
+            ['SALDO ATUAL', 'R$ 0,00'],
+        ]);
+        const renderedTables = JSON.stringify(vi.mocked(autoTable).mock.calls);
+        expect(renderedTables).not.toContain('Pagamento duplicado');
+        expect(renderedTables).not.toContain('PIX');
+        expect(renderedTables).not.toContain('Estornado');
     });
 
-    it('keeps both directions of a linked settlement correction in audit notes', () => {
+    it('shows only the valid replacement of a corrected settlement without audit annotations', () => {
         const original: Transaction = {
             id: 10,
             resellerId: 1,
@@ -224,15 +242,76 @@ describe('pdfService', () => {
 
         generateResellerExtract(mockReseller, [original, replacement], -500);
 
-        const originalRow = tableOptions(1).body?.[0] as string[];
-        const replacementRow = tableOptions(1).body?.[1] as string[];
+        expect(tableOptions(1).body).toEqual([
+            ['Total dos pedidos', 'R$ 0,00'],
+            ['Saldo anterior', 'R$ 0,00'],
+            ['(-) Total de pagamentos', 'R$ 500,00'],
+            ['SALDO ATUAL', 'R$ -500,00'],
+        ]);
+        const paymentBody = tableOptions(2).body as string[][];
+        expect(paymentBody).toHaveLength(1);
+        expect(paymentBody[0][2]).toBe('R$ 500,00');
 
-        expect(originalRow[2]).toBe('R$ 5.000,00');
-        expect(originalRow[3]).toBe('Estornado');
-        expect(originalRow[4]).toContain('Substituído pelo lançamento #11');
-        expect(replacementRow[2]).toBe('R$ 500,00');
-        expect(replacementRow[3]).toBe('Válido');
-        expect(replacementRow[4]).toContain('Correção do lançamento #10');
+        const renderedTables = JSON.stringify(vi.mocked(autoTable).mock.calls);
+        expect(renderedTables).not.toContain('R$ 5.000,00');
+        expect(renderedTables).not.toContain('Valor incorreto');
+        expect(renderedTables).not.toContain('Substituído pelo lançamento');
+        expect(renderedTables).not.toContain('Correção do lançamento');
+    });
+
+    it('shows only the valid corrected order while preserving its written name', () => {
+        const original: Transaction = {
+            id: 30,
+            resellerId: 1,
+            type: 'order',
+            itemId: 7,
+            itemName: 'Placa 3x8',
+            quantity: 1,
+            unitPrice: 50,
+            totalPrice: 50,
+            observation: 'NOME ANTIGO',
+            reversal: {
+                reason: 'Nome incorreto',
+                reversedAt: '2026-08-17T15:00:00.000Z',
+                replacementTransactionId: 31,
+            },
+            createdAt: feb10,
+        };
+        const replacement: Transaction = {
+            id: 31,
+            resellerId: 1,
+            type: 'order',
+            itemId: 7,
+            itemName: 'Placa 3x8',
+            quantity: 1,
+            unitPrice: 50,
+            totalPrice: 50,
+            observation: 'ROBERTO RAMOS',
+            correction: {
+                replacesTransactionId: 30,
+            },
+            createdAt: mar20,
+        };
+
+        generateResellerExtract(mockReseller, [original, replacement], 50);
+
+        const body = tableOptions(0).body as PdfRow[];
+        expect(body).toHaveLength(2);
+        expect(cellContent(body[0][0])).toBe('Placa 3x8');
+        expect(cellContent(body[0][1])).toBe('1');
+        expect(cellContent(body[1][0])).toBe('ROBERTO RAMOS');
+        expect(tableOptions(1).body).toEqual([
+            ['Total dos pedidos', 'R$ 50,00'],
+            ['Saldo anterior', 'R$ 0,00'],
+            ['(-) Total de pagamentos', 'R$ 0,00'],
+            ['SALDO ATUAL', 'R$ 50,00'],
+        ]);
+
+        const renderedTables = JSON.stringify(vi.mocked(autoTable).mock.calls);
+        expect(renderedTables).not.toContain('NOME ANTIGO');
+        expect(renderedTables).not.toContain('Nome incorreto');
+        expect(renderedTables).not.toContain('ESTORNADO');
+        expect(renderedTables).not.toContain('Correção do lançamento');
     });
 
     it('gera PDF com dateRange — nome do arquivo inclui as datas formatadas', () => {
