@@ -304,7 +304,7 @@ Accepted result:
 D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
 
 ### D-035 — Dashboard + Reports core redesign
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-03 CURRENT`
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-04 CURRENT`
 
 Focused product contract: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
@@ -346,14 +346,24 @@ Accepted result:
 D-019 run/job `33115854899` / `98670186895`: 0 lint errors / 105 warnings; 66 files / 290 Vitest PASS; focused snapshot coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `3e09a992a20e3edf72df093c312581c88e04457b`; validated tree `b9b5040abd6f217f41d4bba12f21ae05d06271dc` exactly equals squash-integrated `develop@4e3a9b28174cb64ad820f4ec60356194d1a760bb` tree. Exact tree equivalence: PASS.
 
 #### DR-03 — primary Dashboard KPI row
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #116`
 
-Target: consume DR-02 prepared data to render `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`; preserve the accepted compact secondary context and responsive/loading/empty behavior; remove misleading realtime wording; do not reconstruct accounting inside the visual components and do not begin DR-04.
+Accepted result:
+
+- the primary Dashboard row consumes the integrated `DashboardSnapshot` through `useDashboardSnapshot`;
+- it renders `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias` in the accepted order;
+- compact context includes month orders/items, optional today orders/sales/receipts, open-reseller count and critical reseller count/oldest age;
+- the legacy `Dívida Total` / `Pedidos de Hoje` top cards and misleading realtime wording are removed;
+- responsive `1/2/4` layout, loading states and explicit business empty states are preserved;
+- no accounting/FIFO reconstruction was introduced in presentation components;
+- DR-04/DR-05/later Dashboard redesign work was not bundled.
+
+The first D-019 run/job `33118356365` / `98678713093` failed only because the pre-existing `DashboardCards.test.tsx` still asserted the legacy two-card API. No integration occurred; the focused test contract was aligned and the full gate rerun. Final D-019 run/job `33118656171` / `98679713377`: 0 lint errors / 105 warnings; 66 files / 291 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree `d4be4496de22cb752a25c2307f4b29d5dd393b1e` exactly equals squash-integrated `develop@345a84f3d94d65515671a928b627e7d2d62eb687` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-04 — `Precisa de atenção` action center
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
-Unify critical/attention presentation into one reseller-per-row action center with deterministic severity/age/value ordering and existing reseller-detail navigation.
+Unify the current critical/attention presentation into one compact reseller-per-row action center by consuming `DashboardSnapshot.attentionRows`. Preserve the snapshot's deterministic priority; expose explicit severity, determining age/amount and materially different total open balance; row selection opens the existing reseller detail/history. Do not reconstruct FIFO/accounting in the component and do not begin DR-05.
 
 #### DR-05 — compact carteira aging
 **Status:** `QUEUED / NOT CURRENT`
@@ -388,4 +398,4 @@ Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link a
 
 ## Current NEXT_ACTION
 
-**Execute only D-035 `DR-03 — primary Dashboard KPI row`. Verify the current Dashboard page/card implementation and the integrated DR-02 snapshot/query contract, then implement the four accepted top cards using prepared snapshot data: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`. Preserve useful compact secondary context defined by the focused spec, responsive/loading/empty behavior and accepted pt-BR presentation; remove misleading realtime wording. Do not rebuild financial/FIFO calculations in components and do not begin DR-04 or later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-04 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
+**Execute only D-035 `DR-04 — Precisa de atenção action center`. Verify the integrated DR-03 KPI row, the current `DebtHealthAgingCard` attention presentation and the DR-02 `DashboardSnapshot.attentionRows` contract. Replace the duplicated critical/attention presentation with one compact action center consuming prepared snapshot rows: one reseller per row, explicit `CRÍTICO`/`ATENÇÃO`, determining age and alert-class amount, plus current total open balance when materially different; preserve deterministic priority and navigate to existing reseller detail/history. Keep business-meaningful empty/responsive/accessibility behavior. Do not rebuild FIFO/accounting in components, add a parallel collection/direct-payment workflow, or begin DR-05/later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-05 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
