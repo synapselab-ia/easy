@@ -618,6 +618,52 @@ PR #118 was squash-integrated into `develop` as `4bac76dd83c31016b692efb17531fbf
 
 The post-integration DR-04 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-05 — compact carteira aging — PASS / INTEGRATED
+
+### Scope review — PRESENTATION / CANONICAL AGING PROJECTION ONLY
+
+Verification before implementation confirmed `DebtHealthAgingCard` still rendered a large Recharts donut and percentage-only legend through the legacy compatibility hook, while DR-02 already supplied canonical `DashboardSnapshot.agingBuckets` with exact value + percentage and the Dashboard page already held the shared snapshot.
+
+PR #120 changes only Dashboard presentation and focused tests:
+
+- replaces the large donut with compact exact-value + percentage rows;
+- passes prepared `agingBuckets` and `openDebt.amount` from `DashboardPage` into the aging card;
+- preserves the accepted bucket order/threshold labels;
+- removes no DR-04 attention behavior and leaves `PerformanceAnalysisSection` untouched for DR-07;
+- adds focused aging-card tests and Dashboard handoff coverage.
+
+No domain/FIFO helper, `DashboardSnapshot` calculation, database/schema, Supabase/RPC/Auth/RLS, recovery, deployment-path, DR-06 recent-registration/quick-action or later D-035 scope was bundled.
+
+### Focused coverage — PASS
+
+`DebtHealthAgingCard.test.tsx` has **4/4 PASS** and verifies:
+
+1. the three prepared buckets render exact pt-BR values and prepared percentages with no former SVG chart;
+2. a deliberately non-derived `12.5%` snapshot percentage is displayed as `12,5%` rather than being recalculated from value/total;
+3. zero current debt uses a business-meaningful empty state while all three zero buckets remain explicit;
+4. loading remains compact and does not render the former chart.
+
+`DashboardPage.test.tsx` remains **3/3 PASS** and verifies `agingBuckets` plus the current open-debt total are handed from the shared snapshot to the aging block while DR-03/DR-04 behavior stays intact.
+
+### Final D-019 — PASS
+
+- feature head: `972ad8ae0285e654a5b356a55251807c35d72dd7`;
+- exact GitHub-generated merge ref checked out by Actions: `ea9997d379d1c9f30cf398574dfa28545f37e7c4`;
+- validated tree: `6848853b03148d78c79474d6415d9732ec4af8e5`;
+- run/job: `33124288969` / `98698548321`;
+- ESLint: **0 errors / 105 warnings**;
+- Vitest: **68 files / 299 tests PASS**;
+- focused `DebtHealthAgingCard` tests: **4/4 PASS**;
+- focused `DashboardPage` tests: **3/3 PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No objective D-019 failure was waived. The successful run retained only already tracked non-blocking React/test/lint/audit/chunk warnings.
+
+PR #120 was squash-integrated into `develop` as `cccf11fece99179aa895964c8b743cff29ce9e0f`. Git object inspection confirms the integrated tree is `6848853b03148d78c79474d6415d9732ec4af8e5`, exactly the same tree validated by the PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-05 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -688,6 +734,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-035 DR-04 attention-center D-019: **PASS**.
 - PR #118 integrated-tree equivalence: **PASS**.
 - D-035 DR-04 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- D-035 DR-05 compact carteira aging: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
+- D-035 DR-05 compact-aging D-019: **PASS**.
+- PR #120 integrated-tree equivalence: **PASS**.
+- D-035 DR-05 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 DR-06 recent registrations + quick actions: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
