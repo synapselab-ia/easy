@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — D-035 DR-06 recent registrations + quick actions integrated
+
+D-035 `DR-06` completed the bounded operational Dashboard context after the KPI, attention and aging work. PR #122 adds page-level `+ Pedido`, `+ Pagamento` and `+ Sinal` actions through the existing `/transactions?type=order|payment|signal` route/type context and existing `TransactionForm` write path; no second transaction form or mutation path was introduced.
+
+The new compact `Últimos lançamentos registrados` block consumes the prepared DR-02 `DashboardSnapshot.recentRegistrations` directly. It preserves the snapshot's canonical `createdAt` order and reversed-row exclusion without re-sorting or rebuilding effective/reversal logic in presentation code, distinguishes `Pedido`, `Pagamento` and `Sinal`, shows reseller and pt-BR value, retains registration-time context and shows financial occurrence date when its calendar day differs from registration. Selecting a row opens the existing reseller detail/history route.
+
+The Dashboard priority is now `KPIs -> atenção -> aging -> recent activity`, while `PerformanceAnalysisSection` remains unchanged for the isolated DR-07 step. Focused coverage verifies prepared-order projection, type/value presentation, occurrence-date disambiguation, reseller-history navigation, business empty/loading states and the exact three existing transaction-route intents.
+
+Final D-019 on PR #122: head `c889e2ad73f13d2c6804a8248863d214d27c50e2`, merge ref `2b17e6c8fffd477e7716dd1ac4ad5e31848af0af`, run/job `33126181592` / `98704779945`: 0 lint errors / 105 warnings; 70 files / 304 Vitest PASS including `RecentRegistrations` 4/4, `DashboardQuickActions` 1/1 and `DashboardPage` 3/3; 17/17 Playwright PASS; TypeScript + production Vite build PASS. Validated tree: `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f`.
+
+PR #122 was squash-integrated into `develop` as `1425fe0736dbf919e47c9c0c5bfb593331cec469`; its tree is also `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f`. Exact tree equivalence: PASS. No failed gate was waived. No domain/FIFO/accounting, database/schema, Supabase/RPC/Auth/RLS, recovery or automatic Vercel publication change occurred, and `main` remains untouched. DR-06 is closed and `DR-07 — remove Dashboard Performance block + contextual Reports handoff` is now the sole current authorized item; DR-07 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 DR-05 compact carteira aging integrated
 
 D-035 `DR-05` replaced the large default Dashboard aging donut with the accepted compact `Carteira por idade` context while consuming the canonical DR-02 `DashboardSnapshot.agingBuckets` rather than rebuilding FIFO/aging in presentation code. PR #120 removes the Recharts donut from `DebtHealthAgingCard`; `DashboardPage` now hands the prepared aging buckets plus current `openDebt.amount` from the same shared snapshot into the block.

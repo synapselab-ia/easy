@@ -304,7 +304,7 @@ Accepted result:
 D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
 
 ### D-035 — Dashboard + Reports core redesign
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-06 CURRENT`
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-07 CURRENT`
 
 Focused product contract: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
@@ -396,14 +396,25 @@ Accepted result:
 D-019 run/job `33124288969` / `98698548321`: 0 lint errors / 105 warnings; 68 files / 299 Vitest PASS including `DebtHealthAgingCard` 4/4 and `DashboardPage` 3/3; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `ea9997d379d1c9f30cf398574dfa28545f37e7c4`; validated tree `6848853b03148d78c79474d6415d9732ec4af8e5` exactly equals squash-integrated `develop@cccf11fece99179aa895964c8b743cff29ce9e0f` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-06 — recent registrations + quick actions
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #122`
 
-Add compact recent effective registration context using prepared `DashboardSnapshot.recentRegistrations` plus page-level `Pedido` / `Pagamento` / `Sinal` quick actions through the existing transaction route/type context. Preserve the operational hierarchy and do not create a second transaction form/write path or begin DR-07.
+Accepted result:
+
+- page-level `+ Pedido`, `+ Pagamento` and `+ Sinal` actions reuse the existing `/transactions?type=...` route and existing transaction form/write path;
+- `Últimos lançamentos registrados` consumes prepared `DashboardSnapshot.recentRegistrations` without local re-sorting or reversal/effective-transaction reconstruction;
+- prepared canonical `createdAt` order and reversed-row exclusion remain owned by the snapshot;
+- rows distinguish movement type and expose reseller/value plus registration timestamp;
+- financial occurrence date is shown when its calendar day differs from registration, preserving D-014 disambiguation;
+- row selection navigates to existing reseller detail/history;
+- loading/empty/accessibility semantics are covered by focused tests;
+- `PerformanceAnalysisSection` remains unchanged for DR-07 and no later work was bundled.
+
+D-019 run/job `33126181592` / `98704779945`: 0 lint errors / 105 warnings; 70 files / 304 Vitest PASS including `RecentRegistrations` 4/4, `DashboardQuickActions` 1/1 and `DashboardPage` 3/3; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `2b17e6c8fffd477e7716dd1ac4ad5e31848af0af`; validated tree `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f` exactly equals squash-integrated `develop@1425fe0736dbf919e47c9c0c5bfb593331cec469` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-07 — remove Dashboard Performance block + contextual Reports handoff
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
-Remove the current Dashboard analytical Performance surface only after the operational replacements exist; add reproducible contextual navigation to Reports so useful analysis is not silently lost.
+Remove the current Dashboard analytical Performance surface now that the operational replacements exist; preserve a clear reproducible path to the existing Reports workspace so useful analysis is not silently lost. Reuse existing Reports navigation/semantics and do not begin DR-08 analytical refinement.
 
 #### DR-08 — Reports analytical refinement
 **Status:** `QUEUED / NOT CURRENT`
@@ -423,4 +434,4 @@ Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link a
 
 ## Current NEXT_ACTION
 
-**Execute only D-035 `DR-06 — recent registrations + quick actions`. Verify the integrated DR-05 compact aging block, the DR-02 `DashboardSnapshot.recentRegistrations` contract, the existing transaction route/type/reseller context and the current Dashboard page header/layout. Add a compact `Últimos lançamentos registrados` block consuming prepared recent effective registrations in canonical `createdAt` order, distinguishing `Pedido`, `Pagamento` and `Sinal`, showing reseller/value and occurrence-date context when registration and financial dates differ or otherwise need disambiguation; keep reversed rows excluded through the prepared projection and navigate to reseller detail/history when feasible. Add compact page-level `+ Pedido`, `+ Pagamento`, `+ Sinal` actions by reusing the existing transaction route/type context; do not create a second form or write path. Preserve `KPIs -> atenção -> aging -> recent activity`, responsive/loading/empty/accessibility behavior, and do not alter DR-05 aging, remove Performance (DR-07), refine Reports or begin later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-07 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
+**Execute only D-035 `DR-07 — remove Dashboard Performance block + contextual Reports handoff`. Verify the integrated DR-06 operational Dashboard, the current `PerformanceAnalysisSection` / `usePerformanceAnalysis` surface and the existing Reports route/navigation context. Remove the legacy Dashboard `Análise de Performance` surface now that KPI/attention/aging/recent-activity replacements exist, and preserve a clear reproducible path to the existing Reports workspace for deeper analysis so useful analytics are not silently discarded. Do not create a competing analytics/accounting path, alter DR-03/04/05/06 behavior, perform DR-08 Reports analytical refinement or begin later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-08 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.

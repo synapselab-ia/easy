@@ -36,7 +36,7 @@ Current P10-S3 state:
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
   - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
-  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `CURRENT / AUTHORIZED`.**
+  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `DONE / INTEGRATED — PR #122`; DR-07 remove Dashboard Performance + contextual Reports handoff `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -580,6 +580,37 @@ Validation/integration evidence:
 
 No failed D-019 objective gate was waived. The post-integration DR-05 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
 
+## D-035 DR-06 closure — recent registrations + quick actions
+
+PR #122 completed the remaining bounded operational Dashboard context without changing the transaction write path or canonical snapshot semantics.
+
+Accepted result:
+
+- `DashboardQuickActions` adds page-level `+ Pedido`, `+ Pagamento` and `+ Sinal` actions using the existing `/transactions?type=order|payment|signal` route/type context and existing `TransactionForm` write path;
+- `RecentRegistrations` consumes `DashboardSnapshot.recentRegistrations` exactly in its prepared canonical `createdAt` order and does not re-sort, rebuild effective-transaction logic or inspect reversal chains itself;
+- rows distinguish `Pedido`, `Pagamento` and `Sinal` textually, show reseller and pt-BR value, and retain registration timestamp context;
+- financial occurrence date is shown when its calendar day differs from registration, preserving the distinction between `createdAt` and D-014 occurrence semantics;
+- the prepared snapshot keeps reversed registrations excluded;
+- selecting a row uses the existing `/resellers/:id` detail/history route;
+- loading/empty states and keyboard-accessible row/button semantics are covered by focused tests;
+- the Dashboard priority remains `KPIs -> atenção -> aging -> recent activity`; `PerformanceAnalysisSection` remains present and unchanged for DR-07;
+- no accounting/FIFO/domain, database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Validation/integration evidence:
+
+- feature head: `c889e2ad73f13d2c6804a8248863d214d27c50e2`;
+- exact GitHub-generated merge ref checked out by Actions: `2b17e6c8fffd477e7716dd1ac4ad5e31848af0af`;
+- validated tree: `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f`;
+- D-019 run/job: `33126181592` / `98704779945`;
+- ESLint: 0 errors / 105 warnings;
+- Vitest: 70 files / 304 tests PASS, including `RecentRegistrations` 4/4, `DashboardQuickActions` 1/1 and `DashboardPage` 3/3;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #122 squash-integrated `develop`: `1425fe0736dbf919e47c9c0c5bfb593331cec469`;
+- integrated tree: `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f` — exact tree equivalence PASS.
+
+No failed D-019 objective gate was waived. The post-integration DR-06 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
+
 ## Historical operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
@@ -610,7 +641,7 @@ Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` s
 
 ## D-035 — Dashboard + Reports core redesign
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-06 CURRENT`  
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-07 CURRENT`  
 **Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
 
 Accepted product direction:
@@ -620,13 +651,14 @@ Accepted product direction:
 - current-position values are as-of-today and exclude later future occurrences until their occurrence date;
 - `Precisa de atenção` is one deduplicated reseller-per-row action center consuming canonical snapshot rows;
 - `Carteira por idade` is compact exact-value + percentage context consuming canonical snapshot buckets;
-- recent effective registrations and quick order/payment/signal actions are target operational context;
+- recent effective registrations and quick order/payment/signal actions are now integrated operational context;
 - large 90/180/360 Performance/Pareto/current-debtor/ranking content leaves the target Dashboard only after useful analysis is re-homed or handed off to Reports;
 - Reports refinements stay on canonical `FinancialReport` semantics;
 - DR-02 established one coherent Dashboard read-only projection before the major visual redesign;
 - DR-03 established the accepted four-card primary KPI row on that projection;
 - DR-04 established the deduplicated actionable attention center and removed the old duplicated alert lists;
-- DR-05 established compact exact-value + percentage aging and removed the large default donut without changing aging semantics.
+- DR-05 established compact exact-value + percentage aging and removed the large default donut without changing aging semantics;
+- DR-06 established recent-registration confirmation context and existing-route quick actions without adding a second write path.
 
 Ordered sequence:
 
@@ -635,12 +667,12 @@ Ordered sequence:
 3. **DR-03 DONE / INTEGRATED — primary KPI row — PR #116.**
 4. **DR-04 DONE / INTEGRATED — `Precisa de atenção` action center — PR #118.**
 5. **DR-05 DONE / INTEGRATED — compact carteira aging — PR #120.**
-6. **DR-06 CURRENT / AUTHORIZED — recent registrations + quick actions.**
-7. **DR-07 QUEUED / NOT CURRENT — remove Dashboard Performance block + contextual Reports handoff.**
+6. **DR-06 DONE / INTEGRATED — recent registrations + quick actions — PR #122.**
+7. **DR-07 CURRENT / AUTHORIZED — remove Dashboard Performance block + contextual Reports handoff.**
 8. **DR-08 QUEUED / NOT CURRENT — Reports analytical refinement.**
 9. **DR-09 QUEUED / NOT CURRENT — final Dashboard/Reports UX and efficiency acceptance.**
 
-Only `DR-06` is executable next. Do not bundle `DR-07` or later work into the same task.
+Only `DR-07` is executable next. Do not bundle `DR-08` or later work into the same task.
 
 ## Startup protocol for a new conversation
 
@@ -666,4 +698,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only D-035 `DR-06 — recent registrations + quick actions`. First verify the integrated DR-05 compact aging block, the DR-02 `DashboardSnapshot.recentRegistrations` contract, the existing transaction route/type/reseller context and the current Dashboard page header/layout. Add a compact `Últimos lançamentos registrados` block consuming the prepared recent effective registrations in their canonical `createdAt` order: distinguish `Pedido`, `Pagamento` and `Sinal`, show reseller and value, show financial occurrence date when it differs from the registration calendar date or otherwise needs disambiguation, keep reversed rows excluded by the prepared projection, and navigate a selected row to the related reseller detail/history when feasible. Add compact page-level `+ Pedido`, `+ Pagamento` and `+ Sinal` actions by reusing the existing transaction route/type context; do not create a second transaction form or write path. Preserve the priority order `KPIs -> atenção -> aging -> recent activity` and responsive/loading/empty/accessibility semantics. Do not alter DR-05 aging, remove/re-home the Performance block reserved for DR-07, refine Reports, or begin any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-07 if DR-06 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only D-035 `DR-07 — remove Dashboard Performance block + contextual Reports handoff`. First verify the integrated DR-06 operational Dashboard, the current `PerformanceAnalysisSection` / `usePerformanceAnalysis` surface and the existing `Relatórios` route/navigation context. Remove the legacy `Análise de Performance` block from the Dashboard now that the accepted KPI, attention, aging and recent-activity replacements are integrated, and preserve a clear contextual path from the Dashboard to the existing Reports workspace for deeper analysis; do not silently discard useful analytics or create a competing analytical/accounting model. Preserve the operational priority `KPIs -> atenção -> aging -> recent activity`, existing DR-03/04/05/06 behavior and responsive/loading/empty/accessibility semantics. Do not perform the DR-08 Reports analytical refinement, alter canonical `FinancialReport` accounting semantics, or begin any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-08 if DR-07 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
