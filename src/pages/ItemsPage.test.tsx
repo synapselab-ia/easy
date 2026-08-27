@@ -28,6 +28,22 @@ vi.mock('../components/ui/SearchableSelect', () => ({
     ),
 }));
 
+vi.mock('../components/ui/select', () => ({
+    Select: ({ value, onValueChange, children }: any) => (
+        <select
+            data-testid="mock-select"
+            value={value}
+            onChange={(event) => onValueChange(event.target.value)}
+        >
+            {children}
+        </select>
+    ),
+    SelectContent: ({ children }: any) => <>{children}</>,
+    SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+    SelectTrigger: () => null,
+    SelectValue: () => null,
+}));
+
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
@@ -87,7 +103,7 @@ describe('ItemsPage Integration', () => {
         fireEvent.change(priceInput, { target: { value: '150.50' } });
         fireEvent.change(categoryInput, { target: { value: String(categoryId) } });
 
-        const subcategoryInput = screen.getByLabelText(/Subcategoria/i);
+        const subcategoryInput = screen.getByLabelText(/Subcategoria \(opcional\)/i);
         fireEvent.change(subcategoryInput, { target: { value: String(subcategoryId) } });
         fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
@@ -139,5 +155,102 @@ describe('ItemsPage Integration', () => {
             expect(screen.getByText('Ativo')).toBeInTheDocument();
             expect(screen.getByRole('button', { name: 'Arquivar' })).toBeInTheDocument();
         });
+    });
+
+    it('searches items and combines category, subcategory and lifecycle filters', async () => {
+        const signageCategoryId = await db.categories.add({
+            name: 'Sinalização',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        const pvcSubcategoryId = await db.subcategories.add({
+            categoryId: signageCategoryId,
+            name: 'PVC',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+
+        await db.items.bulkAdd([
+            {
+                name: 'Caneca Árvore',
+                basePrice: 25,
+                isActive: true,
+                categoryId,
+                subcategoryId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: 'Caneca Arquivada',
+                basePrice: 20,
+                isActive: false,
+                categoryId,
+                subcategoryId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: 'Placa PVC',
+                basePrice: 30,
+                isActive: true,
+                categoryId: signageCategoryId,
+                subcategoryId: pvcSubcategoryId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: 'Item Legado',
+                basePrice: 15,
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        ]);
+
+        render(<ItemsPage />, { wrapper });
+
+        expect(await screen.findByText('Caneca Árvore')).toBeInTheDocument();
+        expect(screen.getByText('Placa PVC')).toBeInTheDocument();
+
+        const searchInput = screen.getByLabelText('Buscar item');
+        fireEvent.change(searchInput, { target: { value: 'arvore' } });
+        await waitFor(() => {
+            expect(screen.getByText('Caneca Árvore')).toBeInTheDocument();
+            expect(screen.queryByText('Caneca Arquivada')).not.toBeInTheDocument();
+            expect(screen.queryByText('Placa PVC')).not.toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+        const categoryFilter = screen.getByLabelText('Filtrar por categoria');
+        fireEvent.change(categoryFilter, { target: { value: String(categoryId) } });
+        const subcategoryFilter = screen.getByLabelText('Filtrar por subcategoria');
+        expect(subcategoryFilter).not.toBeDisabled();
+        fireEvent.change(subcategoryFilter, { target: { value: String(subcategoryId) } });
+
+        await waitFor(() => {
+            expect(screen.getByText('Caneca Árvore')).toBeInTheDocument();
+            expect(screen.getByText('Caneca Arquivada')).toBeInTheDocument();
+            expect(screen.queryByText('Placa PVC')).not.toBeInTheDocument();
+            expect(screen.queryByText('Item Legado')).not.toBeInTheDocument();
+        });
+
+        fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'inactive' } });
+        await waitFor(() => {
+            expect(screen.getByText('Caneca Arquivada')).toBeInTheDocument();
+            expect(screen.queryByText('Caneca Árvore')).not.toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+        fireEvent.change(screen.getByLabelText('Filtrar por categoria'), { target: { value: 'unclassified' } });
+        await waitFor(() => {
+            expect(screen.getByText('Item Legado')).toBeInTheDocument();
+            expect(screen.queryByText('Caneca Árvore')).not.toBeInTheDocument();
+        });
+
+        fireEvent.change(searchInput, { target: { value: 'inexistente' } });
+        expect(await screen.findByText('Nenhum item encontrado com os filtros atuais.')).toBeInTheDocument();
     });
 });
