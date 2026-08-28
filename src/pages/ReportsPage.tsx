@@ -8,7 +8,7 @@ import {
     FileDown,
     PackageSearch,
     ReceiptText,
-    ShoppingBag,
+    Scale,
     Users,
     WalletCards,
 } from 'lucide-react';
@@ -33,6 +33,7 @@ import {
     generateFinancialReportPdf,
     type FinancialReportPdfOptions,
 } from '../services/financialReportPdfService';
+import { ParetoChart } from '../components/dashboard/ParetoChart';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -62,6 +63,9 @@ const compactCurrencyFormatter = new Intl.NumberFormat('pt-BR', {
 
 type ReportTab = 'summary' | 'categories' | 'resellers';
 type PeriodPreset = 'today' | 'week' | 'month' | 'previous-month' | 'year' | 'custom';
+type ProductSort = 'sales' | 'quantity' | 'orders';
+type ResellerSort = 'sales' | 'receipts' | 'openDebt' | 'orders';
+type ComparisonDirection = 'higher' | 'lower' | 'neutral';
 
 const PERIOD_PRESET_OPTIONS: Array<{ value: PeriodPreset; label: string }> = [
     { value: 'today', label: 'Hoje' },
@@ -70,6 +74,19 @@ const PERIOD_PRESET_OPTIONS: Array<{ value: PeriodPreset; label: string }> = [
     { value: 'previous-month', label: 'Mês passado' },
     { value: 'year', label: 'Este ano' },
     { value: 'custom', label: 'Personalizado' },
+];
+
+const PRODUCT_SORT_OPTIONS: Array<{ value: ProductSort; label: string }> = [
+    { value: 'sales', label: 'Maior venda' },
+    { value: 'quantity', label: 'Maior quantidade' },
+    { value: 'orders', label: 'Mais pedidos' },
+];
+
+const RESELLER_SORT_OPTIONS: Array<{ value: ResellerSort; label: string }> = [
+    { value: 'sales', label: 'Maior venda' },
+    { value: 'receipts', label: 'Maior recebimento' },
+    { value: 'openDebt', label: 'Maior saldo em aberto' },
+    { value: 'orders', label: 'Mais pedidos' },
 ];
 
 function inputDate(date: Date) {
@@ -107,10 +124,26 @@ function presetRange(preset: PeriodPreset, now = new Date()) {
     }
 }
 
-function comparisonText(value: number | null) {
-    if (value === null) return 'Sem base comparável no período anterior';
-    if (Math.abs(value) < 0.05) return 'Sem variação relevante vs. período anterior';
-    return `${value > 0 ? '+' : ''}${value.toFixed(1).replace('.', ',')}% vs. período anterior`;
+function normalizeSearch(value: string) {
+    return value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('pt-BR')
+        .trim();
+}
+
+function formatComparisonRange(range: FinancialReport['comparison']['previousRange']) {
+    return `${range.startDate.toLocaleDateString('pt-BR')} a ${range.endDate.toLocaleDateString('pt-BR')}`;
+}
+
+function comparisonText(
+    value: number | null,
+    previousRange: FinancialReport['comparison']['previousRange'],
+) {
+    const range = formatComparisonRange(previousRange);
+    if (value === null) return `Sem base comparável · ${range}`;
+    if (Math.abs(value) < 0.05) return `Sem variação relevante vs. ${range}`;
+    return `${value > 0 ? '+' : ''}${value.toFixed(1).replace('.', ',')}% vs. ${range}`;
 }
 
 function productClassification(categoryLabel: string, subcategoryLabel?: string) {
@@ -121,20 +154,30 @@ function SummaryMetric({
     title,
     value,
     comparison,
+    previousRange,
     icon,
-    lowerIsBetter = false,
+    comparisonDirection = 'higher',
     detail,
 }: {
     title: string;
     value: string;
     comparison: number | null;
+    previousRange: FinancialReport['comparison']['previousRange'];
     icon: React.ReactNode;
-    lowerIsBetter?: boolean;
+    comparisonDirection?: ComparisonDirection;
     detail?: string;
 }) {
     const changed = comparison !== null && Math.abs(comparison) >= 0.05;
-    const isGood = changed ? (lowerIsBetter ? comparison < 0 : comparison > 0) : false;
-    const isBad = changed ? !isGood : false;
+    const semanticChange = changed && comparisonDirection !== 'neutral';
+    const isGood = semanticChange && comparison !== null
+        ? (comparisonDirection === 'lower' ? comparison < 0 : comparison > 0)
+        : false;
+    const isBad = semanticChange && !isGood;
+    const comparisonClass = comparisonDirection === 'neutral' || !changed
+        ? 'text-muted-foreground'
+        : isBad
+            ? 'text-debt'
+            : 'text-payment';
 
     return (
         <Card className="shadow-none">
@@ -144,14 +187,14 @@ function SummaryMetric({
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold tracking-tight">{value}</div>
-                <div className="mt-2 flex items-center gap-1 text-xs">
-                    {changed && comparison !== null && (
+                <div className="mt-2 flex items-start gap-1 text-xs">
+                    {semanticChange && comparison !== null && (
                         comparison > 0
-                            ? <ArrowUpRight className={`h-3.5 w-3.5 ${isBad ? 'text-debt' : 'text-payment'}`} />
-                            : <ArrowDownRight className={`h-3.5 w-3.5 ${isBad ? 'text-debt' : 'text-payment'}`} />
+                            ? <ArrowUpRight className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${comparisonClass}`} />
+                            : <ArrowDownRight className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${comparisonClass}`} />
                     )}
-                    <span className={changed ? (isBad ? 'text-debt' : 'text-payment') : 'text-muted-foreground'}>
-                        {comparisonText(comparison)}
+                    <span className={comparisonClass}>
+                        {comparisonText(comparison, previousRange)}
                     </span>
                 </div>
                 {detail && <p className="mt-1 text-xs text-muted-foreground">{detail}</p>}
@@ -318,7 +361,7 @@ function SummaryView({ report }: { report: FinancialReport }) {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 border-t pt-3 text-sm">
                                     <div>
-                                        <p className="text-muted-foreground">Recebido</p>
+                                        <p className="text-muted-foreground">Recebimentos</p>
                                         <p className="font-medium text-payment">{currencyFormatter.format(topReseller.receipts)}</p>
                                     </div>
                                     <div>
@@ -341,6 +384,33 @@ function SummaryView({ report }: { report: FinancialReport }) {
 
 function CategoryView({ report }: { report: FinancialReport }) {
     const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+    const [productSearch, setProductSearch] = useState('');
+    const [productSort, setProductSort] = useState<ProductSort>('sales');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+
+    const categoryOptions = useMemo(() => {
+        const labels = Array.from(new Set(report.products.map(product => product.categoryLabel)))
+            .sort((left, right) => left.localeCompare(right, 'pt-BR'));
+        return [
+            { value: 'all', label: 'Todas as categorias' },
+            ...labels.map(label => ({ value: label, label })),
+        ];
+    }, [report.products]);
+
+    const visibleProducts = useMemo(() => {
+        const query = normalizeSearch(productSearch);
+        return report.products
+            .filter(product => categoryFilter === 'all' || product.categoryLabel === categoryFilter)
+            .filter(product => !query || normalizeSearch(product.label).includes(query))
+            .slice()
+            .sort((left, right) => {
+                let delta = 0;
+                if (productSort === 'quantity') delta = right.quantity - left.quantity;
+                else if (productSort === 'orders') delta = right.orderCount - left.orderCount;
+                else delta = right.grossValue - left.grossValue;
+                return delta !== 0 ? delta : left.label.localeCompare(right.label, 'pt-BR');
+            });
+    }, [categoryFilter, productSearch, productSort, report.products]);
 
     const toggle = (key: string) => {
         setExpanded(current => {
@@ -368,10 +438,55 @@ function CategoryView({ report }: { report: FinancialReport }) {
                     <CardHeader>
                         <CardTitle>Desempenho por produto</CardTitle>
                         <CardDescription>
-                            Ranking por valor vendido usando nome e classificação registrados em cada pedido.
+                            Investigue os snapshots históricos dos pedidos por nome, classificação e resultado no período.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-0">
+                    <CardContent className="space-y-4 p-0">
+                        <div className="grid gap-3 border-t px-5 pt-5 md:grid-cols-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="report-product-search">Buscar produto</Label>
+                                <Input
+                                    id="report-product-search"
+                                    value={productSearch}
+                                    onChange={event => setProductSearch(event.target.value)}
+                                    placeholder="Nome do produto"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Categoria histórica</Label>
+                                <Select
+                                    items={categoryOptions}
+                                    value={categoryFilter}
+                                    onValueChange={value => setCategoryFilter(value || 'all')}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Todas as categorias" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {categoryOptions.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Ordenar produtos</Label>
+                                <Select
+                                    items={PRODUCT_SORT_OPTIONS}
+                                    value={productSort}
+                                    onValueChange={value => setProductSort((value || 'sales') as ProductSort)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Ordenar" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {PRODUCT_SORT_OPTIONS.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                         <div className="overflow-x-auto border-t">
                             <Table>
                                 <TableHeader>
@@ -384,7 +499,13 @@ function CategoryView({ report }: { report: FinancialReport }) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {report.products.map(product => (
+                                    {visibleProducts.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                                                Nenhum produto corresponde aos filtros atuais.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : visibleProducts.map(product => (
                                         <TableRow
                                             key={`${product.itemId ?? 'legacy'}:${product.label}:${product.categoryLabel}:${product.subcategoryLabel ?? ''}`}
                                         >
@@ -469,49 +590,154 @@ function CategoryView({ report }: { report: FinancialReport }) {
 }
 
 function ResellerView({ report }: { report: FinancialReport }) {
+    const [resellerSearch, setResellerSearch] = useState('');
+    const [resellerSort, setResellerSort] = useState<ResellerSort>('sales');
+
+    const visibleResellers = useMemo(() => {
+        const query = normalizeSearch(resellerSearch);
+        return report.resellers
+            .filter(reseller => !query || normalizeSearch(reseller.name).includes(query))
+            .slice()
+            .sort((left, right) => {
+                let delta = 0;
+                if (resellerSort === 'receipts') delta = right.receipts - left.receipts;
+                else if (resellerSort === 'openDebt') delta = right.openDebt - left.openDebt;
+                else if (resellerSort === 'orders') delta = right.orderCount - left.orderCount;
+                else delta = right.sales - left.sales;
+                return delta !== 0 ? delta : left.name.localeCompare(right.name, 'pt-BR');
+            });
+    }, [report.resellers, resellerSearch, resellerSort]);
+
+    const { pareto, countTo80, topOpenBalances } = report.resellerAnalysis;
+
     return (
-        <Card className="overflow-hidden shadow-none">
-            <CardHeader>
-                <CardTitle>Revendedores</CardTitle>
-                <CardDescription>
-                    Vendas e recebimentos são do período; o valor em aberto considera todo o histórico até a data final.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-                <div className="overflow-x-auto border-t">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Revendedor</TableHead>
-                                <TableHead className="text-right">Pedidos</TableHead>
-                                <TableHead className="text-right">Vendas</TableHead>
-                                <TableHead className="text-right">Recebido</TableHead>
-                                <TableHead className="text-right">Em aberto</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {report.resellers.length === 0 ? (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <Card className="shadow-none">
+                    <CardHeader>
+                        <CardTitle className="text-base">Concentração de vendas</CardTitle>
+                        <CardDescription>
+                            Calculada somente sobre as vendas dos revendedores no período selecionado.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {pareto.length > 0 ? (
+                            <>
+                                <p className="text-2xl font-bold">{countTo80} revendedores</p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    concentram pelo menos 80% das vendas do período.
+                                </p>
+                            </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                Nenhuma venda de revendedor para analisar neste período.
+                            </p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-none">
+                    <CardHeader>
+                        <CardTitle className="text-base">Maiores saldos em aberto no fim</CardTitle>
+                        <CardDescription>
+                            Posição positiva reconstruída por todo o histórico até a data final; não significa inadimplência por si só.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {topOpenBalances.length > 0 ? (
+                            <div className="space-y-2">
+                                {topOpenBalances.map((item, index) => (
+                                    <div key={item.resellerId} className="flex items-center justify-between gap-4 text-sm">
+                                        <span className="min-w-0 truncate">
+                                            <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+                                            {item.resellerName}
+                                        </span>
+                                        <span className="shrink-0 font-semibold">{currencyFormatter.format(item.openDebt)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">Nenhum saldo positivo em aberto na data final.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {pareto.length > 0 && <ParetoChart data={pareto} />}
+
+            <Card className="overflow-hidden shadow-none">
+                <CardHeader>
+                    <CardTitle>Revendedores</CardTitle>
+                    <CardDescription>
+                        Vendas e recebimentos são do período; o saldo em aberto considera todo o histórico até a data final.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 p-0">
+                    <div className="grid gap-3 border-t px-5 pt-5 md:grid-cols-2">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="report-reseller-search">Buscar revendedor</Label>
+                            <Input
+                                id="report-reseller-search"
+                                value={resellerSearch}
+                                onChange={event => setResellerSearch(event.target.value)}
+                                placeholder="Nome do revendedor"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Ordenar revendedores</Label>
+                            <Select
+                                items={RESELLER_SORT_OPTIONS}
+                                value={resellerSort}
+                                onValueChange={value => setResellerSort((value || 'sales') as ResellerSort)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Ordenar" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {RESELLER_SORT_OPTIONS.map(option => (
+                                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto border-t">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
-                                        Nenhum revendedor com movimento ou saldo no período.
-                                    </TableCell>
+                                    <TableHead>Revendedor</TableHead>
+                                    <TableHead className="text-right">Pedidos</TableHead>
+                                    <TableHead className="text-right">Vendas</TableHead>
+                                    <TableHead className="text-right">Recebimentos</TableHead>
+                                    <TableHead className="text-right">Em aberto no fim</TableHead>
                                 </TableRow>
-                            ) : report.resellers.map(reseller => (
-                                <TableRow key={reseller.resellerId}>
-                                    <TableCell className="font-medium">{reseller.name}</TableCell>
-                                    <TableCell className="text-right">{reseller.orderCount}</TableCell>
-                                    <TableCell className="text-right">{currencyFormatter.format(reseller.sales)}</TableCell>
-                                    <TableCell className="text-right text-payment">{currencyFormatter.format(reseller.receipts)}</TableCell>
-                                    <TableCell className={`text-right font-medium ${reseller.openDebt > 0 ? 'text-debt' : ''}`}>
-                                        {currencyFormatter.format(reseller.openDebt)}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
+                            </TableHeader>
+                            <TableBody>
+                                {visibleResellers.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                                            {report.resellers.length === 0
+                                                ? 'Nenhum revendedor com movimento ou saldo no período.'
+                                                : 'Nenhum revendedor corresponde à busca atual.'}
+                                        </TableCell>
+                                    </TableRow>
+                                ) : visibleResellers.map(reseller => (
+                                    <TableRow key={reseller.resellerId}>
+                                        <TableCell className="font-medium">{reseller.name}</TableCell>
+                                        <TableCell className="text-right">{reseller.orderCount}</TableCell>
+                                        <TableCell className="text-right">{currencyFormatter.format(reseller.sales)}</TableCell>
+                                        <TableCell className="text-right text-payment">{currencyFormatter.format(reseller.receipts)}</TableCell>
+                                        <TableCell className={`text-right font-medium ${reseller.openDebt > 0 ? 'text-debt' : ''}`}>
+                                            {currencyFormatter.format(reseller.openDebt)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 }
 
@@ -699,6 +925,7 @@ export default function ReportsPage() {
                             title="Vendas"
                             value={currencyFormatter.format(report.summary.sales)}
                             comparison={report.comparison.salesChangePercent}
+                            previousRange={report.comparison.previousRange}
                             icon={<CircleDollarSign className="h-4 w-4" />}
                             detail={`${report.summary.itemQuantity} itens em ${report.summary.orderCount} pedidos`}
                         />
@@ -706,22 +933,27 @@ export default function ReportsPage() {
                             title="Recebimentos"
                             value={currencyFormatter.format(report.summary.receipts)}
                             comparison={report.comparison.receiptsChangePercent}
+                            previousRange={report.comparison.previousRange}
                             icon={<WalletCards className="h-4 w-4" />}
+                            detail="Pagamentos + sinais no período"
+                        />
+                        <SummaryMetric
+                            title="Movimento líquido"
+                            value={currencyFormatter.format(report.summary.periodNet)}
+                            comparison={report.comparison.periodNetChangePercent}
+                            previousRange={report.comparison.previousRange}
+                            comparisonDirection="neutral"
+                            icon={<Scale className="h-4 w-4" />}
+                            detail="Vendas menos recebimentos no período"
                         />
                         <SummaryMetric
                             title="Em aberto no fim"
                             value={currencyFormatter.format(report.summary.openDebt)}
                             comparison={report.comparison.openDebtChangePercent}
+                            previousRange={report.comparison.previousRange}
                             icon={<ReceiptText className="h-4 w-4" />}
-                            lowerIsBetter
+                            comparisonDirection="lower"
                             detail="Considera todo o histórico até a data final"
-                        />
-                        <SummaryMetric
-                            title="Pedidos"
-                            value={report.summary.orderCount.toString()}
-                            comparison={report.comparison.orderCountChangePercent}
-                            icon={<ShoppingBag className="h-4 w-4" />}
-                            detail={`Movimento líquido: ${currencyFormatter.format(report.summary.periodNet)}`}
                         />
                     </div>
 
