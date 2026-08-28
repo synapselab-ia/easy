@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-28 — D-035 DR-08 Reports analytical refinement integrated
+
+D-035 `DR-08` completed the bounded analytical refinement of the existing Reports workspace on the canonical `FinancialReport` path. PR #125 makes the primary report hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`, exposes the actual equal-length previous comparison range, adds bounded product/reseller investigation controls, re-homes Pareto/concentration over selected-period reseller sales and presents largest positive balances explicitly as report-end open balances rather than `inadimplência`.
+
+The canonical report model now carries previous-period movement-net comparison and one `resellerAnalysis` projection for selected-period Pareto plus report-end open-balance highlights. `ReportsPage` consumes that same model; the downloadable financial PDF remains an adapter over the canonical report object. The Dashboard operational hierarchy and its Reports handoff remain unchanged, and the legacy Dashboard-only `90/180/360` analytical path was not resurrected.
+
+The first D-019 run/job `33162503781` / `98820074403` failed on a single ambiguous new UI-test query for `Recebimentos`; focused DR-08 domain/PDF coverage was already green and nothing was integrated. Only the test selector was made specific to the primary KPI title, and the complete gate was rerun. No failed gate was waived.
+
+Final D-019 on PR #125: feature head `ab3123898d493a011448409e7e98ea86ca1aa8ca`, merge ref `b08cd97e8dc2ad4c0755fcedcd0a01ebc9b72dd6`, run/job `33162771608` / `98820945908`: 0 lint errors / 108 warnings; 72 files / 309 Vitest PASS; 17/17 Playwright PASS; TypeScript + production Vite build PASS. Validated tree: `2f36a92aecd12331fae57b39b693f84420c1d81c`.
+
+PR #125 was squash-integrated into `develop` as `c3e43f37802d1e487a50097689c385f8e3de8b78`; its tree is also `2f36a92aecd12331fae57b39b693f84420c1d81c`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, Dashboard operational, recovery or automatic Vercel publication change occurred, and `main` remains untouched. DR-08 is closed and `DR-09 — final Dashboard/Reports UX and efficiency acceptance` is now the sole current authorized item; DR-09 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 DR-07 Dashboard Performance removed with Reports handoff
 
 D-035 `DR-07` completed the bounded operational Dashboard separation from deeper analytics. PR #124 removes the rendered legacy `Análise de Performance` surface after the accepted KPI, attention, aging and recent-activity blocks and adds one compact `Análise detalhada` handoff with explicit `Abrir Relatórios` navigation to the existing `/reports` workspace.
@@ -82,7 +96,7 @@ The snapshot centralizes month-to-today and today sales/receipts/order/item cont
 
 Final D-019 on PR #114: head `e02ab13eb8987cc6ea4865f4b3c39211380e9515`, merge ref `3e09a992a20e3edf72df093c312581c88e04457b`, run/job `33115854899` / `98670186895`: 0 lint errors / 105 warnings; 66 files / 290 Vitest PASS including 3/3 focused snapshot tests; 17/17 Playwright PASS; production build PASS. Validated tree: `b9b5040abd6f217f41d4bba12f21ae05d06271dc`.
 
-PR #114 was squash-integrated into `develop` as `4e3a9b28174cb64ad820f4ec60356194d1a760bb`; its tree is also `b9b5040abd6f217f41d4bba12f21ae05d06271dc`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, recovery, automatic Vercel deployment or `main` publication change occurred. DR-02 is closed and `DR-03 — primary Dashboard KPI row` is now the sole current authorized D-035 item; DR-03 was not started in this task.
+PR #114 was squash-integrated into `develop` as `4e3a9b28174cb64ad820f4ec60356194d1a760bb`; its tree is also `b9b5040abd6f217f41d4bba12f21ae05d06271dc`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, recovery, automatic Vercel deployment or `main` publication change occurred. DR-02 is closed and `DR-03 — canonical Dashboard KPI row` is now the sole current authorized D-035 item; DR-03 was not started in this task.
 
 ---
 
@@ -108,7 +122,7 @@ Same-day and past dates keep the existing submit path. When the selected occurre
 
 Focused occurrence-form coverage now has 3 passing tests, including proof that no transaction exists before future-date confirmation and that the explicitly confirmed year/month/day is preserved. Final D-019 on PR #111: head `6b0e86139265fdf06f482ae2fdb17d275212a79a`, merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`, run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; 17/17 Playwright PASS; production build PASS. Validated tree: `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`.
 
-PR #111 was squash-integrated into `develop` as `bee3e2cee2852c9bf0683fe5d564b34cef569c8a`; its Git tree is also `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, transaction-accounting, correction/reversal/history, recovery, automatic Vercel deployment or `main` publication change occurred. Change #14 remains deferred/on hold pending a broader Dashboard review, and no later bounded early-use queue item is authorized; no #16 was created.
+PR #111 was squash-integrated into `develop` as `bee3e2cee2852c9bf0685fe5d564b34cef569c8a`; its Git tree is also `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, transaction-accounting, correction/reversal/history, recovery, automatic Vercel deployment or `main` publication change occurred. Change #14 remains deferred/on hold pending a broader Dashboard review, and no later bounded early-use queue item is authorized; no #16 was created.
 
 ---
 

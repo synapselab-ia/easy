@@ -1,503 +1,260 @@
-# Easy V2 — Dashboard + Reports Core Product Spec
+# Easy V2 — Project Spec
 
-**Status:** ACCEPTED PRODUCT DIRECTION — D-035  
-**Updated:** 2026-08-27  
-**Initiative:** Dashboard + Reports core decision system  
-**Execution model:** one bounded `DR-*` item at a time
+**Status:** canonical V2 product reference  
+**Repository:** `synapselab-ia/easy`  
+**Integration branch:** `develop`  
+**Updated:** 2026-08-28
 
 ## 1. Purpose
 
-Dashboard and Reports are the two primary business-intelligence surfaces of Easy. They must work as one coherent decision system without duplicating roles.
+Easy is a web application for reseller orders, payments/signals, balances, statements, operational analytics, financial reporting and portable recovery.
 
-The Dashboard is the daily operational surface. Its mission is:
+Easy V2 evolves the existing application rather than rewriting it. It must preserve accepted financial/audit behavior while becoming safer, recoverable, durable and maintainable.
 
-> **In at most about 10 seconds, show how the business stands now, what happened recently, where there is risk and what the next useful action is.**
+## 2. Final architecture objective
 
-Reports is the analytical workspace. Its mission is:
+D-029 remains the final architecture direction:
 
-> **Explain a selected period in depth, compare it with prior performance, support investigation by product/category/reseller and produce a presentable PDF from the same canonical calculations.**
+- React + TypeScript + Vite;
+- Vercel frontend hosting;
+- Supabase/Postgres canonical business persistence;
+- Supabase Auth + RLS + approved-operator authorization;
+- no privileged/service credential in browser code;
+- Dexie/IndexedDB as transition/cache, not hosted source of truth;
+- atomic database/server boundaries for financial create/reverse/correct operations;
+- independent logical Easy JSON backup for portability and contingency.
 
-The redesign must make both surfaces stronger by removing overlap rather than adding more permanent Dashboard widgets.
+## 3. Current sequencing — D-031
 
-## 2. Product boundary
+The operator authorized runtime-first controlled early use before the D-030 unattended off-site backup proof is completed.
 
-### Dashboard answers
+Current state:
 
-- What is happening in the current operating period?
-- What is the current receivable position as of today?
-- What needs attention now?
-- What was registered recently?
-- Where should the operator click next?
+- P10-S3-I2-I2 trusted-PC/off-site/retention/restore acceptance is `ON_HOLD`;
+- the Supabase/Auth runtime and candidate onboarding are accepted;
+- controlled clean-start early use is active;
+- `main` remains stable and untouched;
+- Vercel publication remains manual/candidate;
+- definitive cutover remains unauthorized.
 
-Dashboard characteristics:
+D-030 is not declared passed or cancelled.
 
-- glance-oriented;
-- no configurable analytical period selector;
-- fixed, explicit periods in labels;
-- small number of high-value indicators;
-- exceptions and action paths before deep analysis;
-- mobile priority order must match desktop priority order.
+## 4. Early-use recovery posture — D-032
 
-### Reports answers
+Hosted cloud early use uses a store-global manual logical-backup boundary:
 
-- What happened in a selected period?
-- How did it compare with the immediately preceding equal-length period?
-- Which products/categories/revendedores drove the result?
-- How did sales and receipts evolve through the interval?
-- What is the closing open position as of the report end?
-- Which analysis should be exported to PDF?
+1. Supabase/Postgres holds canonical business data.
+2. Approved operators access it through Auth/RLS/allow-list controls.
+3. Backup v2 export reads the canonical cloud dataset.
+4. The operator stores the JSON outside Easy and explicitly confirms that action.
+5. That confirmed checkpoint is shared by all approved devices.
+6. Normal writes are permitted only while the checkpoint age is strictly `< 24h`.
+7. At `>= 24h`, the database blocks business writes; clients also fail closed when cloud recovery health cannot be verified.
+8. Cloud restore remains checkpointed, server-atomic and post-restore verified.
 
-Reports characteristics:
+A fresh real global checkpoint has been exported/stored/confirmed on the updated candidate, so D-032 is operationally initialized.
 
-- period-controlled;
-- analysis-oriented;
-- sortable/searchable detailed views where useful;
-- charts are allowed when they materially improve investigation;
-- screen and PDF continue to share canonical `FinancialReport` calculations.
+This temporary mode is not D-030 durability acceptance.
 
-## 3. Canonical financial semantics
+## 5. Product objectives
 
-D-014, D-015, D-025, D-033 and D-034 remain authoritative. D-035 changes product projection/hierarchy, not accounting.
+The V2 must be:
 
-Mandatory rules:
+1. **Correct** — balances/history remain internally consistent.
+2. **Recoverable** — export/restore paths are validated and tested.
+3. **Auditable** — financial corrections preserve history.
+4. **Consistent** — dashboard, reseller detail, reports, PDF, search and analytics tell the same story.
+5. **Secure** — cloud data requires authenticated approved-operator access.
+6. **Usable** — routine operations remain efficient on desktop/mobile.
+7. **Testable** — D-019 catches critical regressions before integration/publication.
+8. **Maintainable** — canonical docs reconstruct current state without chat history.
+9. **Portable** — cloud persistence never removes independent logical export.
 
-1. `occurredAt` is financial occurrence time; `createdAt` is registration/audit time.
-2. Reversed transactions remain audit-visible but contribute zero to effective financial/reporting values.
-3. Monthly Dashboard flow uses the operator-local calendar month **from month start through the end of the operator's current local day**.
-4. `Vendas este mês` = effective order gross value in that month-to-today range.
-5. `Recebimentos este mês` = effective payments + signals in that month-to-today range.
-6. `Carteira em aberto` is an **as-of-today** position: sum of positive reseller balances reconstructed from effective history through the end of the operator's current local day.
-7. Future occurrence dates later than the operator's current local day are legitimate under D-014/#15 but **must not contaminate current-position KPIs or aging before their occurrence date**.
-8. Debt aging is reconstructed through the same as-of-today cutoff and retains accepted FIFO allocation semantics.
-9. Existing age thresholds remain unchanged unless separately reauthorized: `Recente` 0–6 days, `Em atenção` 7–30 days, `Crítico` >30 days.
-10. Dashboard and Reports must not create competing financial interpretations. Reuse accepted domain helpers / `FinancialReport` where their semantics match.
+## 6. Critical business invariants
 
-## 4. Target Dashboard hierarchy
+The hosted runtime must preserve:
 
-The target information order is:
+- reversible reseller/item/category/subcategory lifecycle where applicable;
+- strict active references for new operations while historical rows remain preserved;
+- audited reversal rather than destructive financial-history deletion;
+- atomic linked replacement correction;
+- `occurredAt` distinct from registration/audit time;
+- accepted statement and FIFO debt-aging semantics;
+- immutable transaction-time item/category/subcategory snapshots;
+- non-inventive legacy classification semantics;
+- D-026 full-field correction rules;
+- exact logical-backup validation and recovery freshness enforcement;
+- centralized report calculations rather than separate screen/PDF accounting logic.
 
-1. page identity + quick transaction actions;
-2. four primary KPIs;
-3. `Precisa de atenção` action center;
-4. compact `Carteira por idade` context;
-5. recent effective registrations;
-6. contextual path to deeper Reports analysis.
+## 7. Catalog classification — D-033
 
-Large analytical charts, long ranking blocks and configurable analysis windows do not belong in the target Dashboard.
+The accepted catalog model is intentionally shallow:
 
-## 5. Primary Dashboard KPIs
-
-Desktop target: four compact cards. Mobile may use a 1-column or 2-column arrangement, but the information order is preserved.
-
-### 5.1 Vendas este mês
-
-Primary value:
-
-- gross effective order value from local month start through today.
-
-Secondary context:
-
-- month order count;
-- month item quantity;
-- optional compact `Hoje` context such as today's order count/value.
-
-Today's value is secondary context only; it must not become another permanent top-level KPI card.
-
-### 5.2 Recebimentos este mês
-
-Primary value:
-
-- effective payments + signals from local month start through today.
-
-Secondary context:
-
-- clear label `Pagamentos + sinais`;
-- optional compact amount received today.
-
-A zero-receipts day must not make the card useless because the primary metric is month-to-today.
-
-### 5.3 Carteira em aberto
-
-Primary value:
-
-- current positive open balance across resellers as of the end of today.
-
-Secondary context:
-
-- number of resellers with positive current open balance.
-
-Use `Carteira em aberto`, not `Dívida Total`, because recent legitimate open balances are not automatically delinquent.
-
-### 5.4 Crítico > 30 dias
-
-Primary value:
-
-- sum of outstanding FIFO lots older than 30 days as of today.
-
-Secondary context:
-
-- number of unique resellers with any critical amount;
-- oldest critical age when one exists.
-
-This is the risk KPI. It must not be replaced by `Maior devedor atual`, which can be large but recent.
-
-## 6. `Precisa de atenção` action center
-
-This is the highest-priority operational block after the KPIs.
-
-### One reseller, one row
-
-A reseller must not appear once in `Crítico` and again in `Em atenção`.
-
-Classification:
-
-1. if the reseller has any critical outstanding amount, status = `CRÍTICO`;
-2. otherwise, if the reseller has any attention outstanding amount, status = `ATENÇÃO`;
-3. recent-only open balance does not enter this action center.
-
-Each row should expose at least:
-
-- reseller name;
-- status text (`CRÍTICO` / `ATENÇÃO`), never color alone;
-- age in days of the oldest outstanding lot that determines the status;
-- amount in the determining alert class;
-- total current open balance when materially different from the alert-class amount.
-
-### Priority order
-
-Use an explainable deterministic order, not an opaque score:
-
-1. severity (`CRÍTICO` before `ATENÇÃO`);
-2. older determining outstanding occurrence first;
-3. larger determining alert amount first;
-4. reseller name as stable tie-breaker.
-
-### Actions
-
-- clicking a reseller opens the existing reseller detail/history surface;
-- a later bounded refinement may expose a direct `Registrar pagamento` action by reusing the existing transaction route with `type` + `resellerId` context;
-- do not create a parallel collection/cobrança persistence model merely for the Dashboard.
-
-### Density
-
-The initial view should be compact (for example top 5–8 rows depending on responsive space), with explicit filters/tabs for `Todos`, `Críticos`, `Em atenção` when useful. Avoid rendering two separate ten-row lists before the rest of the Dashboard.
-
-Empty states must describe the business condition, e.g. `Nenhuma pendência crítica`, not the misleading `Nenhum revendedor encontrado`.
-
-## 7. Carteira por idade
-
-Retain the accepted three aging buckets but replace the large donut as the default target presentation.
-
-Each bucket must expose both value and percentage:
-
-- `Recente (0–6d)`;
-- `Em atenção (7–30d)`;
-- `Crítico (>30d)`.
-
-Preferred presentation is a compact segmented bar or compact rows/bars, because exact value + percentage should be readable without hovering a chart.
-
-This section is context; the action center above it is where the operator acts.
-
-## 8. Recent effective registrations
-
-Add a compact block for confidence in recent data entry, conceptually `Últimos lançamentos registrados`.
+```text
+Category -> optional Subcategory -> Item
+```
 
 Rules:
 
-- show a small number of latest effective transaction rows ordered by `createdAt` descending;
-- distinguish `Pedido`, `Pagamento` and `Sinal`;
-- show reseller and value;
-- show financial occurrence date when it differs from the registration calendar date or otherwise needs disambiguation;
-- reversed rows are not presented as current effective activity in this compact feed; immutable audit detail remains in existing history surfaces;
-- selecting a row should lead to the related reseller detail/history when feasible.
+- exactly one optional subcategory level; recursive trees are out of scope;
+- every subcategory belongs to one category;
+- an item's subcategory, when present, must belong to its selected category;
+- active items cannot use inactive classification;
+- active references protect category/subcategory archival;
+- legacy unclassified data stays unclassified rather than receiving guessed values;
+- order history captures transaction-time category/subcategory snapshots;
+- later catalog edits do not rewrite prior transactions;
+- Backup v2 schema 6 contains subcategories and related references/snapshots;
+- supported schema 4/5 backups normalize to schema 6 without inventing classification.
 
-This block is not a replacement for a global audit log.
+D-033 is implemented and integrated through PR #82.
 
-## 9. Quick actions
+## 8. Financial reporting — D-034
 
-Expose compact page-level actions for the three routine transaction intents:
+The accepted report product is a dedicated workspace, separate from the glance-oriented Dashboard.
 
-- `+ Pedido`;
-- `+ Pagamento`;
-- `+ Sinal`.
+The report workspace must support:
 
-Reuse the existing transaction route/type context. Do not create a second transaction form.
+- common period presets and a custom date interval;
+- summary KPIs for sales, receipts, open debt at report end and orders;
+- comparison against the immediately preceding equal-length period;
+- sales/receipts timeline;
+- product/item analytics plus category -> subcategory analysis;
+- reseller performance;
+- downloadable financial PDF whose calculations come from the same canonical report model as the screen.
 
-## 10. Content removed from the target Dashboard
+Accounting semantics:
 
-The following current Dashboard elements are not part of the target operational surface:
+1. Range inclusion uses financial occurrence time (`transactionOccurredAt`), not registration time.
+2. Reversed transactions remain historical/auditable but have zero effective report contribution.
+3. `Vendas` = effective order gross value inside the range.
+4. `Recebimentos` = effective payment + signal value inside the range.
+5. `Movimento líquido` = period sales minus period receipts.
+6. `Em aberto no fim` = sum of positive reseller balances reconstructed from all effective history through the selected end date; it is not the period net.
+7. Product and category/subcategory analytics use immutable transaction-time order snapshots and retain explicit legacy/unclassified groups rather than reclassifying history from current catalog data.
+8. Reseller rows may combine period activity with an as-of-end closing balance, and the UI/PDF must label this distinction clearly.
+9. PDF section selection changes presentation only; it does not create a second reporting calculation path.
 
-- configurable `90 / 180 / 360` performance window;
-- `Concentração de Vendas` as a permanent Dashboard card;
-- large Pareto 80/20 chart;
-- `Maior devedor atual` card;
-- `Ranking de Inadimplência` chart.
+D-034 is intentionally read-only and does not add a persistence schema, mutation RPC, recovery exception or deployment exception.
 
-Reasons:
+## 8A. Dashboard + Reports core decision system — D-035
 
-- they are analytical rather than glance/action oriented;
-- several repeat the same open-balance theme;
-- `Maior devedor` is not necessarily the highest-risk reseller;
-- the current `Ranking de Inadimplência` actually ranks positive open balances and can label recent legitimate debt as delinquency;
-- the current performance period selector changes sales/Pareto but not accumulated current-debt ranking, which creates ambiguous period semantics.
+The operator accepted a second-pass product audit that treats Dashboard and Reports as the core management surfaces of Easy rather than independent feature collections.
 
-Do not delete useful analytical capability merely to clean the Dashboard. Re-home applicable analysis in Reports using canonical report semantics.
+Accepted boundary:
 
-## 11. Target Reports refinements
+- **Dashboard** is the daily operational surface: current month flow, as-of-today receivable position, actionable aged-risk exceptions, compact aging context, recent effective registrations and direct paths to the next useful action;
+- **Reports** is the period-controlled analytical surface: comparison, timeline, product/category/reseller investigation, Pareto/concentration and downloadable PDF;
+- analytical `90/180/360` controls, large Pareto/ranking charts and duplicated open-balance analytics are not target permanent Dashboard content;
+- useful analytics removed from Dashboard must be re-homed in Reports on canonical `FinancialReport` semantics rather than discarded or recalculated through a competing path;
+- current-position Dashboard values are explicitly **as of the operator's current local day**. Legitimate future `occurredAt` values after today must not affect current open debt or aging before their occurrence date;
+- existing FIFO aging thresholds remain `0–6d`, `7–30d`, `>30d` unless separately reauthorized;
+- one coherent read-only Dashboard projection is required before the visual redesign so components do not repeatedly reconstruct financial meaning independently.
 
-D-034 remains the foundation. D-035 refines hierarchy/usability without replacing `FinancialReport`.
+The detailed accepted target, semantics, UX criteria and `DR-01…DR-09` execution sequence live in `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
-### 11.1 Summary KPI hierarchy
+DR-02 is integrated through PR #114. The canonical `DashboardSnapshot` projection centralizes month/today flow, as-of-today open position, FIFO aging, critical/attention context and recent effective registrations while reusing accepted `FinancialReport`/transaction helpers and excluding later future occurrences from current-position calculations.
 
-Target four primary financial KPIs:
+DR-03 is integrated through PR #116. The Dashboard primary row consumes that snapshot directly and presents `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto` and `Crítico > 30 dias`, with compact month/today/open-reseller/critical context, explicit loading/empty states and no misleading `tempo real` claim. No accounting calculation was moved into the presentation layer.
 
-1. `Vendas`;
-2. `Recebimentos`;
-3. `Movimento líquido`;
-4. `Em aberto no fim`.
+DR-04 is integrated through PR #118. `Precisa de atenção` consumes the canonical deduplicated `DashboardSnapshot.attentionRows` directly, preserves its deterministic severity/age/value/name order, exposes explicit status/age/alert amount plus materially different total open balance, and navigates each keyboard-accessible row to the existing reseller detail/history. The old duplicated critical/attention lists were removed from `DebtHealthAgingCard`.
 
-`Pedidos` and item quantity become supporting sales context rather than displacing `Movimento líquido` from the primary financial row.
+DR-05 is integrated through PR #120. `Carteira por idade` consumes prepared `DashboardSnapshot.agingBuckets` plus the current open-debt total and replaces the large donut with compact exact-value + percentage rows for `Recente (0–6d)`, `Em atenção (7–30d)` and `Crítico (>30d)`. FIFO allocation, aging classification and percentage derivation remain owned by the canonical read-model rather than presentation components.
 
-### 11.2 Comparison clarity
+DR-06 is integrated through PR #122. The Dashboard now exposes compact `+ Pedido`, `+ Pagamento` and `+ Sinal` actions through the existing transaction route/type context and a compact `Últimos lançamentos registrados` feed consuming prepared `DashboardSnapshot.recentRegistrations` in canonical registration order. The feed distinguishes movement type, reseller and value, exposes occurrence-date context when registration and financial calendar dates differ, and opens the existing reseller detail/history. No second transaction form/write path or presentation-side effective/reversal logic was introduced.
 
-Keep equal-length previous-period comparison, but operator-facing context should expose the actual comparison range when practical instead of only saying `vs. período anterior`.
+DR-07 is integrated through PR #124. The operational Dashboard no longer renders the legacy `Análise de Performance` / `90/180/360` analytical surface after recent activity. Instead, it closes with one explicit `Análise detalhada` handoff to the existing `/reports` workspace. The existing Reports route/default period and `FinancialReport` semantics remained unchanged, while the legacy Performance code stayed outside the rendered Dashboard for the isolated DR-08 re-home/refinement step.
 
-### 11.3 Revendedor analysis
+DR-08 is integrated through PR #125. Reports now uses the primary financial hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim` on screen and in the PDF summary, with order/item counts as supporting context. Equal-length comparison exposes the actual prior range and canonical net comparison; product and reseller workspaces add bounded search/sort/filter controls; selected-period reseller-sales Pareto/concentration and report-end positive open balances are centralized in `FinancialReport.resellerAnalysis`. The existing Pareto visual consumes this canonical report data rather than resurrecting the removed Dashboard-only `90/180/360` calculation path, and positive report-end balance is explicitly not labeled as automatic inadimplência.
 
-The `Revendedores` workspace is the natural home for:
+D-035 does not authorize a new database/schema, financial mutation/accounting contract, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
 
-- sales/receipts/open-debt table;
-- search by reseller name;
-- useful sorting (sales, receipts, open debt, orders);
-- Pareto/concentration analysis derived from the **selected report period's reseller sales**, not from a separate Dashboard-only 90/180/360 calculation path;
-- optional `Maiores saldos em aberto` analysis using report-end `openDebt` language rather than claiming all positive balance is `inadimplência`.
+## 9. Cloud security requirements
 
-### 11.4 Product/category analysis
+- exposed application tables use RLS;
+- anonymous business-data access is forbidden;
+- browser configuration contains only project URL + publishable key;
+- service-role/database/admin secrets never enter browser bundles/Git/public Vercel variables;
+- authorization is based on server-managed `easy_operators`;
+- financial multi-row operations cross one transactional PostgreSQL/server boundary;
+- schema/policies remain reproducible from committed migrations.
 
-The existing immutable-snapshot product/category semantics remain. Add analysis controls only where they materially improve larger datasets, such as:
+Intentional `SECURITY DEFINER` transaction/restore RPCs are executable by `authenticated` only and internally assert the active operator. `anon` and `public` execute privileges are explicitly absent.
 
-- product-name search;
-- sorting by sales, quantity or orders;
-- category filter/context.
+## 10. Data-migration posture
 
-### 11.5 PDF parity
+The private stable-v1 staging/import path remains available synthetically if later needed, but clean-start early use does not require or authorize real legacy import.
 
-Any Reports refinement that changes the meaning of a report metric must be represented in canonical `FinancialReport` first. PDF remains a presentation adapter over the same object. Dashboard-only operational aging does not need to be added to the financial PDF unless separately authorized.
+## 11. Repository governance
 
-## 12. Dashboard ↔ Reports contextual navigation
+Branch roles:
 
-The two surfaces should feel connected.
+- `main` — stable historical reference;
+- `develop` — V2 integration;
+- isolated branches derive from `develop`.
 
-Target behavior after the core Dashboard exists:
+Integration pattern:
 
-- sales/receipts month context can open Reports already focused on the current month;
-- open-position context can open the Reports reseller view when useful;
-- `Abrir Relatórios` provides the general analysis path;
-- contextual state may use URL/search parameters rather than hidden global state so navigation is reproducible and testable.
+`defined work -> isolated branch -> implementation/docs -> D-019 (+ cloud evidence when relevant) -> PR -> develop`
 
-Do not couple the Dashboard to internal component state in a way that makes direct report navigation unreliable.
+## 12. Sources of truth
 
-## 13. Dashboard read-model / efficiency contract
+Precedence:
 
-The original Dashboard independently read/reduced the same transactions multiple times. DR-02 is now integrated and establishes one coherent read-only `DashboardSnapshot` before major visual changes.
+1. `docs/V2/STATUS.md` — current state and `NEXT_ACTION`;
+2. `docs/V2/PROJECT_SPEC.md` — product intent;
+3. `docs/V2/ARCHITECTURE.md` — technical architecture;
+4. `docs/V2/BACKLOG.md` — ordered work;
+5. `docs/V2/DECISIONS.md` — accepted decisions;
+6. `docs/V2/QA_LEDGER.md` — validation evidence/gaps;
+7. `docs/V2/CHANGELOG.md` — material state changes.
 
-The snapshot covers:
+Historical `tasks/` checkboxes are not canonical status.
 
-- month sales;
-- month receipts;
-- month order count;
-- month item quantity;
-- today sales/orders/receipts context;
-- current as-of-today open debt;
-- unique resellers with open debt;
-- critical open amount and unique critical-reseller count;
-- oldest critical age;
-- aging buckets;
-- deduplicated attention rows;
-- recent effective registrations.
-
-Accepted DR-02 implementation:
-
-- `src/domain/dashboardSnapshot.ts` owns the bounded projection;
-- month/today flow reuses `buildFinancialReport` where its semantics match;
-- aging reuses accepted effective-transaction/FIFO helpers;
-- current-position FIFO processing applies one explicit operator-local end-of-today cutoff so later future occurrences cannot affect current debt/aging before they occur;
-- recent registrations remain registration-time context, ordered by `createdAt`, while reversed rows are excluded;
-- `src/hooks/useDashboard.ts` exposes a shared `['dashboard', 'snapshot']` query and maps the snapshot into the legacy operational-hook shapes during the ordered UI transition;
-- existing transaction/reseller mutation invalidation of the `['dashboard']` prefix refreshes the snapshot without introducing a second invalidation mechanism;
-- no database/schema migration, Supabase/Auth/RLS/recovery/deployment change was introduced;
-- DR-02 deliberately did not perform DR-03/DR-04 visual work or alter the legacy Performance block reserved for DR-07.
+For the current D-035 initiative, `docs/V2/DASHBOARD_REPORTS_SPEC.md` is the focused product contract and must be read after the canonical startup set before executing a `DR-*` item.
 
-## 14. Language and visual semantics
-
-Mandatory terminology direction:
-
-- `Carteira em aberto` for current positive receivable position;
-- `Crítico > 30 dias` for aged risk;
-- avoid using `Inadimplência` as a synonym for every positive reseller balance;
-- remove the current `atualizada em tempo real` claim unless real-time behavior is actually implemented and verified;
-- visible money remains consistent with the accepted pt-BR presentation contract;
-- severity must be represented by text/structure in addition to color.
-
-## 15. Responsive / usability acceptance
-
-The redesign is not complete merely when desktop screenshots look good.
-
-Acceptance targets:
+## 13. Current bounded goal
 
-1. operator can identify current business position in roughly 10 seconds;
-2. on desktop, whether critical attention exists should be discoverable without deep scrolling;
-3. attention target opens the relevant reseller in one click;
-4. no configurable analytical window is required to understand the Dashboard;
-5. no reseller is duplicated across simultaneous attention/critical lists;
-6. current-position metrics have explicit as-of-today semantics and exclude later future occurrences;
-7. empty states communicate the business state rather than imply missing master data;
-8. mobile preserves the priority order `KPIs -> attention -> aging -> recent activity`;
-9. analytical 400px-class charts do not dominate the mobile Dashboard;
-10. keyboard/focus/semantic-label behavior remains usable for interactive controls;
-11. Dashboard wording has no ambiguous `tempo real`, `inadimplência` or period claims;
-12. no parallel accounting implementation is introduced.
-
-## 16. Authorized implementation sequence
+D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, early-use change #15 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
 
-The redesign is a new D-035 initiative and **must not be numbered as early-use change #16**.
-
-Only the item named by `STATUS.md -> NEXT_ACTION` is current.
-
-### DR-01 — Product contract and canonical documentation
-
-**Status:** DONE by the documentation change that introduces D-035 and this specification.
-
-- record Dashboard mission and Reports boundary;
-- define canonical KPI/attention/aging/recent-activity semantics;
-- define the implementation sequence and stop conditions;
-- absorb the old isolated change #14 idea into the redesign rather than implementing it standalone.
+The previously proposed isolated change #14 (`Recebimentos hoje`) is no longer a standalone pending item. It is **absorbed/superseded by D-035**: receipts remain part of the target Dashboard, but as `Recebimentos este mês` with optional today context rather than a dedicated daily KPI card.
 
-### DR-02 — Canonical Dashboard read-model
+D-035 / Dashboard + Reports core redesign is the authorized product initiative. `DR-01` (product contract/canonical documentation), `DR-02` (canonical Dashboard read-model), `DR-03` (primary Dashboard KPI row), `DR-04` (`Precisa de atenção` action center), `DR-05` (compact carteira aging), `DR-06` (recent registrations + quick actions), `DR-07` (remove Dashboard Performance + contextual Reports handoff) and `DR-08` (Reports analytical refinement) are complete. **`DR-09 — final Dashboard/Reports UX and efficiency acceptance` is the sole current executable item.** No later D-035 item exists and DR-09 must remain a bounded final acceptance pass rather than a feature-expansion vehicle.
 
-**Status:** DONE / INTEGRATED — PR #114.
+DR-02 integrated one bounded read-only `DashboardSnapshot` in `src/domain/dashboardSnapshot.ts` and one shared Dashboard snapshot query in `src/hooks/useDashboard.ts`. It centralizes month-to-today sales/receipts/order/item context, optional today context, current open debt/reseller count, critical amount/count/oldest age, accepted FIFO buckets, deterministic attention rows and recent effective registrations. The current-position side applies the operator-local end-of-today cutoff so valid future occurrences remain valid history/registrations but cannot affect current debt/aging until they occur. The implementation introduced no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment change.
 
-- canonical `DashboardSnapshot` introduced in `src/domain/dashboardSnapshot.ts`;
-- operational Dashboard hooks share the snapshot query while preserving their current UI contract;
-- month-to-today/today flow reuses `FinancialReport` semantics;
-- current debt/aging reuses accepted transaction/FIFO helpers with an explicit as-of-today cutoff;
-- valid later future occurrences do not alter current debt/aging before occurrence;
-- attention rows are deduplicated/deterministically ordered in the snapshot;
-- recent effective registrations are centralized;
-- focused snapshot tests plus full D-019 passed;
-- no DR-03 or later UI redesign was bundled.
+DR-03 replaced the legacy top-card presentation with the four accepted primary KPIs using the prepared `DashboardSnapshot` only. The row preserves useful month order/item context, optional today context, open-reseller count and critical reseller count/oldest age; responsive `1/2/4` column behavior, loading states and explicit business empty states are covered by focused tests. The first D-019 attempt exposed only a stale pre-DR-03 `DashboardCards` test contract; that test was aligned without weakening the feature, and the final D-019 passed before PR #116 was squash-integrated. Validated and integrated tree equivalence passed.
 
-Validation/integration evidence: PR #114; D-019 run/job `33115854899` / `98670186895`; validated/integrated tree `b9b5040abd6f217f41d4bba12f21ae05d06271dc`; squash-integrated `develop@4e3a9b28174cb64ad820f4ec60356194d1a760bb`; exact tree equivalence PASS.
+DR-04 replaced the two legacy alert lists with one `Precisa de atenção` action center after the KPIs. It consumes prepared snapshot rows only, displays one reseller once with explicit severity, prepared determining age and alert amount, includes total current open balance when materially different, preserves deterministic ordering, provides existing reseller-detail navigation, keeps the initial list compact and uses a business-meaningful empty state. PR #118 passed the full D-019 and exact validated/integrated tree equivalence before closure.
 
-### DR-03 — Primary KPI row
+DR-05 replaced the large aging donut with compact `Carteira por idade` rows using the same prepared snapshot. Each accepted bucket displays exact pt-BR value and prepared percentage with accessible progress semantics, while the total current open position, compact loading behavior and explicit empty state remain visible. The component does not calculate FIFO, classify aging or derive percentages. PR #120 passed full D-019 and exact validated/integrated tree equivalence; DR-06 recent registrations/quick actions were not bundled.
 
-**Status:** DONE / INTEGRATED — PR #116.
+DR-06 added only the prepared recent-registration projection and existing-route quick actions. `RecentRegistrations` preserves the snapshot-provided order and reversal exclusion, distinguishes transaction type, value and reseller, disambiguates occurrence date from registration date when needed, and navigates to existing reseller history. `DashboardQuickActions` routes the three accepted intents into the existing transaction form. PR #122 passed full D-019 and exact validated/integrated tree equivalence; `PerformanceAnalysisSection` remained unchanged for DR-07.
 
-- Dashboard page consumes the canonical `useDashboardSnapshot` shared query for the primary row;
-- four accepted cards are rendered in order: `Vendas este mês`, `Recebimentos este mês`, `Carteira em aberto`, `Crítico > 30 dias`;
-- compact supporting context retains month order/item totals, optional today sales/orders/receipts, open-reseller count and critical reseller count/oldest age;
-- the legacy `Dívida Total` / `Pedidos de Hoje` top-card contract is removed from the primary row;
-- misleading `tempo real` wording is removed;
-- responsive `1/2/4` column behavior, loading states and explicit business empty states are preserved;
-- presentation consumes the prepared snapshot and does not reconstruct accounting/FIFO logic;
-- DR-04 attention redesign, DR-05 aging redesign and later items were not bundled.
+DR-07 removed the legacy analytical Performance surface from the rendered Dashboard only after the operational replacements were complete and added a reproducible contextual path to the existing Reports workspace. The first full D-019 attempt correctly failed because four pre-existing Playwright scenarios still asserted the removed UI; no integration occurred. That stale E2E contract was aligned, the full gate then passed, and PR #124 was squash-integrated with exact validated/integrated tree equivalence. Reports content/accounting was not refined in DR-07.
 
-QA/integration note: the first D-019 run failed because the pre-existing `DashboardCards.test.tsx` still asserted the legacy two-card contract. The implementation was not integrated. Only that stale focused contract was aligned, with an additional singular-age presentation check, and the complete gate was rerun successfully.
+DR-08 completed the analytical re-home/refinement on the existing report path. `FinancialReport` now owns net comparison and reseller Pareto/open-balance analysis; the Reports screen exposes actual comparison dates and bounded investigation controls; the report PDF uses the same primary financial hierarchy. The first D-019 stopped on one ambiguous assertion in the new Reports page test after all domain/PDF focused tests passed; no executable integration occurred. The assertion was targeted precisely without changing product behavior, the full gate passed, and PR #125 was squash-integrated with exact validated/integrated tree equivalence.
 
-Validation/integration evidence: PR #116; final feature head `57a07e35a042bcaed37eb35c8a4be039a277766f`; final D-019 run/job `33118656171` / `98679713377`; ESLint 0 errors / 105 warnings; Vitest 66 files / 291 tests PASS; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `d4be4496de22cb752a25c2307f4b29d5dd393b1e`; squash-integrated `develop@345a84f3d94d65515671a928b627e7d2d62eb687`; exact tree equivalence PASS. Initial failed gate: run/job `33118356365` / `98678713093`; no failed gate was waived.
+Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
-### DR-04 — `Precisa de atenção` action center
+The pre-#8 PDF refinement preserved the existing grouped-product and per-order written-name behavior while removing reversed/audit-only rows from the client-facing document. Its closing now presents effective period orders, canonical pre-period balance, effective payments/signals and canonical current/closing balance directly after the products; optional payment/signal detail follows only when applicable. Audit history itself remains unchanged.
 
-**Status:** DONE / INTEGRATED — PR #118.
+The pre-#8 searchable-selector refinement introduced one reusable searchable combobox for large variable entity lists. Search is substring-based, case-insensitive and accent-insensitive; typed search text is presentation state only, while selection continues to use the existing entity IDs. It is used for reseller/item selection in new transactions and full correction, and category/subcategory selection in item create/edit. Small closed-list selectors remain unchanged. No persistence, database/Supabase, financial/history, Auth/RLS, recovery or deployment contract changed.
 
-- one dedicated action center is rendered immediately after the DR-03 KPI row;
-- it consumes `DashboardSnapshot.attentionRows` as prepared, without sorting, aging classification or FIFO/accounting reconstruction in the component;
-- each reseller appears once with explicit `CRÍTICO` / `ATENÇÃO`, determining age and alert-class amount;
-- current total open balance is shown when materially different from the alert amount;
-- canonical severity/age/value/name ordering is preserved;
-- rows use keyboard-accessible buttons and navigate to the existing reseller detail/history route;
-- initial density is six rows with explicit expansion/collapse when more priorities exist;
-- the empty state describes the business condition rather than missing reseller data;
-- duplicate critical/attention lists were removed from `DebtHealthAgingCard` while its existing donut/legend remain unchanged for DR-05;
-- DR-05 and later work were not bundled.
+Early-use change #8 exposes the **current catalog** classification path (`category` plus optional `subcategory`) in the item catalog and in the new-order item selector. Legacy or unresolved current-catalog references are shown as `Sem classificação`; no classification is fabricated. The selector's search key remains item-name-only, and order creation/history behavior is unchanged, so D-025/D-033 transaction-time classification snapshots remain the historical source of truth.
 
-Validation/integration evidence: PR #118; feature head `f035b6be20c5ea3dfbcbe912474abc945123611f`; merge ref `124fa0bd812250d3822aca1a6be46eb5400dba61`; D-019 run/job `33121893821` / `98690519373`; ESLint 0 errors / 105 warnings; Vitest 67 files / 295 tests PASS, including `AttentionCenter` 4/4 and `DashboardPage` 3/3; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `69905255e836492e8b610ea1ae0ef8bf66d0d070`; squash-integrated `develop@4bac76dd83c31016b692efb17531fbf3eddf5122`; exact tree equivalence PASS; no failed gate was waived.
+Early-use change #9 adds transient list ergonomics using already loaded data: item name search plus category/category-scoped-subcategory/lifecycle filters, and reseller search across name/phone/email plus lifecycle filtering. Search ignores case/accents, filters combine without mutating records, and no database/schema, fuzzy identity, bulk action, lifecycle/history, financial or recovery contract changed.
 
-### DR-05 — Compact carteira aging
+Early-use change #10 exposes the already-supported transaction `observation` field in normal payment and signal entry. The existing local transaction contract, cloud adapter and PostgreSQL RPC already carried and stored the field for non-order movements, so the accepted delta is form-only plus focused tests: the same optional observation is now available for all transaction types, order presentation remains unchanged and blank observations remain absent. No database/schema migration, Supabase function/policy change, payment/signal financial effect, occurrence semantics, reversal/correction/history, PDF or recovery contract changed.
 
-**Status:** DONE / INTEGRATED — PR #120.
+Early-use change #11 makes selected global item-search results actionable without adding an item-detail architecture. Item selection now hands the selected item name into the existing catalog search, `ItemsPage` applies that one-shot navigation intent to the accepted transient #9 name filter and removes the URL parameter, and the operator lands in the filtered catalog context. Reseller navigation and create-item suggestions remain unchanged. No database/schema, item identity/lifecycle/classification/history, Supabase/Auth/RLS, recovery or deployment contract changed.
 
-- the large Recharts donut/default chart is removed from the operational Dashboard aging block;
-- `DashboardPage` hands the shared DR-02 `DashboardSnapshot.agingBuckets` and `openDebt.amount` directly to `DebtHealthAgingCard`;
-- the card preserves the prepared bucket order and displays exact pt-BR value plus prepared percentage for `Recente (0–6d)`, `Em atenção (7–30d)` and `Crítico (>30d)`;
-- presentation does not run FIFO, classify debt age or derive percentages; it only bounds the visual progress width while displaying the prepared percentage unchanged;
-- current total open position remains explicit;
-- zero debt has a business-meaningful empty state while the three zero buckets remain inspectable;
-- loading remains compact and the former chart/SVG is absent;
-- each bucket has accessible progressbar semantics with label, value and percentage;
-- DR-04 attention behavior and DR-07 Performance content remain unchanged;
-- DR-06 and later work were not bundled.
+Early-use change #12 adds conservative, non-blocking duplicate warnings only during **new** reseller/item creation using data already loaded by the existing forms. Reseller warnings match normalized name, normalized exact phone or exact case-insensitive e-mail and identify which fields coincided; item warnings require normalized name plus the same category and same optional subcategory, reducing false positives across legitimate classifications. Archived records are included as warning context, edits are unchanged, and the operator can still explicitly choose `Cadastrar mesmo assim`. No automatic merge, silent rejection, hard uniqueness constraint, database/schema migration, Supabase/Auth/RLS, recovery, financial/history or deployment contract changed.
 
-Validation/integration evidence: PR #120; feature head `972ad8ae0285e654a5b356a55251807c35d72dd7`; merge ref `ea9997d379d1c9f30cf398574dfa28545f37e7c4`; D-019 run/job `33124288969` / `98698548321`; ESLint 0 errors / 105 warnings; Vitest 68 files / 299 tests PASS, including `DebtHealthAgingCard` 4/4 and `DashboardPage` 3/3; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `6848853b03148d78c79474d6415d9732ec4af8e5`; squash-integrated `develop@cccf11fece99179aa895964c8b743cff29ce9e0f`; exact tree equivalence PASS; no failed gate was waived.
+Early-use change #13 extends the existing canonical read-only `FinancialReport` with product-level performance. Product rows come from effective occurrence-time order snapshots and aggregate exact transaction-time item/name/classification context, so later catalog rename or reclassification does not rewrite historical sales. The report screen now exposes product, historical classification, order count, quantity and gross sales; the product highlight uses the top-selling product; and the existing products/categories PDF section consumes the same canonical `report.products` list. Reversed transactions remain zero-effect. No persistence, database/Supabase, mutation, Auth/RLS, recovery or deployment contract changed.
 
-### DR-06 — Recent registrations + quick actions
+Early-use change #15 adds a non-blocking intent check to new transaction entry when the selected financial occurrence date is later than the operator's local current date. Same-day/past entries remain unchanged; a future date prompts `Voltar e corrigir` or `Cadastrar mesmo assim`, and explicit confirmation persists exactly the selected future `occurredAt`. The UI never auto-corrects or prohibits the date, preserving D-014. No database/schema, transaction-accounting, Supabase/RPC/Auth/RLS, recovery or deployment contract changed.
 
-**Status:** DONE / INTEGRATED — PR #122.
+The previous bounded usability/data-quality queue remains historical and must not be extended by inventing a #16. New Dashboard/Reports work uses the separate D-035 `DR-*` sequence. The strict one-item-at-a-time rule remains in force.
 
-- `DashboardQuickActions` exposes `+ Pedido`, `+ Pagamento` and `+ Sinal` using the existing `/transactions?type=...` route and existing transaction form/write path;
-- `RecentRegistrations` consumes prepared `DashboardSnapshot.recentRegistrations` directly and preserves its canonical `createdAt` ordering and reversal exclusion without local re-sorting/effective-transaction logic;
-- rows distinguish `Pedido`, `Pagamento` and `Sinal`, show reseller and pt-BR value, and retain registration timestamp context;
-- the D-014 financial occurrence date is shown when its calendar day differs from the registration day;
-- row selection navigates to the existing reseller detail/history route;
-- empty/loading behavior and keyboard-accessible interactive semantics are covered by focused tests;
-- the operational hierarchy remains `KPIs -> atenção -> aging -> recent activity`;
-- `PerformanceAnalysisSection` remains unchanged for DR-07 and no DR-07/later work was bundled.
-
-Validation/integration evidence: PR #122; feature head `c889e2ad73f13d2c6804a8248863d214d27c50e2`; merge ref `2b17e6c8fffd477e7716dd1ac4ad5e31848af0af`; D-019 run/job `33126181592` / `98704779945`; ESLint 0 errors / 105 warnings; Vitest 70 files / 304 tests PASS, including `RecentRegistrations` 4/4, `DashboardQuickActions` 1/1 and `DashboardPage` 3/3; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated/integrated tree `2f31279a9e9a3bd4b84cd47e8ce1b496119d401f`; squash-integrated `develop@1425fe0736dbf919e47c9c0c5bfb593331cec469`; exact tree equivalence PASS; no failed gate was waived.
-
-### DR-07 — Remove Dashboard Performance block + contextual Reports handoff
-
-**Status:** DONE / INTEGRATED — PR #124.
-
-- `DashboardPage` no longer renders the legacy `Análise de Performance` surface after the accepted operational hierarchy;
-- `DashboardReportsHandoff` now closes the operational Dashboard with `Análise detalhada` context and an explicit `Abrir Relatórios` link to the existing `/reports` workspace;
-- the accepted `KPIs -> atenção -> aging -> recent activity` order and DR-03/04/05/06 behavior remain unchanged;
-- the existing Reports route, default period behavior and canonical `FinancialReport` calculations remain unchanged;
-- legacy `PerformanceAnalysisSection` / `usePerformanceAnalysis` code is retained outside the rendered Dashboard so DR-08 can re-home applicable analytics without bundling that analytical redesign into DR-07;
-- focused unit/integration coverage verifies the handoff and absence of the legacy Dashboard Performance surface;
-- Playwright coverage now verifies the legacy analytical window/Pareto/open-balance ranking are absent from the Dashboard and that the handoff opens the existing Reports workspace;
-- no database/schema, Supabase/RPC/Auth/RLS, recovery, accounting/domain or deployment-path change occurred.
-
-The first D-019 run/job `33127787667` / `98709950744` was not accepted: lint had 0 errors / 105 warnings and all 71 Vitest files / 305 tests passed, but four stale Playwright scenarios still required the exact Performance UI that DR-07 removes. Nothing was integrated on that failure. Only the obsolete E2E contract was aligned to the authorized DR-07 behavior, and the complete D-019 gate was rerun.
-
-Final validation/integration evidence: feature head `ca961ed86f3d4851b8fe7a9e25c0981544db1005`; exact GitHub-generated merge ref `4b84139f38fbf6ef35fcf3e950b5997c2adc1ba0`; D-019 run/job `33128164262` / `98711165562`; ESLint 0 errors / 105 warnings; Vitest 71 files / 305 tests PASS; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated tree `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`; squash-integrated `develop@61ef0646ebae5c39dff68c9a4aa249cb4a3dad2f`; integrated tree `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`; exact tree equivalence PASS; no failed gate was waived.
-
-### DR-08 — Reports analytical refinement
-
-**Status:** CURRENT / AUTHORIZED.
-
-Refine primary KPIs, explicit comparison context, product/reseller analysis controls and re-home applicable Pareto/concentration/open-balance analytics on canonical `FinancialReport` semantics.
-
-### DR-09 — Final Dashboard/Reports UX and efficiency acceptance
-
-**Status:** QUEUED / NOT CURRENT.
-
-Run a bounded final pass across desktop/mobile, empty/loading states, accessibility, wording, deep-link behavior and performance. Fix only defects found by that acceptance pass; do not use it to invent unrelated features.
-
-## 17. Governance / stop conditions
-
-Every executable `DR-*` item:
-
-- starts from current `develop` on an isolated branch;
-- verifies the current implementation before modifying it;
-- uses proportionate focused tests;
-- requires D-019 before executable integration;
-- updates canonical docs at closure and promotes exactly the next `DR-*` item;
-- stops after that one item;
-- does not automatically deploy to Vercel;
-- does not modify/publish `main`;
-- does not weaken D-032 recovery, Supabase/Auth/RLS or approved-operator boundaries;
-- does not resume D-030/I2-I2, import legacy real-store data or claim definitive cutover;
-- does not introduce a database/schema migration unless a later explicit operator decision materially expands the scope.
-
-Unexpected requirements that would alter accepted accounting semantics or materially broaden the initiative require a new operator decision rather than silent expansion.
+Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.

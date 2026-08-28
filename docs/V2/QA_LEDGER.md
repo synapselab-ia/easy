@@ -1,6 +1,6 @@
 # Easy V2 — QA Ledger
 
-**Updated:** 2026-08-27
+**Updated:** 2026-08-28
 
 ## Mandatory repository gate — D-019
 
@@ -769,6 +769,53 @@ PR #124 was squash-integrated into `develop` as `61ef0646ebae5c39dff68c9a4aa249c
 
 The post-integration DR-07 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-08 — Reports analytical refinement — PASS / INTEGRATED
+
+### Scope review — READ-MODEL / REPORT PRESENTATION / CANONICAL `FinancialReport` ONLY
+
+Verification before implementation confirmed the integrated Reports workspace already had canonical period filtering, product/category/reseller projections and PDF parity, but still exposed `Pedidos` in the primary KPI row, hid the concrete previous comparison range and lacked bounded product/reseller investigation controls and canonical Pareto/open-balance analysis. The removed Dashboard Performance path also mixed configurable sales windows with accumulated current-debt ranking and therefore was not reusable as-is.
+
+PR #125 is bounded to six report/domain/test files:
+
+- `src/domain/financialReporting.ts` extends canonical comparison with previous `periodNet` and centralizes `resellerAnalysis` for selected-period reseller-sales Pareto/concentration plus report-end positive open balances;
+- `src/pages/ReportsPage.tsx` applies the accepted primary KPI hierarchy, explicit comparison ranges, bounded product/reseller investigation controls and canonical analytical re-home;
+- `src/services/financialReportPdfService.ts` aligns the PDF summary to the same primary financial hierarchy;
+- focused domain, Reports page and PDF tests cover those contracts.
+
+No Dashboard operational component, financial mutation/accounting path, database/schema, Supabase/RPC/Auth/RLS, recovery or deployment workflow changed. DR-09 was not bundled.
+
+### Focused coverage — PASS
+
+- `financialReporting.test.ts`: **8/8 PASS**, including effective occurrence/reversal semantics, immutable product snapshots, report-end debt, selected-period Pareto/open balances, equal-length comparison with net movement and timeline;
+- `ReportsPage.test.tsx`: **3/3 PASS**, covering primary KPI/comparison hierarchy, product investigation controls and reseller Pareto/open-balance/search behavior;
+- `financialReportPdfService.test.ts`: **3/3 PASS**, including screen/PDF primary financial hierarchy and selected-section behavior.
+
+### D-019 iteration — objective failure corrected, not waived
+
+The first run/job `33162503781` / `98820074403` was **FAIL** and blocked integration. ESLint completed with 0 errors / 108 warnings. The DR-08 domain tests were 8/8 PASS and PDF tests 3/3 PASS; `ReportsPage.test.tsx` was 2/3 PASS. The full Vitest run stopped at **72 files: 71 passed / 1 failed; 309 tests: 308 passed / 1 failed** because one newly written test used `getByText('Recebimentos')`, while the rendered page legitimately contained that label both as a primary KPI and inside the reseller highlight. Playwright and build did not execute because the command chain stopped. Nothing was integrated.
+
+Only the test query was made precise by targeting the card-title semantic slot. Runtime/product behavior did not change, scope did not expand and no objective failure was waived. The complete D-019 gate was rerun on the new head.
+
+### Final D-019 — PASS
+
+- final feature head: `ab3123898d493a011448409e7e98ea86ca1aa8ca`;
+- exact GitHub-generated merge ref checked out by Actions: `b08cd97e8dc2ad4c0755fcedcd0a01ebc9b72dd6`;
+- validated tree: `2f36a92aecd12331fae57b39b693f84420c1d81c`;
+- run/job: `33162771608` / `98820945908`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **72 files / 309 tests PASS**;
+- focused `financialReporting`: **8/8 PASS**;
+- focused `ReportsPage`: **3/3 PASS**;
+- focused `financialReportPdfService`: **3/3 PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No objective D-019 failure was waived. The successful run retained only already tracked non-blocking React/test/lint/audit/Node-deprecation/Vite chunk warnings.
+
+PR #125 was squash-integrated into `develop` as `c3e43f37802d1e487a50097689c385f8e3de8b78`. Git object inspection confirms the integrated tree is `2f36a92aecd12331fae57b39b693f84420c1d81c`, exactly the same tree validated by the final PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-08 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -849,6 +896,10 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-035 DR-07 final D-019: **PASS**.
 - PR #124 integrated-tree equivalence: **PASS**.
 - D-035 DR-07 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- D-035 DR-08 Reports analytical refinement: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
+- D-035 DR-08 first D-019 run/job `33162503781` / `98820074403`: **FAIL — 1 ambiguous new Vitest assertion; NOT INTEGRATED / NOT WAIVED**.
+- D-035 DR-08 final D-019: **PASS**.
+- PR #125 integrated-tree equivalence: **PASS**.
+- D-035 DR-08 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 DR-09 final Dashboard/Reports UX and efficiency acceptance: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.

@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Status
 
-**Updated:** 2026-08-27  
+**Updated:** 2026-08-28  
 **Repository:** `synapselab-ia/easy`  
 **Stable baseline:** `main`  
 **Integration branch:** `develop`
@@ -36,7 +36,7 @@ Current P10-S3 state:
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
   - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
-  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `DONE / INTEGRATED — PR #122`; DR-07 remove Dashboard Performance + contextual Reports handoff `DONE / INTEGRATED — PR #124`; DR-08 Reports analytical refinement `CURRENT / AUTHORIZED`.**
+  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `DONE / INTEGRATED — PR #122`; DR-07 remove Dashboard Performance + contextual Reports handoff `DONE / INTEGRATED — PR #124`; DR-08 Reports analytical refinement `DONE / INTEGRATED — PR #125`; DR-09 final Dashboard/Reports UX and efficiency acceptance `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -641,6 +641,38 @@ Validation/integration evidence:
 
 No failed D-019 objective gate was waived. The post-integration DR-07 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
 
+## D-035 DR-08 closure — Reports analytical refinement
+
+PR #125 refined the existing Reports workspace on the canonical `FinancialReport` path without changing Dashboard operational semantics or persistence/security/recovery boundaries.
+
+Accepted result:
+
+- the four primary financial KPIs are `Vendas`, `Recebimentos`, `Movimento líquido` and `Em aberto no fim`; order/item counts remain supporting sales context;
+- equal-length previous-period comparison exposes the actual previous date range and includes movement-net comparison from the same canonical report object;
+- product investigation adds bounded product-name search, category context/filtering and useful sales/quantity/order sorting without rewriting immutable transaction-time snapshots;
+- reseller investigation adds bounded name search and useful sales/receipts/open-balance/order sorting;
+- Pareto/concentration is derived from selected-period reseller sales through canonical `FinancialReport.resellerAnalysis`, not through the legacy Dashboard-only `90/180/360` path;
+- largest positive balances are shown as `Maiores saldos em aberto` at the selected report end date and are not mislabeled as universal `inadimplência`;
+- the financial PDF summary uses the same canonical KPI/comparison model as the screen;
+- the integrated Dashboard hierarchy and `/reports` handoff remain unchanged;
+- no database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Validation/integration evidence:
+
+- first D-019 run/job `33162503781` / `98820074403`: **FAIL** — a new `ReportsPage` assertion queried the duplicated visible text `Recebimentos` without narrowing it to the primary KPI; domain 8/8 and PDF 3/3 focused coverage were already green; nothing was integrated and the failure was not waived;
+- final feature head: `ab3123898d493a011448409e7e98ea86ca1aa8ca`;
+- exact GitHub-generated merge ref: `b08cd97e8dc2ad4c0755fcedcd0a01ebc9b72dd6`;
+- validated tree: `2f36a92aecd12331fae57b39b693f84420c1d81c`;
+- final D-019 run/job: `33162771608` / `98820945908`;
+- ESLint: 0 errors / 108 warnings;
+- Vitest: 72 files / 309 tests PASS, including `financialReporting` 8/8, `ReportsPage` 3/3 and `financialReportPdfService` 3/3;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #125 squash-integrated `develop`: `c3e43f37802d1e487a50097689c385f8e3de8b78`;
+- integrated tree: `2f36a92aecd12331fae57b39b693f84420c1d81c` — exact tree equivalence PASS.
+
+No failed D-019 objective gate was waived. The post-integration DR-08 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Historical operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
@@ -671,7 +703,7 @@ Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` s
 
 ## D-035 — Dashboard + Reports core redesign
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-08 CURRENT`  
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-09 CURRENT`  
 **Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
 
 Accepted product direction:
@@ -683,13 +715,13 @@ Accepted product direction:
 - `Carteira por idade` is compact exact-value + percentage context consuming canonical snapshot buckets;
 - recent effective registrations and quick order/payment/signal actions are now integrated operational context;
 - the legacy 90/180/360 Performance/Pareto/current-debtor/ranking surface is no longer rendered on Dashboard; an explicit handoff now leads to the existing Reports workspace;
-- applicable analytical re-home/refinement remains isolated to DR-08 and must stay on canonical `FinancialReport` semantics;
 - DR-02 established one coherent Dashboard read-only projection before the major visual redesign;
 - DR-03 established the accepted four-card primary KPI row on that projection;
 - DR-04 established the deduplicated actionable attention center and removed the old duplicated alert lists;
 - DR-05 established compact exact-value + percentage aging and removed the large default donut without changing aging semantics;
 - DR-06 established recent-registration confirmation context and existing-route quick actions without adding a second write path;
-- DR-07 removed the legacy analytical Performance surface from the operational Dashboard and added an explicit existing-Reports handoff without changing report/accounting semantics.
+- DR-07 removed the legacy analytical Performance surface from the operational Dashboard and added an explicit existing-Reports handoff without changing report/accounting semantics;
+- DR-08 established the accepted Reports primary KPI/comparison hierarchy, bounded product/reseller investigation and selected-period/report-end analytical re-home on the canonical `FinancialReport` path.
 
 Ordered sequence:
 
@@ -700,10 +732,10 @@ Ordered sequence:
 5. **DR-05 DONE / INTEGRATED — compact carteira aging — PR #120.**
 6. **DR-06 DONE / INTEGRATED — recent registrations + quick actions — PR #122.**
 7. **DR-07 DONE / INTEGRATED — remove Dashboard Performance block + contextual Reports handoff — PR #124.**
-8. **DR-08 CURRENT / AUTHORIZED — Reports analytical refinement.**
-9. **DR-09 QUEUED / NOT CURRENT — final Dashboard/Reports UX and efficiency acceptance.**
+8. **DR-08 DONE / INTEGRATED — Reports analytical refinement — PR #125.**
+9. **DR-09 CURRENT / AUTHORIZED — final Dashboard/Reports UX and efficiency acceptance.**
 
-Only `DR-08` is executable next. Do not bundle `DR-09` or later work into the same task.
+Only `DR-09` is executable next. Do not invent a `DR-10` or bundle later work into the same task.
 
 ## Startup protocol for a new conversation
 
@@ -729,4 +761,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only D-035 `DR-08 — Reports analytical refinement`. First verify the integrated DR-07 operational Dashboard handoff, the existing `ReportsPage` / canonical `FinancialReport` model and PDF adapter, the current primary report KPI/comparison presentation, product/category and reseller workspaces, and the legacy Performance/Pareto/concentration/open-balance analysis that is no longer rendered on Dashboard. Refine Reports only on the existing canonical report path: make the primary financial KPI hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`; make the equal-length previous-period comparison context explicit; add only bounded product/reseller search/sort/filter controls that materially improve investigation; and re-home applicable Pareto/concentration/open-balance analysis using selected-period/report-end semantics rather than resurrecting the Dashboard-only `90/180/360` path or labeling every positive balance as inadimplência. Preserve screen/PDF accounting parity, D-014 occurrence semantics, reversal-zero-effect behavior and immutable historical item/category/subcategory snapshots. Do not alter the integrated Dashboard operational hierarchy, perform DR-09 final UX acceptance or begin any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-09 if DR-08 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only D-035 `DR-09 — final Dashboard/Reports UX and efficiency acceptance`. Start from current `develop` and verify the fully integrated DR-03…DR-08 Dashboard/Reports system as one product across representative desktop and mobile widths. Inspect Dashboard priority/order, loading/empty states, attention-row navigation, compact aging, recent registrations and Reports handoff; inspect Reports primary KPI hierarchy, explicit comparison range, product/category and reseller investigation controls, selected-period Pareto/concentration, report-end open-balance wording, PDF parity and reproducible direct navigation. Run a bounded final acceptance for responsive overflow/clipping/density, keyboard/focus/semantic-label behavior, business wording, deep-link reliability and material performance regressions. Fix only concrete defects found by that acceptance pass; do not invent new features, redesign accepted accounting/read-model semantics, resurrect Dashboard analytical windows, add unrelated navigation state or expand the D-035 product contract. Preserve D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification snapshots, canonical `FinancialReport` screen/PDF parity and the D-032 recovery/security boundary. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; use proportionate focused acceptance tests and run D-019 before any executable integration. At closure update canonical docs, mark D-035 complete if the acceptance passes safely, and stop without inventing a DR-10. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
