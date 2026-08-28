@@ -245,6 +245,36 @@ describe('buildFinancialReport', () => {
         });
     });
 
+    it('derives Pareto concentration from selected-period reseller sales and report-end open balances', () => {
+        const report = buildFinancialReport(
+            transactions,
+            resellers,
+            categories,
+            subcategories,
+            { startDate: at(1), endDate: at(5) },
+        );
+
+        expect(report.resellerAnalysis.countTo80).toBe(2);
+        expect(report.resellerAnalysis.pareto).toEqual([
+            expect.objectContaining({
+                resellerId: 1,
+                resellerName: 'Ana',
+                revenue: 100,
+                cumulativePercentage: expect.closeTo(55.56, 1),
+            }),
+            expect.objectContaining({
+                resellerId: 2,
+                resellerName: 'Beatriz',
+                revenue: 80,
+                cumulativePercentage: 100,
+            }),
+        ]);
+        expect(report.resellerAnalysis.topOpenBalances).toEqual([
+            { resellerId: 1, resellerName: 'Ana', openDebt: 110 },
+            { resellerId: 2, resellerName: 'Beatriz', openDebt: 60 },
+        ]);
+    });
+
     it('compares against the immediately preceding period with equal calendar length', () => {
         const report = buildFinancialReport(
             transactions,
@@ -258,6 +288,8 @@ describe('buildFinancialReport', () => {
         expect(report.comparison.previousRange.endDate).toEqual(new Date(2026, 6, 31, 23, 59, 59, 999));
         expect(report.comparison.sales).toBe(40);
         expect(report.comparison.salesChangePercent).toBe(350);
+        expect(report.comparison.periodNet).toBe(40);
+        expect(report.comparison.periodNetChangePercent).toBe(225);
     });
 
     it('creates a complete daily timeline for short ranges, including zero days', () => {
