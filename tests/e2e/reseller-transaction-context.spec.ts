@@ -13,7 +13,7 @@ test('reseller detail launches transaction entry with reseller context preserved
     await page.getByRole('button', { name: 'Novo lançamento' }).click();
 
     await expect(page).toHaveURL(/\/transactions\?resellerId=\d+$/);
-    await expect(page.getByRole('heading', { name: 'Lançamentos' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lançamentos', exact: true })).toBeVisible();
     await expect(page.getByText('Nova Movimentação', { exact: true })).toBeVisible();
     await expect(page.locator('#resellerId')).toContainText('Revendedor Contexto E2E');
 
