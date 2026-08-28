@@ -836,7 +836,7 @@ Concrete defects found were limited to Reports interaction semantics: the period
 
 - final feature head: `f817fb09ef14ebd731027f4e75edd587c28e2761`;
 - exact GitHub-generated merge ref checked out by Actions: `d702c9c9065e709b6c3d50aafc4f89041afc2cbd`;
-- validated tree: `423509ce9a5a6449db76880202815513428e021c`;
+- validated tree: `423509ce613b5311ac5a3c6666ed9e9e1d2d426e`;
 - run/job: `33169683674` / `98843481388`;
 - ESLint: **0 errors / 108 warnings**;
 - Vitest: **73 files / 310 tests PASS**;
@@ -845,7 +845,7 @@ Concrete defects found were limited to Reports interaction semantics: the period
 
 No objective D-019 failure was waived. The successful run retained only already tracked non-blocking React/test/mock-select/lint/audit/Node-deprecation/Vite chunk warnings.
 
-PR #126 was squash-integrated into `develop` as `6f20ab99340d051d2ac509125e63f32306ed0680`. Git object inspection confirms the integrated tree is `423509ce9a5a6449db76880202815513428e021c`, exactly the same tree validated by the final PR merge ref. Integrated-tree equivalence: **PASS**.
+PR #126 was squash-integrated into `develop` as `6f20ab99340d051d2ac509125e63f32306ed0680`. Git object inspection confirms the integrated tree is `423509ce613b5311ac5a3c6666ed9e9e1d2d426e`, exactly the same tree validated by the final PR merge ref. Integrated-tree equivalence: **PASS**.
 
 The post-integration DR-09/D-035 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched. D-035 has no authorized DR-10.
 

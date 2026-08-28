@@ -692,14 +692,14 @@ Validation/integration evidence:
 
 - final feature head: `f817fb09ef14ebd731027f4e75edd587c28e2761`;
 - exact GitHub-generated merge ref checked out by Actions: `d702c9c9065e709b6c3d50aafc4f89041afc2cbd`;
-- validated tree: `423509ce9a5a6449db76880202815513428e021c`;
+- validated tree: `423509ce613b5311ac5a3c6666ed9e9e1d2d426e`;
 - D-019 run/job: `33169683674` / `98843481388`;
 - ESLint: 0 errors / 108 warnings;
 - Vitest: 73 files / 310 tests PASS, including the new Reports accessibility acceptance;
 - Playwright: 19/19 PASS, including representative desktop/mobile Dashboard/Reports final acceptance;
 - TypeScript + production Vite build: PASS;
 - PR #126 squash-integrated `develop`: `6f20ab99340d051d2ac509125e63f32306ed0680`;
-- integrated tree: `423509ce9a5a6449db76880202815513428e021c` — exact tree equivalence PASS.
+- integrated tree: `423509ce613b5311ac5a3c6666ed9e9e1d2d426e` — exact tree equivalence PASS.
 
 No failed D-019 objective gate was waived. The post-integration DR-09 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched. D-035 `DR-01…DR-09` is complete and no `DR-10` is authorized.
 
