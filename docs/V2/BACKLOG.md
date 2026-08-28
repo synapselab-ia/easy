@@ -304,19 +304,19 @@ Accepted result:
 D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
 
 ### D-035 — Dashboard + Reports core redesign
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-09 CURRENT`
+**Status:** `DONE / ACCEPTED / INTEGRATED — DR-01…DR-09 COMPLETE`
 
 Focused product contract: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
 Initiative governance:
 
 1. This sequence is independent from the historical numbered early-use queue; do not call it #16.
-2. Only the single `DR-*` item named by `STATUS.md -> NEXT_ACTION` is executable.
-3. Every executable item verifies current behavior first, uses an isolated branch, receives proportionate focused tests and requires D-019 before integration.
-4. Close and document one item, promote exactly the next item, then stop.
-5. The initiative is read-model/presentation/navigation oriented. It does not authorize a database/schema migration, new financial-accounting semantics, transaction mutation path, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
-6. Existing D-014 occurrence, reversal-zero-effect, D-015 FIFO aging and D-034 `FinancialReport` semantics remain authoritative.
-7. Current-position Dashboard metrics use an as-of-today cutoff so later future occurrence dates do not affect current debt/aging before they occur.
+2. The authorized `DR-01…DR-09` sequence is complete. Do not invent a `DR-10`.
+3. Every executable item verified current behavior first, used an isolated branch, received proportionate focused tests and required D-019 before integration.
+4. The initiative remained read-model/presentation/navigation oriented. It did not authorize a database/schema migration, new financial-accounting semantics, transaction mutation path, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
+5. Existing D-014 occurrence, reversal-zero-effect, D-015 FIFO aging and D-034 `FinancialReport` semantics remain authoritative.
+6. Current-position Dashboard metrics use an as-of-today cutoff so later future occurrence dates do not affect current debt/aging before they occur.
+7. Any future executable product work requires new observed evidence or explicit operator authorization rather than continuation of the closed DR sequence.
 
 #### DR-01 — product contract and canonical documentation
 **Status:** `DONE / DOCUMENTATION — D-035`
@@ -447,9 +447,23 @@ The first D-019 run/job `33162503781` / `98820074403` failed after lint 0 errors
 Final D-019 run/job `33162771608` / `98820945908`: 0 lint errors / 108 warnings; 72 files / 309 Vitest PASS, including `financialReporting` 8/8, `ReportsPage` 3/3 and `financialReportPdfService` 3/3; 17/17 Playwright PASS; TypeScript + production build PASS. GitHub Actions validated merge ref `b08cd97e8dc2ad4c0755fcedcd0a01ebc9b72dd6`; validated tree `2f36a92aecd12331fae57b39b693f84420c1d81c` exactly equals squash-integrated `develop@c3e43f37802d1e487a50097689c385f8e3de8b78` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-09 — final Dashboard/Reports UX and efficiency acceptance
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / ACCEPTED / INTEGRATED — PR #126`
 
-Perform final evidence-backed acceptance across desktop/mobile, loading/empty states, accessibility, wording, deep-link behavior and performance. Fix only defects found by that pass; do not invent new features, reopen accepted accounting/product semantics or extend D-035 with an unauthorized DR-10.
+Accepted result:
+
+- representative 1440x1000 and 390x844 acceptance verifies the Dashboard priority/order and document-level responsive containment;
+- Dashboard `Abrir Relatórios` reaches the existing Reports route, and direct `/easy/reports` loading remains reproducible;
+- Reports primary KPI/open-balance wording remains coherent at representative desktop/mobile widths;
+- the period, historical-category and product/reseller sort Select triggers are programmatically associated with their visible labels;
+- report section controls expose a labelled group, selected state with `aria-pressed`, visible keyboard focus and Enter activation;
+- category drilldowns expose `aria-expanded`/`aria-controls` plus explicit focus-visible behavior;
+- focused data-present accessibility coverage verifies controls that only appear inside analytical detail views;
+- existing Dashboard loading/empty tests, canonical `financialReporting` tests and PDF parity tests remained green;
+- no financial/read-model, persistence, database/schema, Supabase/RPC/Auth/RLS, recovery or deployment semantics changed.
+
+Final D-019 run/job `33169683674` / `98843481388`: 0 lint errors / 108 warnings; 73 files / 310 Vitest PASS; 19/19 Playwright PASS; TypeScript + production Vite build PASS. GitHub Actions validated exact merge ref `d702c9c9065e709b6c3d50aafc4f89041afc2cbd`; validated tree `423509ce613b5311ac5a3c6666ed9e9e1d2d426e` exactly equals squash-integrated `develop@6f20ab99340d051d2ac509125e63f32306ed0680` tree. Exact tree equivalence: PASS; no failed gate was waived.
+
+D-035 is complete. No `DR-10` is authorized.
 
 ### P10-S3-I2-I4 — Legacy real-data migration
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
@@ -459,4 +473,4 @@ Perform final evidence-backed acceptance across desktop/mobile, loading/empty st
 
 ## Current NEXT_ACTION
 
-**Execute only D-035 `DR-09 — final Dashboard/Reports UX and efficiency acceptance`. First verify the fully integrated DR-03…DR-08 Dashboard/Reports system on desktop and mobile, including loading/empty states, keyboard/focus/accessibility semantics, wording, Dashboard -> Reports handoff/deep-link behavior and bounded performance/efficiency. Run evidence-backed final acceptance across the existing product; fix only defects found by that pass and do not invent new features, reopen accepted financial/accounting semantics or extend the D-035 sequence. Preserve canonical `DashboardSnapshot`/`FinancialReport`, D-014 occurrence semantics, reversal-zero-effect, immutable snapshots, screen/PDF parity and the integrated Dashboard/Reports hierarchy. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, use proportionate focused checks and D-019 before any executable integration. At closure update canonical docs and, because DR-09 is the final authorized D-035 item, record the D-035 implementation sequence complete rather than inventing DR-10. Stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
+**No new executable Dashboard/Reports item is authorized. D-035 is complete. Continue only the existing P10-S3-I2-I3-D controlled clean-start early-use observation boundary and wait for explicit operator instruction or new observed early-use evidence before authorizing another implementation. Do not invent `DR-10` or early-use change #16, resume D-030/I2-I2, deploy automatically, modify/publish `main`, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
