@@ -105,18 +105,26 @@ export function generateFinancialReportPdf(
         cursorY = sectionTitle(doc, ++sectionIndex, 'RESUMO DO PERÍODO', cursorY) + 5;
         autoTable(doc, {
             startY: cursorY,
-            head: [['Vendas', 'Recebimentos', 'Em aberto no fim', 'Pedidos']],
+            head: [['Vendas', 'Recebimentos', 'Movimento líquido', 'Em aberto no fim']],
             body: [[
                 money(report.summary.sales),
                 money(report.summary.receipts),
+                money(report.summary.periodNet),
                 money(report.summary.openDebt),
-                report.summary.orderCount.toString(),
             ]],
             theme: 'grid',
             styles: { fontSize: 10, halign: 'center', cellPadding: 4 },
             headStyles: { fontStyle: 'bold' },
         });
-        cursorY = lastTableY(doc, cursorY) + 10;
+        cursorY = lastTableY(doc, cursorY) + 6;
+        doc.setFontSize(8.5);
+        doc.setTextColor(90, 90, 90);
+        doc.text(
+            `${report.summary.orderCount} pedidos · ${report.summary.itemQuantity} itens vendidos no período`,
+            14,
+            cursorY,
+        );
+        cursorY += 10;
     }
 
     if (options.includeTimeline && report.timeline.length > 0) {
@@ -203,7 +211,7 @@ export function generateFinancialReportPdf(
         cursorY = sectionTitle(doc, ++sectionIndex, 'REVENDEDORES', cursorY) + 5;
         autoTable(doc, {
             startY: cursorY,
-            head: [['Revendedor', 'Pedidos', 'Vendas', 'Recebido', 'Em aberto']],
+            head: [['Revendedor', 'Pedidos', 'Vendas', 'Recebimentos', 'Em aberto no fim']],
             body: report.resellers.map(reseller => [
                 reseller.name,
                 reseller.orderCount.toString(),

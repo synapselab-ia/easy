@@ -26,10 +26,12 @@ export interface FinancialReportComparison {
     previousRange: FinancialReportRange;
     sales: number;
     receipts: number;
+    periodNet: number;
     orderCount: number;
     openDebt: number;
     salesChangePercent: number | null;
     receiptsChangePercent: number | null;
+    periodNetChangePercent: number | null;
     orderCountChangePercent: number | null;
     openDebtChangePercent: number | null;
 }
@@ -87,6 +89,25 @@ export interface FinancialResellerPerformance {
     openDebt: number;
 }
 
+export interface FinancialResellerParetoPoint {
+    resellerId: number;
+    resellerName: string;
+    revenue: number;
+    cumulativePercentage: number;
+}
+
+export interface FinancialOpenBalanceHighlight {
+    resellerId: number;
+    resellerName: string;
+    openDebt: number;
+}
+
+export interface FinancialResellerAnalysis {
+    countTo80: number;
+    pareto: FinancialResellerParetoPoint[];
+    topOpenBalances: FinancialOpenBalanceHighlight[];
+}
+
 export interface FinancialReport {
     range: FinancialReportRange;
     summary: FinancialReportSummary;
@@ -95,6 +116,7 @@ export interface FinancialReport {
     products: FinancialProductPerformance[];
     categories: FinancialCategoryPerformance[];
     resellers: FinancialResellerPerformance[];
+    resellerAnalysis: FinancialResellerAnalysis;
 }
 
 function normalizeRange(range: FinancialReportRange): FinancialReportRange {
@@ -339,7 +361,6 @@ function buildCategoryPerformance(
             category.grossValue += transaction.totalPrice;
 
             const subcategoryId = transaction.subcategoryId;
-            const subcategoryKey = subcategoryId === undefined ? 'none' : `subcategory:${subcategoryId}`;
             let subcategory = category.subcategories.find(item =>
                 (subcategoryId === undefined && item.subcategoryId === undefined)
                 || item.subcategoryId === subcategoryId
@@ -360,7 +381,6 @@ function buildCategoryPerformance(
                 category.subcategories.push(subcategory);
             }
 
-            void subcategoryKey;
             subcategory.orderCount += 1;
             subcategory.quantity += transaction.quantity ?? 0;
             subcategory.grossValue += transaction.totalPrice;
@@ -422,6 +442,55 @@ function buildResellerPerformance(
     });
 }
 
+function buildResellerAnalysis(resellers: FinancialResellerPerformance[]): FinancialResellerAnalysis {
+    const sellingResellers = resellers
+        .filter(reseller => reseller.sales > FINANCIAL_EPSILON)
+        .slice()
+        .sort((left, right) => {
+            const salesDelta = right.sales - left.sales;
+            return salesDelta !== 0 ? salesDelta : left.name.localeCompare(right.name, 'pt-BR');
+        });
+    const totalSales = sellingResellers.reduce((sum, reseller) => sum + reseller.sales, 0);
+    let runningSales = 0;
+    let countTo80 = 0;
+    let reached80 = false;
+
+    const pareto = sellingResellers.map(reseller => {
+        runningSales += reseller.sales;
+        const cumulativePercentage = totalSales > FINANCIAL_EPSILON
+            ? (runningSales / totalSales) * 100
+            : 0;
+
+        if (!reached80) {
+            countTo80 += 1;
+            if (cumulativePercentage >= 80) reached80 = true;
+        }
+
+        return {
+            resellerId: reseller.resellerId,
+            resellerName: reseller.name,
+            revenue: reseller.sales,
+            cumulativePercentage,
+        };
+    });
+
+    const topOpenBalances = resellers
+        .filter(reseller => reseller.openDebt > FINANCIAL_EPSILON)
+        .slice()
+        .sort((left, right) => {
+            const debtDelta = right.openDebt - left.openDebt;
+            return debtDelta !== 0 ? debtDelta : left.name.localeCompare(right.name, 'pt-BR');
+        })
+        .slice(0, 5)
+        .map(reseller => ({
+            resellerId: reseller.resellerId,
+            resellerName: reseller.name,
+            openDebt: reseller.openDebt,
+        }));
+
+    return { countTo80, pareto, topOpenBalances };
+}
+
 export function buildFinancialReport(
     transactions: Transaction[],
     resellers: Reseller[],
@@ -432,17 +501,20 @@ export function buildFinancialReport(
     const range = normalizeRange(inputRange);
     const periodTransactions = effectiveInRange(transactions, range);
     const period = summarizePeriod(periodTransactions);
+    const periodNet = period.sales - period.receipts;
     const openDebt = calculateOpenDebt(transactions, range.endDate);
     const previousRange = previousRangeFor(range);
     const previousPeriod = summarizePeriod(effectiveInRange(transactions, previousRange));
+    const previousPeriodNet = previousPeriod.sales - previousPeriod.receipts;
     const previousOpenDebt = calculateOpenDebt(transactions, previousRange.endDate);
+    const resellerPerformance = buildResellerPerformance(transactions, range, resellers);
 
     return {
         range,
         summary: {
             sales: period.sales,
             receipts: period.receipts,
-            periodNet: period.sales - period.receipts,
+            periodNet,
             openDebt,
             orderCount: period.orderCount,
             itemQuantity: period.itemQuantity,
@@ -451,16 +523,19 @@ export function buildFinancialReport(
             previousRange,
             sales: previousPeriod.sales,
             receipts: previousPeriod.receipts,
+            periodNet: previousPeriodNet,
             orderCount: previousPeriod.orderCount,
             openDebt: previousOpenDebt,
             salesChangePercent: percentageChange(period.sales, previousPeriod.sales),
             receiptsChangePercent: percentageChange(period.receipts, previousPeriod.receipts),
+            periodNetChangePercent: percentageChange(periodNet, previousPeriodNet),
             orderCountChangePercent: percentageChange(period.orderCount, previousPeriod.orderCount),
             openDebtChangePercent: percentageChange(openDebt, previousOpenDebt),
         },
         timeline: buildTimeline(transactions, range),
         products: buildProductPerformance(transactions, range),
         categories: buildCategoryPerformance(transactions, range, categories, subcategories),
-        resellers: buildResellerPerformance(transactions, range, resellers),
+        resellers: resellerPerformance,
+        resellerAnalysis: buildResellerAnalysis(resellerPerformance),
     };
 }

@@ -49,10 +49,12 @@ const report: FinancialReport = {
         },
         sales: 800,
         receipts: 600,
+        periodNet: 200,
         orderCount: 4,
         openDebt: 400,
         salesChangePercent: 25,
         receiptsChangePercent: 16.67,
+        periodNetChangePercent: 50,
         orderCountChangePercent: 25,
         openDebtChangePercent: 12.5,
     },
@@ -103,6 +105,15 @@ const report: FinancialReport = {
             openDebt: 450,
         },
     ],
+    resellerAnalysis: {
+        countTo80: 1,
+        pareto: [
+            { resellerId: 1, resellerName: 'Ana', revenue: 1000, cumulativePercentage: 100 },
+        ],
+        topOpenBalances: [
+            { resellerId: 1, resellerName: 'Ana', openDebt: 450 },
+        ],
+    },
 };
 
 function tableOptions(index: number) {
@@ -112,16 +123,18 @@ function tableOptions(index: number) {
 describe('financialReportPdfService', () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it('renders the same report sections used by the reports workspace', () => {
+    it('renders the same primary financial hierarchy used by the reports workspace', () => {
         generateFinancialReportPdf(report);
 
         expect(autoTable).toHaveBeenCalledTimes(5);
-        expect(tableOptions(0).head).toEqual([['Vendas', 'Recebimentos', 'Em aberto no fim', 'Pedidos']]);
+        expect(tableOptions(0).head).toEqual([['Vendas', 'Recebimentos', 'Movimento líquido', 'Em aberto no fim']]);
+        expect(tableOptions(0).body[0]).toHaveLength(4);
+        expect(mockText).toHaveBeenCalledWith('5 pedidos · 8 itens vendidos no período', 14, expect.any(Number));
         expect(tableOptions(1).head).toEqual([['Período', 'Vendas', 'Recebimentos', 'Movimento líquido']]);
         expect(tableOptions(2).head).toEqual([['Produto', 'Classificação', 'Pedidos', 'Itens', 'Vendas']]);
         expect(tableOptions(2).body[0]).toEqual(expect.arrayContaining(['Placa 15x30', 'Porcelana antiga > Placas antigas']));
         expect(tableOptions(3).head).toEqual([['Categoria / subcategoria', 'Pedidos', 'Itens', 'Vendas']]);
-        expect(tableOptions(4).head).toEqual([['Revendedor', 'Pedidos', 'Vendas', 'Recebido', 'Em aberto']]);
+        expect(tableOptions(4).head).toEqual([['Revendedor', 'Pedidos', 'Vendas', 'Recebimentos', 'Em aberto no fim']]);
     });
 
     it('supports a short PDF with only selected sections', () => {
@@ -133,8 +146,8 @@ describe('financialReportPdfService', () => {
         });
 
         expect(autoTable).toHaveBeenCalledTimes(2);
-        expect(tableOptions(0).head).toEqual([['Vendas', 'Recebimentos', 'Em aberto no fim', 'Pedidos']]);
-        expect(tableOptions(1).head).toEqual([['Revendedor', 'Pedidos', 'Vendas', 'Recebido', 'Em aberto']]);
+        expect(tableOptions(0).head).toEqual([['Vendas', 'Recebimentos', 'Movimento líquido', 'Em aberto no fim']]);
+        expect(tableOptions(1).head).toEqual([['Revendedor', 'Pedidos', 'Vendas', 'Recebimentos', 'Em aberto no fim']]);
     });
 
     it('uses the selected range in the generated filename', () => {
