@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../db/database';
-import { exportData, preflightBackupPayload, preflightBackupText } from './backupService';
+import { BACKUP_SCHEMA_VERSION, exportData, preflightBackupPayload, preflightBackupText } from './backupService';
 import { restorePreflightedBackup } from './restoreService';
 
 const createObjectURL = vi.fn();
@@ -108,7 +108,7 @@ describe('P9-S3-I1 category backup/restore round-trip', () => {
         anchorClick.mockRestore();
     });
 
-    it('round-trips schema6 categories, references and historical snapshots and checkpoints all business tables', async () => {
+    it('round-trips current schema7 categories, references and historical snapshots and checkpoints all business tables', async () => {
         await seedDataset(5, 15, 25, 35, 'Bronze');
 
         await exportData();
@@ -135,7 +135,7 @@ describe('P9-S3-I1 category backup/restore round-trip', () => {
             source: { schemaVersion: number };
             data: { categories: Array<{ id: number; name: string }>; subcategories: unknown[] };
         };
-        expect(checkpoint.source.schemaVersion).toBe(6);
+        expect(checkpoint.source.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
         expect(checkpoint.data.subcategories).toEqual([]);
         expect(checkpoint.data.categories).toEqual([
             expect.objectContaining({ id: 9, name: 'Porcelana atual antes do restore' }),

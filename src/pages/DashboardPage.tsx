@@ -2,7 +2,6 @@ import { DashboardCards } from '../components/dashboard/DashboardCards';
 import { DashboardQuickActions } from '../components/dashboard/DashboardQuickActions';
 import { AttentionCenter } from '../components/dashboard/AttentionCenter';
 import { DebtHealthAgingCard } from '../components/dashboard/DebtHealthAgingCard';
-import { RecentRegistrations } from '../components/dashboard/RecentRegistrations';
 import { DashboardReportsHandoff } from '../components/dashboard/DashboardReportsHandoff';
 import { useDashboardSnapshot } from '../hooks/useDashboard';
 
@@ -36,11 +35,6 @@ export default function DashboardPage() {
                     isLoading={isLoading}
                 />
             </div>
-
-            <RecentRegistrations
-                rows={snapshot?.recentRegistrations ?? []}
-                isLoading={isLoading}
-            />
 
             <DashboardReportsHandoff />
         </div>

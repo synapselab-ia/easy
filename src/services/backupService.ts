@@ -5,6 +5,7 @@ import {
     type Reseller,
     type Subcategory,
     type Transaction,
+    type TransactionActor,
     type TransactionType,
 } from '../db/database';
 
@@ -12,10 +13,12 @@ export const BACKUP_FORMAT = 'easy-backup';
 export const BACKUP_VERSION = 2 as const;
 export const LEGACY_BACKUP_SCHEMA_VERSION = 4 as const;
 export const CATEGORY_BACKUP_SCHEMA_VERSION = 5 as const;
-export const BACKUP_SCHEMA_VERSION = 6 as const;
+export const SUBCATEGORY_BACKUP_SCHEMA_VERSION = 6 as const;
+export const BACKUP_SCHEMA_VERSION = 7 as const;
 export type SupportedBackupSchemaVersion =
     | typeof LEGACY_BACKUP_SCHEMA_VERSION
     | typeof CATEGORY_BACKUP_SCHEMA_VERSION
+    | typeof SUBCATEGORY_BACKUP_SCHEMA_VERSION
     | typeof BACKUP_SCHEMA_VERSION;
 
 interface BackupCategoryV2 {
@@ -57,6 +60,11 @@ interface BackupResellerV2 {
     updatedAt: string;
 }
 
+interface BackupActorV2 {
+    userId: string;
+    email?: string;
+}
+
 interface BackupTransactionV2 {
     id: number;
     resellerId: number;
@@ -71,10 +79,12 @@ interface BackupTransactionV2 {
     subcategoryName?: string;
     totalPrice: number;
     observation?: string;
+    createdBy?: BackupActorV2;
     reversal?: {
         reason: string;
         reversedAt: string;
         replacementTransactionId?: number;
+        reversedBy?: BackupActorV2;
     };
     correction?: {
         replacesTransactionId: number;
@@ -249,6 +259,26 @@ function normalizedActive(
     return true;
 }
 
+function normalizeActor(value: unknown, path: string, errors: string[]): TransactionActor | undefined {
+    if (value === undefined) return undefined;
+    if (!isRecord(value)) {
+        pathError(errors, path, 'deve ser um objeto');
+        return undefined;
+    }
+
+    const userId = requiredTrimmedString(value.userId, `${path}.userId`, errors);
+    const email = value.email === undefined
+        ? undefined
+        : requiredTrimmedString(value.email, `${path}.email`, errors);
+    if (!userId) return undefined;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+        pathError(errors, `${path}.userId`, 'deve ser UUID válido');
+        return undefined;
+    }
+
+    return { userId, ...(email ? { email } : {}) };
+}
+
 function normalizeCategory(value: unknown, index: number, errors: string[]): Category | undefined {
     const path = `data.categories[${index}]`;
     if (!isRecord(value)) {
@@ -360,6 +390,7 @@ function normalizeReversal(
     value: unknown,
     path: string,
     createdAt: Date | undefined,
+    usesActorSchema: boolean,
     errors: string[],
 ): Transaction['reversal'] | undefined {
     if (value === undefined) return undefined;
@@ -373,6 +404,9 @@ function normalizeReversal(
     if (value.replacementTransactionId !== undefined) {
         replacementTransactionId = positiveInteger(value.replacementTransactionId, `${path}.replacementTransactionId`, errors);
     }
+    const reversedBy = usesActorSchema
+        ? normalizeActor(value.reversedBy, `${path}.reversedBy`, errors)
+        : undefined;
     if (!reason || !reversedAtDate) return undefined;
     if (createdAt && reversedAtDate.getTime() < createdAt.getTime()) {
         pathError(errors, `${path}.reversedAt`, 'não pode ser anterior ao createdAt do lançamento');
@@ -381,6 +415,7 @@ function normalizeReversal(
         reason,
         reversedAt: reversedAtDate.toISOString(),
         ...(replacementTransactionId !== undefined ? { replacementTransactionId } : {}),
+        ...(reversedBy ? { reversedBy } : {}),
     };
 }
 
@@ -400,6 +435,7 @@ function normalizeTransaction(
     sourceVersion: 1 | 2,
     usesCategorySchema: boolean,
     usesSubcategorySchema: boolean,
+    usesActorSchema: boolean,
     errors: string[],
     warnings: string[],
 ): Transaction | undefined {
@@ -460,7 +496,10 @@ function normalizeTransaction(
         }
     }
 
-    const reversal = normalizeReversal(value.reversal, `${path}.reversal`, createdAt, errors);
+    const createdBy = usesActorSchema
+        ? normalizeActor(value.createdBy, `${path}.createdBy`, errors)
+        : undefined;
+    const reversal = normalizeReversal(value.reversal, `${path}.reversal`, createdAt, usesActorSchema, errors);
     const correction = normalizeCorrection(value.correction, `${path}.correction`, errors);
 
     if (type === 'order') {
@@ -493,6 +532,7 @@ function normalizeTransaction(
         ...(subcategoryName !== undefined ? { subcategoryName } : {}),
         totalPrice,
         observation,
+        ...(createdBy ? { createdBy } : {}),
         reversal,
         correction,
         occurredAt,
@@ -688,6 +728,7 @@ function currentEnvelope(
                 subcategoryName: transaction.subcategoryName,
                 totalPrice: transaction.totalPrice,
                 observation: transaction.observation,
+                createdBy: transaction.createdBy,
                 reversal: transaction.reversal,
                 correction: transaction.correction,
                 occurredAt: serializeDate(transaction.occurredAt ?? transaction.createdAt, `transactions[${index}].occurredAt`),
@@ -717,9 +758,14 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
             if (
                 payload.source.schemaVersion !== LEGACY_BACKUP_SCHEMA_VERSION
                 && payload.source.schemaVersion !== CATEGORY_BACKUP_SCHEMA_VERSION
+                && payload.source.schemaVersion !== SUBCATEGORY_BACKUP_SCHEMA_VERSION
                 && payload.source.schemaVersion !== BACKUP_SCHEMA_VERSION
             ) {
-                pathError(errors, 'source.schemaVersion', `deve ser ${LEGACY_BACKUP_SCHEMA_VERSION}, ${CATEGORY_BACKUP_SCHEMA_VERSION} ou ${BACKUP_SCHEMA_VERSION}`);
+                pathError(
+                    errors,
+                    'source.schemaVersion',
+                    `deve ser ${LEGACY_BACKUP_SCHEMA_VERSION}, ${CATEGORY_BACKUP_SCHEMA_VERSION}, ${SUBCATEGORY_BACKUP_SCHEMA_VERSION} ou ${BACKUP_SCHEMA_VERSION}`,
+                );
             } else {
                 sourceSchemaVersion = payload.source.schemaVersion;
             }
@@ -733,8 +779,14 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
     }
 
     const usesCategorySchema = sourceVersion === BACKUP_VERSION
-        && (sourceSchemaVersion === CATEGORY_BACKUP_SCHEMA_VERSION || sourceSchemaVersion === BACKUP_SCHEMA_VERSION);
-    const usesSubcategorySchema = sourceVersion === BACKUP_VERSION && sourceSchemaVersion === BACKUP_SCHEMA_VERSION;
+        && (
+            sourceSchemaVersion === CATEGORY_BACKUP_SCHEMA_VERSION
+            || sourceSchemaVersion === SUBCATEGORY_BACKUP_SCHEMA_VERSION
+            || sourceSchemaVersion === BACKUP_SCHEMA_VERSION
+        );
+    const usesSubcategorySchema = sourceVersion === BACKUP_VERSION
+        && (sourceSchemaVersion === SUBCATEGORY_BACKUP_SCHEMA_VERSION || sourceSchemaVersion === BACKUP_SCHEMA_VERSION);
+    const usesActorSchema = sourceVersion === BACKUP_VERSION && sourceSchemaVersion === BACKUP_SCHEMA_VERSION;
     const rawCategoriesValue = payload.data.categories;
     const rawSubcategoriesValue = payload.data.subcategories;
     const rawItems = payload.data.items;
@@ -756,13 +808,16 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
     const rawSubcategories: unknown[] = usesSubcategorySchema && Array.isArray(rawSubcategoriesValue) ? rawSubcategoriesValue : [];
 
     if (sourceVersion === BACKUP_VERSION && sourceSchemaVersion === LEGACY_BACKUP_SCHEMA_VERSION) {
-        warnings.push('Backup v2/schema4 normalizado para schema6 sem inventar categorias, subcategorias ou classificação histórica.');
+        warnings.push('Backup v2/schema4 normalizado para schema7 sem inventar categorias, subcategorias, classificação histórica ou autoria de lançamentos.');
     }
     if (sourceVersion === BACKUP_VERSION && sourceSchemaVersion === CATEGORY_BACKUP_SCHEMA_VERSION) {
-        warnings.push('Backup v2/schema5 normalizado para schema6 sem inventar subcategorias ou classificação histórica de subcategoria.');
+        warnings.push('Backup v2/schema5 normalizado para schema7 sem inventar subcategorias, classificação histórica de subcategoria ou autoria de lançamentos.');
+    }
+    if (sourceVersion === BACKUP_VERSION && sourceSchemaVersion === SUBCATEGORY_BACKUP_SCHEMA_VERSION) {
+        warnings.push('Backup v2/schema6 normalizado para schema7 sem inventar autoria de lançamentos anteriores à atribuição de operador.');
     }
     if (sourceVersion === 1) {
-        warnings.push('Backup v1 normalizado para schema6 sem inventar categorias, subcategorias ou classificação histórica.');
+        warnings.push('Backup v1 normalizado para schema7 sem inventar categorias, subcategorias, classificação histórica ou autoria de lançamentos.');
     }
 
     const categories = rawCategories.flatMap((value, index) => {
@@ -782,7 +837,16 @@ export function preflightBackupPayload(payload: unknown): BackupPreflightResult 
         return reseller ? [reseller] : [];
     });
     const transactions = rawTransactions.flatMap((value, index) => {
-        const transaction = normalizeTransaction(value, index, sourceVersion, usesCategorySchema, usesSubcategorySchema, errors, warnings);
+        const transaction = normalizeTransaction(
+            value,
+            index,
+            sourceVersion,
+            usesCategorySchema,
+            usesSubcategorySchema,
+            usesActorSchema,
+            errors,
+            warnings,
+        );
         return transaction ? [transaction] : [];
     });
 
@@ -855,7 +919,7 @@ export async function preflightBackupFile(file: Pick<File, 'text'>): Promise<Bac
     return preflightBackupText(await file.text());
 }
 
-/** Exporta um envelope lógico v2/schema6. O próprio dataset é validado antes do download. */
+/** Exporta um envelope lógico v2/schema7. O próprio dataset é validado antes do download. */
 export async function exportData(): Promise<BackupExportResult> {
     const [categories, subcategories, items, resellers, transactions] = await Promise.all([
         db.categories.toArray(),

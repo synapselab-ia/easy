@@ -142,7 +142,23 @@ function toTransaction(row: {
     replaces_transaction_id: number | null;
     occurred_at: string;
     created_at: string;
+    created_by_user_id: string | null;
+    created_by_email: string | null;
+    reversed_by_user_id: string | null;
+    reversed_by_email: string | null;
 }): Transaction {
+    const createdBy = row.created_by_user_id
+        ? {
+            userId: row.created_by_user_id,
+            ...(row.created_by_email ? { email: row.created_by_email } : {}),
+        }
+        : undefined;
+    const reversedBy = row.reversed_by_user_id
+        ? {
+            userId: row.reversed_by_user_id,
+            ...(row.reversed_by_email ? { email: row.reversed_by_email } : {}),
+        }
+        : undefined;
     const reversal = row.reversal_reason && row.reversed_at
         ? {
             reason: row.reversal_reason,
@@ -150,6 +166,7 @@ function toTransaction(row: {
             ...(row.replacement_transaction_id !== null
                 ? { replacementTransactionId: row.replacement_transaction_id }
                 : {}),
+            ...(reversedBy ? { reversedBy } : {}),
         }
         : undefined;
     const correction = row.replaces_transaction_id !== null
@@ -170,6 +187,7 @@ function toTransaction(row: {
         ...(row.subcategory_name !== null ? { subcategoryName: row.subcategory_name } : {}),
         totalPrice: Number(row.total_price),
         ...(row.observation !== null ? { observation: row.observation } : {}),
+        ...(createdBy ? { createdBy } : {}),
         ...(reversal ? { reversal } : {}),
         ...(correction ? { correction } : {}),
         occurredAt: asDate(row.occurred_at),

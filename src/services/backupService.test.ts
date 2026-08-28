@@ -98,9 +98,9 @@ describe('P5-S1 backup contract', () => {
 
         expect(result.preview).toMatchObject({
             sourceVersion: 2,
-            sourceSchemaVersion: 6,
+            sourceSchemaVersion: BACKUP_SCHEMA_VERSION,
             targetVersion: 2,
-            schemaVersion: 6,
+            schemaVersion: BACKUP_SCHEMA_VERSION,
             migrated: false,
             counts: {
                 categories: 0,
@@ -154,7 +154,7 @@ describe('P5-S1 backup contract', () => {
         const result = preflightBackupPayload(legacy);
 
         expect(result.preview.sourceVersion).toBe(1);
-        expect(result.preview.schemaVersion).toBe(6);
+        expect(result.preview.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
         expect(result.preview.migrated).toBe(true);
         expect(result.preview.warnings.length).toBeGreaterThanOrEqual(4);
         expect(result.normalized.data.categories).toEqual([]);
@@ -248,7 +248,7 @@ describe('P5-S1 backup contract', () => {
         expect(() => preflightBackupPayload(payload)).toThrow(/lançamento inexistente 999/);
     });
 
-    it('exports the current database through the versioned v2/schema6 contract', async () => {
+    it('exports the current database through the versioned v2/schema7 contract', async () => {
         (db.categories.toArray as any).mockResolvedValue([]);
         (db.subcategories.toArray as any).mockResolvedValue([]);
         (db.items.toArray as any).mockResolvedValue([{

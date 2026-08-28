@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     BACKUP_FORMAT,
+    BACKUP_SCHEMA_VERSION,
     BACKUP_VERSION,
     preflightBackupPayload,
 } from './backupService';
@@ -60,7 +61,7 @@ function schema5Payload() {
 }
 
 describe('P9-S3-I1 category-aware backup preflight', () => {
-    it('normalizes an existing v2/schema4 backup into the schema6 logical target without inventing classification', () => {
+    it('normalizes an existing v2/schema4 backup into the schema7 logical target without inventing classification or authorship', () => {
         const result = preflightBackupPayload({
             format: BACKUP_FORMAT,
             version: BACKUP_VERSION,
@@ -101,7 +102,7 @@ describe('P9-S3-I1 category-aware backup preflight', () => {
             sourceVersion: 2,
             sourceSchemaVersion: 4,
             targetVersion: 2,
-            schemaVersion: 6,
+            schemaVersion: BACKUP_SCHEMA_VERSION,
             migrated: true,
             counts: {
                 categories: 0,
@@ -115,15 +116,16 @@ describe('P9-S3-I1 category-aware backup preflight', () => {
         expect(result.normalized.data.items[0].categoryId).toBeUndefined();
         expect(result.normalized.data.transactions[0].categoryId).toBeUndefined();
         expect(result.normalized.data.transactions[0].categoryName).toBeUndefined();
-        expect(result.preview.warnings.join(' ')).toMatch(/schema4 normalizado para schema6/);
+        expect(result.normalized.data.transactions[0].createdBy).toBeUndefined();
+        expect(result.preview.warnings.join(' ')).toMatch(/schema4 normalizado para schema7/);
     });
 
-    it('accepts a valid schema5 category graph and normalizes it to schema6 without inventing subcategories', () => {
+    it('accepts a valid schema5 category graph and normalizes it to schema7 without inventing subcategories or actors', () => {
         const result = preflightBackupPayload(schema5Payload());
 
         expect(result.preview).toMatchObject({
             sourceSchemaVersion: 5,
-            schemaVersion: 6,
+            schemaVersion: BACKUP_SCHEMA_VERSION,
             migrated: true,
             counts: {
                 categories: 1,
@@ -144,7 +146,8 @@ describe('P9-S3-I1 category-aware backup preflight', () => {
         });
         expect(result.normalized.data.transactions[0].subcategoryId).toBeUndefined();
         expect(result.normalized.data.transactions[0].subcategoryName).toBeUndefined();
-        expect(result.preview.warnings.join(' ')).toMatch(/schema5 normalizado para schema6/);
+        expect(result.normalized.data.transactions[0].createdBy).toBeUndefined();
+        expect(result.preview.warnings.join(' ')).toMatch(/schema5 normalizado para schema7/);
     });
 
     it('rejects duplicate logical category names case-insensitively', () => {

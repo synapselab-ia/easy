@@ -57,10 +57,16 @@ export function isResellerActive(reseller: Pick<Reseller, 'isActive'>) {
 
 export type TransactionType = 'order' | 'payment' | 'signal';
 
+export interface TransactionActor {
+    userId: string;
+    email?: string;
+}
+
 export interface TransactionReversal {
     reason: string;
     reversedAt: string;
     replacementTransactionId?: number;
+    reversedBy?: TransactionActor;
 }
 
 export interface TransactionCorrection {
@@ -83,7 +89,9 @@ export interface Transaction {
     subcategoryName?: string;
     totalPrice: number;
     observation?: string;
-    // Auditoria de correção. Ausente significa lançamento efetivo.
+    // Operador autenticado que registrou o lançamento. Ausente em dados anteriores à auditoria.
+    createdBy?: TransactionActor;
+    // Auditoria de correção/estorno. Ausente significa lançamento efetivo.
     reversal?: TransactionReversal;
     // Presente apenas em uma transação criada como substituição auditável.
     correction?: TransactionCorrection;
