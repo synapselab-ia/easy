@@ -34,13 +34,13 @@ function baseData() {
 }
 
 describe('Backup v2 subcategory schema', () => {
-    it('accepts schema6 and preserves historical subcategory snapshot names after catalog rename', () => {
+    it('accepts schema6, preserves historical subcategory snapshots and upgrades without inventing actors', () => {
         const data = baseData();
         const result = preflightBackupPayload({
             format: 'easy-backup',
             version: 2,
             exportedAt,
-            source: { database: 'ResellerManagerDB', schemaVersion: BACKUP_SCHEMA_VERSION },
+            source: { database: 'ResellerManagerDB', schemaVersion: 6 },
             data: {
                 ...data,
                 subcategories: [{
@@ -77,11 +77,14 @@ describe('Backup v2 subcategory schema', () => {
             subcategoryId: 10,
             subcategoryName: 'Placas',
         });
-        expect(result.preview.schemaVersion).toBe(6);
-        expect(result.preview.migrated).toBe(false);
+        expect(result.normalized.data.transactions[0].createdBy).toBeUndefined();
+        expect(result.preview.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
+        expect(result.preview.migrated).toBe(true);
+        expect(result.preview.warnings.join(' ')).toContain('schema6 normalizado para schema7');
+        expect(result.preview.warnings.join(' ')).toContain('autoria');
     });
 
-    it('normalizes schema5 to schema6 without inventing subcategories', () => {
+    it('normalizes schema5 to schema7 without inventing subcategories or actors', () => {
         const data = baseData();
         const result = preflightBackupPayload({
             format: 'easy-backup',
@@ -93,8 +96,9 @@ describe('Backup v2 subcategory schema', () => {
 
         expect(result.normalized.data.subcategories).toEqual([]);
         expect(result.normalized.data.items[0].subcategoryId).toBeUndefined();
-        expect(result.preview.schemaVersion).toBe(6);
+        expect(result.preview.schemaVersion).toBe(BACKUP_SCHEMA_VERSION);
         expect(result.preview.migrated).toBe(true);
         expect(result.preview.warnings.join(' ')).toContain('schema5');
+        expect(result.preview.warnings.join(' ')).toContain('schema7');
     });
 });
