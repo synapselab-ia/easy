@@ -134,4 +134,37 @@
   html {
     @apply font-sans;
   }
+
+  /* Recharts still receives a few legacy hsl(var(--token)) presentation attributes.
+     Easy's theme tokens are full OKLCH colors, so those wrapped attributes are invalid.
+     Resolve them here to the canonical token values so chart marks stay visible in both themes. */
+  .recharts-wrapper [stroke="hsl(var(--foreground))"] {
+    stroke: var(--foreground) !important;
+  }
+
+  .recharts-wrapper [stroke="hsl(var(--payment))"] {
+    stroke: var(--payment) !important;
+  }
+
+  .recharts-wrapper [stroke="hsl(var(--muted-foreground))"] {
+    stroke: var(--muted-foreground) !important;
+  }
+
+  .recharts-wrapper [stroke="hsl(var(--destructive))"] {
+    stroke: var(--destructive) !important;
+  }
+
+  .recharts-wrapper [fill="hsl(var(--primary))"] {
+    fill: var(--primary) !important;
+  }
+
+  .recharts-wrapper [fill="hsl(var(--destructive))"] {
+    fill: var(--destructive) !important;
+  }
+
+  .recharts-default-tooltip {
+    border-color: var(--border) !important;
+    background-color: var(--card) !important;
+    color: var(--card-foreground) !important;
+  }
 }
