@@ -1,7 +1,7 @@
 # Easy V2 — Dashboard + Reports Core Product Spec
 
 **Status:** ACCEPTED PRODUCT DIRECTION — D-035  
-**Updated:** 2026-08-27  
+**Updated:** 2026-08-28  
 **Initiative:** Dashboard + Reports core decision system  
 **Execution model:** one bounded `DR-*` item at a time
 
@@ -474,13 +474,27 @@ Final validation/integration evidence: feature head `ca961ed86f3d4851b8fe7a9e25c
 
 ### DR-08 — Reports analytical refinement
 
-**Status:** CURRENT / AUTHORIZED.
+**Status:** DONE / INTEGRATED — PR #125.
 
-Refine primary KPIs, explicit comparison context, product/reseller analysis controls and re-home applicable Pareto/concentration/open-balance analytics on canonical `FinancialReport` semantics.
+- the canonical `FinancialReport` now carries previous-period `periodNet` plus change percentage so `Movimento líquido` participates in the same comparison model as the other primary financial KPIs;
+- `ReportsPage` renders the four primary KPIs in the accepted order: `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`; order/item counts remain supporting sales context;
+- the actual immediately preceding equal-length comparison range is exposed explicitly;
+- product investigation adds bounded product-name search, category context/filtering and sales/quantity/order sorting while preserving immutable transaction-time snapshot semantics;
+- reseller investigation adds bounded name search and sales/receipts/open-balance/order sorting;
+- `FinancialReport.resellerAnalysis` re-homes Pareto/concentration from selected-period reseller sales and report-end positive open-balance highlights;
+- the UI labels those balances as `Maiores saldos em aberto`, avoiding the old blanket `inadimplência` interpretation;
+- the legacy Dashboard-only `90/180/360` path was not resurrected;
+- the financial PDF summary remains an adapter over the same canonical KPI/comparison report object;
+- the integrated Dashboard operational hierarchy and `/reports` handoff remain unchanged;
+- no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+The first D-019 run/job `33162503781` / `98820074403` failed on one ambiguous new `ReportsPage` test query for the repeated visible text `Recebimentos`; focused `financialReporting` 8/8 and PDF 3/3 coverage were already green and nothing was integrated. Only the assertion was narrowed to the primary KPI `card-title`, then the complete D-019 gate was rerun. No failed gate was waived.
+
+Final validation/integration evidence: feature head `ab3123898d493a011448409e7e98ea86ca1aa8ca`; exact GitHub-generated merge ref `b08cd97e8dc2ad4c0755fcedcd0a01ebc9b72dd6`; D-019 run/job `33162771608` / `98820945908`; ESLint 0 errors / 108 warnings; Vitest 72 files / 309 tests PASS, including `financialReporting` 8/8, `ReportsPage` 3/3 and `financialReportPdfService` 3/3; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated tree `2f36a92aecd12331fae57b39b693f84420c1d81c`; squash-integrated `develop@c3e43f37802d1e487a50097689c385f8e3de8b78`; integrated tree `2f36a92aecd12331fae57b39b693f84420c1d81c`; exact tree equivalence PASS; no failed gate was waived.
 
 ### DR-09 — Final Dashboard/Reports UX and efficiency acceptance
 
-**Status:** QUEUED / NOT CURRENT.
+**Status:** CURRENT / AUTHORIZED.
 
 Run a bounded final pass across desktop/mobile, empty/loading states, accessibility, wording, deep-link behavior and performance. Fix only defects found by that acceptance pass; do not use it to invent unrelated features.
 

@@ -3,7 +3,7 @@
 **Status:** canonical V2 product reference  
 **Repository:** `synapselab-ia/easy`  
 **Integration branch:** `develop`  
-**Updated:** 2026-08-27
+**Updated:** 2026-08-28
 
 ## 1. Purpose
 
@@ -165,6 +165,8 @@ DR-06 is integrated through PR #122. The Dashboard now exposes compact `+ Pedido
 
 DR-07 is integrated through PR #124. The operational Dashboard no longer renders the legacy `Análise de Performance` / `90/180/360` analytical surface after recent activity. Instead, it closes with one explicit `Análise detalhada` handoff to the existing `/reports` workspace. The existing Reports route/default period and `FinancialReport` semantics remain unchanged, while the legacy Performance code stays outside the rendered Dashboard for the isolated DR-08 re-home/refinement step.
 
+DR-08 is integrated through PR #125. Reports now uses the accepted primary financial hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`, exposes the actual equal-length previous comparison range, adds bounded product/reseller investigation controls and re-homes selected-period Pareto/concentration plus report-end open-balance analysis through canonical `FinancialReport` semantics. The PDF summary remains an adapter over that same model; the legacy Dashboard-only `90/180/360` path was not resurrected and positive balances are not blanket-labeled as inadimplência.
+
 D-035 does not authorize a new database/schema, financial mutation/accounting contract, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
 
 ## 9. Cloud security requirements
@@ -217,7 +219,7 @@ D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, ea
 
 The previously proposed isolated change #14 (`Recebimentos hoje`) is no longer a standalone pending item. It is **absorbed/superseded by D-035**: receipts remain part of the target Dashboard, but as `Recebimentos este mês` with optional today context rather than a dedicated daily KPI card.
 
-D-035 / Dashboard + Reports core redesign is the authorized product initiative. `DR-01` (product contract/canonical documentation), `DR-02` (canonical Dashboard read-model), `DR-03` (primary Dashboard KPI row), `DR-04` (`Precisa de atenção` action center), `DR-05` (compact carteira aging), `DR-06` (recent registrations + quick actions) and `DR-07` (remove Dashboard Performance + contextual Reports handoff) are complete. **`DR-08 — Reports analytical refinement` is the sole current executable item.** `DR-09` remains queued/not current and must not be bundled.
+D-035 / Dashboard + Reports core redesign is the authorized product initiative. `DR-01` (product contract/canonical documentation), `DR-02` (canonical Dashboard read-model), `DR-03` (primary Dashboard KPI row), `DR-04` (`Precisa de atenção` action center), `DR-05` (compact carteira aging), `DR-06` (recent registrations + quick actions), `DR-07` (remove Dashboard Performance + contextual Reports handoff) and `DR-08` (Reports analytical refinement) are complete. **`DR-09 — final Dashboard/Reports UX and efficiency acceptance` is the sole current executable item.**
 
 DR-02 integrated one bounded read-only `DashboardSnapshot` in `src/domain/dashboardSnapshot.ts` and one shared Dashboard snapshot query in `src/hooks/useDashboard.ts`. It centralizes month-to-today sales/receipts/order/item context, optional today context, current open debt/reseller count, critical amount/count/oldest age, accepted FIFO buckets, deterministic attention rows and recent effective registrations. The current-position side applies the operator-local end-of-today cutoff so valid future occurrences remain valid history/registrations but cannot affect current debt/aging until they occur. The implementation introduced no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment change.
 
@@ -229,7 +231,9 @@ DR-05 replaced the large aging donut with compact `Carteira por idade` rows usin
 
 DR-06 added only the prepared recent-registration projection and existing-route quick actions. `RecentRegistrations` preserves the snapshot-provided order and reversal exclusion, distinguishes transaction type, value and reseller, disambiguates occurrence date from registration date when needed, and navigates to existing reseller history. `DashboardQuickActions` routes the three accepted intents into the existing transaction form. PR #122 passed full D-019 and exact validated/integrated tree equivalence; `PerformanceAnalysisSection` remained unchanged for DR-07.
 
-DR-07 removed the legacy analytical Performance surface from the rendered Dashboard only after the operational replacements were complete and added a reproducible contextual path to the existing Reports workspace. The first full D-019 attempt correctly failed because four pre-existing Playwright scenarios still asserted the removed UI; no integration occurred. That stale E2E contract was aligned, the full gate then passed, and PR #124 was squash-integrated with exact validated/integrated tree equivalence. Reports content/accounting was not refined in DR-07; that remains the isolated DR-08 scope.
+DR-07 removed the legacy analytical Performance surface from the rendered Dashboard only after the operational replacements were complete and added a reproducible contextual path to the existing Reports workspace. The first full D-019 attempt correctly failed because four pre-existing Playwright scenarios still asserted the removed UI; no integration occurred. That stale E2E contract was aligned, the full gate then passed, and PR #124 was squash-integrated with exact validated/integrated tree equivalence. Reports content/accounting was not refined in DR-07; that remained the isolated DR-08 scope.
+
+DR-08 refined Reports only on the canonical `FinancialReport` path. The report now has the accepted four primary financial KPIs, explicit previous-range context, bounded product/category and reseller investigation, selected-period Pareto/concentration, report-end open-balance wording and PDF parity. The first D-019 attempt was blocked by a single ambiguous new UI-test query; only the assertion was narrowed, the full gate passed, and PR #125 was squash-integrated with exact validated/integrated tree equivalence. DR-09 final acceptance was not bundled.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 

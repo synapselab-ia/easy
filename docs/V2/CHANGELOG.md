@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-28 — D-035 DR-08 Reports analytical refinement integrated
+
+D-035 `DR-08` completed the bounded analytical refinement of the existing Reports workspace on the canonical `FinancialReport` path. PR #125 makes the primary report hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`, exposes the actual equal-length previous comparison range, adds bounded product/reseller investigation controls, re-homes Pareto/concentration over selected-period reseller sales and presents largest positive balances explicitly as report-end open balances rather than `inadimplência`.
+
+The canonical report model now carries previous-period movement-net comparison and one `resellerAnalysis` projection for selected-period Pareto plus report-end open-balance highlights. `ReportsPage` consumes that same model; the downloadable financial PDF remains an adapter over the canonical report object. The Dashboard operational hierarchy and its Reports handoff remain unchanged, and the legacy Dashboard-only `90/180/360` analytical path was not resurrected.
+
+The first D-019 run/job `33162503781` / `98820074403` failed on a single ambiguous new UI-test query for `Recebimentos`; focused DR-08 domain/PDF coverage was already green and nothing was integrated. Only the test selector was made specific to the primary KPI title, and the complete gate was rerun. No failed gate was waived.
+
+Final D-019 on PR #125: feature head `ab3123898d493a011448409e7e98ea86ca1aa8ca`, merge ref `b08cd97e8dc2ad4c0755fcedcd0a01ebc9b72dd6`, run/job `33162771608` / `98820945908`: 0 lint errors / 108 warnings; 72 files / 309 Vitest PASS; 17/17 Playwright PASS; TypeScript + production Vite build PASS. Validated tree: `2f36a92aecd12331fae57b39b693f84420c1d81c`.
+
+PR #125 was squash-integrated into `develop` as `c3e43f37802d1e487a50097689c385f8e3de8b78`; its tree is also `2f36a92aecd12331fae57b39b693f84420c1d81c`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, Dashboard operational, recovery or automatic Vercel publication change occurred, and `main` remains untouched. DR-08 is closed and `DR-09 — final Dashboard/Reports UX and efficiency acceptance` is now the sole current authorized item; DR-09 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 DR-07 Dashboard Performance removed with Reports handoff
 
 D-035 `DR-07` completed the bounded operational Dashboard separation from deeper analytics. PR #124 removes the rendered legacy `Análise de Performance` surface after the accepted KPI, attention, aging and recent-activity blocks and adds one compact `Análise detalhada` handoff with explicit `Abrir Relatórios` navigation to the existing `/reports` workspace.

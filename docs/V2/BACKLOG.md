@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Backlog
 
-**Updated:** 2026-08-27
+**Updated:** 2026-08-28
 
 This backlog records current ordered work. Historical implementation detail remains in phase execution documents and Git/PR history.
 
@@ -304,7 +304,7 @@ Accepted result:
 D-019 run/job `33108818780` / `98645846558`: 0 lint errors / 105 warnings; 65 files / 287 Vitest PASS; focused occurrence-form coverage 3/3 PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `650a28b4f53f484cec79bf4b80f4842364e3ee66`; validated tree `c6f2ecb9e1e63c244a1cd305abbe51ebd54b5811` exactly equals squash-integrated `develop@bee3e2cee2852c9bf0683fe5d564b34cef569c8a` tree. Exact tree equivalence: PASS.
 
 ### D-035 — Dashboard + Reports core redesign
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-08 CURRENT`
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-09 CURRENT`
 
 Focused product contract: `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
@@ -428,14 +428,28 @@ The first D-019 run/job `33127787667` / `98709950744` failed because four pre-ex
 Final D-019 run/job `33128164262` / `98711165562`: 0 lint errors / 105 warnings; 71 files / 305 Vitest PASS; 17/17 Playwright PASS; production build PASS. GitHub Actions validated merge ref `4b84139f38fbf6ef35fcf3e950b5997c2adc1ba0`; validated tree `d9f0ed070b6e346d09e3f3035ee737a4245be4f1` exactly equals squash-integrated `develop@61ef0646ebae5c39dff68c9a4aa249cb4a3dad2f` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-08 — Reports analytical refinement
-**Status:** `CURRENT / AUTHORIZED`
+**Status:** `DONE / INTEGRATED — PR #125`
 
-Refine primary financial KPIs/comparison clarity, add bounded product/reseller search/sort/filter controls and re-home Pareto/concentration/open-balance analytics on canonical selected-period `FinancialReport` semantics.
+Accepted result:
+
+- the primary report row and PDF summary now use `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`; order/item counts remain supporting context;
+- each primary comparison displays the actual immediately preceding equal-length date range;
+- `FinancialReport.comparison` owns previous `periodNet` and `periodNetChangePercent`;
+- product analysis adds accent/case-insensitive name search, historical-category filtering and sorting by sales, quantity or orders;
+- reseller analysis adds accent/case-insensitive name search and sorting by sales, receipts, report-end open debt or orders;
+- `FinancialReport.resellerAnalysis` centralizes selected-period reseller-sales Pareto/concentration and top positive report-end open balances;
+- the existing Pareto chart consumes canonical report data instead of the removed Dashboard-only `90/180/360` calculation path;
+- report-end positive balances are presented as `Em aberto no fim` / open receivables and explicitly are not automatic `inadimplência`;
+- Dashboard, financial mutation/accounting semantics, database/schema, Supabase/RPC/Auth/RLS, recovery and deployment behavior remain unchanged.
+
+The first D-019 run/job `33162503781` / `98820074403` failed after lint 0 errors / 108 warnings because one new `ReportsPage` assertion ambiguously queried legitimate duplicated `Recebimentos` text. Domain DR-08 tests were 8/8 PASS, PDF tests 3/3 PASS and Reports page tests 2/3; the full Vitest run stopped at 308/309, so Playwright/build did not run. Nothing was integrated. Only the test selector was made precise; product behavior was unchanged and no failure was waived.
+
+Final D-019 run/job `33162771608` / `98820945908`: 0 lint errors / 108 warnings; 72 files / 309 Vitest PASS, including `financialReporting` 8/8, `ReportsPage` 3/3 and `financialReportPdfService` 3/3; 17/17 Playwright PASS; TypeScript + production build PASS. GitHub Actions validated merge ref `b08cd97e8dc2ad4c0755fcedcd0a01ebc9b72dd6`; validated tree `2f36a92aecd12331fae57b39b693f84420c1d81c` exactly equals squash-integrated `develop@c3e43f37802d1e487a50097689c385f8e3de8b78` tree. Exact tree equivalence: PASS; no failed gate was waived.
 
 #### DR-09 — final Dashboard/Reports UX and efficiency acceptance
-**Status:** `QUEUED / NOT CURRENT`
+**Status:** `CURRENT / AUTHORIZED`
 
-Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link and performance acceptance. Fix only evidence-backed defects found by that pass.
+Perform final evidence-backed acceptance across desktop/mobile, loading/empty states, accessibility, wording, deep-link behavior and performance. Fix only defects found by that pass; do not invent new features, reopen accepted accounting/product semantics or extend D-035 with an unauthorized DR-10.
 
 ### P10-S3-I2-I4 — Legacy real-data migration
 **Status:** `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`
@@ -445,4 +459,4 @@ Perform final desktop/mobile, loading/empty, accessibility, wording, deep-link a
 
 ## Current NEXT_ACTION
 
-**Execute only D-035 `DR-08 — Reports analytical refinement`. Verify the integrated DR-07 operational Dashboard handoff, the existing `ReportsPage` / `FinancialReport` model and PDF adapter, current primary report KPIs/comparison wording, product/category and reseller workspaces, and the legacy Performance/Pareto/concentration/open-balance analysis that is no longer rendered on Dashboard. Refine Reports on the existing canonical `FinancialReport` path: make the primary financial KPI hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`; make equal-length previous-period comparison context explicit; add only bounded product/reseller search/sort/filter controls that materially improve investigation; and re-home applicable Pareto/concentration/open-balance analysis using selected-period/report-end semantics rather than resurrecting the Dashboard-only `90/180/360` path or calling every positive balance inadimplência. Preserve screen/PDF accounting parity and immutable historical snapshot semantics. Do not alter the integrated Dashboard operational hierarchy, perform DR-09 final UX acceptance or begin later work. No database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, run focused tests plus D-019 before executable integration, update canonical docs at closure, promote exactly DR-09 if integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
+**Execute only D-035 `DR-09 — final Dashboard/Reports UX and efficiency acceptance`. First verify the fully integrated DR-03…DR-08 Dashboard/Reports system on desktop and mobile, including loading/empty states, keyboard/focus/accessibility semantics, wording, Dashboard -> Reports handoff/deep-link behavior and bounded performance/efficiency. Run evidence-backed final acceptance across the existing product; fix only defects found by that pass and do not invent new features, reopen accepted financial/accounting semantics or extend the D-035 sequence. Preserve canonical `DashboardSnapshot`/`FinancialReport`, D-014 occurrence semantics, reversal-zero-effect, immutable snapshots, screen/PDF parity and the integrated Dashboard/Reports hierarchy. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work outside `main`, use proportionate focused checks and D-019 before any executable integration. At closure update canonical docs and, because DR-09 is the final authorized D-035 item, record the D-035 implementation sequence complete rather than inventing DR-10. Stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.** See `STATUS.md` for the authoritative instruction.
