@@ -117,4 +117,55 @@ describe('TransactionHistory', () => {
         expect(screen.getByText('1 de 3 lançamento(s)')).toBeInTheDocument();
         expect(screen.getAllByText('Sinal').length).toBeGreaterThan(0);
     });
+
+    it('clamps long desktop variable text to two lines and exposes the full value on hover', () => {
+        const longResellerName = 'Revendedor com um nome excepcionalmente longo para validar a leitura na tabela';
+        const longItemName = 'Placa de aço inox 28x13 com foto 6x8 com moldura e acabamento especial';
+        const longObservation = 'Observação longa com nome do cliente, instruções adicionais e demais informações que precisam continuar disponíveis por completo.';
+        const longActor = 'operador-com-email-extremamente-longo-para-validar-tooltip@easy.local';
+        const longDetail = `${longItemName} · Qtd. 1 · ${longObservation}`;
+
+        const longReseller: Reseller = {
+            id: 99,
+            name: longResellerName,
+            isActive: true,
+            createdAt: new Date('2026-08-28T08:00:00-03:00'),
+            updatedAt: new Date('2026-08-28T08:00:00-03:00'),
+        };
+        const longTransaction: Transaction = {
+            id: 99,
+            resellerId: 99,
+            type: 'order',
+            itemId: 99,
+            itemName: longItemName,
+            quantity: 1,
+            unitPrice: 260,
+            totalPrice: 260,
+            observation: longObservation,
+            createdBy: {
+                userId: '99999999-9999-4999-8999-999999999999',
+                email: longActor,
+            },
+            occurredAt: new Date('2026-08-28T09:00:00-03:00'),
+            createdAt: new Date('2026-08-28T09:29:00-03:00'),
+        };
+
+        render(
+            <MemoryRouter>
+                <TransactionHistory transactions={[longTransaction]} resellers={[longReseller]} isLoading={false} />
+            </MemoryRouter>,
+        );
+
+        const resellerLink = screen.getAllByTitle(longResellerName)[0];
+        const detail = screen.getByTitle(longDetail);
+        const actor = screen.getAllByTitle(`Registrado: ${longActor}`)[0];
+
+        expect(resellerLink).toHaveClass('line-clamp-2');
+        expect(detail).toHaveClass('line-clamp-2');
+        expect(resellerLink.closest('td')).toHaveClass('whitespace-normal');
+        expect(detail.closest('td')).toHaveClass('whitespace-normal');
+        expect(actor).toHaveClass('truncate');
+        expect(actor.closest('td')).toHaveClass('whitespace-normal');
+        expect(detail).toHaveAttribute('title', longDetail);
+    });
 });
