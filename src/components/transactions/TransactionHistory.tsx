@@ -196,13 +196,19 @@ export function TransactionHistory({ transactions, resellers, isLoading }: Trans
 
     const renderActor = (transaction: Transaction) => {
         const correction = transactionStatus(transaction) === 'corrected';
+        const registeredActor = actorLabel(transaction.createdBy);
+        const reversalActor = transaction.reversal ? actorLabel(transaction.reversal.reversedBy) : undefined;
+        const reversalAction = correction ? 'Corrigido' : 'Estornado';
+
         return (
-            <div className="space-y-1 text-xs">
-                <div><span className="text-muted-foreground">Registrado:</span> {actorLabel(transaction.createdBy)}</div>
+            <div className="min-w-0 space-y-1 whitespace-normal text-xs">
+                <div className="truncate" title={`Registrado: ${registeredActor}`}>
+                    <span className="text-muted-foreground">Registrado:</span> {registeredActor}
+                </div>
                 {transaction.reversal && (
-                    <div>
-                        <span className="text-muted-foreground">{correction ? 'Corrigido:' : 'Estornado:'}</span>{' '}
-                        {actorLabel(transaction.reversal.reversedBy)}
+                    <div className="truncate" title={`${reversalAction}: ${reversalActor}`}>
+                        <span className="text-muted-foreground">{reversalAction}:</span>{' '}
+                        {reversalActor}
                     </div>
                 )}
             </div>
@@ -347,22 +353,35 @@ export function TransactionHistory({ transactions, resellers, isLoading }: Trans
                             <TableBody>
                                 {filteredTransactions.map(transaction => {
                                     const reseller = resellerById.get(transaction.resellerId);
+                                    const resellerName = reseller?.name ?? `Revendedor #${transaction.resellerId}`;
+                                    const detail = detailLabel(transaction);
+
                                     return (
                                         <TableRow key={transaction.id ?? `${transaction.resellerId}-${transaction.createdAt.getTime()}`}>
                                             <TableCell className="whitespace-nowrap">{formatDateTime(transaction.createdAt)}</TableCell>
                                             <TableCell className="whitespace-nowrap">{formatDate(transactionOccurredAt(transaction))}</TableCell>
                                             <TableCell>{typeLabel(transaction.type)}</TableCell>
-                                            <TableCell>
+                                            <TableCell className="whitespace-normal">
                                                 {reseller?.id ? (
-                                                    <Link className="font-medium hover:underline" to={`/resellers/${reseller.id}`}>{reseller.name}</Link>
-                                                ) : (reseller?.name ?? `Revendedor #${transaction.resellerId}`)}
+                                                    <Link
+                                                        className="line-clamp-2 break-words font-medium hover:underline"
+                                                        title={resellerName}
+                                                        to={`/resellers/${reseller.id}`}
+                                                    >
+                                                        {resellerName}
+                                                    </Link>
+                                                ) : (
+                                                    <span className="line-clamp-2 break-words" title={resellerName}>{resellerName}</span>
+                                                )}
                                             </TableCell>
-                                            <TableCell className="max-w-[360px] text-sm text-muted-foreground">{detailLabel(transaction)}</TableCell>
+                                            <TableCell className="max-w-[360px] whitespace-normal text-sm text-muted-foreground">
+                                                <span className="line-clamp-2 break-words" title={detail}>{detail}</span>
+                                            </TableCell>
                                             <TableCell className={cn('whitespace-nowrap font-medium tabular-nums', transaction.reversal && 'text-muted-foreground')}>
                                                 {formatCurrency(transaction.totalPrice)}
                                             </TableCell>
                                             <TableCell>{renderStatus(transaction)}</TableCell>
-                                            <TableCell>{renderActor(transaction)}</TableCell>
+                                            <TableCell className="whitespace-normal">{renderActor(transaction)}</TableCell>
                                         </TableRow>
                                     );
                                 })}
