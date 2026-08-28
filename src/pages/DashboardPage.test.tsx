@@ -39,8 +39,8 @@ vi.mock('../components/dashboard/RecentRegistrations', () => ({
     ),
 }));
 
-vi.mock('../components/dashboard/PerformanceAnalysisSection', () => ({
-    PerformanceAnalysisSection: () => <div>Performance analysis</div>,
+vi.mock('../components/dashboard/DashboardReportsHandoff', () => ({
+    DashboardReportsHandoff: () => <div>Reports handoff</div>,
 }));
 
 const dashboardSnapshot = {
@@ -118,9 +118,10 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Attention loading')).toBeInTheDocument();
         expect(screen.getByText('Debt aging loading')).toBeInTheDocument();
         expect(screen.getByText('Recent loading')).toBeInTheDocument();
+        expect(screen.getByText('Reports handoff')).toBeInTheDocument();
     });
 
-    it('renders the four KPIs and hands prepared DR-04/DR-05/DR-06 data to the operational blocks', () => {
+    it('renders the four KPIs and hands prepared DR-04/DR-05/DR-06 data to the operational blocks before the Reports handoff', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: dashboardSnapshot, isLoading: false } as any);
 
         render(<DashboardPage />);
@@ -145,7 +146,9 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Attention center 1')).toBeInTheDocument();
         expect(screen.getByText('Debt aging 3 / 2100')).toBeInTheDocument();
         expect(screen.getByText('Recent registrations 2')).toBeInTheDocument();
+        expect(screen.getByText('Reports handoff')).toBeInTheDocument();
         expect(screen.queryByText(/tempo real/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Análise de Performance/i)).not.toBeInTheDocument();
     });
 
     it('keeps explicit empty-state meaning when the snapshot has no current activity, debt, attention or recent rows', () => {
@@ -176,5 +179,6 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Attention center 0')).toBeInTheDocument();
         expect(screen.getByText('Debt aging 3 / 0')).toBeInTheDocument();
         expect(screen.getByText('Recent registrations 0')).toBeInTheDocument();
+        expect(screen.getByText('Reports handoff')).toBeInTheDocument();
     });
 });

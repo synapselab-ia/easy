@@ -3,7 +3,7 @@ import { DashboardQuickActions } from '../components/dashboard/DashboardQuickAct
 import { AttentionCenter } from '../components/dashboard/AttentionCenter';
 import { DebtHealthAgingCard } from '../components/dashboard/DebtHealthAgingCard';
 import { RecentRegistrations } from '../components/dashboard/RecentRegistrations';
-import { PerformanceAnalysisSection } from '../components/dashboard/PerformanceAnalysisSection';
+import { DashboardReportsHandoff } from '../components/dashboard/DashboardReportsHandoff';
 import { useDashboardSnapshot } from '../hooks/useDashboard';
 
 export default function DashboardPage() {
@@ -42,9 +42,7 @@ export default function DashboardPage() {
                 isLoading={isLoading}
             />
 
-            <div className="w-full">
-                <PerformanceAnalysisSection />
-            </div>
+            <DashboardReportsHandoff />
         </div>
     );
 }
