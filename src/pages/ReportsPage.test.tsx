@@ -136,11 +136,11 @@ describe('ReportsPage DR-08', () => {
     it('uses the four primary financial KPIs and exposes the actual previous comparison range', () => {
         render(<ReportsPage />);
 
-        expect(screen.getByText('Vendas')).toBeInTheDocument();
-        expect(screen.getByText('Recebimentos')).toBeInTheDocument();
-        expect(screen.getByText('Movimento líquido')).toBeInTheDocument();
-        expect(screen.getByText('Em aberto no fim')).toBeInTheDocument();
-        expect(screen.queryByText('Pedidos', { selector: '[class*="CardTitle"]' })).not.toBeInTheDocument();
+        expect(screen.getByText('Vendas', { selector: '[data-slot="card-title"]' })).toBeInTheDocument();
+        expect(screen.getByText('Recebimentos', { selector: '[data-slot="card-title"]' })).toBeInTheDocument();
+        expect(screen.getByText('Movimento líquido', { selector: '[data-slot="card-title"]' })).toBeInTheDocument();
+        expect(screen.getByText('Em aberto no fim', { selector: '[data-slot="card-title"]' })).toBeInTheDocument();
+        expect(screen.queryByText('Pedidos', { selector: '[data-slot="card-title"]' })).not.toBeInTheDocument();
 
         expect(screen.getAllByText(/04\/07\/2026 a 31\/07\/2026/).length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText(/6 itens em 2 pedidos/)).toBeInTheDocument();
