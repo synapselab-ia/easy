@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-28 — D-035 DR-09 final Dashboard/Reports acceptance closes D-035
+
+D-035 `DR-09` completed the final evidence-backed acceptance of the integrated Dashboard/Reports decision system. The pass covered representative desktop `1440x1000` and mobile `390x844` widths, Dashboard priority/order and responsive containment, Dashboard -> Reports navigation plus direct `/easy/reports` loading, report KPI/open-balance wording, keyboard/focus behavior and semantic labeling.
+
+The acceptance found only bounded Reports accessibility defects. PR #126 programmatically associates the period/category/product-sort/reseller-sort Select triggers with their visible labels; exposes the report-section selector as a labelled control group with `aria-pressed`, visible keyboard focus and Enter activation; and gives category drilldowns `aria-expanded` / `aria-controls` plus focus-visible behavior. No financial/read-model, persistence, database/schema, Supabase/RPC/Auth/RLS, recovery or deployment semantics changed.
+
+Final D-019 on PR #126: feature head `f817fb09ef14ebd731027f4e75edd587c28e2761`, exact merge ref `d702c9c9065e709b6c3d50aafc4f89041afc2cbd`, run/job `33169683674` / `98843481388`: 0 lint errors / 108 warnings; 73 files / 310 Vitest PASS; 19/19 Playwright PASS; TypeScript + production Vite build PASS. The new acceptance coverage includes representative desktop/mobile hierarchy/overflow/navigation checks plus focused data-present Reports accessibility semantics; existing loading/empty, canonical financial-report and PDF-parity coverage remained green.
+
+PR #126 was squash-integrated into `develop` as `6f20ab99340d051d2ac509125e63f32306ed0680`. The validated merge-ref tree and integrated commit tree are exactly `423509ce613b5311ac5a3c6666ed9e9e1d2d426e`; exact tree equivalence: PASS. No failed gate was waived, no automatic Vercel publication occurred and `main` remains untouched.
+
+DR-09 is closed and D-035 is complete. There is no authorized `DR-10`; the project returns to the existing P10-S3-I2-I3-D controlled clean-start early-use observation boundary and requires new observed evidence or explicit operator instruction before another executable product change.
+
+---
+
 ## 2026-08-28 — D-035 DR-08 Reports analytical refinement integrated
 
 D-035 `DR-08` completed the bounded analytical refinement of the existing Reports workspace on the canonical `FinancialReport` path. PR #125 makes the primary report hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`, exposes the actual equal-length previous comparison range, adds bounded product/reseller investigation controls, re-homes Pareto/concentration over selected-period reseller sales and presents largest positive balances explicitly as report-end open balances rather than `inadimplência`.

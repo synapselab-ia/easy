@@ -151,7 +151,7 @@ Accepted boundary:
 - existing FIFO aging thresholds remain `0–6d`, `7–30d`, `>30d` unless separately reauthorized;
 - one coherent read-only Dashboard projection is required before the visual redesign so components do not repeatedly reconstruct financial meaning independently.
 
-The detailed accepted target, semantics, UX criteria and `DR-01…DR-09` execution sequence live in `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
+The detailed accepted target, semantics, UX criteria and completed `DR-01…DR-09` execution sequence live in `docs/V2/DASHBOARD_REPORTS_SPEC.md`.
 
 DR-02 is integrated through PR #114. The canonical `DashboardSnapshot` projection centralizes month/today flow, as-of-today open position, FIFO aging, critical/attention context and recent effective registrations while reusing accepted `FinancialReport`/transaction helpers and excluding later future occurrences from current-position calculations.
 
@@ -167,7 +167,9 @@ DR-07 is integrated through PR #124. The operational Dashboard no longer renders
 
 DR-08 is integrated through PR #125. Reports now uses the accepted primary financial hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`, exposes the actual equal-length previous comparison range, adds bounded product/reseller investigation controls and re-homes selected-period Pareto/concentration plus report-end open-balance analysis through canonical `FinancialReport` semantics. The PDF summary remains an adapter over that same model; the legacy Dashboard-only `90/180/360` path was not resurrected and positive balances are not blanket-labeled as inadimplência.
 
-D-035 does not authorize a new database/schema, financial mutation/accounting contract, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import or definitive cutover.
+DR-09 is integrated through PR #126 and closes D-035. The final acceptance added representative 1440x1000 and 390x844 Dashboard/Reports checks for priority order, responsive containment, direct Dashboard -> Reports navigation and direct `/reports` loading, plus keyboard/focus/semantic-state coverage. Concrete Reports accessibility defects found by that pass were corrected without changing financial meaning: the period/category/sort Select triggers are programmatically associated with their labels, report-section controls expose selected state with `aria-pressed` and visible keyboard focus, and category drilldowns expose `aria-expanded`/`aria-controls`. The existing focused loading/empty, Dashboard component, financial-report domain and PDF parity coverage remained green.
+
+D-035 is complete. It does not authorize a new database/schema, financial mutation/accounting contract, Auth/RLS/recovery weakening, automatic deployment, `main` publication, legacy import, definitive cutover or an invented `DR-10`.
 
 ## 9. Cloud security requirements
 
@@ -211,15 +213,15 @@ Precedence:
 
 Historical `tasks/` checkboxes are not canonical status.
 
-For the current D-035 initiative, `docs/V2/DASHBOARD_REPORTS_SPEC.md` is the focused product contract and must be read after the canonical startup set before executing a `DR-*` item.
+`docs/V2/DASHBOARD_REPORTS_SPEC.md` is the focused accepted D-035 product contract and now records the completed `DR-01…DR-09` sequence; it is not authorization for a later `DR-*` item.
 
 ## 13. Current bounded goal
 
 D-033 / subcategories, D-034 / financial reports, early-use changes #5–#13, early-use change #15 and both operator-authorized pre-#8 refinements (the reseller statement PDF simplification and searchable entity selectors) are **closed**. Controlled early-use observation remains active.
 
-The previously proposed isolated change #14 (`Recebimentos hoje`) is no longer a standalone pending item. It is **absorbed/superseded by D-035**: receipts remain part of the target Dashboard, but as `Recebimentos este mês` with optional today context rather than a dedicated daily KPI card.
+The previously proposed isolated change #14 (`Recebimentos hoje`) is no longer a standalone pending item. It is **absorbed/superseded by D-035**: receipts remain part of the accepted Dashboard as `Recebimentos este mês` with optional today context rather than a dedicated daily KPI card.
 
-D-035 / Dashboard + Reports core redesign is the authorized product initiative. `DR-01` (product contract/canonical documentation), `DR-02` (canonical Dashboard read-model), `DR-03` (primary Dashboard KPI row), `DR-04` (`Precisa de atenção` action center), `DR-05` (compact carteira aging), `DR-06` (recent registrations + quick actions), `DR-07` (remove Dashboard Performance + contextual Reports handoff) and `DR-08` (Reports analytical refinement) are complete. **`DR-09 — final Dashboard/Reports UX and efficiency acceptance` is the sole current executable item.**
+D-035 / Dashboard + Reports core redesign is **DONE / ACCEPTED / INTEGRATED**. `DR-01` through `DR-09` are complete; there is no authorized `DR-10` and no new D-035 executable item.
 
 DR-02 integrated one bounded read-only `DashboardSnapshot` in `src/domain/dashboardSnapshot.ts` and one shared Dashboard snapshot query in `src/hooks/useDashboard.ts`. It centralizes month-to-today sales/receipts/order/item context, optional today context, current open debt/reseller count, critical amount/count/oldest age, accepted FIFO buckets, deterministic attention rows and recent effective registrations. The current-position side applies the operator-local end-of-today cutoff so valid future occurrences remain valid history/registrations but cannot affect current debt/aging until they occur. The implementation introduced no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment change.
 
@@ -234,6 +236,8 @@ DR-06 added only the prepared recent-registration projection and existing-route 
 DR-07 removed the legacy analytical Performance surface from the rendered Dashboard only after the operational replacements were complete and added a reproducible contextual path to the existing Reports workspace. The first full D-019 attempt correctly failed because four pre-existing Playwright scenarios still asserted the removed UI; no integration occurred. That stale E2E contract was aligned, the full gate then passed, and PR #124 was squash-integrated with exact validated/integrated tree equivalence. Reports content/accounting was not refined in DR-07; that remained the isolated DR-08 scope.
 
 DR-08 refined Reports only on the canonical `FinancialReport` path. The report now has the accepted four primary financial KPIs, explicit previous-range context, bounded product/category and reseller investigation, selected-period Pareto/concentration, report-end open-balance wording and PDF parity. The first D-019 attempt was blocked by a single ambiguous new UI-test query; only the assertion was narrowed, the full gate passed, and PR #125 was squash-integrated with exact validated/integrated tree equivalence. DR-09 final acceptance was not bundled.
+
+DR-09 completed final evidence-backed UX/efficiency acceptance. PR #126 corrected only observed accessibility/semantic defects in Reports and added representative desktop/mobile E2E coverage. Final D-019 run/job `33169683674` / `98843481388` passed with ESLint 0 errors / 108 warnings, 73 Vitest files / 310 tests, 19/19 Playwright and TypeScript + production Vite build. The GitHub-generated merge ref `d702c9c9065e709b6c3d50aafc4f89041afc2cbd` and squash-integrated `develop@6f20ab99340d051d2ac509125e63f32306ed0680` share tree `423509ce613b5311ac5a3c6666ed9e9e1d2d426e`, so validated/integrated tree equivalence passed. No failed gate was waived.
 
 Early-use change #7 standardized operator-facing monetary presentation to pt-BR separators and two decimals while leaving editable numeric inputs, calculations, parsing, persistence, rounding and accepted accounting/history semantics unchanged. It introduced no database, Auth/RLS, recovery or deployment-boundary change.
 
@@ -255,6 +259,6 @@ Early-use change #13 extends the existing canonical read-only `FinancialReport` 
 
 Early-use change #15 adds a non-blocking intent check to new transaction entry when the selected financial occurrence date is later than the operator's local current date. Same-day/past entries remain unchanged; a future date prompts `Voltar e corrigir` or `Cadastrar mesmo assim`, and explicit confirmation persists exactly the selected future `occurredAt`. The UI never auto-corrects or prohibits the date, preserving D-014. No database/schema, transaction-accounting, Supabase/RPC/Auth/RLS, recovery or deployment contract changed.
 
-The previous bounded usability/data-quality queue remains historical and must not be extended by inventing a #16. New Dashboard/Reports work uses the separate D-035 `DR-*` sequence. The strict one-item-at-a-time rule remains in force.
+The previous bounded usability/data-quality queue remains historical and must not be extended by inventing a #16. D-035 is also closed and must not be extended by inventing a `DR-10`. Controlled early-use observation remains the current product-state boundary; new executable work requires new explicit evidence/authorization.
 
 Scope still excludes automatic Vercel publication, D-030 trusted-PC proof, legacy real-store migration, `main` publication, canonical URL switch or definitive cutover.
