@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test('transaction history desktop columns contain long variable text', async ({ page }) => {
     await page.goto('/easy/transactions');
     await expect(page.getByRole('heading', { name: 'Lançamentos', exact: true })).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="transaction-history-title"]')).toBeVisible();
 
     const layout = await page.evaluate(() => {
         const section = document.querySelector<HTMLElement>('section[aria-labelledby="transaction-history-title"]');
