@@ -1,9 +1,9 @@
 # Easy V2 — Dashboard + Reports Core Product Spec
 
-**Status:** ACCEPTED PRODUCT DIRECTION — D-035  
+**Status:** ACCEPTED PRODUCT DIRECTION — D-035 COMPLETE  
 **Updated:** 2026-08-28  
 **Initiative:** Dashboard + Reports core decision system  
-**Execution model:** one bounded `DR-*` item at a time
+**Execution model:** completed bounded `DR-01…DR-09` sequence
 
 ## 1. Purpose
 
@@ -360,9 +360,7 @@ Acceptance targets:
 
 ## 16. Authorized implementation sequence
 
-The redesign is a new D-035 initiative and **must not be numbered as early-use change #16**.
-
-Only the item named by `STATUS.md -> NEXT_ACTION` is current.
+The redesign is a D-035 initiative and **must not be numbered as early-use change #16**. The authorized `DR-01…DR-09` sequence is complete; this section is now historical execution evidence, not authorization for a later item.
 
 ### DR-01 — Product contract and canonical documentation
 
@@ -494,24 +492,42 @@ Final validation/integration evidence: feature head `ab3123898d493a011448409e7e9
 
 ### DR-09 — Final Dashboard/Reports UX and efficiency acceptance
 
-**Status:** CURRENT / AUTHORIZED.
+**Status:** DONE / ACCEPTED / INTEGRATED — PR #126.
 
-Run a bounded final pass across desktop/mobile, empty/loading states, accessibility, wording, deep-link behavior and performance. Fix only defects found by that acceptance pass; do not use it to invent unrelated features.
+Final acceptance result:
+
+- representative 1440x1000 and 390x844 E2E coverage verifies the integrated Dashboard priority remains `quick actions -> KPIs -> atenção -> aging -> recent activity -> Reports handoff` and the page has no document-level horizontal overflow at those widths;
+- Dashboard `Abrir Relatórios` reaches `/easy/reports`, while direct `/easy/reports` loading remains reproducible;
+- Reports primary KPI hierarchy and report-end open-balance wording remain visible under representative desktop/mobile acceptance;
+- the period Select is programmatically labelled and keyboard-focusable;
+- report sections expose a labelled control group and selected state through `aria-pressed`, with keyboard activation covered;
+- category drilldown exposes `aria-expanded` and `aria-controls` plus explicit keyboard focus treatment;
+- category/product/reseller Select triggers are associated with their visible labels;
+- focused data-present accessibility coverage verifies the controls that only render in analytical detail views;
+- existing Dashboard component tests continue to cover loading/empty/business-state behavior;
+- existing canonical `financialReporting` and PDF service coverage remains green, preserving D-014 occurrence semantics, reversal-zero effect, immutable snapshots, report-end debt semantics and screen/PDF parity;
+- no database/schema, Supabase/RPC/Auth/RLS, recovery, deployment path or accounting/read-model semantics changed.
+
+Final validation/integration evidence: feature head `f817fb09ef14ebd731027f4e75edd587c28e2761`; exact GitHub-generated merge ref `d702c9c9065e709b6c3d50aafc4f89041afc2cbd`; D-019 run/job `33169683674` / `98843481388`; ESLint 0 errors / 108 warnings; Vitest 73 files / 310 tests PASS, including new `ReportsPage.accessibility` 1/1, existing `ReportsPage` 3/3, `financialReporting` 8/8 and `financialReportPdfService` 3/3; Playwright 19/19 PASS; TypeScript + production Vite build PASS; validated tree `423509ce613b5311ac5a3c6666ed9e9e1d2d426e`; squash-integrated `develop@6f20ab99340d051d2ac509125e63f32306ed0680`; integrated tree `423509ce613b5311ac5a3c6666ed9e9e1d2d426e`; exact tree equivalence PASS; no failed gate was waived.
+
+D-035 is complete. Do not invent a `DR-10`.
 
 ## 17. Governance / stop conditions
 
-Every executable `DR-*` item:
+Every executable `DR-*` item in the completed D-035 sequence:
 
-- starts from current `develop` on an isolated branch;
-- verifies the current implementation before modifying it;
-- uses proportionate focused tests;
-- requires D-019 before executable integration;
-- updates canonical docs at closure and promotes exactly the next `DR-*` item;
-- stops after that one item;
-- does not automatically deploy to Vercel;
-- does not modify/publish `main`;
-- does not weaken D-032 recovery, Supabase/Auth/RLS or approved-operator boundaries;
-- does not resume D-030/I2-I2, import legacy real-store data or claim definitive cutover;
-- does not introduce a database/schema migration unless a later explicit operator decision materially expands the scope.
+- started from then-current `develop` on an isolated branch;
+- verified the current implementation before modifying it;
+- used proportionate focused tests;
+- required D-019 before executable integration;
+- updated canonical docs at closure;
+- stopped after its one authorized item;
+- did not automatically deploy to Vercel;
+- did not modify/publish `main`;
+- did not weaken D-032 recovery, Supabase/Auth/RLS or approved-operator boundaries;
+- did not resume D-030/I2-I2, import legacy real-store data or claim definitive cutover;
+- did not introduce a database/schema migration without explicit authorization.
 
-Unexpected requirements that would alter accepted accounting semantics or materially broaden the initiative require a new operator decision rather than silent expansion.
+DR-09 was the final authorized item. There is no implicit successor: a future executable change requires new evidence/authorization and must not be named `DR-10` merely to continue this sequence.
+
+Unexpected requirements that would alter accepted accounting semantics or materially broaden the product still require a new operator decision rather than silent expansion.
