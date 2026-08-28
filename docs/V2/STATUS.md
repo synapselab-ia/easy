@@ -36,12 +36,12 @@ Current P10-S3 state:
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
   - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
-  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `DONE / INTEGRATED — PR #122`; DR-07 remove Dashboard Performance + contextual Reports handoff `DONE / INTEGRATED — PR #124`; DR-08 Reports analytical refinement `DONE / INTEGRATED — PR #125`; DR-09 final Dashboard/Reports UX and efficiency acceptance `CURRENT / AUTHORIZED`.**
+  - **D-035 Dashboard + Reports core redesign: `DONE / ACCEPTED / INTEGRATED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `DONE / INTEGRATED — PR #122`; DR-07 remove Dashboard Performance + contextual Reports handoff `DONE / INTEGRATED — PR #124`; DR-08 Reports analytical refinement `DONE / INTEGRATED — PR #125`; DR-09 final Dashboard/Reports UX and efficiency acceptance `DONE / ACCEPTED / INTEGRATED — PR #126`; implementation sequence complete; no DR-10 is authorized.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
 
-D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by the screen and downloadable PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles and an ordered `DR-*` redesign sequence.
+D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by the screen and downloadable PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles; its ordered `DR-01…DR-09` implementation sequence is complete.
 
 Current invariants:
 
@@ -673,6 +673,36 @@ Validation/integration evidence:
 
 No failed D-019 objective gate was waived. The post-integration DR-08 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-09 closure — final Dashboard/Reports UX and efficiency acceptance
+
+PR #126 completed the final authorized D-035 acceptance pass across the already integrated Dashboard/Reports product. The acceptance remained bounded to evidence-backed UX/accessibility defects and did not reopen accepted financial or read-model semantics.
+
+Accepted result:
+
+- representative desktop and mobile acceptance preserves the operational Dashboard priority and no horizontal overflow/clipping regression was found in the tested 1440x1000 and 390x844 viewports;
+- the existing Dashboard -> Reports handoff and direct `/reports` navigation remain reproducible;
+- report period/filter/sort Select triggers are now programmatically associated with their visible labels;
+- report-section controls expose the active section state through accessible button semantics;
+- expandable category drilldowns expose expansion state and the controlled region;
+- keyboard interaction for the accepted report controls is explicitly covered;
+- the canonical `DashboardSnapshot`, `FinancialReport`, D-014 occurrence semantics, reversal-zero-effect, D-015 FIFO aging, immutable historical classification snapshots and screen/PDF accounting parity remain unchanged;
+- no database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change occurred.
+
+Validation/integration evidence:
+
+- final feature head: `f817fb09ef14ebd731027f4e75edd587c28e2761`;
+- exact GitHub-generated merge ref checked out by Actions: `d702c9c9065e709b6c3d50aafc4f89041afc2cbd`;
+- validated tree: `423509ce9a5a6449db76880202815513428e021c`;
+- D-019 run/job: `33169683674` / `98843481388`;
+- ESLint: 0 errors / 108 warnings;
+- Vitest: 73 files / 310 tests PASS, including the new Reports accessibility acceptance;
+- Playwright: 19/19 PASS, including representative desktop/mobile Dashboard/Reports final acceptance;
+- TypeScript + production Vite build: PASS;
+- PR #126 squash-integrated `develop`: `6f20ab99340d051d2ac509125e63f32306ed0680`;
+- integrated tree: `423509ce9a5a6449db76880202815513428e021c` — exact tree equivalence PASS.
+
+No failed D-019 objective gate was waived. The post-integration DR-09 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched. D-035 `DR-01…DR-09` is complete and no `DR-10` is authorized.
+
 ## Historical operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
@@ -699,11 +729,11 @@ Historical ordered queue:
 9. **#14 SUPERSEDED / ABSORBED BY D-035** — the isolated receipts-today KPI will not be implemented standalone.
 10. **#15 DONE / INTEGRATED — PR #111** — future occurrence dates require explicit non-blocking confirmation while preserving the chosen D-014 occurrence date.
 
-Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` sequence.
+Do not invent or start a #16. D-035 also ends at DR-09; new work requires new explicit operator authorization.
 
 ## D-035 — Dashboard + Reports core redesign
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-09 CURRENT`  
+**Status:** `DONE / ACCEPTED / INTEGRATED — DR-01…DR-09 COMPLETE`  
 **Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
 
 Accepted product direction:
@@ -713,15 +743,16 @@ Accepted product direction:
 - current-position values are as-of-today and exclude later future occurrences until their occurrence date;
 - `Precisa de atenção` is one deduplicated reseller-per-row action center consuming canonical snapshot rows;
 - `Carteira por idade` is compact exact-value + percentage context consuming canonical snapshot buckets;
-- recent effective registrations and quick order/payment/signal actions are now integrated operational context;
-- the legacy 90/180/360 Performance/Pareto/current-debtor/ranking surface is no longer rendered on Dashboard; an explicit handoff now leads to the existing Reports workspace;
+- recent effective registrations and quick order/payment/signal actions are integrated operational context;
+- the legacy 90/180/360 Performance/Pareto/current-debtor/ranking surface is no longer rendered on Dashboard; an explicit handoff leads to the Reports workspace;
 - DR-02 established one coherent Dashboard read-only projection before the major visual redesign;
 - DR-03 established the accepted four-card primary KPI row on that projection;
 - DR-04 established the deduplicated actionable attention center and removed the old duplicated alert lists;
 - DR-05 established compact exact-value + percentage aging and removed the large default donut without changing aging semantics;
 - DR-06 established recent-registration confirmation context and existing-route quick actions without adding a second write path;
 - DR-07 removed the legacy analytical Performance surface from the operational Dashboard and added an explicit existing-Reports handoff without changing report/accounting semantics;
-- DR-08 established the accepted Reports primary KPI/comparison hierarchy, bounded product/reseller investigation and selected-period/report-end analytical re-home on the canonical `FinancialReport` path.
+- DR-08 established the accepted Reports primary KPI/comparison hierarchy, bounded product/reseller investigation and selected-period/report-end analytical re-home on the canonical `FinancialReport` path;
+- DR-09 completed final representative desktop/mobile, accessibility, wording/deep-link and efficiency acceptance and fixed only concrete Reports semantic-label/state defects found by that pass.
 
 Ordered sequence:
 
@@ -733,9 +764,9 @@ Ordered sequence:
 6. **DR-06 DONE / INTEGRATED — recent registrations + quick actions — PR #122.**
 7. **DR-07 DONE / INTEGRATED — remove Dashboard Performance block + contextual Reports handoff — PR #124.**
 8. **DR-08 DONE / INTEGRATED — Reports analytical refinement — PR #125.**
-9. **DR-09 CURRENT / AUTHORIZED — final Dashboard/Reports UX and efficiency acceptance.**
+9. **DR-09 DONE / ACCEPTED / INTEGRATED — final Dashboard/Reports UX and efficiency acceptance — PR #126.**
 
-Only `DR-09` is executable next. Do not invent a `DR-10` or bundle later work into the same task.
+D-035 is complete. Do not invent a `DR-10`; no new D-035 implementation item is authorized without a new explicit operator decision.
 
 ## Startup protocol for a new conversation
 
@@ -761,4 +792,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only D-035 `DR-09 — final Dashboard/Reports UX and efficiency acceptance`. Start from current `develop` and verify the fully integrated DR-03…DR-08 Dashboard/Reports system as one product across representative desktop and mobile widths. Inspect Dashboard priority/order, loading/empty states, attention-row navigation, compact aging, recent registrations and Reports handoff; inspect Reports primary KPI hierarchy, explicit comparison range, product/category and reseller investigation controls, selected-period Pareto/concentration, report-end open-balance wording, PDF parity and reproducible direct navigation. Run a bounded final acceptance for responsive overflow/clipping/density, keyboard/focus/semantic-label behavior, business wording, deep-link reliability and material performance regressions. Fix only concrete defects found by that acceptance pass; do not invent new features, redesign accepted accounting/read-model semantics, resurrect Dashboard analytical windows, add unrelated navigation state or expand the D-035 product contract. Preserve D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification snapshots, canonical `FinancialReport` screen/PDF parity and the D-032 recovery/security boundary. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; use proportionate focused acceptance tests and run D-019 before any executable integration. At closure update canonical docs, mark D-035 complete if the acceptance passes safely, and stop without inventing a DR-10. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**No new bounded implementation item is authorized. D-035 `DR-01…DR-09` is complete through PR #126. Continue P10-S3-I2-I3-D controlled clean-start early-use observation under D-031/D-032 and keep the confirmed Backup v2 recovery checkpoint strictly younger than 24 hours before normal hosted writes. Act only on new observed evidence or explicit operator instruction, reconstructing state through the canonical startup protocol before any future change. Preserve Supabase/Auth/RLS/operator authorization, D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification snapshots and canonical screen/PDF report parity. Do not invent `DR-10` or early-use change #16, automatically resume D-030/I2-I2, import legacy real-store data, automatically deploy, modify/publish `main` or claim definitive cutover.**
