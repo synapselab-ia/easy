@@ -8,7 +8,7 @@ export type Json =
 
 export type Database = {
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -122,6 +122,8 @@ export type Database = {
           category_id: number | null
           category_name: string | null
           created_at: string
+          created_by_email: string | null
+          created_by_user_id: string | null
           id: number
           item_id: number | null
           item_name: string | null
@@ -133,6 +135,8 @@ export type Database = {
           reseller_id: number
           reversal_reason: string | null
           reversed_at: string | null
+          reversed_by_email: string | null
+          reversed_by_user_id: string | null
           subcategory_id: number | null
           subcategory_name: string | null
           total_price: number
@@ -143,6 +147,8 @@ export type Database = {
           category_id?: number | null
           category_name?: string | null
           created_at?: string
+          created_by_email?: string | null
+          created_by_user_id?: string | null
           id?: number
           item_id?: number | null
           item_name?: string | null
@@ -154,6 +160,8 @@ export type Database = {
           reseller_id: number
           reversal_reason?: string | null
           reversed_at?: string | null
+          reversed_by_email?: string | null
+          reversed_by_user_id?: string | null
           subcategory_id?: number | null
           subcategory_name?: string | null
           total_price: number
@@ -164,6 +172,8 @@ export type Database = {
           category_id?: number | null
           category_name?: string | null
           created_at?: string
+          created_by_email?: string | null
+          created_by_user_id?: string | null
           id?: number
           item_id?: number | null
           item_name?: string | null
@@ -175,6 +185,8 @@ export type Database = {
           reseller_id?: number
           reversal_reason?: string | null
           reversed_at?: string | null
+          reversed_by_email?: string | null
+          reversed_by_user_id?: string | null
           subcategory_id?: number | null
           subcategory_name?: string | null
           total_price?: number
