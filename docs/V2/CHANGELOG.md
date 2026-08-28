@@ -2,6 +2,20 @@
 
 This changelog records material project-state changes. Detailed older implementation history remains available in Git/PR history and phase-specific execution documents.
 
+## 2026-08-27 — D-035 DR-07 Dashboard Performance removed with Reports handoff
+
+D-035 `DR-07` completed the bounded operational Dashboard separation from deeper analytics. PR #124 removes the rendered legacy `Análise de Performance` surface after the accepted KPI, attention, aging and recent-activity blocks and adds one compact `Análise detalhada` handoff with explicit `Abrir Relatórios` navigation to the existing `/reports` workspace.
+
+The change preserves the established `KPIs -> atenção -> aging -> recent activity` priority and existing DR-03/04/05/06 behavior. Reports itself was not analytically redesigned: its route, current default period behavior and canonical `FinancialReport` calculations remain unchanged. The legacy `PerformanceAnalysisSection` / `usePerformanceAnalysis` implementation is retained outside the rendered Dashboard so applicable Pareto/concentration/open-balance analysis can be re-homed deliberately in isolated DR-08 rather than silently discarded or bundled here.
+
+The first D-019 run/job `33127787667` / `98709950744` failed objectively: lint had 0 errors / 105 warnings and all 71 Vitest files / 305 tests passed, but four pre-existing Playwright scenarios still asserted the exact Performance UI removed by DR-07. Nothing was integrated. Only that stale E2E contract was aligned to assert the accepted absence/handoff behavior, and the complete gate was rerun; no failed gate was waived.
+
+Final D-019 on PR #124: head `ca961ed86f3d4851b8fe7a9e25c0981544db1005`, merge ref `4b84139f38fbf6ef35fcf3e950b5997c2adc1ba0`, run/job `33128164262` / `98711165562`: 0 lint errors / 105 warnings; 71 files / 305 Vitest PASS; 17/17 Playwright PASS; TypeScript + production Vite build PASS. Validated tree: `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`.
+
+PR #124 was squash-integrated into `develop` as `61ef0646ebae5c39dff68c9a4aa249cb4a3dad2f`; its tree is also `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`. Exact tree equivalence: PASS. No database/schema, Supabase/RPC/Auth/RLS, accounting/domain, recovery or automatic Vercel publication change occurred, and `main` remains untouched. DR-07 is closed and `DR-08 — Reports analytical refinement` is now the sole current authorized item; DR-08 was not started in this task.
+
+---
+
 ## 2026-08-27 — D-035 DR-06 recent registrations + quick actions integrated
 
 D-035 `DR-06` completed the bounded operational Dashboard context after the KPI, attention and aging work. PR #122 adds page-level `+ Pedido`, `+ Pagamento` and `+ Sinal` actions through the existing `/transactions?type=order|payment|signal` route/type context and existing `TransactionForm` write path; no second transaction form or mutation path was introduced.

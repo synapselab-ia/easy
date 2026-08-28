@@ -457,13 +457,24 @@ Validation/integration evidence: PR #122; feature head `c889e2ad73f13d2c6804a824
 
 ### DR-07 — Remove Dashboard Performance block + contextual Reports handoff
 
-**Status:** CURRENT / AUTHORIZED.
+**Status:** DONE / INTEGRATED — PR #124.
 
-Remove the current Dashboard `Análise de Performance` surface now that the accepted operational replacements exist. Preserve a clear contextual path to the existing Reports workspace so useful analysis is not silently discarded. Reuse existing route/report semantics; do not perform DR-08 analytical redesign or create a competing accounting model.
+- `DashboardPage` no longer renders the legacy `Análise de Performance` surface after the accepted operational hierarchy;
+- `DashboardReportsHandoff` now closes the operational Dashboard with `Análise detalhada` context and an explicit `Abrir Relatórios` link to the existing `/reports` workspace;
+- the accepted `KPIs -> atenção -> aging -> recent activity` order and DR-03/04/05/06 behavior remain unchanged;
+- the existing Reports route, default period behavior and canonical `FinancialReport` calculations remain unchanged;
+- legacy `PerformanceAnalysisSection` / `usePerformanceAnalysis` code is retained outside the rendered Dashboard so DR-08 can re-home applicable analytics without bundling that analytical redesign into DR-07;
+- focused unit/integration coverage verifies the handoff and absence of the legacy Dashboard Performance surface;
+- Playwright coverage now verifies the legacy analytical window/Pareto/open-balance ranking are absent from the Dashboard and that the handoff opens the existing Reports workspace;
+- no database/schema, Supabase/RPC/Auth/RLS, recovery, accounting/domain or deployment-path change occurred.
+
+The first D-019 run/job `33127787667` / `98709950744` was not accepted: lint had 0 errors / 105 warnings and all 71 Vitest files / 305 tests passed, but four stale Playwright scenarios still required the exact Performance UI that DR-07 removes. Nothing was integrated on that failure. Only the obsolete E2E contract was aligned to the authorized DR-07 behavior, and the complete D-019 gate was rerun.
+
+Final validation/integration evidence: feature head `ca961ed86f3d4851b8fe7a9e25c0981544db1005`; exact GitHub-generated merge ref `4b84139f38fbf6ef35fcf3e950b5997c2adc1ba0`; D-019 run/job `33128164262` / `98711165562`; ESLint 0 errors / 105 warnings; Vitest 71 files / 305 tests PASS; Playwright 17/17 PASS; TypeScript + production Vite build PASS; validated tree `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`; squash-integrated `develop@61ef0646ebae5c39dff68c9a4aa249cb4a3dad2f`; integrated tree `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`; exact tree equivalence PASS; no failed gate was waived.
 
 ### DR-08 — Reports analytical refinement
 
-**Status:** QUEUED / NOT CURRENT.
+**Status:** CURRENT / AUTHORIZED.
 
 Refine primary KPIs, explicit comparison context, product/reseller analysis controls and re-home applicable Pareto/concentration/open-balance analytics on canonical `FinancialReport` semantics.
 

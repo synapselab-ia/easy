@@ -36,7 +36,7 @@ Current P10-S3 state:
   - change #13 product-level financial report analytics: `DONE / INTEGRATED` — PR #108;
   - change #14 Dashboard receipts-today card: `SUPERSEDED / ABSORBED BY D-035 — NO STANDALONE IMPLEMENTATION`;
   - change #15 future occurrence-date confirmation: `DONE / INTEGRATED` — PR #111;
-  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `DONE / INTEGRATED — PR #122`; DR-07 remove Dashboard Performance + contextual Reports handoff `CURRENT / AUTHORIZED`.**
+  - **D-035 Dashboard + Reports core redesign: `AUTHORIZED`; DR-01 documentation `DONE`; DR-02 canonical Dashboard read-model `DONE / INTEGRATED — PR #114`; DR-03 primary KPI row `DONE / INTEGRATED — PR #116`; DR-04 `Precisa de atenção` action center `DONE / INTEGRATED — PR #118`; DR-05 compact carteira aging `DONE / INTEGRATED — PR #120`; DR-06 recent registrations + quick actions `DONE / INTEGRATED — PR #122`; DR-07 remove Dashboard Performance + contextual Reports handoff `DONE / INTEGRATED — PR #124`; DR-08 Reports analytical refinement `CURRENT / AUTHORIZED`.**
 - P10-S3-I2-I4 — legacy real-data migration: `ON_HOLD / NOT REQUIRED FOR CLEAN-START EARLY USE`.
 
 ## Governing decisions
@@ -611,6 +611,36 @@ Validation/integration evidence:
 
 No failed D-019 objective gate was waived. The post-integration DR-06 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
 
+## D-035 DR-07 closure — Dashboard Performance removal + Reports handoff
+
+PR #124 removed the legacy analytical Performance surface from the rendered Dashboard only after the accepted operational hierarchy was complete, and preserved a clear contextual route into the existing Reports workspace.
+
+Accepted result:
+
+- `DashboardPage` no longer renders `PerformanceAnalysisSection` after recent activity;
+- `DashboardReportsHandoff` closes the operational Dashboard with `Análise detalhada` context and an explicit `Abrir Relatórios` link to the existing `/reports` workspace;
+- the accepted `KPIs -> atenção -> aging -> recent activity` order and existing DR-03/04/05/06 behavior remain unchanged;
+- the existing Reports route, default period behavior and canonical `FinancialReport` calculations remain unchanged;
+- legacy `PerformanceAnalysisSection` / `usePerformanceAnalysis` code is retained outside the rendered Dashboard so applicable analysis can be deliberately re-homed/refined in isolated DR-08;
+- focused and Playwright coverage verifies the legacy Performance/window/Pareto/open-balance ranking UI is absent from Dashboard and the handoff reaches Reports;
+- no database/schema migration, Supabase/RPC/Auth/RLS, accounting/domain, recovery or deployment-path change occurred.
+
+Validation/integration evidence:
+
+- first D-019 run/job `33127787667` / `98709950744`: **FAIL** — ESLint 0 errors / 105 warnings and Vitest 71 files / 305 tests PASS, but four stale Playwright scenarios still asserted the exact legacy Performance UI; nothing was integrated and the failure was not waived;
+- final feature head: `ca961ed86f3d4851b8fe7a9e25c0981544db1005`;
+- exact GitHub-generated merge ref: `4b84139f38fbf6ef35fcf3e950b5997c2adc1ba0`;
+- validated tree: `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`;
+- final D-019 run/job: `33128164262` / `98711165562`;
+- ESLint: 0 errors / 105 warnings;
+- Vitest: 71 files / 305 tests PASS;
+- Playwright: 17/17 PASS;
+- TypeScript + production Vite build: PASS;
+- PR #124 squash-integrated `develop`: `61ef0646ebae5c39dff68c9a4aa249cb4a3dad2f`;
+- integrated tree: `d9f0ed070b6e346d09e3f3035ee737a4245be4f1` — exact tree equivalence PASS.
+
+No failed D-019 objective gate was waived. The post-integration DR-07 closure is documentation-only. No automatic Vercel publication occurred and `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9` untouched.
+
 ## Historical operator-authorized usability/data-quality queue
 
 On 2026-08-26 the operator explicitly authorized a bounded sequence of early-use usability/data-quality improvements to be handled **one at a time**. This queue is now historical and is not extended by D-035.
@@ -641,7 +671,7 @@ Do not invent or start a #16. New Dashboard/Reports work uses the D-035 `DR-*` s
 
 ## D-035 — Dashboard + Reports core redesign
 
-**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-07 CURRENT`  
+**Status:** `AUTHORIZED / ORDERED / BOUNDED — DR-08 CURRENT`  
 **Focused contract:** `docs/V2/DASHBOARD_REPORTS_SPEC.md`
 
 Accepted product direction:
@@ -652,13 +682,14 @@ Accepted product direction:
 - `Precisa de atenção` is one deduplicated reseller-per-row action center consuming canonical snapshot rows;
 - `Carteira por idade` is compact exact-value + percentage context consuming canonical snapshot buckets;
 - recent effective registrations and quick order/payment/signal actions are now integrated operational context;
-- large 90/180/360 Performance/Pareto/current-debtor/ranking content leaves the target Dashboard only after useful analysis is re-homed or handed off to Reports;
-- Reports refinements stay on canonical `FinancialReport` semantics;
+- the legacy 90/180/360 Performance/Pareto/current-debtor/ranking surface is no longer rendered on Dashboard; an explicit handoff now leads to the existing Reports workspace;
+- applicable analytical re-home/refinement remains isolated to DR-08 and must stay on canonical `FinancialReport` semantics;
 - DR-02 established one coherent Dashboard read-only projection before the major visual redesign;
 - DR-03 established the accepted four-card primary KPI row on that projection;
 - DR-04 established the deduplicated actionable attention center and removed the old duplicated alert lists;
 - DR-05 established compact exact-value + percentage aging and removed the large default donut without changing aging semantics;
-- DR-06 established recent-registration confirmation context and existing-route quick actions without adding a second write path.
+- DR-06 established recent-registration confirmation context and existing-route quick actions without adding a second write path;
+- DR-07 removed the legacy analytical Performance surface from the operational Dashboard and added an explicit existing-Reports handoff without changing report/accounting semantics.
 
 Ordered sequence:
 
@@ -668,11 +699,11 @@ Ordered sequence:
 4. **DR-04 DONE / INTEGRATED — `Precisa de atenção` action center — PR #118.**
 5. **DR-05 DONE / INTEGRATED — compact carteira aging — PR #120.**
 6. **DR-06 DONE / INTEGRATED — recent registrations + quick actions — PR #122.**
-7. **DR-07 CURRENT / AUTHORIZED — remove Dashboard Performance block + contextual Reports handoff.**
-8. **DR-08 QUEUED / NOT CURRENT — Reports analytical refinement.**
+7. **DR-07 DONE / INTEGRATED — remove Dashboard Performance block + contextual Reports handoff — PR #124.**
+8. **DR-08 CURRENT / AUTHORIZED — Reports analytical refinement.**
 9. **DR-09 QUEUED / NOT CURRENT — final Dashboard/Reports UX and efficiency acceptance.**
 
-Only `DR-07` is executable next. Do not bundle `DR-08` or later work into the same task.
+Only `DR-08` is executable next. Do not bundle `DR-09` or later work into the same task.
 
 ## Startup protocol for a new conversation
 
@@ -698,4 +729,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Execute only D-035 `DR-07 — remove Dashboard Performance block + contextual Reports handoff`. First verify the integrated DR-06 operational Dashboard, the current `PerformanceAnalysisSection` / `usePerformanceAnalysis` surface and the existing `Relatórios` route/navigation context. Remove the legacy `Análise de Performance` block from the Dashboard now that the accepted KPI, attention, aging and recent-activity replacements are integrated, and preserve a clear contextual path from the Dashboard to the existing Reports workspace for deeper analysis; do not silently discard useful analytics or create a competing analytical/accounting model. Preserve the operational priority `KPIs -> atenção -> aging -> recent activity`, existing DR-03/04/05/06 behavior and responsive/loading/empty/accessibility semantics. Do not perform the DR-08 Reports analytical refinement, alter canonical `FinancialReport` accounting semantics, or begin any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-08 if DR-07 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**
+**Execute only D-035 `DR-08 — Reports analytical refinement`. First verify the integrated DR-07 operational Dashboard handoff, the existing `ReportsPage` / canonical `FinancialReport` model and PDF adapter, the current primary report KPI/comparison presentation, product/category and reseller workspaces, and the legacy Performance/Pareto/concentration/open-balance analysis that is no longer rendered on Dashboard. Refine Reports only on the existing canonical report path: make the primary financial KPI hierarchy `Vendas`, `Recebimentos`, `Movimento líquido`, `Em aberto no fim`; make the equal-length previous-period comparison context explicit; add only bounded product/reseller search/sort/filter controls that materially improve investigation; and re-home applicable Pareto/concentration/open-balance analysis using selected-period/report-end semantics rather than resurrecting the Dashboard-only `90/180/360` path or labeling every positive balance as inadimplência. Preserve screen/PDF accounting parity, D-014 occurrence semantics, reversal-zero-effect behavior and immutable historical item/category/subcategory snapshots. Do not alter the integrated Dashboard operational hierarchy, perform DR-09 final UX acceptance or begin any later DR item. No database/schema migration, Supabase/RPC/Auth/RLS, recovery or deployment-path change is authorized. Work on an isolated branch from current `develop`; run proportionate focused tests plus D-019 before executable integration. At closure update canonical docs, promote exactly DR-09 if DR-08 is safely integrated, and stop. Do not automatically deploy, modify/publish `main`, resume D-030/I2-I2, import legacy real-store data or claim definitive cutover.**

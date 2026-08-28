@@ -719,6 +719,56 @@ PR #122 was squash-integrated into `develop` as `1425fe0736dbf919e47c9c0c5bfb593
 
 The post-integration DR-06 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-07 — Dashboard Performance removal + Reports handoff — PASS / INTEGRATED
+
+### Scope review — PRESENTATION / EXISTING REPORTS NAVIGATION ONLY
+
+Verification before implementation confirmed:
+
+- the integrated DR-03/04/05/06 operational Dashboard already provides the accepted KPI, attention, aging, recent-registration and quick-action hierarchy;
+- `DashboardPage` still rendered `PerformanceAnalysisSection` after recent activity;
+- that legacy block owned the configurable `90/180/360` window, concentration/Pareto/current-top-debtor/open-balance-ranking presentation;
+- `/reports` already exists in application routing/navigation and defaults to the existing current-month report behavior;
+- DR-08 is the separately queued analytical Reports refinement, so DR-07 must not alter `FinancialReport` or Reports analysis content.
+
+PR #124 is bounded to Dashboard presentation/navigation plus focused and E2E contract coverage:
+
+- `DashboardPage` no longer renders `PerformanceAnalysisSection`;
+- `DashboardReportsHandoff` adds compact `Análise detalhada` context and one `Abrir Relatórios` link to the existing `/reports` route;
+- operational DR-03/04/05/06 blocks remain in the same priority order;
+- legacy Performance code remains outside the rendered Dashboard for the isolated DR-08 re-home/refinement step;
+- Reports content/default period/accounting semantics remain unchanged;
+- no database/schema, Supabase/RPC/Auth/RLS, recovery or deployment-path change was introduced.
+
+### Focused coverage — PASS
+
+- `DashboardReportsHandoff.test.tsx`: **1/1 PASS**, proving explicit contextual copy and `/reports` route target;
+- `DashboardPage.test.tsx`: **3/3 PASS**, covering loading/loaded/empty operational projection with handoff present and legacy `Análise de Performance` absent;
+- the DR-07 Playwright contract verifies the legacy Performance/window/Pareto/open-balance ranking UI is absent from Dashboard and `Abrir Relatórios` reaches the existing Reports workspace.
+
+### D-019 iteration — objective failure corrected, not waived
+
+The first run/job `33127787667` / `98709950744` was **FAIL** and blocked integration. ESLint had 0 errors / 105 warnings and Vitest passed **71 files / 305 tests**, including all new DR-07 focused coverage, but four scenarios in the pre-existing `tests/e2e/performance-analysis.spec.ts` still asserted the exact legacy Performance UI that DR-07 is authorized to remove. Because Playwright failed 4/17, the command chain stopped before build. Nothing was integrated.
+
+Only that stale E2E contract was aligned to the accepted DR-07 product behavior; runtime scope was not broadened and no failure was waived. The complete D-019 command chain was rerun on the new head.
+
+### Final D-019 — PASS
+
+- final feature head: `ca961ed86f3d4851b8fe7a9e25c0981544db1005`;
+- exact GitHub-generated merge ref checked out by Actions: `4b84139f38fbf6ef35fcf3e950b5997c2adc1ba0`;
+- validated tree: `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`;
+- run/job: `33128164262` / `98711165562`;
+- ESLint: **0 errors / 105 warnings**;
+- Vitest: **71 files / 305 tests PASS**;
+- Playwright: **17/17 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No objective D-019 failure was waived. The successful run retained only already tracked non-blocking lint/audit/Node-deprecation/Vite chunk warnings.
+
+PR #124 was squash-integrated into `develop` as `61ef0646ebae5c39dff68c9a4aa249cb4a3dad2f`. Git object inspection confirms the integrated tree is `d9f0ed070b6e346d09e3f3035ee737a4245be4f1`, exactly the same tree validated by the final PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-07 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -795,6 +845,10 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-035 DR-06 recent registrations + quick actions D-019: **PASS**.
 - PR #122 integrated-tree equivalence: **PASS**.
 - D-035 DR-06 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- D-035 DR-07 Performance removal + Reports handoff: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
+- D-035 DR-07 first D-019 run/job `33127787667` / `98709950744`: **FAIL — 4 stale Playwright assertions; NOT INTEGRATED / NOT WAIVED**.
+- D-035 DR-07 final D-019: **PASS**.
+- PR #124 integrated-tree equivalence: **PASS**.
+- D-035 DR-07 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 DR-08 Reports analytical refinement: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
