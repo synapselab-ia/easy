@@ -35,20 +35,18 @@ test.describe('D-035 DR-09 final Dashboard/Reports acceptance', () => {
             const sales = page.getByText('Vendas este mês', { exact: true });
             const attention = page.getByRole('heading', { name: 'Precisa de atenção' });
             const aging = page.getByRole('heading', { name: 'Carteira por idade' });
-            const recent = page.getByRole('heading', { name: 'Últimos lançamentos registrados' });
             const handoff = page.getByRole('heading', { name: 'Análise detalhada' });
 
             await expect(sales).toBeVisible();
             await expect(attention).toBeVisible();
             await expect(aging).toBeVisible();
-            await expect(recent).toBeVisible();
             await expect(handoff).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Últimos lançamentos registrados' })).toHaveCount(0);
 
             const orderedTops = await Promise.all([
                 topOf(sales),
                 topOf(attention),
                 topOf(aging),
-                topOf(recent),
                 topOf(handoff),
             ]);
             expect(orderedTops, `${viewport.name} Dashboard priority should remain top-to-bottom`).toEqual(
