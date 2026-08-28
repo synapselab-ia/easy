@@ -211,13 +211,18 @@ function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (value: R
     ];
 
     return (
-        <div className="inline-flex w-full rounded-lg border bg-muted/30 p-1 sm:w-auto">
+        <div
+            role="group"
+            aria-label="Seções do relatório"
+            className="inline-flex w-full rounded-lg border bg-muted/30 p-1 sm:w-auto"
+        >
             {tabs.map(tab => (
                 <button
                     key={tab.value}
                     type="button"
+                    aria-pressed={value === tab.value}
                     onClick={() => onChange(tab.value)}
-                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:flex-none ${
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none ${
                         value === tab.value
                             ? 'bg-background text-foreground shadow-sm'
                             : 'text-muted-foreground hover:text-foreground'
@@ -453,13 +458,13 @@ function CategoryView({ report }: { report: FinancialReport }) {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label>Categoria histórica</Label>
+                                <Label htmlFor="report-category-filter">Categoria histórica</Label>
                                 <Select
                                     items={categoryOptions}
                                     value={categoryFilter}
                                     onValueChange={value => setCategoryFilter(value || 'all')}
                                 >
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger id="report-category-filter" className="w-full">
                                         <SelectValue placeholder="Todas as categorias" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -470,13 +475,13 @@ function CategoryView({ report }: { report: FinancialReport }) {
                                 </Select>
                             </div>
                             <div className="space-y-1.5">
-                                <Label>Ordenar produtos</Label>
+                                <Label htmlFor="report-product-sort">Ordenar produtos</Label>
                                 <Select
                                     items={PRODUCT_SORT_OPTIONS}
                                     value={productSort}
                                     onValueChange={value => setProductSort((value || 'sales') as ProductSort)}
                                 >
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger id="report-product-sort" className="w-full">
                                         <SelectValue placeholder="Ordenar" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -540,12 +545,15 @@ function CategoryView({ report }: { report: FinancialReport }) {
                             {report.categories.map(category => {
                                 const key = category.categoryId === undefined ? 'legacy' : String(category.categoryId);
                                 const isExpanded = expanded.has(key);
+                                const detailsId = `report-category-details-${key}`;
                                 return (
                                     <div key={key}>
                                         <button
                                             type="button"
+                                            aria-expanded={isExpanded}
+                                            aria-controls={detailsId}
                                             onClick={() => toggle(key)}
-                                            className="grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-muted/40"
+                                            className="grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                                         >
                                             <div className="flex min-w-0 items-center gap-3">
                                                 {isExpanded
@@ -561,7 +569,7 @@ function CategoryView({ report }: { report: FinancialReport }) {
                                             <p className="text-right font-semibold">{currencyFormatter.format(category.grossValue)}</p>
                                         </button>
                                         {isExpanded && (
-                                            <div className="border-t bg-muted/20 px-5 py-2 sm:pl-12">
+                                            <div id={detailsId} className="border-t bg-muted/20 px-5 py-2 sm:pl-12">
                                                 {category.subcategories.map(subcategory => (
                                                     <div
                                                         key={subcategory.subcategoryId ?? subcategory.label}
@@ -684,13 +692,13 @@ function ResellerView({ report }: { report: FinancialReport }) {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label>Ordenar revendedores</Label>
+                            <Label htmlFor="report-reseller-sort">Ordenar revendedores</Label>
                             <Select
                                 items={RESELLER_SORT_OPTIONS}
                                 value={resellerSort}
                                 onValueChange={value => setResellerSort((value || 'sales') as ResellerSort)}
                             >
-                                <SelectTrigger className="w-full">
+                                <SelectTrigger id="report-reseller-sort" className="w-full">
                                     <SelectValue placeholder="Ordenar" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -862,13 +870,13 @@ export default function ReportsPage() {
                 <CardContent className="pt-6">
                     <div className="grid gap-4 lg:grid-cols-[220px_1fr_1fr] lg:items-end">
                         <div className="space-y-1.5">
-                            <Label>Período</Label>
+                            <Label htmlFor="report-period">Período</Label>
                             <Select
                                 items={PERIOD_PRESET_OPTIONS}
                                 value={preset}
                                 onValueChange={value => applyPreset((value || 'month') as PeriodPreset)}
                             >
-                                <SelectTrigger className="w-full">
+                                <SelectTrigger id="report-period" className="w-full">
                                     <SelectValue placeholder="Selecione o período" />
                                 </SelectTrigger>
                                 <SelectContent>
