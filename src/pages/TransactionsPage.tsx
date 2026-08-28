@@ -1,6 +1,9 @@
 import { useSearchParams } from "react-router-dom";
 import { TransactionForm } from "../components/transactions/TransactionForm";
+import { TransactionHistory } from "../components/transactions/TransactionHistory";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { useTransactions } from "../hooks/useTransactions";
+import { useResellers } from "../hooks/useResellers";
 import { toast } from "sonner";
 import type { TransactionType } from "../db/database";
 
@@ -15,17 +18,19 @@ export default function TransactionsPage() {
     const [searchParams] = useSearchParams();
     const initialType = (searchParams.get("type") as TransactionType) || "order";
     const initialResellerId = parsePositiveInteger(searchParams.get("resellerId"));
+    const { data: transactions = [], isLoading: transactionsLoading } = useTransactions();
+    const { data: resellers = [], isLoading: resellersLoading } = useResellers();
 
     const handleSuccess = () => {
         toast.success("Lançamento salvo com sucesso!");
     };
 
     return (
-        <div className="p-4 lg:p-6 space-y-6">
+        <div className="p-4 lg:p-6 space-y-8">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight">Lançamento de Demanda</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Lançamentos</h1>
                 <p className="text-muted-foreground">
-                    Faça lançamentos de pedidos, pagamentos ou sinais dos revendedores.
+                    Registre movimentações e consulte o histórico financeiro completo.
                 </p>
             </div>
 
@@ -33,7 +38,7 @@ export default function TransactionsPage() {
                 <CardHeader>
                     <CardTitle>Nova Movimentação</CardTitle>
                     <CardDescription>
-                        Preencha os dados abaixo para registrar a movimentação.
+                        Registre um pedido, pagamento ou sinal para um revendedor.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -45,6 +50,12 @@ export default function TransactionsPage() {
                     />
                 </CardContent>
             </Card>
+
+            <TransactionHistory
+                transactions={transactions}
+                resellers={resellers}
+                isLoading={transactionsLoading || resellersLoading}
+            />
         </div>
     );
 }
