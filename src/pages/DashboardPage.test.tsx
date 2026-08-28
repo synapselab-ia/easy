@@ -33,12 +33,6 @@ vi.mock('../components/dashboard/DebtHealthAgingCard', () => ({
     ),
 }));
 
-vi.mock('../components/dashboard/RecentRegistrations', () => ({
-    RecentRegistrations: ({ rows, isLoading }: { rows: unknown[]; isLoading: boolean }) => (
-        <div>{isLoading ? 'Recent loading' : `Recent registrations ${rows.length}`}</div>
-    ),
-}));
-
 vi.mock('../components/dashboard/DashboardReportsHandoff', () => ({
     DashboardReportsHandoff: () => <div>Reports handoff</div>,
 }));
@@ -91,15 +85,6 @@ const dashboardSnapshot = {
             createdAt: new Date('2026-08-27T15:30:00'),
             occurredAt: new Date('2026-08-26T12:00:00'),
         },
-        {
-            transactionId: 29,
-            resellerId: 20,
-            resellerName: 'Revendedor recente',
-            type: 'order',
-            totalPrice: 500,
-            createdAt: new Date('2026-08-27T14:30:00'),
-            occurredAt: new Date('2026-08-27T12:00:00'),
-        },
     ],
 } as any;
 
@@ -108,7 +93,7 @@ describe('DashboardPage integration', () => {
         vi.clearAllMocks();
     });
 
-    it('renders loading state for the primary KPIs and all operational blocks', () => {
+    it('renders loading state for the primary KPIs and operational blocks', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: undefined, isLoading: true } as any);
 
         render(<DashboardPage />);
@@ -117,11 +102,11 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Quick actions')).toBeInTheDocument();
         expect(screen.getByText('Attention loading')).toBeInTheDocument();
         expect(screen.getByText('Debt aging loading')).toBeInTheDocument();
-        expect(screen.getByText('Recent loading')).toBeInTheDocument();
         expect(screen.getByText('Reports handoff')).toBeInTheDocument();
+        expect(screen.queryByText(/Últimos lançamentos/i)).not.toBeInTheDocument();
     });
 
-    it('renders the four KPIs and hands prepared DR-04/DR-05/DR-06 data to the operational blocks before the Reports handoff', () => {
+    it('renders the four KPIs and keeps the Dashboard focused on operational summary before the Reports handoff', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({ data: dashboardSnapshot, isLoading: false } as any);
 
         render(<DashboardPage />);
@@ -145,13 +130,13 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Quick actions')).toBeInTheDocument();
         expect(screen.getByText('Attention center 1')).toBeInTheDocument();
         expect(screen.getByText('Debt aging 3 / 2100')).toBeInTheDocument();
-        expect(screen.getByText('Recent registrations 2')).toBeInTheDocument();
         expect(screen.getByText('Reports handoff')).toBeInTheDocument();
+        expect(screen.queryByText(/Últimos lançamentos/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/tempo real/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/Análise de Performance/i)).not.toBeInTheDocument();
     });
 
-    it('keeps explicit empty-state meaning when the snapshot has no current activity, debt, attention or recent rows', () => {
+    it('keeps explicit empty-state meaning when the snapshot has no current activity or debt', () => {
         vi.mocked(useDashboardSnapshot).mockReturnValue({
             data: {
                 ...dashboardSnapshot,
@@ -178,7 +163,7 @@ describe('DashboardPage integration', () => {
         expect(screen.getByText('Nenhum valor crítico hoje.')).toBeInTheDocument();
         expect(screen.getByText('Attention center 0')).toBeInTheDocument();
         expect(screen.getByText('Debt aging 3 / 0')).toBeInTheDocument();
-        expect(screen.getByText('Recent registrations 0')).toBeInTheDocument();
         expect(screen.getByText('Reports handoff')).toBeInTheDocument();
+        expect(screen.queryByText(/Últimos lançamentos/i)).not.toBeInTheDocument();
     });
 });
