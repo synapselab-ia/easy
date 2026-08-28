@@ -167,4 +167,56 @@
     background-color: var(--card) !important;
     color: var(--card-foreground) !important;
   }
+
+  /* The base Table cells are intentionally nowrap. The financial-history desktop table
+     carries variable reseller/detail/operator text, so constrain its columns locally
+     instead of letting long content paint over adjacent cells. */
+  section[aria-labelledby="transaction-history-title"] [data-slot="table"] {
+    table-layout: fixed;
+    min-width: 82.5rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-cell"] {
+    overflow: hidden;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(1) {
+    width: 10rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(2) {
+    width: 7rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(3) {
+    width: 5.5rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(4) {
+    width: 11rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(5) {
+    width: 23rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(6) {
+    width: 7.5rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(7) {
+    width: 6.75rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-head"]:nth-child(8) {
+    width: 12.75rem;
+  }
+
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-cell"]:nth-child(4),
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-cell"]:nth-child(5),
+  section[aria-labelledby="transaction-history-title"] [data-slot="table-cell"]:nth-child(8) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
