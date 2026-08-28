@@ -36,7 +36,8 @@ Important integrated milestones remain:
 - D-035 / PRs #114, #116, #118, #120, #122, #124, #125, #126 — Dashboard/Reports redesign through final acceptance;
 - PR #129 — observed Reports chart-visibility defect fixed and closed during early use;
 - **PR #131 — bounded transaction-history/operator-attribution refinement: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #133 — observed transaction-history cell-overflow/layout defect: `DONE / ACCEPTED / INTEGRATED`.**
+- **PR #133 — observed transaction-history cell-overflow/layout defect: `DONE / ACCEPTED / INTEGRATED`;**
+- **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`.**
 
 ## PR #131 closure — transaction history + operator attribution
 
@@ -115,6 +116,40 @@ No automatic Vercel publication occurred and `main` was not targeted.
 
 Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_LAYOUT.md`.
 
+## PR #135 closure — transaction-history bounded readability
+
+A second real early-use screenshot after PR #133 confirmed that cross-cell overlap was fixed but `Detalhe` could still remain effectively unreadable because the real desktop row rendered variable text as a single clipped line.
+
+Root cause and accepted presentation correction:
+
+- the shared `TableCell` component carries the Tailwind utility `whitespace-nowrap`;
+- PR #133's scoped base-layer CSS correctly closed overflow but could still lose the white-space cascade to the real component utility; its synthetic browser fixture did not include the real `TableCell` utility classes;
+- PR #135 moves the override into the actual history component so `cn()`/`twMerge` resolves `whitespace-normal` against the shared default deterministically;
+- `Detalhe` now shows up to two desktop lines with `line-clamp-2`, safe word breaking and the complete value available through native hover `title`;
+- `Revendedor` follows the same two-line + full-hover contract;
+- `Usuário` preserves separate `Registrado` and optional `Corrigido`/`Estornado` lines, with each long actor value safely truncated and fully available on hover;
+- `Valor` stays non-wrapping/tabular, `Situação` stays stable, and the PR #133 no-overlap/horizontal-scroll contract remains intact;
+- mobile history cards remain full-content and unchanged;
+- no persistence, Supabase/Auth/RLS, Backup v2, recovery, financial/history or deployment behavior changed.
+
+Repository acceptance evidence:
+
+- final feature head: `ece16ffc94b2b383c97ccdd9c0ae8699a7a3c13f`;
+- exact GitHub-generated merge ref checked out by Actions: `d06f4108cfae6ef82d4d366d362cf13f6e5cd894`;
+- validated tree: `b92e86e942c94b3dbb2c339ebdf1cda7abede066`;
+- D-019 run/job: `33186980363` / `98902403708`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **75 files / 317 tests PASS**;
+- Playwright: **21/21 PASS on first attempt**;
+- TypeScript + production Vite build: **PASS**;
+- PR #135 squash-integrated `develop`: `eec8c9363195aa7bd38ce28f0549585d5e50e5d9`;
+- integrated tree: `b92e86e942c94b3dbb2c339ebdf1cda7abede066` — exact tree equivalence PASS;
+- post-integration `develop` Critical QA run/job: `33187306207` / `98903523909` — **PASS**.
+
+No failed gate was waived. No automatic Vercel publication occurred and `main` remains untouched.
+
+Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_READABILITY.md`.
+
 ## Governing decisions and invariants
 
 D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by screen and PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles; `DR-01…DR-09` is complete.
@@ -138,11 +173,11 @@ Current invariants:
 
 ## Recovery checkpoint state
 
-The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131 or PR #133.
+The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133 or PR #135.
 
 During the PR #131 work, the latest confirmed real Backup v2 export was observed at `2026-08-27 12:57:03.459119+00`, and at `2026-08-28 13:56:41.296122+00` the server reported it as **not fresh**. Therefore normal hosted business writes remain correctly blocked until the operator exports a new Backup v2 and explicitly confirms that the file has been stored outside Easy.
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133 is presentation/test only and does not alter recovery health.
+The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133 and PR #135 are presentation/test only and do not alter recovery health.
 
 This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
@@ -158,7 +193,7 @@ The accepted split remains:
 - contextual handoff to Reports remains explicit;
 - no `DR-10` exists or is authorized.
 
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 only corrects the resulting history table's desktop containment and likewise does not reopen D-035.
+The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035.
 
 ## Startup protocol for a new conversation
 
@@ -173,6 +208,7 @@ Read in this exact order:
 7. `docs/V2/CHANGELOG.md`
 8. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_AUDIT.md`
 9. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_LAYOUT.md`
+10. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_READABILITY.md`
 
 Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot is available at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
 
