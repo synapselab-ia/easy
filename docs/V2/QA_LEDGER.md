@@ -178,7 +178,7 @@ The product was already rendering the intended comma-decimal values. Only those 
 - Playwright: **17/17 PASS**;
 - TypeScript + production Vite build: **PASS**.
 
-PR #92 was squash-integrated into `develop` as `3f9bafca186951f363c20e990a791a771a4cf35d`. Git object inspection confirms the integrated commit tree is `f973d83aa8116fef7254dd056a5c5e99debbf063`, exactly the same tree as the D-019-validated merge ref. Integrated-tree equivalence: **PASS**.
+PR #92 was squash-integrated into `develop` as `3f9bafca186951f363c20e990a791a771a4cf35d`. Git object inspection confirms the integrated tree is `f973d83aa8116fef7254dd056a5c5e99debbf063`, exactly the same tree as the D-019-validated merge ref. Integrated-tree equivalence: **PASS**.
 
 The post-integration change #7 closure changes Markdown documentation only; no executable/runtime file differs from the validated integrated tree. No failed executable gate was waived, no automatic Vercel publication occurred and `main` remains untouched.
 
@@ -654,7 +654,7 @@ No domain/FIFO helper, `DashboardSnapshot` calculation, database/schema, Supabas
 - ESLint: **0 errors / 105 warnings**;
 - Vitest: **68 files / 299 tests PASS**;
 - focused `DebtHealthAgingCard` tests: **4/4 PASS**;
-- focused `DashboardPage` tests: **3/3 PASS**;
+- focused `DashboardPage`: **3/3 PASS**;
 - Playwright: **17/17 PASS**;
 - TypeScript + production Vite build: **PASS**.
 
@@ -816,6 +816,39 @@ PR #125 was squash-integrated into `develop` as `c3e43f37802d1e487a50097689c385f
 
 The post-integration DR-08 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched.
 
+## D-035 DR-09 — final Dashboard/Reports UX and efficiency acceptance — PASS / INTEGRATED
+
+### Scope review — FINAL ACCEPTANCE / ACCESSIBILITY / RESPONSIVE E2E ONLY
+
+The final acceptance pass reviewed the fully integrated DR-03…DR-08 Dashboard/Reports product across representative desktop and mobile widths, including priority/order, loading/empty behavior already covered by focused Dashboard tests, Dashboard -> Reports navigation/direct route behavior, report investigation controls, business wording, keyboard semantics and horizontal overflow.
+
+Concrete defects found were limited to Reports interaction semantics: the period/filter/sort Select triggers had visual labels without programmatic label association, the report-section controls did not expose their active state, and expandable category drilldown controls did not expose expansion state/controlled-region semantics. PR #126 fixes only those evidence-backed defects and adds focused/E2E acceptance coverage. It does not change `DashboardSnapshot`, `FinancialReport`, financial/accounting semantics, screen/PDF calculations, database/schema, Supabase/RPC/Auth/RLS, recovery or deployment behavior.
+
+### Focused acceptance — PASS
+
+- `src/pages/ReportsPage.accessibility.test.tsx`: **1/1 PASS**, proving report controls are associated with labels and section/expansion state is programmatically exposed;
+- `tests/e2e/dashboard-reports-final-acceptance.spec.ts`: representative **1440x1000 desktop** and **390x844 mobile** acceptance, covering the Dashboard operational hierarchy, absence of horizontal overflow, Dashboard -> Reports handoff/direct `/reports` behavior and keyboard/semantic operation of report controls;
+- existing `ReportsPage.test.tsx`: **3/3 PASS**;
+- existing `financialReporting.test.ts`: **8/8 PASS**;
+- existing `financialReportPdfService.test.ts`: **3/3 PASS**.
+
+### Final D-019 — PASS
+
+- final feature head: `f817fb09ef14ebd731027f4e75edd587c28e2761`;
+- exact GitHub-generated merge ref checked out by Actions: `d702c9c9065e709b6c3d50aafc4f89041afc2cbd`;
+- validated tree: `423509ce9a5a6449db76880202815513428e021c`;
+- run/job: `33169683674` / `98843481388`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **73 files / 310 tests PASS**;
+- Playwright: **19/19 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No objective D-019 failure was waived. The successful run retained only already tracked non-blocking React/test/mock-select/lint/audit/Node-deprecation/Vite chunk warnings.
+
+PR #126 was squash-integrated into `develop` as `6f20ab99340d051d2ac509125e63f32306ed0680`. Git object inspection confirms the integrated tree is `423509ce9a5a6449db76880202815513428e021c`, exactly the same tree validated by the final PR merge ref. Integrated-tree equivalence: **PASS**.
+
+The post-integration DR-09/D-035 closure is documentation-only. No automatic Vercel publication occurred and `main` remains untouched. D-035 has no authorized DR-10.
+
 ## Known non-blocking debt
 
 When objective D-019 commands pass, these remain non-blocking unless later evidence elevates them:
@@ -900,6 +933,9 @@ When objective D-019 commands pass, these remain non-blocking unless later evide
 - D-035 DR-08 final D-019: **PASS**.
 - PR #125 integrated-tree equivalence: **PASS**.
 - D-035 DR-08 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
-- D-035 DR-09 final Dashboard/Reports UX and efficiency acceptance: **CURRENT / AUTHORIZED — NOT YET EXECUTED**.
+- D-035 DR-09 final Dashboard/Reports UX and efficiency acceptance D-019: **PASS**.
+- PR #126 integrated-tree equivalence: **PASS**.
+- D-035 DR-09 canonical closure: **DOCUMENTATION-ONLY / NO EXECUTABLE DELTA**.
+- D-035 implementation sequence: **COMPLETE / NO DR-10 AUTHORIZED**.
 - D-030 operator-local unattended recovery acceptance: **ON HOLD / NOT PASSED**.
 - definitive production cutover: **NOT AUTHORIZED**.
