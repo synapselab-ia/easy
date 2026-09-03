@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Status
 
-**Updated:** 2026-08-28  
+**Updated:** 2026-09-03  
 **Repository:** `synapselab-ia/easy`  
 **Stable baseline:** `main`  
 **Integration branch:** `develop`
@@ -37,7 +37,8 @@ Important integrated milestones remain:
 - PR #129 — observed Reports chart-visibility defect fixed and closed during early use;
 - **PR #131 — bounded transaction-history/operator-attribution refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #133 — observed transaction-history cell-overflow/layout defect: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`.**
+- **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`;**
+- **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`.**
 
 ## PR #131 closure — transaction history + operator attribution
 
@@ -150,6 +151,38 @@ No failed gate was waived. No automatic Vercel publication occurred and `main` r
 
 Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_READABILITY.md`.
 
+## PR #137 closure — reseller statement PDF issue date
+
+A real early-use collection workflow showed that the reseller statement PDF identified the selected financial period but not when that specific account/PDF was generated.
+
+Accepted presentation behavior:
+
+- every reseller statement PDF now shows `Emitido em: dd/mm/aaaa` using the operator/browser local date at generation time;
+- when a range is selected, `Período` remains a separate line and continues to mean only the D-014 financial occurrence interval included in the statement;
+- the issue date does not participate in transaction selection, opening balance, order/payment totals or closing-balance calculation;
+- only header/table vertical spacing changed;
+- no persistence, Supabase/Auth/RLS, Backup v2, recovery, financial semantics, correction/reversal behavior or deployment behavior changed.
+
+Repository acceptance evidence:
+
+- final feature head: `e3876c713e93356170a72d58b0ea51188f9730d2`;
+- exact GitHub-generated merge ref checked out by Actions: `92b8793f6a258afab4459fc609258efcc8f3eebb`;
+- validated tree: `a2d34910ae6ad3cee847a63c558b6ebcfbd5b35f`;
+- D-019 run/job: `33760682855` / `100665933092`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **76 files / 319 tests PASS**;
+- Playwright: **21/21 PASS**;
+- TypeScript + production Vite build: **PASS**;
+- PR #137 squash-integrated `develop`: `9b3bb2f560787f099345c618c9dcd1f269ec772e`;
+- integrated tree: `a2d34910ae6ad3cee847a63c558b6ebcfbd5b35f` — exact tree equivalence PASS;
+- post-integration `develop` Critical QA run/job: `33761058376` / `100667188524` — **PASS**.
+
+The first PR #137 D-019 attempt exposed only a stale test expectation for the old table start position. The production implementation and dedicated emission-date regression were already correct; the expectation was aligned with the independent `Emitido em` + `Período` lines and the full gate was rerun. No failed gate was waived.
+
+No automatic Vercel publication occurred and `main` remains untouched.
+
+Detailed bounded closure: `docs/V2/P10_EARLY_USE_RESELLER_PDF_ISSUE_DATE.md`.
+
 ## Governing decisions and invariants
 
 D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by screen and PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles; `DR-01…DR-09` is complete.
@@ -173,11 +206,11 @@ Current invariants:
 
 ## Recovery checkpoint state
 
-The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133 or PR #135.
+The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135 or PR #137.
 
 During the PR #131 work, the latest confirmed real Backup v2 export was observed at `2026-08-27 12:57:03.459119+00`, and at `2026-08-28 13:56:41.296122+00` the server reported it as **not fresh**. Therefore normal hosted business writes remain correctly blocked until the operator exports a new Backup v2 and explicitly confirms that the file has been stored outside Easy.
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133 and PR #135 are presentation/test only and do not alter recovery health.
+The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only and do not alter recovery health.
 
 This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
@@ -193,7 +226,7 @@ The accepted split remains:
 - contextual handoff to Reports remains explicit;
 - no `DR-10` exists or is authorized.
 
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035.
+The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035.
 
 ## Startup protocol for a new conversation
 
@@ -209,6 +242,7 @@ Read in this exact order:
 8. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_AUDIT.md`
 9. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_LAYOUT.md`
 10. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_READABILITY.md`
+11. `docs/V2/P10_EARLY_USE_RESELLER_PDF_ISSUE_DATE.md`
 
 Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot is available at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
 
