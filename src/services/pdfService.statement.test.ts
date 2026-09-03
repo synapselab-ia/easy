@@ -81,7 +81,7 @@ describe('P3-S2 PDF statement semantics', () => {
         const summaryTable = vi.mocked(autoTable).mock.calls[1][1];
         const settlementTable = vi.mocked(autoTable).mock.calls[2][1];
 
-        expect(itemTable.startY).toBe(74);
+        expect(itemTable.startY).toBe(82);
         expect(itemTable.body).toHaveLength(1);
         expect(summaryTable.body).toEqual([
             ['Total dos pedidos', 'R$ 50,00'],
