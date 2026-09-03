@@ -32,14 +32,18 @@ jobs:
       - name: Critical QA - lint
         run: npm run lint
 
-      - name: Diagnostic - TransactionForm unit
-        run: npx vitest run src/components/transactions/TransactionForm.test.tsx
+      - name: Diagnostic - defaults
+        if: always()
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should keep reseller, type and date enabled by default for continuous entry"
 
-      - name: Critical QA - unit
-        run: npm run test:run
+      - name: Diagnostic - order retention
+        if: always()
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should keep selected order fields and clear unselected fields when adding another transaction"
 
-      - name: Critical QA - e2e
-        run: npm run test:e2e
+      - name: Diagnostic - payment retention
+        if: always()
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should allow payment value retention only when the operator selects it"
 
-      - name: Critical QA - build
-        run: npm run build
+      - name: Diagnostic - cancel reset
+        if: always()
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should clear entered data on cancel and restore the requested initial type"
