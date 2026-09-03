@@ -32,6 +32,9 @@ jobs:
       - name: Critical QA - lint
         run: npm run lint
 
+      - name: Diagnostic - TransactionForm unit
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx
+
       - name: Critical QA - unit
         run: npm run test:run
 
