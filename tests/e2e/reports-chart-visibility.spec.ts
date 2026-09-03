@@ -15,7 +15,7 @@ test('renders visible sales/receipts timeline strokes with the OKLCH theme', asy
     await page.getByPlaceholder('Pesquisar revendedor...').fill(resellerName);
     await page.getByRole('option', { name: resellerName }).click();
     await page.getByLabel('Valor para Abatimento (R$)').fill('123.45');
-    await page.getByRole('button', { name: 'Lançar Movimentação' }).click();
+    await page.getByRole('button', { name: 'Salvar e concluir' }).click();
 
     await page.goto('/easy/reports');
     await expect(page.getByText('Vendas e recebimentos', { exact: true })).toBeVisible();
