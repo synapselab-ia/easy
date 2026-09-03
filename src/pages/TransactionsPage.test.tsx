@@ -85,7 +85,7 @@ describe('TransactionsPage Integration', () => {
         const itemOption = screen.getByText(/Creme/) as HTMLOptionElement;
         fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
-        const qtyInput = await screen.findByLabelText(/Quantidade/i);
+        const qtyInput = await screen.findByLabelText(/^Quantidade$/i);
         fireEvent.change(qtyInput, { target: { value: '2' } });
 
         fireEvent.click(screen.getByRole('button', { name: /Salvar e concluir/i }));
