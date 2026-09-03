@@ -123,15 +123,18 @@ export function generateResellerExtract(
     doc.text(`Telefone: ${reseller.phone || '-'}`, 14, 48);
     doc.text(`Email: ${reseller.email || '-'}`, 14, 56);
 
-    let tableStartY = 70;
+    const generatedAt = new Date();
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Emitido em: ${generatedAt.toLocaleDateString('pt-BR')}`, 14, 64);
+
+    let tableStartY = 76;
 
     if (dateRange) {
         const fmt = (d: Date) => d.toLocaleDateString('pt-BR');
         const periodoText = `Período: ${fmt(dateRange.startDate)} a ${fmt(dateRange.endDate)}`;
-        doc.setFontSize(11);
-        doc.setTextColor(100, 100, 100);
-        doc.text(periodoText, 14, 64);
-        tableStartY = 74;
+        doc.text(periodoText, 14, 72);
+        tableStartY = 82;
     }
 
     const filtered = statement
