@@ -457,24 +457,30 @@ export function TransactionForm({
                     {keepNextOptions.map(({ field, label }) => {
                         const checked = keepNext[field];
                         return (
-                            <label
+                            <button
                                 key={field}
-                                htmlFor={`keep-next-${field}`}
+                                id={`keep-next-${field}`}
+                                type="button"
+                                role="checkbox"
+                                aria-checked={checked}
+                                aria-label={`Manter ${label.toLowerCase()}`}
+                                onClick={() => toggleKeepNext(field)}
                                 className={`inline-flex cursor-pointer select-none items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-colors ${checked
                                     ? "border-primary/30 bg-primary/10 text-foreground shadow-sm"
                                     : "bg-background text-muted-foreground hover:bg-muted/70"
                                     }`}
                             >
-                                <input
-                                    id={`keep-next-${field}`}
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => toggleKeepNext(field)}
-                                    aria-label={`Manter ${label.toLowerCase()}`}
-                                    className="h-4 w-4 cursor-pointer accent-primary"
-                                />
+                                <span
+                                    aria-hidden="true"
+                                    className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] leading-none ${checked
+                                        ? "border-primary bg-primary text-primary-foreground"
+                                        : "border-muted-foreground/40 bg-background"
+                                        }`}
+                                >
+                                    {checked ? "✓" : ""}
+                                </span>
                                 <span>{label}</span>
-                            </label>
+                            </button>
                         );
                     })}
                 </div>
