@@ -32,18 +32,13 @@ jobs:
       - name: Critical QA - lint
         run: npm run lint
 
-      - name: Diagnostic - defaults
-        if: always()
-        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should keep reseller, type and date enabled by default for continuous entry"
+      - name: Diagnostic - TransactionForm JSON
+        run: npx vitest run src/components/transactions/TransactionForm.test.tsx --reporter=json --outputFile=vitest-transaction-form.json
 
-      - name: Diagnostic - order retention
+      - name: Upload diagnostic report
         if: always()
-        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should keep selected order fields and clear unselected fields when adding another transaction"
-
-      - name: Diagnostic - payment retention
-        if: always()
-        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should allow payment value retention only when the operator selects it"
-
-      - name: Diagnostic - cancel reset
-        if: always()
-        run: npx vitest run src/components/transactions/TransactionForm.test.tsx -t "should clear entered data on cancel and restore the requested initial type"
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-transaction-form
+          path: vitest-transaction-form.json
+          if-no-files-found: error
