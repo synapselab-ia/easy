@@ -29,16 +29,5 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Critical QA - lint
-        run: npm run lint
-
-      - name: Diagnostic - TransactionForm JSON
-        run: npx vitest run src/components/transactions/TransactionForm.test.tsx --reporter=json --outputFile=vitest-transaction-form.json
-
-      - name: Upload diagnostic report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vitest-transaction-form
-          path: vitest-transaction-form.json
-          if-no-files-found: error
+      - name: Critical QA
+        run: npm run qa:critical
