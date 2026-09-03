@@ -27,6 +27,32 @@ interface TransactionFormProps {
     initialResellerId?: number;
 }
 
+type SubmitMode = "finish" | "continue";
+
+type KeepNextState = {
+    resellerId: boolean;
+    type: boolean;
+    occurrenceDate: boolean;
+    itemId: boolean;
+    quantity: boolean;
+    unitPrice: boolean;
+    paymentValue: boolean;
+    observation: boolean;
+};
+
+function createDefaultKeepNext(): KeepNextState {
+    return {
+        resellerId: true,
+        type: true,
+        occurrenceDate: true,
+        itemId: false,
+        quantity: false,
+        unitPrice: false,
+        paymentValue: false,
+        observation: false,
+    };
+}
+
 function formatDateInput(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -70,8 +96,10 @@ export function TransactionForm({
     const [unitPrice, setUnitPrice] = useState<string>("");
     const [observation, setObservation] = useState<string>("");
     const [paymentValue, setPaymentValue] = useState<string>("");
+    const [keepNext, setKeepNext] = useState<KeepNextState>(() => createDefaultKeepNext());
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [futureDateConfirmationOpen, setFutureDateConfirmationOpen] = useState(false);
+    const [pendingSubmitMode, setPendingSubmitMode] = useState<SubmitMode>("finish");
 
     const createMutation = useCreateTransaction();
     const isPending = createMutation.isPending;
@@ -131,6 +159,28 @@ export function TransactionForm({
         setUnitPrice("");
         setPaymentValue("");
         setObservation("");
+        setKeepNext(createDefaultKeepNext());
+        setErrors({});
+        setFutureDateConfirmationOpen(false);
+        setPendingSubmitMode("finish");
+        createMutation.reset();
+    };
+
+    const prepareNextTransaction = () => {
+        const keptItemId = keepNext.itemId ? itemId : "";
+        const keptItem = activeItems.find(item => item.id?.toString() === keptItemId);
+
+        setResellerId(current => keepNext.resellerId ? current : "");
+        setType(current => keepNext.type ? current : initialType);
+        setOccurrenceDate(current => keepNext.occurrenceDate ? current : formatDateInput());
+        setItemId(keptItemId);
+        setQuantity(current => keepNext.quantity ? current : "1");
+        setUnitPrice(current => {
+            if (keepNext.unitPrice) return current;
+            return keptItem ? keptItem.basePrice.toString() : "";
+        });
+        setPaymentValue(current => keepNext.paymentValue ? current : "");
+        setObservation(current => keepNext.observation ? current : "");
         setErrors({});
         setFutureDateConfirmationOpen(false);
         createMutation.reset();
@@ -170,7 +220,7 @@ export function TransactionForm({
         return Object.keys(newErrors).length === 0;
     };
 
-    const persistTransaction = async () => {
+    const persistTransaction = async (mode: SubmitMode) => {
         const occurredAt = occurrenceFromDateInput(occurrenceDate);
         if (!occurredAt) return;
 
@@ -201,14 +251,18 @@ export function TransactionForm({
         try {
             await createMutation.mutateAsync(data);
             onSubmitSuccess();
-            resetForm();
+            if (mode === "continue") {
+                prepareNextTransaction();
+            } else {
+                resetForm();
+            }
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Não foi possível salvar o lançamento.");
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const startSubmit = async (mode: SubmitMode) => {
+        setPendingSubmitMode(mode);
         if (!validate()) return;
 
         if (isFutureOccurrenceDate(occurrenceDate)) {
@@ -216,18 +270,46 @@ export function TransactionForm({
             return;
         }
 
-        await persistTransaction();
+        await persistTransaction(mode);
+    };
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        await startSubmit("finish");
     };
 
     const handleConfirmFutureDate = async () => {
         setFutureDateConfirmationOpen(false);
-        await persistTransaction();
+        await persistTransaction(pendingSubmitMode);
     };
 
     const handleCancel = () => {
         resetForm();
         onCancel?.();
     };
+
+    const toggleKeepNext = (field: keyof KeepNextState) => {
+        setKeepNext(current => ({
+            ...current,
+            [field]: !current[field],
+        }));
+    };
+
+    const keepNextOptions: Array<{ field: keyof KeepNextState; label: string }> = [
+        { field: "resellerId", label: "Revendedor" },
+        { field: "type", label: "Tipo" },
+        { field: "occurrenceDate", label: "Data" },
+        ...(type === "order"
+            ? [
+                { field: "itemId" as const, label: "Item" },
+                { field: "quantity" as const, label: "Quantidade" },
+                { field: "unitPrice" as const, label: "Preço" },
+            ]
+            : [
+                { field: "paymentValue" as const, label: "Valor" },
+            ]),
+        { field: "observation", label: "Observação" },
+    ];
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -364,12 +446,54 @@ export function TransactionForm({
                 />
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending}>
+            <div className="rounded-xl border bg-muted/30 p-4 shadow-sm">
+                <div className="space-y-1">
+                    <p className="text-sm font-semibold">Manter no próximo lançamento</p>
+                    <p className="text-xs text-muted-foreground">
+                        Vale somente para “Salvar e adicionar outro”. Revendedor, tipo e data já ficam mantidos por padrão.
+                    </p>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Campos mantidos no próximo lançamento">
+                    {keepNextOptions.map(({ field, label }) => {
+                        const checked = keepNext[field];
+                        return (
+                            <label
+                                key={field}
+                                htmlFor={`keep-next-${field}`}
+                                className={`inline-flex cursor-pointer select-none items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-colors ${checked
+                                    ? "border-primary/30 bg-primary/10 text-foreground shadow-sm"
+                                    : "bg-background text-muted-foreground hover:bg-muted/70"
+                                    }`}
+                            >
+                                <input
+                                    id={`keep-next-${field}`}
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggleKeepNext(field)}
+                                    aria-label={`Manter ${label.toLowerCase()}`}
+                                    className="h-4 w-4 cursor-pointer accent-primary"
+                                />
+                                <span>{label}</span>
+                            </label>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={isPending} className="w-full sm:w-auto">
                     Cancelar
                 </Button>
-                <Button type="submit" disabled={isPending}>
-                    {isPending ? "Lançando..." : "Lançar Movimentação"}
+                <Button type="submit" variant="secondary" disabled={isPending} className="w-full sm:w-auto">
+                    {isPending && pendingSubmitMode === "finish" ? "Salvando..." : "Salvar e concluir"}
+                </Button>
+                <Button
+                    type="button"
+                    onClick={() => void startSubmit("continue")}
+                    disabled={isPending}
+                    className="w-full sm:w-auto"
+                >
+                    {isPending && pendingSubmitMode === "continue" ? "Salvando..." : "Salvar e adicionar outro"}
                 </Button>
             </div>
 
@@ -393,7 +517,11 @@ export function TransactionForm({
                             onClick={handleConfirmFutureDate}
                             disabled={isPending}
                         >
-                            {isPending ? "Lançando..." : "Cadastrar mesmo assim"}
+                            {isPending
+                                ? "Salvando..."
+                                : pendingSubmitMode === "continue"
+                                    ? "Cadastrar e adicionar outro"
+                                    : "Cadastrar mesmo assim"}
                         </Button>
                     </>
                 )}
