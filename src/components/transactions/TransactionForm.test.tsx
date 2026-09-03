@@ -77,19 +77,19 @@ describe('TransactionForm', () => {
     it('should render conditional fields based on type', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
-        expect(await screen.findByText("Revendedor")).toBeInTheDocument();
+        expect(await screen.findByLabelText(/^Revendedor$/i)).toBeInTheDocument();
         expect(screen.getByText(/Item do Catálogo/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Quantidade/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Quantidade$/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Valor Unitário/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Observação/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Observação$/i)).toBeInTheDocument();
         expect(screen.queryByLabelText(/Valor para Abatimento/i)).not.toBeInTheDocument();
 
         fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'payment' } });
 
         expect(await screen.findByText("Valor para Abatimento (R$)")).toBeInTheDocument();
-        expect(screen.getByLabelText(/Observação/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Observação$/i)).toBeInTheDocument();
         expect(screen.queryByText("Item do Catálogo")).not.toBeInTheDocument();
-        expect(screen.queryByLabelText(/Quantidade/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/^Quantidade$/i)).not.toBeInTheDocument();
     });
 
     it('should keep reseller, type and date enabled by default for continuous entry', async () => {
@@ -228,7 +228,7 @@ describe('TransactionForm', () => {
             expect(unitPriceInput.value).toBe('150');
         });
 
-        const qtyInput = screen.getByLabelText(/Quantidade/i);
+        const qtyInput = screen.getByLabelText(/^Quantidade$/i);
         fireEvent.change(qtyInput, { target: { value: '3' } });
 
         const totalInput = screen.getByLabelText(/Valor Total/i) as HTMLInputElement;
@@ -250,8 +250,8 @@ describe('TransactionForm', () => {
         const unitPriceInput = await screen.findByLabelText(/Valor Unitário/i) as HTMLInputElement;
         await waitFor(() => expect(unitPriceInput.value).toBe('150'));
         fireEvent.change(unitPriceInput, { target: { value: '125.50' } });
-        fireEvent.change(screen.getByLabelText(/Quantidade/i), { target: { value: '3' } });
-        fireEvent.change(screen.getByLabelText(/Observação/i), { target: { value: 'Primeira peça' } });
+        fireEvent.change(screen.getByLabelText(/^Quantidade$/i), { target: { value: '3' } });
+        fireEvent.change(screen.getByLabelText(/^Observação$/i), { target: { value: 'Primeira peça' } });
         fireEvent.click(screen.getByRole('checkbox', { name: 'Manter item' }));
         fireEvent.click(screen.getByRole('checkbox', { name: 'Manter preço' }));
 
@@ -265,8 +265,8 @@ describe('TransactionForm', () => {
         expect((nextSearchableSelects[1] as HTMLSelectElement).value).toBe(itemOption.value);
         expect((screen.getByTestId('mock-select') as HTMLSelectElement).value).toBe('order');
         expect((screen.getByLabelText(/Valor Unitário/i) as HTMLInputElement).value).toBe('125.50');
-        expect((screen.getByLabelText(/Quantidade/i) as HTMLInputElement).value).toBe('1');
-        expect((screen.getByLabelText(/Observação/i) as HTMLInputElement).value).toBe('');
+        expect((screen.getByLabelText(/^Quantidade$/i) as HTMLInputElement).value).toBe('1');
+        expect((screen.getByLabelText(/^Observação$/i) as HTMLInputElement).value).toBe('');
         expect(screen.getByRole('checkbox', { name: 'Manter item' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Manter preço' })).toBeChecked();
     });
@@ -301,7 +301,7 @@ describe('TransactionForm', () => {
         const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
         fireEvent.change(resellerSelect, { target: { value: resellerOption.value } });
         fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '125.50' } });
-        fireEvent.change(screen.getByLabelText(/Observação/i), { target: { value: '  PIX referente ao pedido das canecas  ' } });
+        fireEvent.change(screen.getByLabelText(/^Observação$/i), { target: { value: '  PIX referente ao pedido das canecas  ' } });
         fireEvent.click(screen.getByRole('button', { name: 'Salvar e concluir' }));
 
         await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledOnce());
@@ -331,7 +331,7 @@ describe('TransactionForm', () => {
 
         const paymentValueInput = screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement;
         fireEvent.change(paymentValueInput, { target: { value: '99.50' } });
-        fireEvent.change(screen.getByLabelText(/Observação/i), { target: { value: 'Teste' } });
+        fireEvent.change(screen.getByLabelText(/^Observação$/i), { target: { value: 'Teste' } });
         fireEvent.click(screen.getByRole('checkbox', { name: 'Manter valor' }));
 
         fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
@@ -342,7 +342,7 @@ describe('TransactionForm', () => {
             expect((resetSearchableSelects[0] as HTMLSelectElement).value).toBe('');
             expect((screen.getByTestId('mock-select') as HTMLSelectElement).value).toBe('signal');
             expect((screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement).value).toBe('');
-            expect((screen.getByLabelText(/Observação/i) as HTMLInputElement).value).toBe('');
+            expect((screen.getByLabelText(/^Observação$/i) as HTMLInputElement).value).toBe('');
             expect(screen.getByRole('checkbox', { name: 'Manter valor' })).not.toBeChecked();
         });
     });
@@ -361,7 +361,7 @@ describe('TransactionForm', () => {
         const itemOption = screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i) as HTMLOptionElement;
         fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
-        const qtyInput = screen.getByLabelText(/Quantidade/i) as HTMLInputElement;
+        const qtyInput = screen.getByLabelText(/^Quantidade$/i) as HTMLInputElement;
         fireEvent.change(qtyInput, { target: { value: '2' } });
 
         await db.resellers.delete(Number(resellerOption.value));
