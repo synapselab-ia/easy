@@ -38,7 +38,8 @@ Important integrated milestones remain:
 - **PR #131 — bounded transaction-history/operator-attribution refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #133 — observed transaction-history cell-overflow/layout defect: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`.**
+- **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`;**
+- **PR #139 — observed continuous/repeated transaction-entry refinement: `DONE / ACCEPTED / INTEGRATED`.**
 
 ## PR #131 closure — transaction history + operator attribution
 
@@ -183,6 +184,41 @@ No automatic Vercel publication occurred and `main` remains untouched.
 
 Detailed bounded closure: `docs/V2/P10_EARLY_USE_RESELLER_PDF_ISSUE_DATE.md`.
 
+## PR #139 closure — continuous transaction entry
+
+A real early-use entry workflow exposed avoidable repetition when many consecutive launches shared the same reseller and other common values. PR #139 keeps the canonical `TransactionForm` and existing persistence path while adding an explicit continuation mode.
+
+Accepted behavior:
+
+- `Salvar e concluir` performs the normal save and resets the sequence safely;
+- `Salvar e adicionar outro` saves through the same mutation path and prepares the existing form for the next launch;
+- `Manter no próximo lançamento` exposes compact accessible retention controls;
+- `Revendedor`, `Tipo` and `Data` are retained by default;
+- `Item`, `Quantidade` and `Preço` can be retained for orders; `Valor` can be retained for payment/signal; `Observação` can be retained explicitly;
+- only selected fields survive continuation; cancel/conclude restores safe defaults;
+- the existing reseller-context behavior remains supported;
+- no validation or catalog eligibility rule is relaxed, including the active-classification requirement for new orders.
+
+Repository acceptance evidence:
+
+- final feature head: `207a04cbb1095b07dc35e26d3c4521727b9ee012`;
+- exact GitHub-generated merge ref checked out by Actions: `940b13eb570e430733f5e045fb7af32a6a76e362`;
+- validated tree: `51af140eccafcbdee226ebc21ada544a6fd49e2c`;
+- D-019 run/job: `33779270951` / `100728639904`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **76 files / 322 tests PASS**;
+- Playwright: **21/21 PASS**;
+- TypeScript + production Vite build: **PASS**;
+- PR #139 squash-integrated `develop`: `51a99cce00535bd40f6ed24a0373e58cc01b494c`;
+- integrated tree: `51af140eccafcbdee226ebc21ada544a6fd49e2c` — exact tree equivalence PASS;
+- post-integration `develop` Critical QA run/job: `33779689002` / `100730023526` — **PASS**.
+
+Failed D-019 iterations were diagnosed and corrected, not waived. They exposed stale/broad test selectors affected by the new retention controls, one invalid unclassified-order test fixture, and one pre-existing Reports-chart E2E that still clicked the old `Lançar Movimentação` action. The canonical workflow was restored before the final successful gate and PR #139 contains no net CI-workflow change.
+
+No database/schema, Supabase/Auth/RLS/RPC, actor attribution, Backup v2, recovery, financial/reporting, correction/reversal or deployment behavior changed. No automatic Vercel publication occurred and `main` remains untouched.
+
+Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`.
+
 ## Governing decisions and invariants
 
 D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by screen and PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles; `DR-01…DR-09` is complete.
@@ -206,11 +242,11 @@ Current invariants:
 
 ## Recovery checkpoint state
 
-The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135 or PR #137.
+The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135, PR #137 or PR #139.
 
 During the PR #131 work, the latest confirmed real Backup v2 export was observed at `2026-08-27 12:57:03.459119+00`, and at `2026-08-28 13:56:41.296122+00` the server reported it as **not fresh**. Therefore normal hosted business writes remain correctly blocked until the operator exports a new Backup v2 and explicitly confirms that the file has been stored outside Easy.
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only and do not alter recovery health.
+The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only and do not alter recovery health. PR #139 changes only the existing transaction-entry UI/session behavior and tests; it does not alter recovery health or hosted-write authorization.
 
 This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
@@ -226,7 +262,7 @@ The accepted split remains:
 - contextual handoff to Reports remains explicit;
 - no `DR-10` exists or is authorized.
 
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035.
+The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16.
 
 ## Startup protocol for a new conversation
 
@@ -243,6 +279,7 @@ Read in this exact order:
 9. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_LAYOUT.md`
 10. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_READABILITY.md`
 11. `docs/V2/P10_EARLY_USE_RESELLER_PDF_ISSUE_DATE.md`
+12. `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`
 
 Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot is available at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
 
