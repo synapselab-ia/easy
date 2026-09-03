@@ -85,10 +85,10 @@ describe('TransactionsPage Integration', () => {
         const itemOption = screen.getByText(/Creme/) as HTMLOptionElement;
         fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
-        const qtyInput = await screen.findByLabelText(/Quantidade/i);
+        const qtyInput = await screen.findByLabelText(/^Quantidade$/i);
         fireEvent.change(qtyInput, { target: { value: '2' } });
 
-        fireEvent.submit(screen.getByRole('button', { name: /Lançar/i }));
+        fireEvent.click(screen.getByRole('button', { name: /Salvar e concluir/i }));
 
         await waitFor(async () => {
             const transactions = await db.transactions.toArray();
@@ -116,7 +116,7 @@ describe('TransactionsPage Integration', () => {
         const paymentValueInput = await screen.findByLabelText(/Valor para Abatimento/i);
         fireEvent.change(paymentValueInput, { target: { value: '250.50' } });
 
-        fireEvent.submit(screen.getByRole('button', { name: /Lançar/i }));
+        fireEvent.click(screen.getByRole('button', { name: /Salvar e concluir/i }));
 
         await waitFor(async () => {
             const transactions = await db.transactions.toArray();

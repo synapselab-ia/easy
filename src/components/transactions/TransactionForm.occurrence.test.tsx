@@ -130,7 +130,7 @@ describe('P3-S1 transaction form occurrence date', () => {
         fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), {
             target: { value: '25' },
         });
-        fireEvent.click(screen.getByRole('button', { name: /Lançar Movimentação/i }));
+        fireEvent.click(screen.getByRole('button', { name: /Salvar e concluir/i }));
 
         await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalled());
         const stored = (await db.transactions.toArray())[0];
@@ -170,7 +170,7 @@ describe('P3-S1 transaction form occurrence date', () => {
         fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), {
             target: { value: '40' },
         });
-        fireEvent.click(screen.getByRole('button', { name: /Lançar Movimentação/i }));
+        fireEvent.click(screen.getByRole('button', { name: /Salvar e concluir/i }));
 
         expect(screen.getByRole('dialog', { name: /Data de ocorrência no futuro/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Voltar e corrigir/i })).toBeInTheDocument();
@@ -182,7 +182,7 @@ describe('P3-S1 transaction form occurrence date', () => {
         expect(screen.queryByRole('dialog', { name: /Data de ocorrência no futuro/i })).not.toBeInTheDocument();
         expect(await db.transactions.count()).toBe(0);
 
-        fireEvent.click(screen.getByRole('button', { name: /Lançar Movimentação/i }));
+        fireEvent.click(screen.getByRole('button', { name: /Salvar e concluir/i }));
         fireEvent.click(screen.getByRole('button', { name: /Cadastrar mesmo assim/i }));
 
         await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledTimes(1));

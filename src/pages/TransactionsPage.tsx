@@ -34,11 +34,11 @@ export default function TransactionsPage() {
                 </p>
             </div>
 
-            <Card className="max-w-3xl">
+            <Card className="max-w-4xl">
                 <CardHeader>
                     <CardTitle>Nova Movimentação</CardTitle>
                     <CardDescription>
-                        Registre um pedido, pagamento ou sinal para um revendedor.
+                        Registre um pedido, pagamento ou sinal. Em sequências, escolha quais campos devem permanecer no próximo lançamento.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

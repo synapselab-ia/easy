@@ -77,19 +77,33 @@ describe('TransactionForm', () => {
     it('should render conditional fields based on type', async () => {
         render(<TransactionForm onSubmitSuccess={vi.fn()} onCancel={vi.fn()} />, { wrapper });
 
-        expect(await screen.findByText("Revendedor")).toBeInTheDocument();
+        expect(await screen.findByLabelText(/^Revendedor$/i)).toBeInTheDocument();
         expect(screen.getByText(/Item do Catálogo/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Quantidade/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Quantidade$/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Valor Unitário/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Observação/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Observação$/i)).toBeInTheDocument();
         expect(screen.queryByLabelText(/Valor para Abatimento/i)).not.toBeInTheDocument();
 
         fireEvent.change(screen.getByTestId('mock-select'), { target: { value: 'payment' } });
 
         expect(await screen.findByText("Valor para Abatimento (R$)")).toBeInTheDocument();
-        expect(screen.getByLabelText(/Observação/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Observação$/i)).toBeInTheDocument();
         expect(screen.queryByText("Item do Catálogo")).not.toBeInTheDocument();
-        expect(screen.queryByLabelText(/Quantidade/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/^Quantidade$/i)).not.toBeInTheDocument();
+    });
+
+    it('should keep reseller, type and date enabled by default for continuous entry', async () => {
+        render(<TransactionForm onSubmitSuccess={vi.fn()} />, { wrapper });
+
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+
+        expect(screen.getByRole('checkbox', { name: 'Manter revendedor' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Manter tipo' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Manter data' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Manter item' })).not.toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Manter quantidade' })).not.toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Manter preço' })).not.toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Manter observação' })).not.toBeChecked();
     });
 
     it('should only list active resellers for new transactions', async () => {
@@ -143,7 +157,7 @@ describe('TransactionForm', () => {
 
         await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
         fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '10.00' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Lançar Movimentação' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Salvar e concluir' }));
 
         expect(await screen.findByText('Revendedor inativo não pode receber novos lançamentos')).toBeInTheDocument();
         expect(onSubmitSuccess).not.toHaveBeenCalled();
@@ -164,7 +178,7 @@ describe('TransactionForm', () => {
 
         await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
         fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '10.00' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Lançar Movimentação' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Salvar e concluir' }));
 
         expect(await screen.findByText('Revendedor inativo não pode receber novos lançamentos')).toBeInTheDocument();
         expect(onSubmitSuccess).not.toHaveBeenCalled();
@@ -182,15 +196,13 @@ describe('TransactionForm', () => {
         const categoryId = await db.categories.add({
             name: 'Porcelana',
             isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: new Date(), updatedAt: new Date(),
         }) as number;
         const subcategoryId = await db.subcategories.add({
             categoryId,
             name: 'Canecas',
             isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: new Date(), updatedAt: new Date(),
         }) as number;
         const perfume = (await db.items.toArray()).find(item => item.name === 'Perfume');
         await db.items.update(perfume!.id!, { categoryId, subcategoryId });
@@ -216,11 +228,73 @@ describe('TransactionForm', () => {
             expect(unitPriceInput.value).toBe('150');
         });
 
-        const qtyInput = screen.getByLabelText(/Quantidade/i);
+        const qtyInput = screen.getByLabelText(/^Quantidade$/i);
         fireEvent.change(qtyInput, { target: { value: '3' } });
 
         const totalInput = screen.getByLabelText(/Valor Total/i) as HTMLInputElement;
         expect(totalInput.value).toBe('R$ 450,00');
+    });
+
+    it('should keep selected order fields and clear unselected fields when adding another transaction', async () => {
+        const onSubmitSuccess = vi.fn();
+        render(<TransactionForm onSubmitSuccess={onSubmitSuccess} />, { wrapper });
+
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        const searchableSelects = screen.getAllByTestId('mock-searchable-select');
+        const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
+        fireEvent.change(searchableSelects[0], { target: { value: resellerOption.value } });
+
+        const itemOption = await screen.findByText(/Perfume — Sem classificação \(R\$ 150,00\)/i) as HTMLOptionElement;
+        fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
+
+        const categoryId = await db.categories.add({
+            name: 'Perfumes',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        await db.items.update(Number(itemOption.value), { categoryId });
+
+        const unitPriceInput = await screen.findByLabelText(/Valor Unitário/i) as HTMLInputElement;
+        await waitFor(() => expect(unitPriceInput.value).toBe('150'));
+        fireEvent.change(unitPriceInput, { target: { value: '125.50' } });
+        fireEvent.change(screen.getByLabelText(/^Quantidade$/i), { target: { value: '3' } });
+        fireEvent.change(screen.getByLabelText(/^Observação$/i), { target: { value: 'Primeira peça' } });
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Manter item' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Manter preço' }));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Salvar e adicionar outro' }));
+
+        await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledOnce());
+        await waitFor(() => expect(db.transactions.count()).resolves.toBe(1));
+
+        const nextSearchableSelects = screen.getAllByTestId('mock-searchable-select');
+        expect((nextSearchableSelects[0] as HTMLSelectElement).value).toBe(resellerOption.value);
+        expect((nextSearchableSelects[1] as HTMLSelectElement).value).toBe(itemOption.value);
+        expect((screen.getByTestId('mock-select') as HTMLSelectElement).value).toBe('order');
+        expect((screen.getByLabelText(/Valor Unitário/i) as HTMLInputElement).value).toBe('125.50');
+        expect((screen.getByLabelText(/^Quantidade$/i) as HTMLInputElement).value).toBe('1');
+        expect((screen.getByLabelText(/^Observação$/i) as HTMLInputElement).value).toBe('');
+        expect(screen.getByRole('checkbox', { name: 'Manter item' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Manter preço' })).toBeChecked();
+    });
+
+    it('should allow payment value retention only when the operator selects it', async () => {
+        const onSubmitSuccess = vi.fn();
+        render(<TransactionForm onSubmitSuccess={onSubmitSuccess} initialType="payment" />, { wrapper });
+
+        await waitFor(() => expect(screen.getByText('Joãozinho')).toBeInTheDocument());
+        const resellerSelect = (await screen.findAllByTestId('mock-searchable-select'))[0];
+        const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
+        fireEvent.change(resellerSelect, { target: { value: resellerOption.value } });
+        fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '80.00' } });
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Manter valor' }));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Salvar e adicionar outro' }));
+
+        await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledOnce());
+        expect((screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement).value).toBe('80.00');
+        expect(screen.getByRole('checkbox', { name: 'Manter valor' })).toBeChecked();
     });
 
     it.each(['payment', 'signal'] as const)('should persist an optional observation for %s creation', async (movementType) => {
@@ -235,8 +309,8 @@ describe('TransactionForm', () => {
         const resellerOption = screen.getByText('Joãozinho') as HTMLOptionElement;
         fireEvent.change(resellerSelect, { target: { value: resellerOption.value } });
         fireEvent.change(screen.getByLabelText(/Valor para Abatimento/i), { target: { value: '125.50' } });
-        fireEvent.change(screen.getByLabelText(/Observação/i), { target: { value: '  PIX referente ao pedido das canecas  ' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Lançar Movimentação' }));
+        fireEvent.change(screen.getByLabelText(/^Observação$/i), { target: { value: '  PIX referente ao pedido das canecas  ' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Salvar e concluir' }));
 
         await waitFor(() => expect(onSubmitSuccess).toHaveBeenCalledOnce());
         const transactions = await db.transactions.toArray();
@@ -265,7 +339,8 @@ describe('TransactionForm', () => {
 
         const paymentValueInput = screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement;
         fireEvent.change(paymentValueInput, { target: { value: '99.50' } });
-        fireEvent.change(screen.getByLabelText(/Observação/i), { target: { value: 'Teste' } });
+        fireEvent.change(screen.getByLabelText(/^Observação$/i), { target: { value: 'Teste' } });
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Manter valor' }));
 
         fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
@@ -275,7 +350,8 @@ describe('TransactionForm', () => {
             expect((resetSearchableSelects[0] as HTMLSelectElement).value).toBe('');
             expect((screen.getByTestId('mock-select') as HTMLSelectElement).value).toBe('signal');
             expect((screen.getByLabelText(/Valor para Abatimento/i) as HTMLInputElement).value).toBe('');
-            expect((screen.getByLabelText(/Observação/i) as HTMLInputElement).value).toBe('');
+            expect((screen.getByLabelText(/^Observação$/i) as HTMLInputElement).value).toBe('');
+            expect(screen.getByRole('checkbox', { name: 'Manter valor' })).not.toBeChecked();
         });
     });
 
@@ -293,11 +369,11 @@ describe('TransactionForm', () => {
         const itemOption = screen.getByText(/Perfume — Sem classificação \(R\$ 150,00\)/i) as HTMLOptionElement;
         fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
-        const qtyInput = screen.getByLabelText(/Quantidade/i) as HTMLInputElement;
+        const qtyInput = screen.getByLabelText(/^Quantidade$/i) as HTMLInputElement;
         fireEvent.change(qtyInput, { target: { value: '2' } });
 
         await db.resellers.delete(Number(resellerOption.value));
-        fireEvent.click(screen.getByRole('button', { name: 'Lançar Movimentação' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Salvar e concluir' }));
 
         await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Revendedor não encontrado.'));
         expect(onSubmitSuccess).not.toHaveBeenCalled();

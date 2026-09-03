@@ -82,7 +82,7 @@ describe('TransactionsPage reseller context', () => {
         renderPage('/transactions?resellerId=1');
 
         await waitFor(() => expect(screen.getByText('Mariazinha')).toBeInTheDocument());
-        const resellerSelect = screen.getByLabelText(/^Revendedor$/i);
+        const resellerSelect = screen.getByRole('combobox', { name: /^Revendedor$/i });
         expect((resellerSelect as HTMLSelectElement).value).toBe('1');
     });
 
@@ -90,7 +90,7 @@ describe('TransactionsPage reseller context', () => {
         renderPage('/transactions?resellerId=not-a-number');
 
         await waitFor(() => expect(screen.getByText('Mariazinha')).toBeInTheDocument());
-        const resellerSelect = screen.getByLabelText(/^Revendedor$/i);
+        const resellerSelect = screen.getByRole('combobox', { name: /^Revendedor$/i });
         expect((resellerSelect as HTMLSelectElement).value).toBe('');
     });
 });
