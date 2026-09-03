@@ -247,6 +247,14 @@ describe('TransactionForm', () => {
         const itemOption = await screen.findByText(/Perfume — Sem classificação \(R\$ 150,00\)/i) as HTMLOptionElement;
         fireEvent.change(searchableSelects[1], { target: { value: itemOption.value } });
 
+        const categoryId = await db.categories.add({
+            name: 'Perfumes',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }) as number;
+        await db.items.update(Number(itemOption.value), { categoryId });
+
         const unitPriceInput = await screen.findByLabelText(/Valor Unitário/i) as HTMLInputElement;
         await waitFor(() => expect(unitPriceInput.value).toBe('150'));
         fireEvent.change(unitPriceInput, { target: { value: '125.50' } });
