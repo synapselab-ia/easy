@@ -29,5 +29,14 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Critical QA
-        run: npm run qa:critical
+      - name: Critical QA - lint
+        run: npm run lint
+
+      - name: Critical QA - unit
+        run: npm run test:run
+
+      - name: Critical QA - e2e
+        run: npm run test:e2e
+
+      - name: Critical QA - build
+        run: npm run build
