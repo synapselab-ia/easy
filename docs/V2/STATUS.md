@@ -5,7 +5,7 @@
 **Stable baseline:** `main`  
 **Integration branch:** `develop`
 
-> Historical note: the complete canonical status immediately before the bounded transaction-history/operator-attribution refinement is preserved verbatim at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md`. Nothing from that status was discarded; this file is the current operational summary and has precedence when older documents still mention Backup v2 schema 6.
+> Historical note: the complete canonical status immediately before the bounded transaction-history/operator-attribution refinement is preserved verbatim at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md`. Detailed closure evidence for later bounded refinements remains in the focused documents named below. This file is the current operational summary and has precedence when older documents still mention Backup v2 schema 6.
 
 ## Current phase
 
@@ -26,221 +26,67 @@ Current P10-S3 state:
 
 ## Integrated early-use state
 
-The previously authorized usability/data-quality queue through change #15 is closed. D-035 Dashboard + Reports is also complete through `DR-09`; **no change #16 and no DR-10 are authorized**. New bounded work may still be authorized by a later explicit operator instruction without extending either closed sequence.
+The previously authorized usability/data-quality queue through change #15 is closed. D-035 Dashboard + Reports is complete through `DR-09`; **no change #16 and no DR-10 are authorized**. Later bounded work may be authorized only by new observed evidence or explicit operator instruction.
 
-Important integrated milestones remain:
+Important integrated milestones:
 
 - D-032 / PR #80 — store-global manual Backup v2 checkpoint;
 - D-033 / PR #82 — optional subcategories and immutable category/subcategory snapshots;
 - D-034 / PR #85 — canonical financial Reports workspace + PDF;
 - D-035 / PRs #114, #116, #118, #120, #122, #124, #125, #126 — Dashboard/Reports redesign through final acceptance;
-- PR #129 — observed Reports chart-visibility defect fixed and closed during early use;
-- **PR #131 — bounded transaction-history/operator-attribution refinement: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #133 — observed transaction-history cell-overflow/layout defect: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #139 — observed continuous/repeated transaction-entry refinement: `DONE / ACCEPTED / INTEGRATED`.**
+- PR #129 — Reports chart-visibility defect fixed during early use;
+- PR #131 — transaction history + server-derived operator attribution;
+- PR #133 — transaction-history table containment;
+- PR #135 — transaction-history readability;
+- PR #137 — reseller-statement PDF issue date;
+- PR #139 — continuous/repeated transaction entry;
+- **PR #142 — operator-scoped visual personalization: `DONE / ACCEPTED / INTEGRATED`.**
 
-A later explicit operator instruction on 2026-09-09 authorizes one new bounded presentation item: **operator-scoped visual personalization with an optional decorative image**. It is `AUTHORIZED / NOT IMPLEMENTED` and is the sole current executable product item. It is not historical early-use change #16 and does not reopen D-035 or create `DR-10`.
+Focused historical/closure documents retain the full evidence for PRs #131–#142; this current status intentionally does not duplicate every historical run and implementation detail.
 
-## PR #131 closure — transaction history + operator attribution
+## PR #142 closure — operator-scoped visual personalization
 
-The operator explicitly authorized this bounded early-use refinement and explicitly declined a broader general audit for now. It is **not** D-035 `DR-10`, early-use change #16, D-030 resumption or a general audit subsystem.
+The 2026-09-09 explicit operator instruction authorized one bounded decorative-image personalization item. It is now complete and does **not** create early-use change #16, reopen D-035 or create `DR-10`.
 
 Accepted product behavior:
 
-- Dashboard no longer renders the recent-launch list; it stays focused on operational summary/action context.
-- `/transactions` is the canonical `Lançamentos` workspace with `Nova Movimentação` plus `Histórico de Lançamentos`.
-- History supports practical search plus filters for movement type, effective/corrected/reversed state, operator, and one date interval selectable between registration time and occurrence time.
-- Desktop uses a table and mobile uses cards; correction/reversal links remain visible.
-- Existing historical rows without actor attribution are displayed as `Não registrado`; no actor is fabricated retrospectively.
-- New hosted transaction creation records the authenticated operator on the server.
-- Hosted reversal/correction records the authenticated operator on the server; the browser does not choose or submit actor identity.
-- Auth/RLS/active `easy_operators`, D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable classification snapshots and existing correction/reversal semantics remain intact.
+- preference is genuinely scoped to the authenticated operator and persists cross-session in the existing `public.easy_operators` row;
+- the preference is opt-in and disabled by default;
+- initial eligibility is assigned from database state to the sole active operator, with no person name, e-mail or UUID hardcoded into presentation logic;
+- only two presentation modes exist: `Canto` and `Marca d'água`;
+- only bounded `Bem discreta` / `Suave` intensity presets exist;
+- the implementation reuses the already-versioned `src/assets/hero.png`; no arbitrary upload, Supabase Storage, gallery or general theme-builder was introduced;
+- the control is available in the authenticated shell on desktop/mobile only when the current operator is eligible;
+- decorative rendering is `aria-hidden`, `pointer-events-none` and `print:hidden`, remains behind business content, and does not enter PDFs, reseller statements, backups, exports or print-oriented output;
+- ineligible operators and the eligible operator while disabled receive the normal existing Easy interface.
 
-Persistence/recovery contract after PR #131:
+Persistence/security acceptance:
 
-- Supabase/Postgres remains canonical business persistence.
-- `public.transactions` now has nullable creation/reversal actor identity snapshots (`*_user_id`, `*_email`).
-- Public transaction RPC signatures remain backward compatible; actor identity is derived from `auth.uid()` / JWT claims inside PostgreSQL.
-- Production migrations `20260828135753_transaction_operator_attribution_and_history_backup` and `20260828140038_remove_unused_transaction_actor_indexes` are applied to `easy-v2`.
-- Backup format remains **Backup v2**, but the current logical schema is now **schema 7**.
-- Schema 7 preserves transaction creation/reversal actors. Supported schema 4/5/6 inputs remain accepted and are normalized without inventing missing actor history; schema 6 continues to preserve subcategories.
-- A synthetic database proof exercised creation, reversal and correction/replacement actor attribution inside an intentionally aborted transaction; post-check confirmed zero synthetic operator/transaction rows remained.
-
-Repository acceptance evidence:
-
-- feature head: `71799016d2f90b07b345dc37d8e9180fcd9fbd35`;
-- exact GitHub-generated merge ref checked out by Actions: `5441afe3b520a3a302ffbe4a7f64c0a23c0dd764`;
-- validated tree: `71c43008df5058b50d49597217f6485637b935fe`;
-- D-019 run/job: `33181135877` / `98882307187`;
-- ESLint: **0 errors / 108 warnings**;
-- Vitest: **75 files / 316 tests PASS**;
-- Playwright: **20 scenarios completed successfully; 19 passed on first attempt and the pre-existing Reports chart-visibility scenario passed on retry and was reported flaky**;
-- TypeScript + production Vite build: **PASS**;
-- PR #131 squash-integrated `develop`: `45f318e8fc2f789e884d6e5e9f8eafd443e4f1fe`;
-- integrated tree: `71c43008df5058b50d49597217f6485637b935fe` — exact tree equivalence PASS.
-
-No failed Critical QA gate was waived. No automatic Vercel publication occurred. `main` remains `9574e3a4097ddd78ab1f75a13b9ea065287946e9`.
-
-Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_AUDIT.md`.
-
-## PR #133 closure — transaction-history table cell containment
-
-A real early-use screenshot showed long `Detalhe` text visually crossing its desktop table cell and overlaying `Valor`; the same shared table behavior could affect a long `Revendedor` or `Usuário` value.
-
-Root cause and accepted presentation correction:
-
-- the shared table cells default to `white-space: nowrap`; `Detalhe` had a maximum width but no local wrap/overflow override;
-- the correction is scoped only to `section[aria-labelledby="transaction-history-title"]`, so unrelated Easy tables retain their existing behavior;
-- the desktop history now uses fixed table layout, a 1320 px minimum width and explicit predictable column widths;
-- all history cells close overflow so content cannot paint across a neighboring cell;
-- `Revendedor`, `Detalhe` and `Usuário` allow safe wrapping, including long uninterrupted content;
-- narrower desktop space uses the existing horizontal table scroll instead of compressing fields into overlap;
-- mobile history cards are unchanged;
-- no persistence, Supabase/Auth/RLS, Backup v2, recovery, financial/history or deployment behavior changed.
+- production migration `20260909135441_operator_visual_personalization` is applied to `easy-v2`;
+- `authenticated` has column-level `UPDATE` only for `visual_personalization_enabled`, `visual_personalization_mode` and `visual_personalization_intensity`;
+- `authenticated` cannot update `visual_personalization_allowed`, `is_active` or `user_id`;
+- RLS policy `easy_operators_update_visual_preferences` restricts update to the authenticated user's own active, eligible operator row and uses both `USING` and `WITH CHECK`;
+- live verification after integration found exactly 1 active operator, 1 eligible operator and 0 enabled operators, so the production preference remains off until explicitly enabled;
+- the existing Supabase security advisors show no new finding attributable to this feature. The pre-existing intentional `SECURITY DEFINER` RPC advisory and leaked-password-protection warning remain outside this bounded task.
 
 Repository acceptance evidence:
 
-- final feature head: `8cedd37044b29986b270b413a222d3b34954c534`;
-- exact GitHub-generated merge ref checked out by Actions: `eacf9ea2424509133ac3f9c9d19843121a52fbd2`;
-- validated tree: `4a4071a3ef7f347ef54f984a3ed35fab087f2ebf`;
-- D-019 run/job: `33184406848` / `98893556145`;
+- final feature head: `7462a8a5f235691a8381587429715c22cc2f7242`;
+- exact GitHub-generated merge ref validated by Actions: `c8aa4482eee0364a155d213cac5252dccfedec3c`;
+- validated tree: `eeab347c5f701fe7ef6e2a6bd1400bc07f9bdcbd`;
+- final PR D-019 run/job: `34360454611` / `102495778094`;
 - ESLint: **0 errors / 108 warnings**;
-- Vitest: **75 files / 316 tests PASS**;
-- Playwright: **21 scenarios completed successfully**; the new history-layout regression passed on its first attempt, while the pre-existing Reports chart-visibility scenario passed on retry and remained the only reported flaky scenario;
-- TypeScript + production Vite build: **PASS**;
-- PR #133 squash-integrated `develop`: `66b9bdad245337efd7e9e040ee503d0673be22c1`;
-- integrated tree: `4a4071a3ef7f347ef54f984a3ed35fab087f2ebf` — exact tree equivalence PASS;
-- post-integration `develop` Critical QA run/job: `33184663864` / `98894431412` — **PASS**.
-
-The first PR #133 CI iteration exposed only a race in the newly added layout regression: it inspected the page before the asynchronously loaded history section mounted. The test was made deterministic by explicitly waiting for the history section and the full D-019 gate was rerun. No product regression was waived.
-
-No automatic Vercel publication occurred and `main` was not targeted.
-
-Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_LAYOUT.md`.
-
-## PR #135 closure — transaction-history bounded readability
-
-A second real early-use screenshot after PR #133 confirmed that cross-cell overlap was fixed but `Detalhe` could still remain effectively unreadable because the real desktop row rendered variable text as a single clipped line.
-
-Root cause and accepted presentation correction:
-
-- the shared `TableCell` component carries the Tailwind utility `whitespace-nowrap`;
-- PR #133's scoped base-layer CSS correctly closed overflow but could still lose the white-space cascade to the real component utility; its synthetic browser fixture did not include the real `TableCell` utility classes;
-- PR #135 moves the override into the actual history component so `cn()`/`twMerge` resolves `whitespace-normal` against the shared default deterministically;
-- `Detalhe` now shows up to two desktop lines with `line-clamp-2`, safe word breaking and the complete value available through native hover `title`;
-- `Revendedor` follows the same two-line + full-hover contract;
-- `Usuário` preserves separate `Registrado` and optional `Corrigido`/`Estornado` lines, with each long actor value safely truncated and fully available on hover;
-- `Valor` stays non-wrapping/tabular, `Situação` stays stable, and the PR #133 no-overlap/horizontal-scroll contract remains intact;
-- mobile history cards remain full-content and unchanged;
-- no persistence, Supabase/Auth/RLS, Backup v2, recovery, financial/history or deployment behavior changed.
-
-Repository acceptance evidence:
-
-- final feature head: `ece16ffc94b2b383c97ccdd9c0ae8699a7a3c13f`;
-- exact GitHub-generated merge ref checked out by Actions: `d06f4108cfae6ef82d4d366d362cf13f6e5cd894`;
-- validated tree: `b92e86e942c94b3dbb2c339ebdf1cda7abede066`;
-- D-019 run/job: `33186980363` / `98902403708`;
-- ESLint: **0 errors / 108 warnings**;
-- Vitest: **75 files / 317 tests PASS**;
-- Playwright: **21/21 PASS on first attempt**;
-- TypeScript + production Vite build: **PASS**;
-- PR #135 squash-integrated `develop`: `eec8c9363195aa7bd38ce28f0549585d5e50e5d9`;
-- integrated tree: `b92e86e942c94b3dbb2c339ebdf1cda7abede066` — exact tree equivalence PASS;
-- post-integration `develop` Critical QA run/job: `33187306207` / `98903523909` — **PASS**.
-
-No failed gate was waived. No automatic Vercel publication occurred and `main` remains untouched.
-
-Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_READABILITY.md`.
-
-## PR #137 closure — reseller statement PDF issue date
-
-A real early-use collection workflow showed that the reseller statement PDF identified the selected financial period but not when that specific account/PDF was generated.
-
-Accepted presentation behavior:
-
-- every reseller statement PDF now shows `Emitido em: dd/mm/aaaa` using the operator/browser local date at generation time;
-- when a range is selected, `Período` remains a separate line and continues to mean only the D-014 financial occurrence interval included in the statement;
-- the issue date does not participate in transaction selection, opening balance, order/payment totals or closing-balance calculation;
-- only header/table vertical spacing changed;
-- no persistence, Supabase/Auth/RLS, Backup v2, recovery, financial semantics, correction/reversal behavior or deployment behavior changed.
-
-Repository acceptance evidence:
-
-- final feature head: `e3876c713e93356170a72d58b0ea51188f9730d2`;
-- exact GitHub-generated merge ref checked out by Actions: `92b8793f6a258afab4459fc609258efcc8f3eebb`;
-- validated tree: `a2d34910ae6ad3cee847a63c558b6ebcfbd5b35f`;
-- D-019 run/job: `33760682855` / `100665933092`;
-- ESLint: **0 errors / 108 warnings**;
-- Vitest: **76 files / 319 tests PASS**;
+- Vitest: **78 files / 329 tests PASS**;
 - Playwright: **21/21 PASS**;
 - TypeScript + production Vite build: **PASS**;
-- PR #137 squash-integrated `develop`: `9b3bb2f560787f099345c618c9dcd1f269ec772e`;
-- integrated tree: `a2d34910ae6ad3cee847a63c558b6ebcfbd5b35f` — exact tree equivalence PASS;
-- post-integration `develop` Critical QA run/job: `33761058376` / `100667188524` — **PASS**.
+- feature-focused coverage includes `OperatorVisualPersonalization` 4/4 and operator-personalization service 3/3 PASS;
+- PR #142 squash-integrated into `develop` as `3b3ba1f3eb280a552a806dda0f0752f21900c263`;
+- integrated tree: `eeab347c5f701fe7ef6e2a6bd1400bc07f9bdcbd` — exact tree equivalence **PASS**;
+- post-integration `develop` Critical QA run/job: `34364762432` / `102510503835` — **PASS**.
 
-The first PR #137 D-019 attempt exposed only a stale test expectation for the old table start position. The production implementation and dedicated emission-date regression were already correct; the expectation was aligned with the independent `Emitido em` + `Período` lines and the full gate was rerun. No failed gate was waived.
+No failed gate was waived. No automatic Vercel publication occurred. `main` was not targeted.
 
-No automatic Vercel publication occurred and `main` remains untouched.
-
-Detailed bounded closure: `docs/V2/P10_EARLY_USE_RESELLER_PDF_ISSUE_DATE.md`.
-
-## PR #139 closure — continuous transaction entry
-
-A real early-use entry workflow exposed avoidable repetition when many consecutive launches shared the same reseller and other common values. PR #139 keeps the canonical `TransactionForm` and existing persistence path while adding an explicit continuation mode.
-
-Accepted behavior:
-
-- `Salvar e concluir` performs the normal save and resets the sequence safely;
-- `Salvar e adicionar outro` saves through the same mutation path and prepares the existing form for the next launch;
-- `Manter no próximo lançamento` exposes compact accessible retention controls;
-- `Revendedor`, `Tipo` and `Data` are retained by default;
-- `Item`, `Quantidade` and `Preço` can be retained for orders; `Valor` can be retained for payment/signal; `Observação` can be retained explicitly;
-- only selected fields survive continuation; cancel/conclude restores safe defaults;
-- the existing reseller-context behavior remains supported;
-- no validation or catalog eligibility rule is relaxed, including the active-classification requirement for new orders.
-
-Repository acceptance evidence:
-
-- final feature head: `207a04cbb1095b07dc35e26d3c4521727b9ee012`;
-- exact GitHub-generated merge ref checked out by Actions: `940b13eb570e430733f5e045fb7af32a6a76e362`;
-- validated tree: `51af140eccafcbdee226ebc21ada544a6fd49e2c`;
-- D-019 run/job: `33779270951` / `100728639904`;
-- ESLint: **0 errors / 108 warnings**;
-- Vitest: **76 files / 322 tests PASS**;
-- Playwright: **21/21 PASS**;
-- TypeScript + production Vite build: **PASS**;
-- PR #139 squash-integrated `develop`: `51a99cce00535bd40f6ed24a0373e58cc01b494c`;
-- integrated tree: `51af140eccafcbdee226ebc21ada544a6fd49e2c` — exact tree equivalence PASS;
-- post-integration `develop` Critical QA run/job: `33779689002` / `100730023526` — **PASS**.
-
-Failed D-019 iterations were diagnosed and corrected, not waived. They exposed stale/broad test selectors affected by the new retention controls, one invalid unclassified-order test fixture, and one pre-existing Reports-chart E2E that still clicked the old `Lançar Movimentação` action. The canonical workflow was restored before the final successful gate and PR #139 contains no net CI-workflow change.
-
-No database/schema, Supabase/Auth/RLS/RPC, actor attribution, Backup v2, recovery, financial/reporting, correction/reversal or deployment behavior changed. No automatic Vercel publication occurred and `main` remains untouched.
-
-Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`.
-
-## Authorized pending refinement — operator-scoped visual personalization
-
-On 2026-09-09 the operator explicitly authorized a bounded presentation/personalization refinement: one designated authenticated operator may opt into a decorative image in Easy, while other operators retain the normal interface.
-
-Accepted direction before implementation:
-
-- preference is operator-scoped and disabled by default;
-- the first use is limited to one designated operator account, without hardcoding a person's display name/e-mail in UI logic;
-- the designated operator can explicitly enable/disable the image;
-- the first implementation targets two bounded modes: a discreet corner image and a low-opacity watermark/background image;
-- the image is decorative/non-interactive and must not cover controls, tables, text, alerts, forms or navigation;
-- safe bounded opacity/size preserves readability and responsive containment;
-- PDFs, reseller statements, backups, exports and print-oriented output remain unchanged;
-- generalized arbitrary upload/Supabase Storage/theme-builder work is not authorized by default; one supplied/bundled asset is sufficient for the first implementation;
-- before coding, the current authenticated-operator/profile model must be inspected so cross-session preference is genuinely scoped by operator rather than by a browser-global setting;
-- if satisfying that preference safely requires a material database/Auth/RLS expansion, stop for a new operator decision rather than silently broadening scope.
-
-This authorization is separate from the closed numbered early-use queue and from D-035. It does not create early-use change #16 or `DR-10`.
-
-Detailed authorization/acceptance contract: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`.
+Detailed authorization and closure: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`.
 
 ## Governing decisions and invariants
 
@@ -252,7 +98,7 @@ Current invariants:
 2. Supabase Auth + RLS + active `easy_operators` authorization remain mandatory.
 3. Hosted-cloud recovery health is store-global; the latest confirmed real Backup v2 must remain strictly younger than 24 hours for normal writes.
 4. The database enforces the recovery boundary and the browser fails closed when cloud recovery health cannot be verified.
-5. D-030 remains ON HOLD/not accepted and definitive cutover is not authorized.
+5. D-030 remains `ON_HOLD / NOT ACCEPTED`; definitive cutover is not authorized.
 6. `main` remains untouched; Vercel publication remains manual while the candidate is in controlled early use.
 7. Catalog classification is `category -> optional subcategory -> item`, exactly one optional subcategory level.
 8. Financial/classification history uses immutable transaction-time snapshots and D-014 occurrence-time semantics; later catalog edits do not rewrite history.
@@ -261,31 +107,21 @@ Current invariants:
 11. Transaction actor attribution is server-derived from the authenticated session; client-selected actor identity is not trusted.
 12. The financial report screen and PDF consume the same canonical `FinancialReport` model.
 13. Current-position Dashboard metrics are as-of the operator's current local day; later future occurrence dates do not affect current debt/aging before occurrence.
-14. No general audit subsystem is authorized by PR #131; audit expansion to catalog/reseller/other entity edits requires a new explicit operator instruction.
+14. Operator visual personalization is ornamental only and may not influence authorization, business calculations, transaction behavior, recovery or exported documents.
+15. No general audit, theme-builder, upload/storage subsystem, early-use change #16 or `DR-10` is implicitly authorized by the completed bounded refinements.
 
 ## Recovery checkpoint state
 
-The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135, PR #137 or PR #139.
+D-032 remains operational and was not bypassed by PR #142.
 
-During the PR #131 work, the latest confirmed real Backup v2 export was observed at `2026-08-27 12:57:03.459119+00`, and at `2026-08-28 13:56:41.296122+00` the server reported it as **not fresh**. Therefore normal hosted business writes remain correctly blocked until the operator exports a new Backup v2 and explicitly confirms that the file has been stored outside Easy.
+The latest observed real Backup v2 export/confirmation in `manual_recovery_events` is:
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only and do not alter recovery health. PR #139 changes only the existing transaction-entry UI/session behavior and tests; it does not alter recovery health or hosted-write authorization. The 2026-09-09 visual-personalization authorization is documentation-only so far and likewise changes no recovery state.
+- export: `2026-09-04 14:36:06.332805+00`;
+- confirmation: `2026-09-04 14:36:14.282849+00`.
 
-This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
+As of 2026-09-09 this checkpoint is older than the accepted strict `<24h` window. Therefore normal hosted business writes must continue to fail closed until an approved operator exports a new Backup v2, stores it outside Easy and explicitly confirms it. The personalization migration/verification does not bypass or satisfy this recovery condition.
 
-## D-035 status
-
-**D-035 Dashboard + Reports core redesign: `DONE / ACCEPTED / INTEGRATED — DR-01…DR-09 COMPLETE`.**
-
-The accepted split remains:
-
-- Dashboard = glance/action surface;
-- Reports = period-controlled analytical surface;
-- the legacy Dashboard performance block remains removed;
-- contextual handoff to Reports remains explicit;
-- no `DR-10` exists or is authorized.
-
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. The 2026-09-09 operator-scoped visual-personalization item is a separate bounded presentation refinement and also does not reopen D-035.
+This remains D-032 early-use recovery evidence only and does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
 ## Startup protocol for a new conversation
 
@@ -305,7 +141,7 @@ Read in this exact order:
 12. `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`
 13. `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`
 
-Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot is available at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
+Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot remains at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
 
 Precedence when documents conflict:
 
@@ -317,4 +153,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Implement only the explicitly authorized operator-scoped visual personalization defined in `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`. First verify the current authenticated-operator/profile preference surface and the application layout shell. The feature must be opt-in and disabled by default, initially apply only to one designated authenticated operator, avoid hardcoded person name/e-mail checks, support only the bounded `Canto` and low-opacity `Marca d'água` presentation modes, remain decorative/non-interactive and never contaminate PDFs/exports/print output. Prefer an existing safe operator-scoped preference mechanism; if genuine cross-session per-operator persistence requires a material database/Auth/RLS expansion, stop and document that dependency for a new operator decision instead of broadening scope. Work only from current `develop` on an isolated branch and require the complete D-019 gate before executable integration. Preserve Supabase/Auth/RLS/operator authorization, server-derived transaction actor attribution, D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification snapshots, canonical screen/PDF report parity and the D-032 recovery boundary. Do not create early-use change #16 or `DR-10`, build a general theme/upload/Supabase-Storage subsystem without new authorization, automatically resume D-030/I2-I2, import legacy real-store data, automatically deploy, modify/publish `main` or claim definitive cutover.**
+**Resume only `P10-S3-I2-I3-D` controlled clean-start early-use observation on the accepted `develop` candidate. There is currently no additional authorized executable product change. Before normal hosted business writes, restore the D-032 store-global recovery checkpoint by exporting a fresh Backup v2, storing it outside Easy and explicitly confirming it so the server-visible checkpoint is strictly younger than 24 hours. After that, continue real operator use and collect concrete evidence/defects. Start another product change only from new observed evidence or a new explicit operator instruction, and then authorize it canonically before coding. D-030/I2-I2 remains on hold; do not automatically resume it, import legacy real-store data, create change #16 or `DR-10`, automatically deploy, modify/publish `main` or claim definitive cutover.**
