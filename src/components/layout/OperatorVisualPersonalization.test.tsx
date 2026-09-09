@@ -69,7 +69,6 @@ describe('OperatorVisualPersonalization', () => {
             'Inferior direita',
         ]
 
-        expect(screen.getByTestId ? true : true).toBe(true)
         for (const label of labels) {
             expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
         }
