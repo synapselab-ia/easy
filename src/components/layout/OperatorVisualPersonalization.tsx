@@ -1,20 +1,24 @@
 import * as React from 'react'
-import { Image as ImageIcon, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Sparkles, Trash2, Upload } from 'lucide-react'
 import heroImage from '@/assets/hero.png'
 import { Button } from '@/components/ui/button'
 import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
 import { cn } from '@/lib/utils'
-import type {
-    OperatorVisualPreference,
-    OperatorVisualPreferenceUpdate,
+import {
+    OPERATOR_VISUAL_IMAGE_ACCEPT,
+    type OperatorVisualPreference,
+    type OperatorVisualPreferenceUpdate,
 } from '@/services/operatorVisualPersonalization'
 
 interface OperatorVisualPersonalizationControlProps {
     preference: OperatorVisualPreference
     isLoading: boolean
     isSaving: boolean
+    isUploadingImage: boolean
     error?: string
     onSave: (preference: OperatorVisualPreferenceUpdate) => Promise<void>
+    onUploadImage: (file: File) => Promise<void>
+    onRemoveImage: () => Promise<void>
     className?: string
 }
 
@@ -22,11 +26,15 @@ export function OperatorVisualPersonalizationControl({
     preference,
     isLoading,
     isSaving,
+    isUploadingImage,
     error,
     onSave,
+    onUploadImage,
+    onRemoveImage,
     className,
 }: OperatorVisualPersonalizationControlProps) {
     const [open, setOpen] = React.useState(false)
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
     const [draft, setDraft] = React.useState<OperatorVisualPreferenceUpdate>({
         enabled: preference.enabled,
         mode: preference.mode,
@@ -44,6 +52,8 @@ export function OperatorVisualPersonalizationControl({
     }, [open, preference])
 
     if (isLoading || !preference.allowed) return null
+
+    const busy = isSaving || isUploadingImage
 
     const handleOpenChange = (nextOpen: boolean) => {
         if (nextOpen) {
@@ -64,6 +74,28 @@ export function OperatorVisualPersonalizationControl({
             // The hook exposes the persisted error inside the dialog.
         }
     }
+
+    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file) return
+
+        try {
+            await onUploadImage(file)
+        } catch {
+            // The hook exposes the persisted error inside the dialog.
+        }
+    }
+
+    const handleRemoveImage = async () => {
+        try {
+            await onRemoveImage()
+        } catch {
+            // The hook exposes the persisted error inside the dialog.
+        }
+    }
+
+    const previewImage = preference.imageUrl ?? heroImage
 
     return (
         <>
@@ -90,14 +122,14 @@ export function OperatorVisualPersonalizationControl({
                             type="button"
                             variant="outline"
                             onClick={() => handleOpenChange(false)}
-                            disabled={isSaving}
+                            disabled={busy}
                         >
                             Cancelar
                         </Button>
                         <Button
                             type="button"
                             onClick={() => void handleSave()}
-                            disabled={isSaving}
+                            disabled={busy}
                         >
                             {isSaving ? 'Salvando...' : 'Salvar aparência'}
                         </Button>
@@ -122,8 +154,9 @@ export function OperatorVisualPersonalizationControl({
                                     ...current,
                                     enabled: !current.enabled,
                                 }))}
+                                disabled={busy}
                                 className={cn(
-                                    'relative h-6 w-11 shrink-0 rounded-full border transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                                    'relative h-6 w-11 shrink-0 rounded-full border transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
                                     draft.enabled
                                         ? 'border-primary bg-primary'
                                         : 'border-border bg-muted',
@@ -139,7 +172,74 @@ export function OperatorVisualPersonalizationControl({
                         </div>
                     </div>
 
-                    <fieldset className="space-y-2" disabled={!draft.enabled || isSaving}>
+                    <section className="space-y-3" aria-labelledby="visual-image-title">
+                        <div className="space-y-1">
+                            <h3 id="visual-image-title" className="text-sm font-medium">Sua imagem</h3>
+                            <p className="text-xs leading-relaxed text-muted-foreground">
+                                PNG, JPG ou WebP, até 5 MB. A imagem fica salva somente na sua conta.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3 rounded-xl border bg-background p-3 sm:flex-row sm:items-center">
+                            <div className="flex h-24 w-full items-center justify-center overflow-hidden rounded-lg border bg-muted/20 sm:w-32">
+                                <img
+                                    src={previewImage}
+                                    alt="Prévia da imagem decorativa"
+                                    className="max-h-full max-w-full object-contain"
+                                />
+                            </div>
+
+                            <div className="min-w-0 flex-1 space-y-2">
+                                <div>
+                                    <p className="text-sm font-medium">
+                                        {preference.hasCustomImage ? 'Imagem personalizada' : 'Imagem padrão do Easy'}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {preference.hasCustomImage
+                                            ? 'Esta imagem acompanha sua conta em outros dispositivos.'
+                                            : 'Escolha outra imagem se quiser personalizar.'}
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept={OPERATOR_VISUAL_IMAGE_ACCEPT}
+                                        className="sr-only"
+                                        aria-label="Escolher imagem personalizada"
+                                        onChange={event => void handleImageChange(event)}
+                                        disabled={busy}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={busy}
+                                    >
+                                        <Upload className="size-4" />
+                                        {isUploadingImage ? 'Enviando...' : 'Escolher imagem'}
+                                    </Button>
+
+                                    {preference.hasCustomImage && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => void handleRemoveImage()}
+                                            disabled={busy}
+                                        >
+                                            <Trash2 className="size-4" />
+                                            Usar imagem padrão
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <fieldset className="space-y-2" disabled={!draft.enabled || busy}>
                         <legend className="text-sm font-medium">Posição</legend>
                         <div className="grid grid-cols-2 gap-2">
                             {([
@@ -170,7 +270,7 @@ export function OperatorVisualPersonalizationControl({
                         </div>
                     </fieldset>
 
-                    <fieldset className="space-y-2" disabled={!draft.enabled || isSaving}>
+                    <fieldset className="space-y-2" disabled={!draft.enabled || busy}>
                         <legend className="text-sm font-medium">Intensidade</legend>
                         <div className="grid grid-cols-2 gap-2">
                             {([
@@ -222,7 +322,7 @@ export function OperatorDecorativeImage({
 
     return (
         <img
-            src={heroImage}
+            src={preference.imageUrl ?? heroImage}
             alt=""
             aria-hidden="true"
             data-operator-decoration={preference.mode}
