@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
     DEFAULT_OPERATOR_VISUAL_PREFERENCE,
+    OPERATOR_VISUAL_IMAGE_MAX_BYTES,
+    getOperatorVisualImagePath,
     normalizeOperatorVisualPreference,
+    validateOperatorVisualImage,
 } from './operatorVisualPersonalization'
 
 describe('operator visual personalization preference', () => {
@@ -35,5 +38,26 @@ describe('operator visual personalization preference', () => {
             mode: 'corner',
             intensity: 'subtle',
         })
+    })
+
+    it('uses one deterministic storage object per authenticated operator', () => {
+        expect(getOperatorVisualImagePath('operator-123')).toBe('operator-123/decoration')
+    })
+
+    it('accepts only bounded PNG, JPEG and WebP images up to 5 MB', () => {
+        expect(() => validateOperatorVisualImage({
+            type: 'image/png',
+            size: OPERATOR_VISUAL_IMAGE_MAX_BYTES,
+        })).not.toThrow()
+
+        expect(() => validateOperatorVisualImage({
+            type: 'image/gif',
+            size: 1024,
+        })).toThrow('Escolha uma imagem PNG, JPG ou WebP.')
+
+        expect(() => validateOperatorVisualImage({
+            type: 'image/jpeg',
+            size: OPERATOR_VISUAL_IMAGE_MAX_BYTES + 1,
+        })).toThrow('A imagem deve ter no máximo 5 MB.')
     })
 })
