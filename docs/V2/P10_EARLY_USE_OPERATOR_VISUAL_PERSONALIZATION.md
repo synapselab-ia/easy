@@ -2,72 +2,140 @@
 
 **Date:** 2026-09-09  
 **Scope:** explicitly operator-authorized presentation/personalization refinement during `P10-S3-I2-I3-D` controlled early use.  
-**Status:** `AUTHORIZED / NOT IMPLEMENTED`
+**Status:** `DONE / ACCEPTED / INTEGRATED — PR #142`
 
 ## Trigger
 
 The operator explicitly requested an optional decorative image in the Easy interface, either as a small corner element or as a discreet watermark/background element, with the important requirement that the personalization apply only to one designated operator account rather than globally to every Easy user.
 
-This is a new bounded operator instruction after the closure of PR #139. It is **not** historical early-use change #16, D-035 `DR-10`, D-030 resumption, a branding redesign or authorization for a general theme-builder subsystem.
+This is a bounded operator instruction after the closure of PR #139. It is **not** historical early-use change #16, D-035 `DR-10`, D-030 resumption, a branding redesign or authorization for a general theme-builder subsystem.
 
-## Product goal
+## Accepted result
 
-Allow one designated authenticated operator to make Easy visually personal without changing the business interface for other operators and without reducing readability, accessibility or operational efficiency.
+PR #142 implements the authorized behavior without introducing a competing business/runtime subsystem:
 
-The feature is ornamental only. Financial data, transaction behavior, reports, PDFs, recovery and authorization semantics remain independent from the decorative image.
+1. **Per-operator and opt-in.** The preference is stored on the authenticated operator's existing `public.easy_operators` row and is disabled by default.
+2. **Initial designated account only.** Eligibility is database state. The production migration designates the sole active operator only when exactly one active operator exists. No person's display name, e-mail or UUID is hardcoded in presentation logic.
+3. **Explicit toggle.** The eligible operator can enable/disable the decoration without affecting another operator.
+4. **Two bounded presentation modes.** The implementation supports `Canto` and `Marca d'água` only.
+5. **Bounded intensity.** The only intensity presets are `Bem discreta` and `Suave`; no arbitrary opacity/size editor exists.
+6. **Existing bundled asset.** The implementation reuses `src/assets/hero.png`. No upload, Supabase Storage, asset gallery or image lifecycle was added.
+7. **Safe visual hierarchy.** Business content and navigation render above the decoration. The shell prevents the decorative layer from becoming an interactive or layout-driving surface.
+8. **Decorative semantics.** The image is `aria-hidden` and `pointer-events-none`; it cannot receive keyboard/pointer interaction or communicate business information.
+9. **No document/export contamination.** The decoration is `print:hidden` and no PDF, reseller-statement, Backup v2, report-export or data-export path was changed.
+10. **No effect when unavailable/off.** Ineligible operators, and the eligible operator while the preference remains disabled, receive the normal Easy interface.
 
-## Authorized behavior
+The control is exposed in the existing authenticated shell on desktop and mobile rather than in business-operation pages.
 
-The implementation target is:
+## Persistence and authorization boundary
 
-1. **Per-operator and opt-in.** The decorative image preference is scoped to the authenticated operator, is disabled by default and must not become a store-global setting.
-2. **Initial designated account only.** The first accepted use is for one designated operator account. Do not hardcode a person's display name or e-mail in presentation code. The implementation must bind eligibility/state to authenticated operator identity through an appropriate existing or deliberately scoped preference mechanism.
-3. **Explicit toggle.** The designated operator can enable/disable the decorative image without affecting other operators.
-4. **Two bounded presentation modes.** The intended first implementation supports a discreet corner image and a low-opacity watermark/background presentation. A large theme/skin system is out of scope.
-5. **Safe visual hierarchy.** The image must not cover controls, tables, text, alerts, forms or navigation; must not cause layout shift or horizontal overflow; and must remain visually subordinate to business content.
-6. **Decorative semantics.** When the image conveys no business information it should be ignored by assistive technology and should not intercept pointer/keyboard interaction.
-7. **Constrained intensity.** Watermark opacity/size must use safe bounded values or presets rather than allowing settings that can make business content unreadable.
-8. **No document/export contamination.** The decorative image must not appear in reseller statements, financial PDFs, backups, data exports or print-oriented output unless a later explicit instruction changes that boundary.
-9. **No generalized upload/storage subsystem by default.** The first implementation may use one supplied/bundled decorative asset. Building arbitrary image upload, Supabase Storage, asset galleries or image-management lifecycle is outside this authorization unless implementation evidence shows it is genuinely required and the operator explicitly expands scope.
-10. **No effect when unavailable/off.** Operators who are not eligible, or the designated operator with the option disabled, must see the normal existing Easy interface with no visual or behavioral delta.
+The existing operator allow-list table was extended minimally rather than creating a new preference subsystem:
 
-## Persistence/auth boundary to verify before coding
+- `visual_personalization_allowed boolean not null default false`;
+- `visual_personalization_enabled boolean not null default false`;
+- `visual_personalization_mode text not null default 'corner'`, constrained to `corner|watermark`;
+- `visual_personalization_intensity text not null default 'subtle'`, constrained to `subtle|soft`.
 
-The product requirement is cross-session **operator-scoped preference**, not a hardcoded client identity check. Before implementation, inspect the current authenticated-operator/profile model and choose the smallest safe persistence mechanism that satisfies that requirement.
+Production migration:
 
-Do not introduce a database/schema migration merely for convenience if the current model already provides a suitable operator-scoped preference location. Conversely, do not pretend a browser-global preference is per-operator if it can leak across accounts using the same browser.
+- `20260909135441_operator_visual_personalization` — **APPLIED** to `easy-v2`.
 
-If satisfying the per-operator/cross-session requirement would materially broaden database/Auth/RLS scope beyond a small isolated preference, stop and document the dependency for a new operator decision rather than silently expanding the task.
+Security boundary:
 
-## Suggested UI location
+- `authenticated` receives column-level `UPDATE` only for `visual_personalization_enabled`, `visual_personalization_mode` and `visual_personalization_intensity`;
+- `authenticated` does **not** receive update privilege for `visual_personalization_allowed`, `is_active` or `user_id`;
+- RLS policy `easy_operators_update_visual_preferences` uses both `USING` and `WITH CHECK` and requires `user_id = auth.uid()`, `is_active` and `visual_personalization_allowed`;
+- existing `easy_operators_select_self` remains the SELECT boundary for the operator's own row;
+- no `SECURITY DEFINER` helper, new Auth claim, browser-global identity check or client-selected authorization field was introduced.
 
-Prefer a compact setting under an existing or appropriately bounded `Configurações` / `Aparência` surface rather than placing configuration controls in operational pages.
+Live post-integration verification on 2026-09-09 found:
 
-The minimum useful controls are:
+- active operators: **1**;
+- eligible operators: **1**;
+- enabled operators: **0**;
+- `authenticated` can update enabled/mode/intensity: **true**;
+- `authenticated` can update allowed/is_active/user_id: **false**;
+- update RLS policy present: **true**.
 
-- ativar/desativar imagem personalizada;
-- modo `Canto` ou `Marca d'água`;
-- a bounded visual intensity required for legibility.
+A prior transaction-scoped RLS proof also exercised a real authenticated preference update and rolled the transaction back, leaving production disabled.
 
-Additional page-by-page selectors, arbitrary positioning, animation, theme colors or a general design editor are not required for the first accepted version.
+## Supabase advisor review
 
-## Acceptance criteria
+Post-DDL security advisors produced no new finding attributable to this feature.
 
-Implementation acceptance must demonstrate that:
+Existing unrelated warnings remain:
 
-- the designated authenticated operator can enable and disable the image;
-- another authenticated operator does not receive the personalization;
-- the setting does not rely on a hardcoded person's name/e-mail in UI logic;
-- corner mode remains outside interactive/content-critical regions across representative desktop and mobile widths;
-- watermark mode remains sufficiently faint and behind business content;
-- the image is non-interactive/decorative and does not alter keyboard/focus behavior;
-- PDFs/exports remain unchanged;
-- normal transaction/report/history/recovery behavior remains unchanged;
-- the complete D-019 gate passes before executable integration.
+- signed-in execution of the intentionally exposed `SECURITY DEFINER` transaction/restore RPCs (`create_transaction`, `correct_transaction`, `restore_easy_backup`), governed by their existing accepted boundaries;
+- leaked-password protection is disabled in Supabase Auth.
+
+Those pre-existing findings were not changed or waived as part of this presentation-only product authorization.
+
+Reference remediation documentation:
+
+- `https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable`
+- `https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection`
+
+## Acceptance evidence
+
+### Focused coverage
+
+New coverage verifies:
+
+- an ineligible operator receives no personalization control;
+- an eligible operator can save only enabled/mode/intensity preference values;
+- decoration is absent while disabled;
+- enabled decoration uses decorative/non-interactive/print-hidden semantics;
+- service mapping rejects unsupported mode/intensity values and preserves the bounded defaults.
+
+### Final PR D-019 — PASS
+
+- feature head: `7462a8a5f235691a8381587429715c22cc2f7242`;
+- GitHub-generated merge ref checked out by Actions: `c8aa4482eee0364a155d213cac5252dccfedec3c`;
+- validated tree: `eeab347c5f701fe7ef6e2a6bd1400bc07f9bdcbd`;
+- run/job: `34360454611` / `102495778094`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **78 files / 329 tests PASS**;
+- feature component coverage: **4/4 PASS**;
+- feature service coverage: **3/3 PASS**;
+- Playwright: **21/21 PASS**;
+- TypeScript + production Vite build: **PASS**.
+
+No failed executable gate was waived.
+
+### Integration — PASS
+
+PR #142 was squash-integrated into `develop` as:
+
+- `3b3ba1f3eb280a552a806dda0f0752f21900c263`.
+
+The integrated commit tree is:
+
+- `eeab347c5f701fe7ef6e2a6bd1400bc07f9bdcbd`.
+
+That exactly equals the D-019-validated merge-ref tree. **Exact tree equivalence: PASS.**
+
+Post-integration `develop` Critical QA:
+
+- run/job `34364762432` / `102510503835`: **PASS**.
+
+No automatic Vercel publication occurred and `main` was not targeted.
+
+## Recovery boundary
+
+PR #142 does not modify D-032/D-030 recovery behavior.
+
+The latest observed real manual recovery events on 2026-09-09 are:
+
+- export: `2026-09-04 14:36:06.332805+00`;
+- confirmation: `2026-09-04 14:36:14.282849+00`.
+
+The checkpoint is therefore older than the strict accepted `<24h` write window. Normal hosted business writes must remain fail-closed until an approved operator creates and confirms a fresh Backup v2 stored outside Easy. This feature neither bypasses nor satisfies that recovery requirement.
+
+D-030 unattended off-site automation/retention/restore acceptance remains `ON_HOLD`.
 
 ## Boundaries preserved
 
-This authorization does not change or weaken:
+This completed refinement does not change or weaken:
 
 - Supabase/Postgres canonical business persistence;
 - Supabase Auth, RLS or active `easy_operators` authorization;
@@ -77,11 +145,15 @@ This authorization does not change or weaken:
 - D-015 FIFO aging;
 - immutable historical classification snapshots;
 - canonical screen/PDF financial-report parity;
-- Backup v2 schema/recovery guard;
+- Backup v2 schema 7 or recovery guard;
 - manual Vercel publication;
 - `main` stability;
 - D-030 hold or definitive-cutover status.
 
-## Canonical next step
+It also does not authorize arbitrary uploads, Supabase Storage, animation, page-by-page skins, theme colors, a design editor, early-use change #16 or `DR-10`.
 
-Verify the current operator/auth preference surface and layout shell, then implement **only** this bounded operator-scoped decorative-image personalization on an isolated branch from current `develop`. Do not bundle unrelated usability changes, a general theme system, arbitrary uploads/storage or another early-use initiative.
+## Closure
+
+The explicitly authorized operator-scoped visual personalization is **DONE / ACCEPTED / INTEGRATED**.
+
+The project returns to `P10-S3-I2-I3-D` controlled clean-start early-use observation. There is no additional authorized executable product item. Before normal hosted writes, the D-032 recovery checkpoint must first be refreshed and confirmed. Any later product change requires new observed evidence or a new explicit operator instruction and must be canonically authorized before coding.

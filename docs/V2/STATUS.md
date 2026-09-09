@@ -39,9 +39,10 @@ Important integrated milestones remain:
 - **PR #133 — observed transaction-history cell-overflow/layout defect: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #139 — observed continuous/repeated transaction-entry refinement: `DONE / ACCEPTED / INTEGRATED`.**
+- **PR #139 — observed continuous/repeated transaction-entry refinement: `DONE / ACCEPTED / INTEGRATED`;**
+- **PR #142 — explicitly authorized operator-scoped visual personalization: `DONE / ACCEPTED / INTEGRATED`.**
 
-A later explicit operator instruction on 2026-09-09 authorizes one new bounded presentation item: **operator-scoped visual personalization with an optional decorative image**. It is `AUTHORIZED / NOT IMPLEMENTED` and is the sole current executable product item. It is not historical early-use change #16 and does not reopen D-035 or create `DR-10`.
+The PR #142 item is separate from the closed numbered early-use queue and from D-035. It does not create early-use change #16, reopen D-035 or create `DR-10`.
 
 ## PR #131 closure — transaction history + operator attribution
 
@@ -221,26 +222,48 @@ No database/schema, Supabase/Auth/RLS/RPC, actor attribution, Backup v2, recover
 
 Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`.
 
-## Authorized pending refinement — operator-scoped visual personalization
+## PR #142 closure — operator-scoped visual personalization
 
-On 2026-09-09 the operator explicitly authorized a bounded presentation/personalization refinement: one designated authenticated operator may opt into a decorative image in Easy, while other operators retain the normal interface.
+On 2026-09-09 the operator explicitly authorized a bounded presentation/personalization refinement: one designated authenticated operator may opt into a decorative image in Easy while other operators retain the normal interface. The item is now **DONE / ACCEPTED / INTEGRATED**.
 
-Accepted direction before implementation:
+Accepted behavior:
 
-- preference is operator-scoped and disabled by default;
-- the first use is limited to one designated operator account, without hardcoding a person's display name/e-mail in UI logic;
-- the designated operator can explicitly enable/disable the image;
-- the first implementation targets two bounded modes: a discreet corner image and a low-opacity watermark/background image;
-- the image is decorative/non-interactive and must not cover controls, tables, text, alerts, forms or navigation;
-- safe bounded opacity/size preserves readability and responsive containment;
+- preference is genuinely operator-scoped, cross-session and disabled by default;
+- initial eligibility is assigned from database state to the sole active operator, without hardcoding a person's display name, e-mail or UUID in UI logic;
+- the eligible operator can explicitly enable/disable the decoration;
+- the only presentation modes are `Canto` and low-opacity `Marca d'água`;
+- the only intensity presets are bounded `Bem discreta` and `Suave`;
+- the implementation reuses `src/assets/hero.png`; no upload, Supabase Storage, gallery or general theme-builder was introduced;
+- the image is decorative/non-interactive, behind business content, `aria-hidden`, `pointer-events-none` and `print:hidden`;
 - PDFs, reseller statements, backups, exports and print-oriented output remain unchanged;
-- generalized arbitrary upload/Supabase Storage/theme-builder work is not authorized by default; one supplied/bundled asset is sufficient for the first implementation;
-- before coding, the current authenticated-operator/profile model must be inspected so cross-session preference is genuinely scoped by operator rather than by a browser-global setting;
-- if satisfying that preference safely requires a material database/Auth/RLS expansion, stop for a new operator decision rather than silently broadening scope.
+- ineligible operators and the eligible operator while disabled receive the normal Easy interface.
 
-This authorization is separate from the closed numbered early-use queue and from D-035. It does not create early-use change #16 or `DR-10`.
+Persistence/security acceptance:
 
-Detailed authorization/acceptance contract: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`.
+- production migration `20260909135441_operator_visual_personalization` is applied to `easy-v2`;
+- `authenticated` has column-level `UPDATE` only for `visual_personalization_enabled`, `visual_personalization_mode` and `visual_personalization_intensity`;
+- `authenticated` cannot update `visual_personalization_allowed`, `is_active` or `user_id`;
+- RLS policy `easy_operators_update_visual_preferences` restricts update to the authenticated user's own active, eligible operator row with both `USING` and `WITH CHECK`;
+- live post-integration verification found 1 active operator, 1 eligible operator and 0 enabled operators; production remains off until explicitly enabled;
+- Supabase advisors produced no new finding attributable to this feature. Existing intentional `SECURITY DEFINER` RPC and leaked-password-protection warnings remain outside this bounded task.
+
+Repository acceptance evidence:
+
+- final feature head: `7462a8a5f235691a8381587429715c22cc2f7242`;
+- exact GitHub-generated merge ref checked out by Actions: `c8aa4482eee0364a155d213cac5252dccfedec3c`;
+- validated tree: `eeab347c5f701fe7ef6e2a6bd1400bc07f9bdcbd`;
+- final PR D-019 run/job: `34360454611` / `102495778094`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **78 files / 329 tests PASS**;
+- Playwright: **21/21 PASS**;
+- TypeScript + production Vite build: **PASS**;
+- PR #142 squash-integrated `develop`: `3b3ba1f3eb280a552a806dda0f0752f21900c263`;
+- integrated tree: `eeab347c5f701fe7ef6e2a6bd1400bc07f9bdcbd` — exact tree equivalence **PASS**;
+- post-integration `develop` Critical QA run/job: `34364762432` / `102510503835` — **PASS**.
+
+No failed gate was waived. No automatic Vercel publication occurred and `main` was not targeted.
+
+Detailed authorization/closure: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`.
 
 ## Governing decisions and invariants
 
@@ -262,14 +285,20 @@ Current invariants:
 12. The financial report screen and PDF consume the same canonical `FinancialReport` model.
 13. Current-position Dashboard metrics are as-of the operator's current local day; later future occurrence dates do not affect current debt/aging before occurrence.
 14. No general audit subsystem is authorized by PR #131; audit expansion to catalog/reseller/other entity edits requires a new explicit operator instruction.
+15. Operator visual personalization is ornamental only and may not influence authorization, business calculations, transaction behavior, recovery or exported documents.
 
 ## Recovery checkpoint state
 
-The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135, PR #137 or PR #139.
+The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135, PR #137, PR #139 or PR #142.
 
-During the PR #131 work, the latest confirmed real Backup v2 export was observed at `2026-08-27 12:57:03.459119+00`, and at `2026-08-28 13:56:41.296122+00` the server reported it as **not fresh**. Therefore normal hosted business writes remain correctly blocked until the operator exports a new Backup v2 and explicitly confirms that the file has been stored outside Easy.
+The latest observed real Backup v2 recovery events on 2026-09-09 are:
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only and do not alter recovery health. PR #139 changes only the existing transaction-entry UI/session behavior and tests; it does not alter recovery health or hosted-write authorization. The 2026-09-09 visual-personalization authorization is documentation-only so far and likewise changes no recovery state.
+- export: `2026-09-04 14:36:06.332805+00`;
+- confirmation: `2026-09-04 14:36:14.282849+00`.
+
+As of 2026-09-09 the confirmed checkpoint is older than the accepted strict `<24h` window. Therefore normal hosted business writes remain correctly fail-closed until the operator exports a fresh Backup v2, stores it outside Easy and explicitly confirms it.
+
+The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only. PR #139 changes only the existing transaction-entry UI/session behavior and tests. PR #142 adds a bounded operator preference but does not bypass, refresh or satisfy recovery health.
 
 This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
@@ -285,7 +314,7 @@ The accepted split remains:
 - contextual handoff to Reports remains explicit;
 - no `DR-10` exists or is authorized.
 
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. The 2026-09-09 operator-scoped visual-personalization item is a separate bounded presentation refinement and also does not reopen D-035.
+The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. PR #142 is a separate completed bounded presentation refinement and also does not reopen D-035.
 
 ## Startup protocol for a new conversation
 
@@ -317,4 +346,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Implement only the explicitly authorized operator-scoped visual personalization defined in `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`. First verify the current authenticated-operator/profile preference surface and the application layout shell. The feature must be opt-in and disabled by default, initially apply only to one designated authenticated operator, avoid hardcoded person name/e-mail checks, support only the bounded `Canto` and low-opacity `Marca d'água` presentation modes, remain decorative/non-interactive and never contaminate PDFs/exports/print output. Prefer an existing safe operator-scoped preference mechanism; if genuine cross-session per-operator persistence requires a material database/Auth/RLS expansion, stop and document that dependency for a new operator decision instead of broadening scope. Work only from current `develop` on an isolated branch and require the complete D-019 gate before executable integration. Preserve Supabase/Auth/RLS/operator authorization, server-derived transaction actor attribution, D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification snapshots, canonical screen/PDF report parity and the D-032 recovery boundary. Do not create early-use change #16 or `DR-10`, build a general theme/upload/Supabase-Storage subsystem without new authorization, automatically resume D-030/I2-I2, import legacy real-store data, automatically deploy, modify/publish `main` or claim definitive cutover.**
+**Resume only `P10-S3-I2-I3-D` controlled clean-start early-use observation on the accepted `develop` candidate. There is currently no additional authorized executable product change. Before normal hosted business writes, restore the D-032 store-global recovery checkpoint by exporting a fresh Backup v2, storing it outside Easy and explicitly confirming it so the server-visible checkpoint is strictly younger than 24 hours. After that, continue real operator use and collect concrete evidence/defects. Start another product change only from new observed evidence or a new explicit operator instruction, and then authorize it canonically before coding. D-030/I2-I2 remains on hold; do not automatically resume it, import legacy real-store data, create change #16 or `DR-10`, automatically deploy, modify/publish `main` or claim definitive cutover.**
