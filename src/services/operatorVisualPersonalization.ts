@@ -67,6 +67,7 @@ const OPERATOR_VISUAL_POSITIONS = new Set<OperatorVisualPosition>([
     'bottom-right',
 ])
 const OPERATOR_VISUAL_SIZES = new Set<OperatorVisualSize>(['small', 'medium', 'large'])
+const OPERATOR_VISUAL_PREFERENCE_COLUMNS = 'visual_personalization_allowed, visual_personalization_enabled, visual_personalization_position, visual_personalization_size, visual_personalization_opacity, visual_personalization_layer' as const
 
 interface OperatorVisualPreferenceRow {
     visual_personalization_allowed: boolean
@@ -184,15 +185,6 @@ async function fetchOperatorVisualImageUrl(userId: string) {
 
     return createOperatorVisualImageSignedUrl(userId)
 }
-
-const OPERATOR_VISUAL_PREFERENCE_COLUMNS = [
-    'visual_personalization_allowed',
-    'visual_personalization_enabled',
-    'visual_personalization_position',
-    'visual_personalization_size',
-    'visual_personalization_opacity',
-    'visual_personalization_layer',
-].join(', ')
 
 export async function fetchOperatorVisualPreference(): Promise<OperatorVisualPreference> {
     if (!isEasySupabaseConfigured()) {
