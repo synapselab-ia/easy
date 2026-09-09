@@ -1,6 +1,10 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
+import {
+    OperatorDecorativeImage,
+    OperatorVisualPersonalizationControl,
+} from './OperatorVisualPersonalization'
 import { CommandCenter } from '../search/CommandCenter'
 import { RecoveryHealthBanner } from '../backup/RecoveryHealthBanner'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -8,10 +12,12 @@ import { Button } from '@/components/ui/button'
 import { Menu, Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { ThemeToggle } from '../ui/ThemeToggle'
+import { useOperatorVisualPersonalization } from '@/hooks/useOperatorVisualPersonalization'
 
 export function MainLayout() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
+    const visualPersonalization = useOperatorVisualPersonalization()
 
     useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -24,17 +30,31 @@ export function MainLayout() {
         return () => document.removeEventListener("keydown", down)
     }, [])
 
-    return (
-        <div className="flex min-h-screen w-full bg-background">
-            {/* Desktop Sidebar */}
-            <Sidebar className="hidden lg:flex" />
+    const visualControlProps = {
+        preference: visualPersonalization.preference,
+        isLoading: visualPersonalization.isLoading,
+        isSaving: visualPersonalization.isSaving,
+        error: visualPersonalization.error,
+        onSave: visualPersonalization.savePreference,
+    }
 
-            <div className="flex flex-col flex-1 h-screen overflow-hidden">
+    return (
+        <div className="relative isolate flex min-h-screen w-full overflow-hidden bg-background">
+            <OperatorDecorativeImage preference={visualPersonalization.preference} />
+
+            {/* Desktop Sidebar */}
+            <Sidebar className="relative z-10 hidden lg:flex" />
+
+            <div className="relative z-10 flex flex-1 flex-col h-screen overflow-hidden">
                 {/* Desktop Header */}
-                <Header onSearchClick={() => setIsSearchOpen(true)} className="hidden lg:flex" />
+                <Header
+                    onSearchClick={() => setIsSearchOpen(true)}
+                    className="hidden lg:flex"
+                    actions={<OperatorVisualPersonalizationControl {...visualControlProps} />}
+                />
 
                 {/* Mobile Nav */}
-                <header className="h-16 border-b flex items-center px-4 lg:hidden shrink-0">
+                <header className="h-16 border-b flex items-center px-4 lg:hidden shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                     <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                         <SheetTrigger render={<Button variant="ghost" size="icon" />}>
                             <Menu size={20} />
@@ -48,6 +68,7 @@ export function MainLayout() {
                         <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
                             <Search size={20} />
                         </Button>
+                        <OperatorVisualPersonalizationControl {...visualControlProps} />
                         <div className="visible desktop:hidden">
                             <ThemeToggle />
                         </div>
@@ -56,8 +77,10 @@ export function MainLayout() {
 
                 <RecoveryHealthBanner />
 
-                <main className="flex-1 overflow-y-auto">
-                    <Outlet />
+                <main className="relative flex-1 overflow-y-auto">
+                    <div className="relative z-10">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
 
