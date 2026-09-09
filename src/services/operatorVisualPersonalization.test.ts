@@ -16,13 +16,17 @@ describe('operator visual personalization preference', () => {
         expect(normalizeOperatorVisualPreference({
             visual_personalization_allowed: false,
             visual_personalization_enabled: true,
-            visual_personalization_mode: 'watermark',
-            visual_personalization_intensity: 'soft',
+            visual_personalization_position: 'center',
+            visual_personalization_size: 'large',
+            visual_personalization_opacity: 50,
+            visual_personalization_layer: 'over',
         })).toEqual({
             allowed: false,
             enabled: false,
-            mode: 'watermark',
-            intensity: 'soft',
+            position: 'center',
+            size: 'large',
+            opacity: 50,
+            layer: 'over',
         })
     })
 
@@ -30,14 +34,41 @@ describe('operator visual personalization preference', () => {
         expect(normalizeOperatorVisualPreference({
             visual_personalization_allowed: true,
             visual_personalization_enabled: true,
-            visual_personalization_mode: 'floating',
-            visual_personalization_intensity: 'opaque',
+            visual_personalization_position: 'floating',
+            visual_personalization_size: 'huge',
+            visual_personalization_opacity: 87,
+            visual_personalization_layer: 'front-most',
         })).toEqual({
             allowed: true,
             enabled: true,
-            mode: 'corner',
-            intensity: 'subtle',
+            position: 'bottom-right',
+            size: 'medium',
+            opacity: 50,
+            layer: 'behind',
         })
+    })
+
+    it('keeps opacity on the accepted 5%-50% five-point scale', () => {
+        const baseRow = {
+            visual_personalization_allowed: true,
+            visual_personalization_enabled: true,
+            visual_personalization_position: 'center',
+            visual_personalization_size: 'medium',
+            visual_personalization_layer: 'behind',
+        }
+
+        expect(normalizeOperatorVisualPreference({
+            ...baseRow,
+            visual_personalization_opacity: 1,
+        }).opacity).toBe(5)
+        expect(normalizeOperatorVisualPreference({
+            ...baseRow,
+            visual_personalization_opacity: 28,
+        }).opacity).toBe(30)
+        expect(normalizeOperatorVisualPreference({
+            ...baseRow,
+            visual_personalization_opacity: 90,
+        }).opacity).toBe(50)
     })
 
     it('uses one deterministic storage object per authenticated operator', () => {
