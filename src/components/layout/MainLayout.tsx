@@ -34,8 +34,11 @@ export function MainLayout() {
         preference: visualPersonalization.preference,
         isLoading: visualPersonalization.isLoading,
         isSaving: visualPersonalization.isSaving,
+        isUploadingImage: visualPersonalization.isUploadingImage,
         error: visualPersonalization.error,
         onSave: visualPersonalization.savePreference,
+        onUploadImage: visualPersonalization.uploadImage,
+        onRemoveImage: visualPersonalization.removeImage,
     }
 
     return (
