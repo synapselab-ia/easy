@@ -1,6 +1,6 @@
 # Easy V2 — Canonical Status
 
-**Updated:** 2026-09-03  
+**Updated:** 2026-09-09  
 **Repository:** `synapselab-ia/easy`  
 **Stable baseline:** `main`  
 **Integration branch:** `develop`
@@ -26,7 +26,7 @@ Current P10-S3 state:
 
 ## Integrated early-use state
 
-The previously authorized usability/data-quality queue through change #15 is closed. D-035 Dashboard + Reports is also complete through `DR-09`; **no change #16 and no DR-10 are authorized**.
+The previously authorized usability/data-quality queue through change #15 is closed. D-035 Dashboard + Reports is also complete through `DR-09`; **no change #16 and no DR-10 are authorized**. New bounded work may still be authorized by a later explicit operator instruction without extending either closed sequence.
 
 Important integrated milestones remain:
 
@@ -40,6 +40,8 @@ Important integrated milestones remain:
 - **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #139 — observed continuous/repeated transaction-entry refinement: `DONE / ACCEPTED / INTEGRATED`.**
+
+A later explicit operator instruction on 2026-09-09 authorizes one new bounded presentation item: **operator-scoped visual personalization with an optional decorative image**. It is `AUTHORIZED / NOT IMPLEMENTED` and is the sole current executable product item. It is not historical early-use change #16 and does not reopen D-035 or create `DR-10`.
 
 ## PR #131 closure — transaction history + operator attribution
 
@@ -219,6 +221,27 @@ No database/schema, Supabase/Auth/RLS/RPC, actor attribution, Backup v2, recover
 
 Detailed bounded closure: `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`.
 
+## Authorized pending refinement — operator-scoped visual personalization
+
+On 2026-09-09 the operator explicitly authorized a bounded presentation/personalization refinement: one designated authenticated operator may opt into a decorative image in Easy, while other operators retain the normal interface.
+
+Accepted direction before implementation:
+
+- preference is operator-scoped and disabled by default;
+- the first use is limited to one designated operator account, without hardcoding a person's display name/e-mail in UI logic;
+- the designated operator can explicitly enable/disable the image;
+- the first implementation targets two bounded modes: a discreet corner image and a low-opacity watermark/background image;
+- the image is decorative/non-interactive and must not cover controls, tables, text, alerts, forms or navigation;
+- safe bounded opacity/size preserves readability and responsive containment;
+- PDFs, reseller statements, backups, exports and print-oriented output remain unchanged;
+- generalized arbitrary upload/Supabase Storage/theme-builder work is not authorized by default; one supplied/bundled asset is sufficient for the first implementation;
+- before coding, the current authenticated-operator/profile model must be inspected so cross-session preference is genuinely scoped by operator rather than by a browser-global setting;
+- if satisfying that preference safely requires a material database/Auth/RLS expansion, stop for a new operator decision rather than silently broadening scope.
+
+This authorization is separate from the closed numbered early-use queue and from D-035. It does not create early-use change #16 or `DR-10`.
+
+Detailed authorization/acceptance contract: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`.
+
 ## Governing decisions and invariants
 
 D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by screen and PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles; `DR-01…DR-09` is complete.
@@ -246,7 +269,7 @@ The D-032 store-global exact-24h recovery guard remains operational and was not 
 
 During the PR #131 work, the latest confirmed real Backup v2 export was observed at `2026-08-27 12:57:03.459119+00`, and at `2026-08-28 13:56:41.296122+00` the server reported it as **not fresh**. Therefore normal hosted business writes remain correctly blocked until the operator exports a new Backup v2 and explicitly confirms that the file has been stored outside Easy.
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only and do not alter recovery health. PR #139 changes only the existing transaction-entry UI/session behavior and tests; it does not alter recovery health or hosted-write authorization.
+The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only and do not alter recovery health. PR #139 changes only the existing transaction-entry UI/session behavior and tests; it does not alter recovery health or hosted-write authorization. The 2026-09-09 visual-personalization authorization is documentation-only so far and likewise changes no recovery state.
 
 This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
@@ -262,7 +285,7 @@ The accepted split remains:
 - contextual handoff to Reports remains explicit;
 - no `DR-10` exists or is authorized.
 
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16.
+The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. The 2026-09-09 operator-scoped visual-personalization item is a separate bounded presentation refinement and also does not reopen D-035.
 
 ## Startup protocol for a new conversation
 
@@ -280,6 +303,7 @@ Read in this exact order:
 10. `docs/V2/P10_EARLY_USE_TRANSACTION_HISTORY_READABILITY.md`
 11. `docs/V2/P10_EARLY_USE_RESELLER_PDF_ISSUE_DATE.md`
 12. `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`
+13. `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`
 
 Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot is available at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
 
@@ -293,4 +317,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**No new bounded implementation item is authorized. Continue P10-S3-I2-I3-D controlled clean-start early-use observation under D-031/D-032. Before any normal hosted business write, export a fresh Backup v2 and explicitly confirm that it was stored outside Easy so the store-global checkpoint is again strictly younger than 24 hours. Act only on new observed evidence or explicit operator instruction, reconstructing state through the canonical startup protocol before any future change. Preserve Supabase/Auth/RLS/operator authorization, server-derived transaction actor attribution, D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification snapshots and canonical screen/PDF report parity. Do not expand PR #131 into a general audit subsystem, invent `DR-10` or early-use change #16, automatically resume D-030/I2-I2, import legacy real-store data, automatically deploy, modify/publish `main` or claim definitive cutover.**
+**Implement only the explicitly authorized operator-scoped visual personalization defined in `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`. First verify the current authenticated-operator/profile preference surface and the application layout shell. The feature must be opt-in and disabled by default, initially apply only to one designated authenticated operator, avoid hardcoded person name/e-mail checks, support only the bounded `Canto` and low-opacity `Marca d'água` presentation modes, remain decorative/non-interactive and never contaminate PDFs/exports/print output. Prefer an existing safe operator-scoped preference mechanism; if genuine cross-session per-operator persistence requires a material database/Auth/RLS expansion, stop and document that dependency for a new operator decision instead of broadening scope. Work only from current `develop` on an isolated branch and require the complete D-019 gate before executable integration. Preserve Supabase/Auth/RLS/operator authorization, server-derived transaction actor attribution, D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification snapshots, canonical screen/PDF report parity and the D-032 recovery boundary. Do not create early-use change #16 or `DR-10`, build a general theme/upload/Supabase-Storage subsystem without new authorization, automatically resume D-030/I2-I2, import legacy real-store data, automatically deploy, modify/publish `main` or claim definitive cutover.**
