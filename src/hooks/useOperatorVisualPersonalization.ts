@@ -2,7 +2,9 @@ import * as React from 'react'
 import {
     DEFAULT_OPERATOR_VISUAL_PREFERENCE,
     fetchOperatorVisualPreference,
+    removeOperatorVisualImage,
     saveOperatorVisualPreference,
+    uploadOperatorVisualImage,
     type OperatorVisualPreference,
     type OperatorVisualPreferenceUpdate,
 } from '@/services/operatorVisualPersonalization'
@@ -13,6 +15,7 @@ export function useOperatorVisualPersonalization() {
     )
     const [isLoading, setIsLoading] = React.useState(true)
     const [isSaving, setIsSaving] = React.useState(false)
+    const [isUploadingImage, setIsUploadingImage] = React.useState(false)
     const [error, setError] = React.useState<string>()
 
     React.useEffect(() => {
@@ -48,7 +51,11 @@ export function useOperatorVisualPersonalization() {
 
         try {
             const saved = await saveOperatorVisualPreference(next)
-            setPreference(saved)
+            setPreference(current => ({
+                ...saved,
+                imageUrl: current.imageUrl,
+                hasCustomImage: current.hasCustomImage,
+            }))
         } catch (saveError) {
             const message = saveError instanceof Error
                 ? saveError.message
@@ -60,11 +67,58 @@ export function useOperatorVisualPersonalization() {
         }
     }, [])
 
+    const uploadImage = React.useCallback(async (file: File) => {
+        setIsUploadingImage(true)
+        setError(undefined)
+
+        try {
+            const imageUrl = await uploadOperatorVisualImage(file)
+            setPreference(current => ({
+                ...current,
+                imageUrl,
+                hasCustomImage: true,
+            }))
+        } catch (uploadError) {
+            const message = uploadError instanceof Error
+                ? uploadError.message
+                : 'Não foi possível salvar esta imagem na sua conta.'
+            setError(message)
+            throw uploadError
+        } finally {
+            setIsUploadingImage(false)
+        }
+    }, [])
+
+    const removeImage = React.useCallback(async () => {
+        setIsUploadingImage(true)
+        setError(undefined)
+
+        try {
+            await removeOperatorVisualImage()
+            setPreference(current => ({
+                ...current,
+                imageUrl: undefined,
+                hasCustomImage: false,
+            }))
+        } catch (removeError) {
+            const message = removeError instanceof Error
+                ? removeError.message
+                : 'Não foi possível remover a imagem personalizada desta conta.'
+            setError(message)
+            throw removeError
+        } finally {
+            setIsUploadingImage(false)
+        }
+    }, [])
+
     return {
         preference,
         isLoading,
         isSaving,
+        isUploadingImage,
         error,
         savePreference,
+        uploadImage,
+        removeImage,
     }
 }

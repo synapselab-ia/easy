@@ -20,16 +20,27 @@ const allowedPreference: OperatorVisualPreference = {
     intensity: 'subtle',
 }
 
+function renderControl(
+    preference: OperatorVisualPreference,
+    overrides: Partial<React.ComponentProps<typeof OperatorVisualPersonalizationControl>> = {},
+) {
+    return render(
+        <OperatorVisualPersonalizationControl
+            preference={preference}
+            isLoading={false}
+            isSaving={false}
+            isUploadingImage={false}
+            onSave={vi.fn().mockResolvedValue(undefined)}
+            onUploadImage={vi.fn().mockResolvedValue(undefined)}
+            onRemoveImage={vi.fn().mockResolvedValue(undefined)}
+            {...overrides}
+        />,
+    )
+}
+
 describe('OperatorVisualPersonalization', () => {
     it('does not expose controls to an ineligible operator', () => {
-        render(
-            <OperatorVisualPersonalizationControl
-                preference={disabledPreference}
-                isLoading={false}
-                isSaving={false}
-                onSave={vi.fn()}
-            />,
-        )
+        renderControl(disabledPreference)
 
         expect(screen.queryByRole('button', { name: 'Personalização visual' })).not.toBeInTheDocument()
     })
@@ -37,14 +48,7 @@ describe('OperatorVisualPersonalization', () => {
     it('saves only the bounded enabled, mode and intensity preference', async () => {
         const onSave = vi.fn().mockResolvedValue(undefined)
 
-        render(
-            <OperatorVisualPersonalizationControl
-                preference={allowedPreference}
-                isLoading={false}
-                isSaving={false}
-                onSave={onSave}
-            />,
-        )
+        renderControl(allowedPreference, { onSave })
 
         fireEvent.click(screen.getByRole('button', { name: 'Personalização visual' }))
         fireEvent.click(screen.getByRole('switch', { name: 'Ativar imagem decorativa' }))
@@ -59,6 +63,39 @@ describe('OperatorVisualPersonalization', () => {
                 intensity: 'soft',
             })
         })
+    })
+
+    it('lets the eligible operator choose one local image from the personalization dialog', async () => {
+        const onUploadImage = vi.fn().mockResolvedValue(undefined)
+        const file = new File(['image'], 'decoracao.png', { type: 'image/png' })
+
+        renderControl(allowedPreference, { onUploadImage })
+
+        fireEvent.click(screen.getByRole('button', { name: 'Personalização visual' }))
+        fireEvent.change(screen.getByLabelText('Escolher imagem personalizada'), {
+            target: { files: [file] },
+        })
+
+        await waitFor(() => {
+            expect(onUploadImage).toHaveBeenCalledWith(file)
+        })
+    })
+
+    it('offers the bundled fallback when a custom image exists', async () => {
+        const onRemoveImage = vi.fn().mockResolvedValue(undefined)
+
+        renderControl({
+            ...allowedPreference,
+            imageUrl: 'https://example.test/custom.png',
+            hasCustomImage: true,
+        }, { onRemoveImage })
+
+        fireEvent.click(screen.getByRole('button', { name: 'Personalização visual' }))
+        expect(screen.getByRole('img', { name: 'Prévia da imagem decorativa' }))
+            .toHaveAttribute('src', 'https://example.test/custom.png')
+
+        fireEvent.click(screen.getByRole('button', { name: 'Usar imagem padrão' }))
+        await waitFor(() => expect(onRemoveImage).toHaveBeenCalledTimes(1))
     })
 
     it('renders a non-interactive print-hidden corner decoration only when enabled', () => {
@@ -80,7 +117,7 @@ describe('OperatorVisualPersonalization', () => {
         expect(container.querySelector('[data-operator-decoration]')).not.toBeInTheDocument()
     })
 
-    it('keeps watermark intensity bounded and behind the application content', () => {
+    it('uses the custom signed image URL without changing decoration semantics', () => {
         const { container } = render(
             <OperatorDecorativeImage
                 preference={{
@@ -88,12 +125,15 @@ describe('OperatorVisualPersonalization', () => {
                     enabled: true,
                     mode: 'watermark',
                     intensity: 'soft',
+                    imageUrl: 'https://example.test/signed-image',
+                    hasCustomImage: true,
                 }}
             />,
         )
 
         const decoration = container.querySelector('[data-operator-decoration="watermark"]')
         expect(decoration).toBeInTheDocument()
+        expect(decoration).toHaveAttribute('src', 'https://example.test/signed-image')
         expect(decoration).toHaveClass('z-0')
         expect(decoration).toHaveClass('opacity-[0.10]')
         expect(decoration).toHaveClass('pointer-events-none')

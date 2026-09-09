@@ -8,6 +8,8 @@ export interface OperatorVisualPreference {
     enabled: boolean
     mode: OperatorVisualMode
     intensity: OperatorVisualIntensity
+    imageUrl?: string
+    hasCustomImage?: boolean
 }
 
 export interface OperatorVisualPreferenceUpdate {
@@ -22,6 +24,18 @@ export const DEFAULT_OPERATOR_VISUAL_PREFERENCE: OperatorVisualPreference = {
     mode: 'corner',
     intensity: 'subtle',
 }
+
+export const OPERATOR_VISUAL_IMAGE_BUCKET = 'operator-visual-personalization'
+export const OPERATOR_VISUAL_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+export const OPERATOR_VISUAL_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp'
+
+const OPERATOR_VISUAL_IMAGE_NAME = 'decoration'
+const OPERATOR_VISUAL_IMAGE_SIGNED_URL_SECONDS = 7 * 24 * 60 * 60
+const OPERATOR_VISUAL_IMAGE_TYPES = new Set([
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+])
 
 interface OperatorVisualPreferenceRow {
     visual_personalization_allowed: boolean
@@ -53,6 +67,20 @@ export function normalizeOperatorVisualPreference(
     }
 }
 
+export function getOperatorVisualImagePath(userId: string) {
+    return `${userId}/${OPERATOR_VISUAL_IMAGE_NAME}`
+}
+
+export function validateOperatorVisualImage(file: Pick<File, 'type' | 'size'>) {
+    if (!OPERATOR_VISUAL_IMAGE_TYPES.has(file.type)) {
+        throw new Error('Escolha uma imagem PNG, JPG ou WebP.')
+    }
+
+    if (file.size <= 0 || file.size > OPERATOR_VISUAL_IMAGE_MAX_BYTES) {
+        throw new Error('A imagem deve ter no máximo 5 MB.')
+    }
+}
+
 async function getAuthenticatedOperatorId() {
     const client = getEasySupabaseClient()
     const { data, error } = await client.auth.getSession()
@@ -66,6 +94,41 @@ async function getAuthenticatedOperatorId() {
     }
 
     return data.session.user.id
+}
+
+async function createOperatorVisualImageSignedUrl(userId: string) {
+    const client = getEasySupabaseClient()
+    const { data, error } = await client.storage
+        .from(OPERATOR_VISUAL_IMAGE_BUCKET)
+        .createSignedUrl(
+            getOperatorVisualImagePath(userId),
+            OPERATOR_VISUAL_IMAGE_SIGNED_URL_SECONDS,
+        )
+
+    if (error || !data?.signedUrl) {
+        throw new Error('Não foi possível carregar a imagem personalizada desta conta.')
+    }
+
+    return data.signedUrl
+}
+
+async function fetchOperatorVisualImageUrl(userId: string) {
+    const client = getEasySupabaseClient()
+    const { data, error } = await client.storage
+        .from(OPERATOR_VISUAL_IMAGE_BUCKET)
+        .list(userId, {
+            limit: 10,
+            search: OPERATOR_VISUAL_IMAGE_NAME,
+        })
+
+    if (error) {
+        throw new Error('Não foi possível verificar a imagem personalizada desta conta.')
+    }
+
+    const exists = data?.some(object => object.name === OPERATOR_VISUAL_IMAGE_NAME) === true
+    if (!exists) return undefined
+
+    return createOperatorVisualImageSignedUrl(userId)
 }
 
 export async function fetchOperatorVisualPreference(): Promise<OperatorVisualPreference> {
@@ -87,7 +150,22 @@ export async function fetchOperatorVisualPreference(): Promise<OperatorVisualPre
         throw new Error('Não foi possível carregar a preferência visual desta conta.')
     }
 
-    return normalizeOperatorVisualPreference(data)
+    const preference = normalizeOperatorVisualPreference(data)
+    if (!preference.allowed) return preference
+
+    try {
+        const imageUrl = await fetchOperatorVisualImageUrl(userId)
+        return {
+            ...preference,
+            imageUrl,
+            hasCustomImage: Boolean(imageUrl),
+        }
+    } catch {
+        return {
+            ...preference,
+            hasCustomImage: false,
+        }
+    }
 }
 
 export async function saveOperatorVisualPreference(
@@ -122,4 +200,42 @@ export async function saveOperatorVisualPreference(
     }
 
     return normalizeOperatorVisualPreference(data)
+}
+
+export async function uploadOperatorVisualImage(file: File): Promise<string> {
+    if (!isEasySupabaseConfigured()) {
+        throw new Error('A imagem personalizada só está disponível no Easy conectado.')
+    }
+
+    validateOperatorVisualImage(file)
+
+    const userId = await getAuthenticatedOperatorId()
+    const client = getEasySupabaseClient()
+    const { error } = await client.storage
+        .from(OPERATOR_VISUAL_IMAGE_BUCKET)
+        .upload(getOperatorVisualImagePath(userId), file, {
+            upsert: true,
+            contentType: file.type,
+            cacheControl: '3600',
+        })
+
+    if (error) {
+        throw new Error('Não foi possível salvar esta imagem na sua conta.')
+    }
+
+    return createOperatorVisualImageSignedUrl(userId)
+}
+
+export async function removeOperatorVisualImage(): Promise<void> {
+    if (!isEasySupabaseConfigured()) return
+
+    const userId = await getAuthenticatedOperatorId()
+    const client = getEasySupabaseClient()
+    const { error } = await client.storage
+        .from(OPERATOR_VISUAL_IMAGE_BUCKET)
+        .remove([getOperatorVisualImagePath(userId)])
+
+    if (error) {
+        throw new Error('Não foi possível remover a imagem personalizada desta conta.')
+    }
 }
