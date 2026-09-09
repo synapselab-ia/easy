@@ -41,9 +41,10 @@ Important integrated milestones remain:
 - **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #139 — observed continuous/repeated transaction-entry refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #142 — explicitly authorized operator-scoped visual personalization: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #144 — explicitly authorized operator-scoped decorative-image selection: `DONE / ACCEPTED / INTEGRATED`.**
+- **PR #144 — explicitly authorized operator-scoped decorative-image selection: `DONE / ACCEPTED / INTEGRATED`;**
+- **Operator visual layout controls — explicit follow-up authorization: `AUTHORIZED / NOT YET IMPLEMENTED`.**
 
-The PR #142 and PR #144 items are separate bounded presentation refinements outside the closed numbered early-use queue and D-035. They do not create early-use change #16, reopen D-035 or create `DR-10`.
+The PR #142 / PR #144 personalization line and the newly authorized layout-controls follow-up are separate bounded presentation refinements outside the closed numbered early-use queue and D-035. They do not create early-use change #16, reopen D-035 or create `DR-10`.
 
 ## PR #131 closure — transaction history + operator attribution
 
@@ -312,6 +313,24 @@ No failed D-019 gate was waived; the final gate passed on its first attempt. The
 
 Detailed authorization/closure: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_IMAGE_SELECTION.md`.
 
+## Authorized follow-up — operator visual layout controls
+
+On 2026-09-09 the operator explicitly authorized a bounded follow-up to make the decorative image easier to place without distracting from daily work. The item is **AUTHORIZED / NOT YET IMPLEMENTED**.
+
+Authorized scope only:
+
+- exactly nine fixed screen anchors: superior esquerda/centro/direita, centro esquerda/centro/direita, inferior esquerda/centro/direita;
+- exactly three size presets: `Pequeno`, `Médio`, `Grande`;
+- operator-selectable opacity from **5% to 50%**, with the current percentage visible;
+- exactly two layer choices: `Atrás do conteúdo` and `Sobre o conteúdo`;
+- preferences remain operator-scoped and persistent across sessions/devices;
+- overlay must remain `pointer-events: none`, decorative/assistive-tech-hidden and excluded from print/PDF/export;
+- no free dragging, arbitrary coordinates, rotation, crop/editor, animation, multiple simultaneous images, page-specific skins or general theme builder.
+
+A minimal extension of the existing `easy_operators` presentation-preference fields is authorized only if required, preserving column-scoped browser UPDATE and the existing own-active-eligible-row RLS boundary. No authorization/business/recovery/Backup v2 semantics may depend on these preferences.
+
+Detailed authorization: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_LAYOUT_CONTROLS.md`.
+
 ## Governing decisions and invariants
 
 D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by screen and PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles; `DR-01…DR-09` is complete.
@@ -346,7 +365,7 @@ The latest observed real Backup v2 recovery events on 2026-09-09 are:
 
 As of 2026-09-09 the confirmed checkpoint is older than the accepted strict `<24h` window. Therefore normal hosted business writes remain correctly fail-closed until the operator exports a fresh Backup v2, stores it outside Easy and explicitly confirms it.
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only. PR #139 changes only the existing transaction-entry UI/session behavior and tests. PR #142 adds a bounded operator preference. PR #144 adds only private optional Storage presentation state. Neither PR #142 nor PR #144 bypasses, refreshes or satisfies recovery health.
+The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only. PR #139 changes only the existing transaction-entry UI/session behavior and tests. PR #142 adds a bounded operator preference. PR #144 adds only private optional Storage presentation state. Neither PR #142 nor PR #144 bypasses, refreshes or satisfies recovery health. The newly authorized visual layout controls likewise may not bypass, refresh or satisfy recovery health.
 
 This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
@@ -362,7 +381,7 @@ The accepted split remains:
 - contextual handoff to Reports remains explicit;
 - no `DR-10` exists or is authorized.
 
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. PR #142 and its PR #144 image-selection follow-up are separate completed bounded presentation refinements and likewise do not reopen D-035.
+The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. PR #142, PR #144 and the newly authorized visual layout-controls follow-up are separate bounded presentation refinements and likewise do not reopen D-035.
 
 ## Startup protocol for a new conversation
 
@@ -382,6 +401,7 @@ Read in this exact order:
 12. `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`
 13. `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`
 14. `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_IMAGE_SELECTION.md`
+15. `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_LAYOUT_CONTROLS.md`
 
 Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot is available at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
 
@@ -395,4 +415,4 @@ Precedence when documents conflict:
 
 ## NEXT_ACTION
 
-**Resume only `P10-S3-I2-I3-D` controlled clean-start early-use observation on the accepted `develop` candidate. There is currently no additional authorized executable product change. Before normal hosted business writes, restore the D-032 store-global recovery checkpoint by exporting a fresh Backup v2, storing it outside Easy and explicitly confirming it so the server-visible checkpoint is strictly younger than 24 hours. After that, continue real operator use and collect concrete evidence/defects. Start another product change only from new observed evidence or a new explicit operator instruction, and then authorize it canonically before coding. D-030/I2-I2 remains on hold; do not automatically resume it, import legacy real-store data, create change #16 or `DR-10`, automatically deploy, modify/publish `main` or claim definitive cutover.**
+**Implement only the explicitly authorized operator visual layout-controls follow-up defined in `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_LAYOUT_CONTROLS.md`, working outside `main` from the accepted `develop` candidate. Extend the existing `Personalização visual` feature with exactly nine fixed positions, `Pequeno`/`Médio`/`Grande`, selectable 5%–50% opacity with visible percentage, and `Atrás do conteúdo` / `Sobre o conteúdo`. Preserve operator-scoped persistence and the existing eligibility/security boundary; if new `easy_operators` preference fields are required, use only the minimum migration plus column-scoped UPDATE and own-active-eligible-row RLS, then verify grants/policies and run Supabase advisors. Overlay must remain `pointer-events: none`, decorative/assistive-tech-hidden and excluded from print/PDF/export. Add focused regression coverage and require the complete D-019 gate before integration. Do not add free dragging/arbitrary coordinates, rotation, crop/editor, animation, multiple images, page-specific skins or a general theme builder. Before normal hosted business writes, the stale D-032 recovery checkpoint still requires a fresh externally stored and explicitly confirmed Backup v2; this visual refinement must not bypass or refresh it. D-030/I2-I2 remains on hold; do not import legacy real-store data, create change #16 or `DR-10`, automatically deploy, modify/publish `main` or claim definitive cutover. After accepted integration and documentation closure, return `NEXT_ACTION` to controlled early-use observation.**
