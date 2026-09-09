@@ -19,9 +19,36 @@ export type Database = {
         Relationships: []
       }
       easy_operators: {
-        Row: { created_at: string; is_active: boolean; updated_at: string; user_id: string }
-        Insert: { created_at?: string; is_active?: boolean; updated_at?: string; user_id: string }
-        Update: { created_at?: string; is_active?: boolean; updated_at?: string; user_id?: string }
+        Row: {
+          created_at: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+          visual_personalization_allowed: boolean
+          visual_personalization_enabled: boolean
+          visual_personalization_intensity: string
+          visual_personalization_mode: string
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+          visual_personalization_allowed?: boolean
+          visual_personalization_enabled?: boolean
+          visual_personalization_intensity?: string
+          visual_personalization_mode?: string
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+          visual_personalization_allowed?: boolean
+          visual_personalization_enabled?: boolean
+          visual_personalization_intensity?: string
+          visual_personalization_mode?: string
+        }
         Relationships: []
       }
       items: {

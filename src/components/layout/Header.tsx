@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '../ui/ThemeToggle'
@@ -6,9 +7,10 @@ import { cn } from '@/lib/utils'
 interface HeaderProps {
     onSearchClick: () => void
     className?: string
+    actions?: ReactNode
 }
 
-export function Header({ onSearchClick, className }: HeaderProps) {
+export function Header({ onSearchClick, className, actions }: HeaderProps) {
     return (
         <header
             className={cn(
@@ -31,6 +33,7 @@ export function Header({ onSearchClick, className }: HeaderProps) {
                 </Button>
             </div>
             <div className="flex items-center gap-2">
+                {actions}
                 <div className="visible desktop:hidden">
                     <ThemeToggle />
                 </div>
