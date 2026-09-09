@@ -40,9 +40,10 @@ Important integrated milestones remain:
 - **PR #135 — observed transaction-history readability refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #137 — observed reseller-statement PDF issue-date refinement: `DONE / ACCEPTED / INTEGRATED`;**
 - **PR #139 — observed continuous/repeated transaction-entry refinement: `DONE / ACCEPTED / INTEGRATED`;**
-- **PR #142 — explicitly authorized operator-scoped visual personalization: `DONE / ACCEPTED / INTEGRATED`.**
+- **PR #142 — explicitly authorized operator-scoped visual personalization: `DONE / ACCEPTED / INTEGRATED`;**
+- **PR #144 — explicitly authorized operator-scoped decorative-image selection: `DONE / ACCEPTED / INTEGRATED`.**
 
-The PR #142 item is separate from the closed numbered early-use queue and from D-035. It does not create early-use change #16, reopen D-035 or create `DR-10`.
+The PR #142 and PR #144 items are separate bounded presentation refinements outside the closed numbered early-use queue and D-035. They do not create early-use change #16, reopen D-035 or create `DR-10`.
 
 ## PR #131 closure — transaction history + operator attribution
 
@@ -265,6 +266,52 @@ No failed gate was waived. No automatic Vercel publication occurred and `main` w
 
 Detailed authorization/closure: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`.
 
+## PR #144 closure — operator decorative-image selection
+
+After PR #142, the operator explicitly clarified that the eligible account must be able to choose the decorative image from inside Easy instead of being permanently tied to the bundled asset. PR #144 is **DONE / ACCEPTED / INTEGRATED**.
+
+Accepted behavior:
+
+- `Personalização visual` now contains a `Sua imagem` section with preview and `Escolher imagem`;
+- the eligible operator can choose PNG, JPEG or WebP up to 5 MB;
+- exactly one custom object is retained per operator account and selecting another valid image replaces it;
+- `Usar imagem padrão` removes the custom object and restores `src/assets/hero.png`;
+- the selected custom image follows the operator across browser/device sessions via a private signed URL;
+- `Canto`, `Marca d'água`, bounded intensity, explicit enable/disable, decorative/non-interactive behavior and `print:hidden` remain unchanged;
+- PDFs, Reports, reseller statements, Backup v2 and other exports remain unchanged;
+- no gallery, crop/editor, animation, public media library, page skin or general theme subsystem was introduced.
+
+Persistence/security acceptance:
+
+- production migration `20260909151557_operator_visual_image_selection` is applied to `easy-v2`;
+- private bucket `operator-visual-personalization` enforces 5 MiB and MIME allow-list `image/png`, `image/jpeg`, `image/webp`;
+- object path is deterministic: `${auth.uid()}/decoration`;
+- `storage.objects` RLS policies for `SELECT`, `INSERT`, `UPDATE` and `DELETE` require the same authenticated UUID path plus an active/elegible `easy_operators` row;
+- UPDATE has both `USING` and `WITH CHECK` ownership/elegibility predicates;
+- no `service_role`, secret key, browser-selected user identity, hardcoded person identity or `SECURITY DEFINER` upload helper was introduced;
+- post-migration Supabase advisors showed no new PR #144 security finding; only the pre-existing intentional RPC/leaked-password-protection warnings remain;
+- closure inspection found 0 custom image objects, so no operator received a custom image implicitly.
+
+Repository acceptance evidence:
+
+- final feature head: `f1967f37307e6516635cc72ac1a695196efc4f92`;
+- exact GitHub-generated merge ref checked out by Actions: `a06ded6f1445e63e6c464819be039db1ad15f4b1`;
+- validated tree: `3904c6833fc589478477d7ade60804fc36768621`;
+- D-019 run/job: `34369323612` / `102526152622`;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **78 files / 333 tests PASS**;
+- focused personalization component coverage: **6/6 PASS**;
+- focused personalization service coverage: **5/5 PASS**;
+- Playwright: **21/21 PASS**;
+- TypeScript + production Vite build: **PASS**;
+- PR #144 squash-integrated `develop`: `d4b59ab733876af1df2d9a294f3668c5f421bc18`;
+- integrated tree: `3904c6833fc589478477d7ade60804fc36768621` — exact tree equivalence **PASS**;
+- post-integration `develop` Critical QA run/job: `34370060092` / `102528684256` — **PASS**.
+
+No failed D-019 gate was waived; the final gate passed on its first attempt. The custom image is optional presentation state and remains outside Backup v2. Storage absence/failure degrades to the bundled fallback rather than affecting business operation. No automatic Vercel publication occurred and `main` was not targeted.
+
+Detailed authorization/closure: `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_IMAGE_SELECTION.md`.
+
 ## Governing decisions and invariants
 
 D-031 continues to authorize runtime-first controlled early use before D-030 operator-local durability proof. D-032 defines the temporary store-global manual JSON checkpoint. D-033 defines the shallow category/subcategory model. D-034 defines one canonical read-only financial-report model shared by screen and PDF. D-035 defines Dashboard and Reports as one core decision system with separate operational and analytical roles; `DR-01…DR-09` is complete.
@@ -286,10 +333,11 @@ Current invariants:
 13. Current-position Dashboard metrics are as-of the operator's current local day; later future occurrence dates do not affect current debt/aging before occurrence.
 14. No general audit subsystem is authorized by PR #131; audit expansion to catalog/reseller/other entity edits requires a new explicit operator instruction.
 15. Operator visual personalization is ornamental only and may not influence authorization, business calculations, transaction behavior, recovery or exported documents.
+16. Operator custom decorative images are private account-scoped presentation state, never canonical business data, and must fail safely to the bundled visual fallback.
 
 ## Recovery checkpoint state
 
-The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135, PR #137, PR #139 or PR #142.
+The D-032 store-global exact-24h recovery guard remains operational and was not bypassed for PR #131, PR #133, PR #135, PR #137, PR #139, PR #142 or PR #144.
 
 The latest observed real Backup v2 recovery events on 2026-09-09 are:
 
@@ -298,7 +346,7 @@ The latest observed real Backup v2 recovery events on 2026-09-09 are:
 
 As of 2026-09-09 the confirmed checkpoint is older than the accepted strict `<24h` window. Therefore normal hosted business writes remain correctly fail-closed until the operator exports a fresh Backup v2, stores it outside Easy and explicitly confirms it.
 
-The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only. PR #139 changes only the existing transaction-entry UI/session behavior and tests. PR #142 adds a bounded operator preference but does not bypass, refresh or satisfy recovery health.
+The PR #131 schema migration itself was applied as database maintenance; the synthetic attribution proof was rolled back and did not bypass the normal hosted-write guard. PR #133, PR #135 and PR #137 are presentation/test only. PR #139 changes only the existing transaction-entry UI/session behavior and tests. PR #142 adds a bounded operator preference. PR #144 adds only private optional Storage presentation state. Neither PR #142 nor PR #144 bypasses, refreshes or satisfies recovery health.
 
 This still does not satisfy D-030 unattended off-site automation/retention/restore-drill acceptance.
 
@@ -314,7 +362,7 @@ The accepted split remains:
 - contextual handoff to Reports remains explicit;
 - no `DR-10` exists or is authorized.
 
-The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. PR #142 is a separate completed bounded presentation refinement and also does not reopen D-035.
+The recent-registration list originally added in DR-06 was later removed from Dashboard by the explicitly authorized PR #131 refinement and re-homed into the canonical `Lançamentos` history workspace. DR-06 quick actions remain valid; this does not reopen D-035. PR #133 and PR #135 only correct containment/readability in the resulting history table and likewise do not reopen D-035. PR #137 is confined to the reseller statement PDF and does not reopen D-035. PR #139 is an explicitly authorized transaction-entry usability refinement and likewise does not reopen D-035 or create `DR-10`/early-use change #16. PR #142 and its PR #144 image-selection follow-up are separate completed bounded presentation refinements and likewise do not reopen D-035.
 
 ## Startup protocol for a new conversation
 
@@ -333,6 +381,7 @@ Read in this exact order:
 11. `docs/V2/P10_EARLY_USE_RESELLER_PDF_ISSUE_DATE.md`
 12. `docs/V2/P10_EARLY_USE_TRANSACTION_CONTINUOUS_ENTRY.md`
 13. `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_PERSONALIZATION.md`
+14. `docs/V2/P10_EARLY_USE_OPERATOR_VISUAL_IMAGE_SELECTION.md`
 
 Read `docs/V2/DASHBOARD_REPORTS_SPEC.md` only when investigating D-035 historical design/acceptance evidence. The complete pre-PR131 status snapshot is available at `docs/V2/archive/STATUS_pre_transaction_history_audit_20260828.md` when deeper historical reconstruction is required.
 
