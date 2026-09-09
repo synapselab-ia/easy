@@ -13,10 +13,12 @@ import { Menu, Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { useOperatorVisualPersonalization } from '@/hooks/useOperatorVisualPersonalization'
+import type { OperatorVisualPreference } from '@/services/operatorVisualPersonalization'
 
 export function MainLayout() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
+    const [visualPreview, setVisualPreview] = useState<OperatorVisualPreference | null>(null)
     const visualPersonalization = useOperatorVisualPersonalization()
 
     useEffect(() => {
@@ -39,11 +41,14 @@ export function MainLayout() {
         onSave: visualPersonalization.savePreference,
         onUploadImage: visualPersonalization.uploadImage,
         onRemoveImage: visualPersonalization.removeImage,
+        onPreviewChange: setVisualPreview,
     }
 
     return (
         <div className="relative isolate flex min-h-screen w-full overflow-hidden bg-background">
-            <OperatorDecorativeImage preference={visualPersonalization.preference} />
+            <OperatorDecorativeImage
+                preference={visualPreview ?? visualPersonalization.preference}
+            />
 
             {/* Desktop Sidebar */}
             <Sidebar className="relative z-10 hidden lg:flex" />

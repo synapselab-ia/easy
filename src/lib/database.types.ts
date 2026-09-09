@@ -27,7 +27,11 @@ export type Database = {
           visual_personalization_allowed: boolean
           visual_personalization_enabled: boolean
           visual_personalization_intensity: string
+          visual_personalization_layer: string
           visual_personalization_mode: string
+          visual_personalization_opacity: number
+          visual_personalization_position: string
+          visual_personalization_size: string
         }
         Insert: {
           created_at?: string
@@ -37,7 +41,11 @@ export type Database = {
           visual_personalization_allowed?: boolean
           visual_personalization_enabled?: boolean
           visual_personalization_intensity?: string
+          visual_personalization_layer?: string
           visual_personalization_mode?: string
+          visual_personalization_opacity?: number
+          visual_personalization_position?: string
+          visual_personalization_size?: string
         }
         Update: {
           created_at?: string
@@ -47,7 +55,11 @@ export type Database = {
           visual_personalization_allowed?: boolean
           visual_personalization_enabled?: boolean
           visual_personalization_intensity?: string
+          visual_personalization_layer?: string
           visual_personalization_mode?: string
+          visual_personalization_opacity?: number
+          visual_personalization_position?: string
+          visual_personalization_size?: string
         }
         Relationships: []
       }

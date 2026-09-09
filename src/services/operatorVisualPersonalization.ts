@@ -1,33 +1,52 @@
 import { getEasySupabaseClient, isEasySupabaseConfigured } from '@/lib/supabase'
 
-export type OperatorVisualMode = 'corner' | 'watermark'
-export type OperatorVisualIntensity = 'subtle' | 'soft'
+export type OperatorVisualPosition =
+    | 'top-left'
+    | 'top-center'
+    | 'top-right'
+    | 'center-left'
+    | 'center'
+    | 'center-right'
+    | 'bottom-left'
+    | 'bottom-center'
+    | 'bottom-right'
+export type OperatorVisualSize = 'small' | 'medium' | 'large'
+export type OperatorVisualLayer = 'behind' | 'over'
 
 export interface OperatorVisualPreference {
     allowed: boolean
     enabled: boolean
-    mode: OperatorVisualMode
-    intensity: OperatorVisualIntensity
+    position: OperatorVisualPosition
+    size: OperatorVisualSize
+    opacity: number
+    layer: OperatorVisualLayer
     imageUrl?: string
     hasCustomImage?: boolean
 }
 
 export interface OperatorVisualPreferenceUpdate {
     enabled: boolean
-    mode: OperatorVisualMode
-    intensity: OperatorVisualIntensity
+    position: OperatorVisualPosition
+    size: OperatorVisualSize
+    opacity: number
+    layer: OperatorVisualLayer
 }
 
 export const DEFAULT_OPERATOR_VISUAL_PREFERENCE: OperatorVisualPreference = {
     allowed: false,
     enabled: false,
-    mode: 'corner',
-    intensity: 'subtle',
+    position: 'bottom-right',
+    size: 'medium',
+    opacity: 20,
+    layer: 'behind',
 }
 
 export const OPERATOR_VISUAL_IMAGE_BUCKET = 'operator-visual-personalization'
 export const OPERATOR_VISUAL_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 export const OPERATOR_VISUAL_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp'
+export const OPERATOR_VISUAL_OPACITY_MIN = 5
+export const OPERATOR_VISUAL_OPACITY_MAX = 50
+export const OPERATOR_VISUAL_OPACITY_STEP = 5
 
 const OPERATOR_VISUAL_IMAGE_NAME = 'decoration'
 const OPERATOR_VISUAL_IMAGE_SIGNED_URL_SECONDS = 7 * 24 * 60 * 60
@@ -36,20 +55,54 @@ const OPERATOR_VISUAL_IMAGE_TYPES = new Set([
     'image/jpeg',
     'image/webp',
 ])
+const OPERATOR_VISUAL_POSITIONS = new Set<OperatorVisualPosition>([
+    'top-left',
+    'top-center',
+    'top-right',
+    'center-left',
+    'center',
+    'center-right',
+    'bottom-left',
+    'bottom-center',
+    'bottom-right',
+])
+const OPERATOR_VISUAL_SIZES = new Set<OperatorVisualSize>(['small', 'medium', 'large'])
+const OPERATOR_VISUAL_PREFERENCE_COLUMNS = 'visual_personalization_allowed, visual_personalization_enabled, visual_personalization_position, visual_personalization_size, visual_personalization_opacity, visual_personalization_layer' as const
 
 interface OperatorVisualPreferenceRow {
     visual_personalization_allowed: boolean
     visual_personalization_enabled: boolean
-    visual_personalization_mode: string
-    visual_personalization_intensity: string
+    visual_personalization_position: string
+    visual_personalization_size: string
+    visual_personalization_opacity: number
+    visual_personalization_layer: string
 }
 
-function normalizeMode(value: string): OperatorVisualMode {
-    return value === 'watermark' ? 'watermark' : 'corner'
+function normalizePosition(value: string): OperatorVisualPosition {
+    return OPERATOR_VISUAL_POSITIONS.has(value as OperatorVisualPosition)
+        ? value as OperatorVisualPosition
+        : 'bottom-right'
 }
 
-function normalizeIntensity(value: string): OperatorVisualIntensity {
-    return value === 'soft' ? 'soft' : 'subtle'
+function normalizeSize(value: string): OperatorVisualSize {
+    return OPERATOR_VISUAL_SIZES.has(value as OperatorVisualSize)
+        ? value as OperatorVisualSize
+        : 'medium'
+}
+
+function normalizeOpacity(value: number): number {
+    if (!Number.isFinite(value)) return DEFAULT_OPERATOR_VISUAL_PREFERENCE.opacity
+
+    const stepped = Math.round(value / OPERATOR_VISUAL_OPACITY_STEP)
+        * OPERATOR_VISUAL_OPACITY_STEP
+    return Math.min(
+        OPERATOR_VISUAL_OPACITY_MAX,
+        Math.max(OPERATOR_VISUAL_OPACITY_MIN, stepped),
+    )
+}
+
+function normalizeLayer(value: string): OperatorVisualLayer {
+    return value === 'over' ? 'over' : 'behind'
 }
 
 export function normalizeOperatorVisualPreference(
@@ -62,8 +115,10 @@ export function normalizeOperatorVisualPreference(
         enabled:
             row.visual_personalization_allowed === true
             && row.visual_personalization_enabled === true,
-        mode: normalizeMode(row.visual_personalization_mode),
-        intensity: normalizeIntensity(row.visual_personalization_intensity),
+        position: normalizePosition(row.visual_personalization_position),
+        size: normalizeSize(row.visual_personalization_size),
+        opacity: normalizeOpacity(row.visual_personalization_opacity),
+        layer: normalizeLayer(row.visual_personalization_layer),
     }
 }
 
@@ -140,9 +195,7 @@ export async function fetchOperatorVisualPreference(): Promise<OperatorVisualPre
     const client = getEasySupabaseClient()
     const { data, error } = await client
         .from('easy_operators')
-        .select(
-            'visual_personalization_allowed, visual_personalization_enabled, visual_personalization_mode, visual_personalization_intensity',
-        )
+        .select(OPERATOR_VISUAL_PREFERENCE_COLUMNS)
         .eq('user_id', userId)
         .maybeSingle()
 
@@ -181,14 +234,14 @@ export async function saveOperatorVisualPreference(
         .from('easy_operators')
         .update({
             visual_personalization_enabled: preference.enabled,
-            visual_personalization_mode: preference.mode,
-            visual_personalization_intensity: preference.intensity,
+            visual_personalization_position: normalizePosition(preference.position),
+            visual_personalization_size: normalizeSize(preference.size),
+            visual_personalization_opacity: normalizeOpacity(preference.opacity),
+            visual_personalization_layer: normalizeLayer(preference.layer),
         })
         .eq('user_id', userId)
         .eq('visual_personalization_allowed', true)
-        .select(
-            'visual_personalization_allowed, visual_personalization_enabled, visual_personalization_mode, visual_personalization_intensity',
-        )
+        .select(OPERATOR_VISUAL_PREFERENCE_COLUMNS)
         .maybeSingle()
 
     if (error) {
