@@ -21,7 +21,7 @@ describe('ResponsiveDialog', () => {
         })
     })
 
-    it('should render Dialog on desktop (> 1024px)', () => {
+    it('should render Dialog on desktop (> 1024px) with a bounded scroll region and footer outside it', () => {
         // Mock desktop
         window.matchMedia = vi.fn().mockImplementation(query => ({
             matches: query === '(min-width: 1024px)',
@@ -37,18 +37,22 @@ describe('ResponsiveDialog', () => {
                 onOpenChange={() => { }}
                 title="Test Title"
                 description="Test Description"
+                footer={<button type="button">Save action</button>}
             >
                 <div>Content</div>
             </ResponsiveDialog>
         )
 
-        // Dialog typically uses DialogContent/DialogTitle
         expect(screen.getByText('Test Title')).toBeInTheDocument()
         expect(screen.getByText('Test Description')).toBeInTheDocument()
-        expect(screen.getByText('Content')).toBeInTheDocument()
+        const scrollRegion = screen.getByText('Content').parentElement
+        expect(scrollRegion).toHaveClass('min-h-0', 'overflow-y-auto')
+        expect(screen.getByRole('dialog')).toHaveClass('max-h-[calc(100dvh-2rem)]', 'overflow-hidden')
+        expect(screen.getByRole('button', { name: 'Save action' })).toBeInTheDocument()
+        expect(scrollRegion).not.toContainElement(screen.getByRole('button', { name: 'Save action' }))
     })
 
-    it('should render Drawer on mobile (< 1024px)', () => {
+    it('should render Drawer on mobile (< 1024px) with a bounded scroll region and footer outside it', () => {
         // Mock mobile
         window.matchMedia = vi.fn().mockImplementation(query => ({
             matches: false,
@@ -64,6 +68,7 @@ describe('ResponsiveDialog', () => {
                 onOpenChange={() => { }}
                 title="Test Title Mobile"
                 description="Test Description Mobile"
+                footer={<button type="button">Save mobile</button>}
             >
                 <div>Mobile Content</div>
             </ResponsiveDialog>
@@ -71,6 +76,9 @@ describe('ResponsiveDialog', () => {
 
         expect(screen.getByText('Test Title Mobile')).toBeInTheDocument()
         expect(screen.getByText('Test Description Mobile')).toBeInTheDocument()
-        expect(screen.getByText('Mobile Content')).toBeInTheDocument()
+        const scrollRegion = screen.getByText('Mobile Content').parentElement
+        expect(scrollRegion).toHaveClass('min-h-0', 'flex-1', 'overflow-y-auto')
+        expect(screen.getByRole('button', { name: 'Save mobile' })).toBeInTheDocument()
+        expect(scrollRegion).not.toContainElement(screen.getByRole('button', { name: 'Save mobile' }))
     })
 })
