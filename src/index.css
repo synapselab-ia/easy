@@ -82,7 +82,7 @@
     --sidebar-accent: oklch(0.97 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.556 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
     --debt: oklch(0.6 0.25 25);
     --payment: oklch(0.6 0.2 145)
   }
