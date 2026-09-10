@@ -82,7 +82,7 @@
     --sidebar-accent: oklch(0.97 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar-ring: oklch(0.556 0 0);
     --debt: oklch(0.6 0.25 25);
     --payment: oklch(0.6 0.2 145)
   }
@@ -166,6 +166,13 @@
     border-color: var(--border) !important;
     background-color: var(--card) !important;
     color: var(--card-foreground) !important;
+  }
+
+  /* Keep the personalization switch thumb anchored inside its 44x24 track.
+     The translate utility handles the enabled travel; this explicit origin prevents
+     the absolutely positioned thumb from using its static-position fallback. */
+  button[role="switch"][aria-label="Ativar imagem decorativa"] > span {
+    left: 0.125rem;
   }
 
   /* The base Table cells are intentionally nowrap. The financial-history desktop table
