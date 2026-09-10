@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-09  
 **Scope:** explicit operator follow-up to the accepted PR #142 / PR #144 visual-personalization work during `P10-S3-I2-I3-D` controlled early use.  
-**Status:** `DONE / ACCEPTED / INTEGRATED — PR #147`
+**Status:** `DONE / ACCEPTED / INTEGRATED — PR #147`; observed presentation defect `DONE / ACCEPTED / INTEGRATED — PR #149`
 
 ## Trigger
 
@@ -90,16 +90,52 @@ Exact acceptance evidence:
 
 No failed Critical QA gate was waived; the feature gate passed on its first attempt. The migration version in the repository matches the applied Supabase migration history exactly.
 
+## Observed early-use presentation defect — PR #149
+
+On 2026-09-10 a real operator screenshot and follow-up observation clarified that layout preferences **were persisting correctly when `Salvar aparência` was used**. The observed defect was presentation-only:
+
+- after PR #147 added the bounded position/size/opacity/layer controls, the personalization dialog could exceed the usable viewport height;
+- `ResponsiveDialog` did not bound the popup/drawer height or provide an internal scroll region, so the footer containing `Cancelar` and `Salvar aparência` could render below the visible viewport;
+- the enabled decorative-image switch thumb could render partly outside its track because the absolutely positioned thumb had no explicit horizontal origin.
+
+PR #149 corrected only those observed UI defects:
+
+- desktop dialog height is bounded to the dynamic viewport and uses a three-row header/body/footer layout;
+- mobile drawer height is likewise bounded to the dynamic viewport;
+- only the dialog/drawer body scrolls vertically; the footer remains outside that scroll region so `Salvar aparência` stays accessible;
+- the switch thumb receives an explicit horizontal origin while retaining the existing enabled translation;
+- the save/persistence contract, preview/cancel semantics and all Supabase preference fields remain unchanged.
+
+No Supabase migration, grant, RLS policy, Storage behavior, Backup v2 contract, transaction/financial behavior or recovery logic changed in PR #149.
+
+PR #149 acceptance evidence:
+
+- final fix head: `e283867190ea99be5deb569af3017a95f016384a`;
+- exact GitHub-generated merge ref checked out by Actions: `ca6d2a9fc9582f87bd63131e52829d5cba10dc0a`;
+- validated tree: `40b65b586e8a8f0403a3e4e06e27d20b50c913f7`;
+- final PR D-019 run/job: `34477620679` / `102872158608` — **PASS**;
+- ESLint: **0 errors / 108 warnings**;
+- Vitest: **78 files / 338 tests PASS**;
+- `ResponsiveDialog` bounded-scroll/footer regression: **2/2 PASS**;
+- existing operator-personalization component coverage: **10/10 PASS**, including explicit save and preview/cancel behavior;
+- Playwright: **21/21 PASS**;
+- TypeScript + production Vite build: **PASS**;
+- PR #149 squash-integrated `develop`: `193d808a71710c7f11f0aa1022e3d34a61f79dff`;
+- integrated tree: `40b65b586e8a8f0403a3e4e06e27d20b50c913f7` — exact validated-tree equivalence **PASS**;
+- post-integration `develop` Critical QA run/job: `34478087699` / `102873709969` — **PASS** with 0-error lint, 338/338 Vitest, 21/21 Playwright and production build.
+
+The first PR #149 CI iteration passed technically, but pre-merge diff inspection detected an unrelated accidental `--sidebar-ring` token change introduced while editing `src/index.css`. That unrelated delta was restored before integration and the complete D-019 gate was rerun on the corrected final head. No unrelated theme change entered `develop`, and no failed gate was waived.
+
 ## Preserved invariants
 
 All accepted V2 and PR #142 / PR #144 invariants remain in force, including Supabase Auth/RLS/operator authorization, server-derived transaction actor attribution, D-014 occurrence semantics, reversal-zero-effect behavior, D-015 FIFO aging, immutable historical classification, screen/PDF report parity, Backup v2 schema 7, D-032 recovery fail-closed behavior, manual deployment and untouched `main`.
 
 Decorative-image presentation state remains outside Backup v2 and is never canonical business data.
 
-The stale D-032 checkpoint was neither bypassed nor refreshed by PR #147. Before normal hosted business writes, a fresh Backup v2 must still be exported, stored outside Easy and explicitly confirmed. D-030 / I2-I2 remains on hold. No legacy real-store import, early-use change #16, `DR-10`, automatic Vercel publication, `main` modification or definitive cutover occurred.
+The stale D-032 checkpoint was neither bypassed nor refreshed by PR #147 or PR #149. Before normal hosted business writes, a fresh Backup v2 must still be exported, stored outside Easy and explicitly confirmed. D-030 / I2-I2 remains on hold. No legacy real-store import, early-use change #16, `DR-10`, automatic Vercel publication, `main` modification or definitive cutover occurred.
 
 ## Closure
 
-The operator visual layout-controls follow-up is **DONE / ACCEPTED / INTEGRATED** on `develop` through PR #147. No additional implementation is implied by this document.
+The operator visual layout-controls follow-up and its observed viewport/switch correction are **DONE / ACCEPTED / INTEGRATED** on `develop` through PR #147 and PR #149. No additional implementation is implied by this document.
 
-Canonical `NEXT_ACTION` returns to controlled clean-start early-use observation, subject to the stale D-032 recovery checkpoint before normal hosted business writes and any later explicit operator instruction.
+Canonical `NEXT_ACTION` remains controlled clean-start early-use observation, subject to the stale D-032 recovery checkpoint before normal hosted business writes and any later explicit operator instruction.
